@@ -1,6 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 
 const BASE_HOST = (typeof window !== 'undefined') ? 'http://localhost:8080' : (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080');
 const API_URL = `${BASE_HOST}/api/mobile`;
@@ -70,6 +71,21 @@ export const getSubjectPerformance = async (studentId) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   return Array.isArray(response.data) ? response.data : (response.data.value ?? []);
+};
+
+export const downloadReportCard = async (term, studentId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const params = new URLSearchParams({ term });
+  if (studentId) params.set('studentId', studentId);
+  const url = `${BASE_HOST}/api/mobile/parent/report-card?${params.toString()}`;
+  const fileUri = `${FileSystem.documentDirectory}report_card_${term}.pdf`;
+  const result = await FileSystem.downloadAsync(url, fileUri, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (result.status !== 200) {
+    throw new Error(`Report card download failed with status ${result.status}`);
+  }
+  return result.uri;
 };
 
 export const getClassRoster = async (sectionId) => {

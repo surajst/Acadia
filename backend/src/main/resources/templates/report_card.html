@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Report Card</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            color: #1a1a1a;
+            background-color: #ffffff;
+            font-size: 12px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #1a1a1a;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .school-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .report-title {
+            font-size: 14px;
+            color: #444444;
+            margin: 4px 0 0 0;
+        }
+        .student-info {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        .student-info td {
+            padding: 3px 8px 3px 0;
+            font-size: 12px;
+        }
+        .student-info .label {
+            color: #666666;
+            width: 90px;
+        }
+        table.subject-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+        }
+        table.subject-table th, table.subject-table td {
+            border: 1px solid #cccccc;
+            padding: 5px 8px;
+            text-align: left;
+            font-size: 11px;
+        }
+        table.subject-table th {
+            background-color: #f0f0f0;
+        }
+        .subject-heading {
+            font-size: 13px;
+            font-weight: bold;
+            margin: 14px 0 4px 0;
+            padding-bottom: 2px;
+            border-bottom: 1px solid #999999;
+        }
+        .subject-summary {
+            font-weight: bold;
+        }
+        .empty-state {
+            color: #666666;
+            font-style: italic;
+            margin: 20px 0;
+        }
+        .overall-summary {
+            margin-top: 20px;
+            padding-top: 12px;
+            border-top: 2px solid #1a1a1a;
+        }
+        .overall-summary td {
+            padding: 4px 8px 4px 0;
+            font-size: 13px;
+        }
+        .grade-badge {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 10px;
+            color: #888888;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <p class="school-name" th:text="${schoolName}">School Name</p>
+        <p class="report-title">Academic Report Card &#8212; <span th:text="${term}">TERM1</span></p>
+    </div>
+
+    <table class="student-info">
+        <tr>
+            <td class="label">Student</td>
+            <td th:text="${studentName}">Student Name</td>
+            <td class="label">Roll No.</td>
+            <td th:text="${rollNumber}">0</td>
+        </tr>
+        <tr>
+            <td class="label">Grade</td>
+            <td th:text="${gradeName}">Grade</td>
+            <td class="label">Section</td>
+            <td th:text="${sectionName}">Section</td>
+        </tr>
+    </table>
+
+    <div th:unless="${hasSubjects}" class="empty-state">
+        No assessments recorded for this term.
+    </div>
+
+    <div th:if="${hasSubjects}">
+        <div th:each="subject : ${subjects}">
+            <p class="subject-heading" th:text="${subject.subjectName}">SUBJECT</p>
+            <table class="subject-table">
+                <thead>
+                    <tr>
+                        <th>Assessment</th>
+                        <th>Date</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="a : ${subject.assessments}">
+                        <td th:text="${a.title}">Title</td>
+                        <td th:text="${a.date}">Date</td>
+                        <td th:text="${a.score} + ' / ' + ${a.maxScore}">0 / 100</td>
+                    </tr>
+                    <tr class="subject-summary">
+                        <td colspan="2">Subject Average</td>
+                        <td th:text="${subject.averagePercentage} + '% (' + ${subject.grade} + ')'">0% (A)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <table class="overall-summary">
+            <tr>
+                <td>Overall Average</td>
+                <td th:text="${overallAverage} + '%'">0%</td>
+                <td class="grade-badge" th:text="${overallGrade}">A</td>
+            </tr>
+        </table>
+    </div>
+
+    <p class="footer">Generated on <span th:text="${generatedDate}">01 Jan 2026</span></p>
+</body>
+</html>

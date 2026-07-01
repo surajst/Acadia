@@ -70,6 +70,12 @@
 			<version>0.11.5</version>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- PDF generation for report cards: renders Thymeleaf HTML to PDF -->
+		<dependency>
+			<groupId>org.xhtmlrenderer</groupId>
+			<artifactId>flying-saucer-pdf-openpdf</artifactId>
+			<version>9.4.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

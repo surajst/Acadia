@@ -5,10 +5,16 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useContext, useState, useEffect } from 'react';
+import * as Sharing from 'expo-sharing';
 import { DataContext } from './_layout';
-import { getSubjectPerformance } from '../../services/api';
+import { getSubjectPerformance, downloadReportCard } from '../../services/api';
+
+const TERMS = ['TERM1', 'TERM2', 'FINAL'] as const;
+type Term = typeof TERMS[number];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SubjectPerformance = {
@@ -71,8 +77,27 @@ export default function PerformanceScreen() {
     data?.subjectPerformance ?? null
   );
   const [loading, setLoading] = useState(false);
+  const [selectedTerm, setSelectedTerm] = useState<Term>('TERM1');
+  const [downloading, setDownloading] = useState(false);
 
   const studentId = data?.student?.id;
+
+  const handleDownloadReportCard = async () => {
+    setDownloading(true);
+    try {
+      const uri = await downloadReportCard(selectedTerm, studentId);
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Report Card' });
+      } else {
+        Alert.alert('Downloaded', `Report card saved to ${uri}`);
+      }
+    } catch (error) {
+      Alert.alert('Download failed', 'Could not download the report card. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const fetchPerformance = async () => {
     if (!studentId) { setSubjects(null); return; }
@@ -113,6 +138,34 @@ export default function PerformanceScreen() {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
     >
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Report Card</Text>
+        <View style={styles.termRow}>
+          {TERMS.map((term) => (
+            <TouchableOpacity
+              key={term}
+              style={[styles.termChip, selectedTerm === term && styles.termChipActive]}
+              onPress={() => setSelectedTerm(term)}
+            >
+              <Text style={[styles.termChipText, selectedTerm === term && styles.termChipTextActive]}>
+                {term}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TouchableOpacity
+          style={styles.downloadButton}
+          onPress={handleDownloadReportCard}
+          disabled={downloading || !studentId}
+        >
+          {downloading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.downloadButtonText}>Download Report Card</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Subject-wise Performance</Text>
 
@@ -184,6 +237,28 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 4,
   },
+
+  termRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  termChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  termChipActive: { backgroundColor: '#6366f1', borderColor: '#6366f1' },
+  termChipText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
+  termChipTextActive: { color: '#fff' },
+
+  downloadButton: {
+    backgroundColor: '#6366f1',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  downloadButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
   trendRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10 },
   trendDot: { width: 8, height: 8, borderRadius: 4 },

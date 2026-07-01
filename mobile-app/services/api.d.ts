@@ -59,6 +59,7 @@ export function getCurriculumTopics(
 ): Promise<CurriculumTopic[]>;
 export function getParentAttendance(studentId: string): Promise<ApiObject>;
 export function getSubjectPerformance(studentId: string): Promise<SubjectPerformance[]>;
+export function downloadReportCard(term: string, studentId?: string): Promise<string>;
 export function getClass6MathRoster(): Promise<RosterStudent[]>;
 export function submitClassAttendance(
   attendanceRecord: AttendanceRecord[],
