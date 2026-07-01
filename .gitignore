@@ -14,6 +14,7 @@ backend/data/
 backend/startup_log.txt
 **/*.log
 test-results/
+playwright-report/
 
 # Dependencies
 mobile-app/node_modules/
