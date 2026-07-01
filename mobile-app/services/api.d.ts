@@ -37,6 +37,12 @@ export interface AttendanceRecord {
   status: 'PRESENT' | 'ABSENT';
 }
 
+export interface SubjectPerformance {
+  subjectType: string;
+  averagePercentage: number;
+  trend: number[];
+}
+
 export type ApiObject = Record<string, unknown>;
 
 export function login(
@@ -52,6 +58,7 @@ export function getCurriculumTopics(
   standard?: number,
 ): Promise<CurriculumTopic[]>;
 export function getParentAttendance(studentId: string): Promise<ApiObject>;
+export function getSubjectPerformance(studentId: string): Promise<SubjectPerformance[]>;
 export function getClass6MathRoster(): Promise<RosterStudent[]>;
 export function submitClassAttendance(
   attendanceRecord: AttendanceRecord[],

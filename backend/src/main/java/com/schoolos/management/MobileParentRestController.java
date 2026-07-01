@@ -2,6 +2,8 @@ package com.schoolos.management;
 
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.academics.AssessmentService;
+import com.schoolos.academics.SubjectPerformance;
 import com.schoolos.user.UserRepository;
 import com.schoolos.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +49,9 @@ public class MobileParentRestController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AssessmentService assessmentService;
 
     private Parent resolveParent(String username) {
         if (username == null) return null;
@@ -172,8 +177,32 @@ public class MobileParentRestController {
         response.put("pendingRewards", pendingRewards);
         response.put("parentQuests", parentQuests);
         response.put("parentRewards", parentRewards);
+        response.put("subjectPerformance", assessmentService.getSubjectPerformance(studentId));
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/subject-performance")
+    public ResponseEntity<?> getSubjectPerformance(
+            @RequestParam(value = "studentId", required = false) UUID studentId,
+            Authentication authentication) {
+
+        if (studentId == null) {
+            String username = (authentication != null) ? authentication.getName() : "ramesh";
+            Parent parent = resolveParent(username);
+            if (parent != null) {
+                List<Student> students = studentRepository.findByParentsContaining(parent);
+                if (!students.isEmpty()) {
+                    studentId = students.get(0).getId();
+                }
+            }
+        }
+
+        if (studentId == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "No student found"));
+        }
+
+        return ResponseEntity.ok(assessmentService.getSubjectPerformance(studentId));
     }
 
     @GetMapping("/attendance")

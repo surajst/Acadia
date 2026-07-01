@@ -246,6 +246,32 @@ CREATE TABLE IF NOT EXISTS student_progress (
     CONSTRAINT fk_student_progress_curriculum FOREIGN KEY (curriculum_id) REFERENCES curriculums(id)
 );
 
+CREATE TABLE IF NOT EXISTS assessments (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    academic_year_id UUID NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    subject_type VARCHAR(50) NOT NULL,
+    class_section_id UUID NOT NULL,
+    term VARCHAR(20) NOT NULL,
+    max_score INT NOT NULL,
+    assessment_date DATE NOT NULL,
+    created_by_teacher_id UUID NOT NULL,
+    CONSTRAINT fk_assessment_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+    CONSTRAINT fk_assessment_class_section FOREIGN KEY (class_section_id) REFERENCES class_sections(id)
+);
+
+CREATE TABLE IF NOT EXISTS student_assessment_scores (
+    id UUID PRIMARY KEY,
+    student_id UUID NOT NULL,
+    assessment_id UUID NOT NULL,
+    score INT NOT NULL,
+    graded_by_teacher_id UUID NOT NULL,
+    graded_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    CONSTRAINT fk_score_student FOREIGN KEY (student_id) REFERENCES students(id),
+    CONSTRAINT fk_score_assessment FOREIGN KEY (assessment_id) REFERENCES assessments(id)
+);
+
 CREATE TABLE IF NOT EXISTS teacher_tasks (
     id UUID PRIMARY KEY,
     title VARCHAR(255) NOT NULL,

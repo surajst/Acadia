@@ -166,6 +166,17 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
+          name="performance"
+          options={{
+            title: 'Performance',
+            href: isParent ? undefined : null,
+            tabBarIcon: ({ color }) => (
+              <SymbolView name={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }} tintColor={color} size={28} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
           name="teacher"
           options={{
             title: 'My Classes',
