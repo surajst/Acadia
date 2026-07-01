@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Repository
 public interface TeacherTaskRepository extends JpaRepository<TeacherTask, UUID> {
-    List<TeacherTask> findByCreatedByTeacherId(UUID teacherId);
-    List<TeacherTask> findByStandardAndAssignedToClassTrue(Integer standard);
-    List<TeacherTask> findByStudentId(UUID studentId);
+    List<TeacherTask> findByCreatedByTeacherIdAndTenantId(UUID teacherId, UUID tenantId);
+    List<TeacherTask> findByStandardAndAssignedToClassTrueAndTenantId(Integer standard, UUID tenantId);
+    List<TeacherTask> findByStudentIdAndTenantId(UUID studentId, UUID tenantId);
 }

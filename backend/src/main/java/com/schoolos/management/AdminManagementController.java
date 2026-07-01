@@ -1,5 +1,6 @@
 package com.schoolos.management;
 
+import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.UserRepository;
 import com.schoolos.user.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,9 @@ public class AdminManagementController {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private CurrentUserService currentUserService;
 
     @GetMapping("/web/admin/management")
     public String showAdminManagement(Model model, Authentication authentication) {
@@ -94,10 +98,11 @@ public class AdminManagementController {
                                @RequestParam("description") String description,
                                @RequestParam("xpCost") int xpCost,
                                @RequestParam("displayEmoji") String displayEmoji,
-                               @RequestParam("inventoryCount") int inventoryCount) {
+                               @RequestParam("inventoryCount") int inventoryCount,
+                               Authentication authentication) {
         try {
-            UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000000");
-            UUID academicYearId = UUID.fromString("00000000-0000-0000-0000-111111111111");
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
 
             RewardItem reward = new RewardItem(
                 UUID.randomUUID(),
@@ -139,8 +144,8 @@ public class AdminManagementController {
             }
         }
 
-        UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000000");
-        UUID academicYearId = UUID.fromString("00000000-0000-0000-0000-111111111111");
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
 
         SchoolClass schoolClass = schoolClassRepository.findById(schoolClassId)
             .orElseThrow(() -> new RuntimeException("SchoolClass not found: " + schoolClassId));

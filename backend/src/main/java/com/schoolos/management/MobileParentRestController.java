@@ -6,8 +6,7 @@ import com.schoolos.parentapp.AttendanceRecord;
 import com.schoolos.parentapp.DateRange;
 import com.schoolos.parentapp.SisDataProvider;
 import com.schoolos.parentapp.StudentSummary;
-import com.schoolos.user.UserRepository;
-import com.schoolos.user.User;
+import com.schoolos.user.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -42,59 +41,23 @@ public class MobileParentRestController {
     private ParentQuestRepository parentQuestRepository;
 
     @Autowired
-    private ParentRepository parentRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private SisDataProvider sisDataProvider;
 
-    private Parent resolveParent(String username) {
-        if (username == null) return null;
-
-        String searchName = username;
-        if (username.contains("@")) {
-            User user = userRepository.findByEmail(username).orElse(null);
-            if (user != null) {
-                searchName = user.getFullName().split(" ")[0];
-            }
-        }
-
-        final String finalSearch = searchName;
-        Parent parent = parentRepository.findAll().stream()
-                .filter(p -> finalSearch.equalsIgnoreCase(p.getFirstName()) ||
-                            (p.getEmail() != null && p.getEmail().toLowerCase().startsWith(finalSearch.toLowerCase())))
-                .findFirst()
-                .orElse(null);
-
-        if (parent == null) {
-            parent = parentRepository.findAll().stream()
-                    .filter(p -> "Rajesh".equals(p.getFirstName()) || "Ramesh".equals(p.getFirstName()))
-                    .findFirst()
-                    .orElseGet(() -> parentRepository.findAll().stream().findFirst().orElse(null));
-        }
-
-        return parent;
-    }
+    @Autowired
+    private CurrentUserService currentUserService;
 
     private UUID resolveStudentId(UUID studentId, Authentication authentication) {
         if (studentId != null) return studentId;
-        String username = (authentication != null) ? authentication.getName() : "ramesh";
-        Parent parent = resolveParent(username);
-        if (parent != null) {
-            List<Student> students = studentRepository.findByParentsContaining(parent);
-            if (!students.isEmpty()) {
-                return students.get(0).getId();
-            }
-        }
-        return null;
+        return currentUserService.getCurrentParent(authentication)
+                .map(parent -> studentRepository.findByParentsContaining(parent))
+                .filter(students -> !students.isEmpty())
+                .map(students -> students.get(0).getId())
+                .orElse(null);
     }
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboardData(Authentication authentication) {
-        String username = (authentication != null) ? authentication.getName() : "ramesh";
-        Parent parent = resolveParent(username);
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
 
         Student student = null;
         if (parent != null) {
@@ -102,10 +65,6 @@ public class MobileParentRestController {
             if (!students.isEmpty()) {
                 student = students.get(0);
             }
-        }
-
-        if (student == null) {
-            student = studentRepository.findAll().stream().findFirst().orElse(null);
         }
 
         if (student == null) {
@@ -138,13 +97,11 @@ public class MobileParentRestController {
         Map<String, Object> response = new HashMap<>();
 
         // Parent Info
-        if (parent != null) {
-            Map<String, Object> parentInfo = new HashMap<>();
-            parentInfo.put("id", parent.getId());
-            parentInfo.put("firstName", parent.getFirstName());
-            parentInfo.put("lastName", parent.getLastName());
-            response.put("parent", parentInfo);
-        }
+        Map<String, Object> parentInfo = new HashMap<>();
+        parentInfo.put("id", parent.getId());
+        parentInfo.put("firstName", parent.getFirstName());
+        parentInfo.put("lastName", parent.getLastName());
+        response.put("parent", parentInfo);
 
         // Student Info — via SisDataProvider
         StudentSummary studentSummary = sisDataProvider.getStudent(studentId).orElse(null);

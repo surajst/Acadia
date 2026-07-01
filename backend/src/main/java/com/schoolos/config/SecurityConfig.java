@@ -135,36 +135,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new PasswordEncoder() {
-            private final BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
-
-            @Override
-            public String encode(CharSequence rawPassword) {
-                return bcrypt.encode(rawPassword);
-            }
-
-            @Override
-            public boolean matches(CharSequence rawPassword, String encodedPassword) {
-                System.out.println(">>> PasswordEncoder.matches called!");
-                System.out.println(">>> rawPassword: " + rawPassword);
-                System.out.println(">>> encodedPassword: " + encodedPassword);
-
-                if (encodedPassword == null) return false;
-
-                if (encodedPassword.equals(rawPassword.toString())) {
-                    System.out.println(">>> Matched plaintext fallback!");
-                    return true;
-                }
-
-                try {
-                    boolean result = bcrypt.matches(rawPassword, encodedPassword);
-                    System.out.println(">>> BCrypt matches result: " + result);
-                    return result;
-                } catch (Exception e) {
-                    System.out.println(">>> BCrypt matches threw exception: " + e.getMessage());
-                    return false;
-                }
-            }
-        };
+        return new BCryptPasswordEncoder();
     }
 }

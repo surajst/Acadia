@@ -1,8 +1,9 @@
 package com.schoolos.announcement;
 
+import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.User;
-import com.schoolos.user.UserRepository;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,18 +27,18 @@ public class WebController {
     private final AnnouncementRepository announcementRepository;
     private final StudentRepository studentRepository;
     private final AttendanceRepository attendanceRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
     public WebController(AnnouncementService announcementService,
                          AnnouncementRepository announcementRepository,
                          StudentRepository studentRepository,
                          AttendanceRepository attendanceRepository,
-                         UserRepository userRepository) {
+                         CurrentUserService currentUserService) {
         this.announcementService = announcementService;
         this.announcementRepository = announcementRepository;
         this.studentRepository = studentRepository;
         this.attendanceRepository = attendanceRepository;
-        this.userRepository = userRepository;
+        this.currentUserService = currentUserService;
     }
 
     @GetMapping("/feed")
@@ -73,36 +74,13 @@ public class WebController {
     }
 
     @PostMapping("/admin/post")
-    public String postAnnouncement(@ModelAttribute Announcement announcement) {
-        // Resolve the real admin user UUID dynamically using the canonical Admin identity
-        // Falls back to the pinned Admin UUID: 11111111-1111-1111-1111-111111111111
-        UUID resolvedCreatedBy = userRepository.findByEmail("admin@greenwood.com")
-                .map(User::getId)
-                .orElseGet(() -> userRepository.findAll().stream()
-                        .findFirst()
-                        .map(User::getId)
-                        .orElse(UUID.fromString("11111111-1111-1111-1111-111111111111")));
+    public String postAnnouncement(@ModelAttribute Announcement announcement, Authentication authentication) {
+        User currentUser = currentUserService.getCurrentUser(authentication)
+                .orElseThrow(() -> new IllegalStateException("Authenticated admin user not found"));
 
-        // Strategy 1: source tenant context from existing announcements
-        List<Announcement> existing = announcementRepository.findAll();
-        if (!existing.isEmpty()) {
-            Announcement ref = existing.get(0);
-            announcement.setTenantId(ref.getTenantId());
-            announcement.setAcademicYearId(ref.getAcademicYearId());
-            announcement.setCreatedBy(ref.getCreatedBy() != null ? ref.getCreatedBy() : resolvedCreatedBy);
-        } else {
-            // Strategy 2: fall back to the first student record (always seeded)
-            studentRepository.findAll().stream().findFirst().ifPresentOrElse(student -> {
-                announcement.setTenantId(student.getTenantId());
-                announcement.setAcademicYearId(student.getAcademicYearId());
-                announcement.setCreatedBy(resolvedCreatedBy);
-            }, () -> {
-                // Strategy 3: absolute fallback — use the static seeded tenant UUIDs
-                announcement.setTenantId(UUID.fromString("00000000-0000-0000-0000-000000000000"));
-                announcement.setAcademicYearId(UUID.fromString("00000000-0000-0000-0000-111111111111"));
-                announcement.setCreatedBy(resolvedCreatedBy);
-            });
-        }
+        announcement.setTenantId(currentUser.getTenantId());
+        announcement.setAcademicYearId(currentUser.getAcademicYearId());
+        announcement.setCreatedBy(currentUser.getId());
 
         // Service handles saving and prints the WhatsApp mock console output
         announcementService.createAnnouncement(announcement);

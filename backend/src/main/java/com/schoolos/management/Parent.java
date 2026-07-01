@@ -27,6 +27,9 @@ public class Parent extends BaseTenantEntity {
     @Column
     private String email;
 
+    @Column(name = "user_id")
+    private UUID userId;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -41,4 +44,7 @@ public class Parent extends BaseTenantEntity {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public UUID getUserId() { return userId; }
+    public void setUserId(UUID userId) { this.userId = userId; }
 }

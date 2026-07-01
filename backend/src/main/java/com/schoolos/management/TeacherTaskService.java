@@ -19,38 +19,40 @@ public class TeacherTaskService {
     }
 
     @Transactional
-    public TeacherTask createTask(TeacherTaskRequest request, String teacherUsername) {
+    public TeacherTask createTask(TeacherTaskRequest request, String teacherUsername, UUID tenantId, UUID academicYearId) {
         TeacherTask task = new TeacherTask();
         task.setId(UUID.randomUUID());
+        task.setTenantId(tenantId);
+        task.setAcademicYearId(academicYearId);
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
         task.setSubjectType(request.getSubjectType());
         task.setTaskType(request.getTaskType());
         task.setStandard(request.getStandard());
-        
+
         Boolean isAssignedToClass = request.getAssignedToClass();
         if (isAssignedToClass == null) isAssignedToClass = true;
         task.setAssignedToClass(isAssignedToClass);
-        
+
         task.setStudentId(request.getStudentId());
         task.setCreatedByTeacherId(resolveTeacherId(teacherUsername));
         task.setXpReward(request.getXpReward() != null ? request.getXpReward() : 50);
         task.setDueDate(request.getDueDate());
-        
+
         if (TaskType.READING.equals(request.getTaskType())) {
             task.setQuestion1(request.getQuestion1());
             task.setQuestion2(request.getQuestion2());
             task.setQuestion3(request.getQuestion3());
         }
-        
+
         return teacherTaskRepository.save(task);
     }
 
     @Transactional
-    public List<TeacherTask> getTasksForStudent(UUID studentId, int standard) {
-        List<TeacherTask> classTasks = teacherTaskRepository.findByStandardAndAssignedToClassTrue(standard);
-        List<TeacherTask> studentTasks = teacherTaskRepository.findByStudentId(studentId);
-        
+    public List<TeacherTask> getTasksForStudent(UUID studentId, int standard, UUID tenantId) {
+        List<TeacherTask> classTasks = teacherTaskRepository.findByStandardAndAssignedToClassTrueAndTenantId(standard, tenantId);
+        List<TeacherTask> studentTasks = teacherTaskRepository.findByStudentIdAndTenantId(studentId, tenantId);
+
         Set<TeacherTask> allTasks = new HashSet<>(classTasks);
         allTasks.addAll(studentTasks);
         
@@ -80,8 +82,8 @@ public class TeacherTaskService {
         return activeTasks;
     }
 
-    public List<TeacherTask> getTasksCreatedByTeacher(String teacherUsername) {
-        return teacherTaskRepository.findByCreatedByTeacherId(resolveTeacherId(teacherUsername));
+    public List<TeacherTask> getTasksCreatedByTeacher(String teacherUsername, UUID tenantId) {
+        return teacherTaskRepository.findByCreatedByTeacherIdAndTenantId(resolveTeacherId(teacherUsername), tenantId);
     }
 
     public Map<String, String> getQuestionsForTask(UUID taskId) {

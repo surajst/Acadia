@@ -6,8 +6,7 @@ import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
 import com.schoolos.management.Attendance;
 import com.schoolos.management.AttendanceRepository;
-import com.schoolos.user.UserRepository;
-import com.schoolos.user.User;
+import com.schoolos.user.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -54,7 +53,7 @@ public class MobileStudentRestController {
     private ParentQuestRepository parentQuestRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private CurrentUserService currentUserService;
 
     @Autowired
     private AttendanceRepository attendanceRepository;
@@ -68,38 +67,14 @@ public class MobileStudentRestController {
     @Autowired
     private CurriculumService curriculumService;
 
-    private Student resolveStudent(String username) {
-        if (username == null || username.trim().isEmpty()) {
-            throw new IllegalArgumentException("Username is null or empty");
-        }
-        
-        String searchName = username;
-        
-        // If it's an email (from our new DB UserDetailsService), look up the User first
-        if (username.contains("@")) {
-            User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
-            searchName = user.getFullName().split(" ")[0];
-        }
-
-        if (searchName.startsWith("student_")) {
-            String suffix = searchName.substring(8);
-            for (Student s : studentRepository.findAll()) {
-                if (("Pilot-" + suffix).equals(s.getRollNumber())) {
-                    return s;
-                }
-            }
-        }
-        
-        final String finalSearchName = searchName;
-        return studentRepository.findByFirstNameIgnoreCase(finalSearchName)
-            .orElseThrow(() -> new IllegalArgumentException("Student record not found for name: " + finalSearchName));
+    private Student resolveStudent(Authentication authentication) {
+        return currentUserService.getCurrentStudent(authentication)
+                .orElseThrow(() -> new IllegalArgumentException("Student record not found"));
     }
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboardData(Authentication authentication) {
-        String username = (authentication != null) ? authentication.getName() : "arjun";
-        Student student = resolveStudent(username);
+        Student student = resolveStudent(authentication);
         UUID studentId = student.getId();
 
         StudentMetric studentMetrics = studentMetricRepository.findByStudentId(studentId).orElse(new StudentMetric());
@@ -155,9 +130,8 @@ public class MobileStudentRestController {
 
     @GetMapping("/attendance")
     public ResponseEntity<?> getAttendanceLog(Authentication authentication) {
-        String username = (authentication != null) ? authentication.getName() : "arjun";
-        Student student = resolveStudent(username);
-        
+        Student student = resolveStudent(authentication);
+
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(60);
         
@@ -177,19 +151,17 @@ public class MobileStudentRestController {
     @GetMapping("/tasks")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> getStudentTasks(Authentication authentication) {
-        String username = (authentication != null) ? authentication.getName() : "arjun";
-        Student student = resolveStudent(username);
+        Student student = resolveStudent(authentication);
         int standard = extractStandard(student);
-        return ResponseEntity.ok(teacherTaskService.getTasksForStudent(student.getId(), standard));
+        return ResponseEntity.ok(teacherTaskService.getTasksForStudent(student.getId(), standard, student.getTenantId()));
     }
 
     @GetMapping("/syllabus")
     public ResponseEntity<?> getStudentSyllabus(Authentication authentication) {
-        String username = (authentication != null) ? authentication.getName() : "arjun";
-        Student student = resolveStudent(username);
+        Student student = resolveStudent(authentication);
         UUID studentId = student.getId();
         int standard = extractStandard(student);
-        List<Curriculum> allTopics = curriculumService.getTopics(SyllabusType.CBSE, standard, null);
+        List<Curriculum> allTopics = curriculumService.getTopics(student.getTenantId(), SyllabusType.CBSE, standard, null);
         List<StudentProgress> progressList = studentProgressRepository.findByStudentId(studentId);
         Set<UUID> completedIds = progressList.stream()
                 .filter(StudentProgress::isCompleted)

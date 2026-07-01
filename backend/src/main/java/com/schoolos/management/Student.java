@@ -30,6 +30,12 @@ public class Student extends BaseTenantEntity {
     @Column
     private String rollNumber;
 
+    @Column(name = "user_id")
+    private UUID userId;
+
+    public UUID getUserId() { return userId; }
+    public void setUserId(UUID userId) { this.userId = userId; }
+
     @ManyToOne
     @JoinColumn(name = "class_section_id", nullable = false)
     private ClassSection classSection;

@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS students (
     roll_number VARCHAR(255),
     class_section_id UUID NOT NULL,
     school_class_id UUID,
+    user_id UUID,
     CONSTRAINT fk_student_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
     CONSTRAINT fk_student_academic_year FOREIGN KEY (academic_year_id) REFERENCES academic_years(id),
     CONSTRAINT fk_student_class_section FOREIGN KEY (class_section_id) REFERENCES class_sections(id),
@@ -106,6 +107,7 @@ CREATE TABLE IF NOT EXISTS parents (
     last_name VARCHAR(255) NOT NULL,
     phone_number VARCHAR(255),
     email VARCHAR(255),
+    user_id UUID,
     CONSTRAINT fk_parent_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
     CONSTRAINT fk_parent_academic_year FOREIGN KEY (academic_year_id) REFERENCES academic_years(id)
 );
@@ -275,6 +277,8 @@ CREATE TABLE IF NOT EXISTS student_assessment_scores (
 
 CREATE TABLE IF NOT EXISTS teacher_tasks (
     id UUID PRIMARY KEY,
+    tenant_id UUID,
+    academic_year_id UUID,
     title VARCHAR(255) NOT NULL,
     description TEXT,
     subject_type VARCHAR(50) NOT NULL,

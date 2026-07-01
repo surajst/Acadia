@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.user.CurrentUserService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -51,6 +52,9 @@ public class UnifiedDashboardWebController {
     @Autowired
     private CurriculumRepository curriculumRepository;
 
+    @Autowired
+    private CurrentUserService currentUserService;
+
     /** Redirect bridge: /web/management/attendance → canonical teacher attendance route */
     @GetMapping("/web/management/attendance")
     public String managementAttendanceRedirect() {
@@ -83,9 +87,9 @@ public class UnifiedDashboardWebController {
         }
         
         // Setup IDs dynamically
-        UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         String username = authentication != null ? authentication.getName() : "teacher_1";
-        UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes()); 
+        UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
         String activeTeacherName = username;
 
         // If sections are populated, align tenantId
@@ -253,11 +257,11 @@ public class UnifiedDashboardWebController {
         List<ClassSection> assignedClassrooms = Collections.emptyList();
         try {
             List<ClassSection> checkSections = classSectionRepo.findAll();
-            UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
             String username = authentication != null ? authentication.getName() : "teacher_1";
             UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
 
-            if (!checkSections.isEmpty()) {
+            if (tenantId == null && !checkSections.isEmpty()) {
                 tenantId = checkSections.get(0).getTenantId();
             }
 
@@ -471,7 +475,7 @@ public class UnifiedDashboardWebController {
 
         // Available ClassSections menu for matching layouts / sidebars
         List<ClassSection> checkSections = Collections.emptyList();
-        UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         String username = authentication != null ? authentication.getName() : "teacher_1";
         UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
 

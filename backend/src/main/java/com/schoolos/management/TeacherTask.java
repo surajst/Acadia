@@ -12,6 +12,15 @@ public class TeacherTask {
     @Id
     private UUID id;
 
+    // Nullable (unlike BaseTenantEntity's tenant_id/academic_year_id, which are
+    // NOT NULL) so the ALTER TABLE that adds these columns succeeds against
+    // this entity's pre-existing rows; backfilled once via UserAccountLinkageSeeder.
+    @Column(name = "tenant_id")
+    private UUID tenantId;
+
+    @Column(name = "academic_year_id")
+    private UUID academicYearId;
+
     @Column(nullable = false)
     private String title;
 
@@ -63,7 +72,13 @@ public class TeacherTask {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
-    
+
+    public UUID getTenantId() { return tenantId; }
+    public void setTenantId(UUID tenantId) { this.tenantId = tenantId; }
+
+    public UUID getAcademicYearId() { return academicYearId; }
+    public void setAcademicYearId(UUID academicYearId) { this.academicYearId = academicYearId; }
+
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     

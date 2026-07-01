@@ -27,6 +27,7 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     // Dynamic principal resolution and pagination methods
     Page<Student> findBySchoolClassId(UUID schoolClassId, Pageable pageable);
     Optional<Student> findByFirstNameIgnoreCase(String firstName);
+    Optional<Student> findByUserId(UUID userId);
     List<Student> findByParentsContaining(Parent parent);
 
     // Dynamic search: filter by name substring (first or last) across all sections

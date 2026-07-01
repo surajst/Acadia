@@ -5,6 +5,7 @@ import com.schoolos.academics.StudentMetricRepository;
 import com.schoolos.parentapp.AttendanceRecord;
 import com.schoolos.parentapp.DateRange;
 import com.schoolos.parentapp.SisDataProvider;
+import com.schoolos.user.CurrentUserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -24,43 +25,29 @@ public class ParentPortalApiController {
     private final ParentQuestRepository parentQuestRepository;
     private final StudentMetricRepository studentMetricRepository;
     private final StudentRepository studentRepository;
-    private final ParentRepository parentRepository;
     private final StudentProgressService studentProgressService;
     private final SisDataProvider sisDataProvider;
+    private final CurrentUserService currentUserService;
 
     public ParentPortalApiController(ParentQuestRepository parentQuestRepository,
                                      StudentMetricRepository studentMetricRepository,
                                      StudentRepository studentRepository,
-                                     ParentRepository parentRepository,
                                      StudentProgressService studentProgressService,
-                                     SisDataProvider sisDataProvider) {
+                                     SisDataProvider sisDataProvider,
+                                     CurrentUserService currentUserService) {
         this.parentQuestRepository = parentQuestRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.studentRepository = studentRepository;
-        this.parentRepository = parentRepository;
         this.studentProgressService = studentProgressService;
         this.sisDataProvider = sisDataProvider;
+        this.currentUserService = currentUserService;
     }
 
     // ─── Resolve helpers ────────────────────────────────────────────────────
-    private Parent resolveParent(Authentication authentication) {
-        String username = (authentication != null) ? authentication.getName() : "ramesh";
-        return parentRepository.findAll().stream()
-                .filter(p -> username.equalsIgnoreCase(p.getFirstName())
-                        || (p.getEmail() != null && p.getEmail().toLowerCase().startsWith(username.toLowerCase())))
-                .findFirst()
-                .orElseGet(() -> parentRepository.findAll().stream()
-                        .filter(p -> "Ramesh".equals(p.getFirstName()) || "Rajesh".equals(p.getFirstName()))
-                        .findFirst()
-                        .orElseGet(() -> parentRepository.findAll().stream().findFirst().orElse(null)));
-    }
-
     private Student resolveChildForParent(Parent parent) {
         if (parent == null) return null;
         List<Student> linked = studentRepository.findByParentsContaining(parent);
-        if (!linked.isEmpty()) return linked.get(0);
-        // fallback to Arjun
-        return studentRepository.findById(UUID.fromString("00000000-0000-0000-0000-000000000091")).orElse(null);
+        return linked.isEmpty() ? null : linked.get(0);
     }
 
     // ─── Existing endpoints ──────────────────────────────────────────────────
@@ -107,7 +94,7 @@ public class ParentPortalApiController {
             return ResponseEntity.badRequest().body(Map.of("error", "Student not found"));
         }
         Student student = studentOpt.get();
-        Parent parent = resolveParent(authentication);
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
         if (parent == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Parent not found"));
         }
@@ -135,7 +122,7 @@ public class ParentPortalApiController {
     @GetMapping("/child-attendance")
     @PreAuthorize("hasRole('PARENT')")
     public ResponseEntity<?> getChildAttendance(Authentication authentication) {
-        Parent parent = resolveParent(authentication);
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
         Student child = resolveChildForParent(parent);
         if (child == null) {
             return ResponseEntity.ok(List.of());
@@ -156,7 +143,7 @@ public class ParentPortalApiController {
     @GetMapping("/child-syllabus")
     @PreAuthorize("hasRole('PARENT')")
     public ResponseEntity<?> getChildSyllabus(Authentication authentication) {
-        Parent parent = resolveParent(authentication);
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
         Student child = resolveChildForParent(parent);
         if (child == null) {
             return ResponseEntity.ok(Map.of());

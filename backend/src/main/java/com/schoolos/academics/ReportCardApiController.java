@@ -1,11 +1,9 @@
 package com.schoolos.academics;
 
 import com.schoolos.management.Parent;
-import com.schoolos.management.ParentRepository;
 import com.schoolos.management.Student;
 import com.schoolos.management.StudentRepository;
-import com.schoolos.user.User;
-import com.schoolos.user.UserRepository;
+import com.schoolos.user.CurrentUserService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,17 +20,14 @@ public class ReportCardApiController {
 
     private final ReportCardService reportCardService;
     private final StudentRepository studentRepository;
-    private final ParentRepository parentRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
     public ReportCardApiController(ReportCardService reportCardService,
                                     StudentRepository studentRepository,
-                                    ParentRepository parentRepository,
-                                    UserRepository userRepository) {
+                                    CurrentUserService currentUserService) {
         this.reportCardService = reportCardService;
         this.studentRepository = studentRepository;
-        this.parentRepository = parentRepository;
-        this.userRepository = userRepository;
+        this.currentUserService = currentUserService;
     }
 
     // ─── Teacher/Admin: generate for any student in their tenant ────────────
@@ -54,7 +49,7 @@ public class ReportCardApiController {
     public ResponseEntity<?> parentReportCard(@RequestParam(required = false) UUID studentId,
                                                @RequestParam AssessmentTerm term,
                                                Authentication authentication) {
-        Parent parent = resolveParent(authentication);
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
         if (parent == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Parent not found"));
         }
@@ -76,7 +71,7 @@ public class ReportCardApiController {
     @GetMapping("/api/student/report-card")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> studentReportCard(@RequestParam AssessmentTerm term, Authentication authentication) {
-        Student student = resolveStudent(authentication != null ? authentication.getName() : null);
+        Student student = currentUserService.getCurrentStudent(authentication).orElse(null);
         if (student == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Student not found"));
         }
@@ -93,47 +88,5 @@ public class ReportCardApiController {
                 .filename("report_card_" + term.name() + ".pdf")
                 .build());
         return new ResponseEntity<>(pdf, headers, org.springframework.http.HttpStatus.OK);
-    }
-
-    private Parent resolveParent(Authentication authentication) {
-        String username = (authentication != null) ? authentication.getName() : null;
-        if (username == null) return null;
-
-        String searchName = username;
-        if (username.contains("@")) {
-            User user = userRepository.findByEmail(username).orElse(null);
-            if (user != null) {
-                searchName = user.getFullName().split(" ")[0];
-            }
-        }
-
-        final String finalSearch = searchName;
-        return parentRepository.findAll().stream()
-                .filter(p -> finalSearch.equalsIgnoreCase(p.getFirstName())
-                        || (p.getEmail() != null && p.getEmail().toLowerCase().startsWith(finalSearch.toLowerCase())))
-                .findFirst()
-                .orElseGet(() -> parentRepository.findAll().stream()
-                        .filter(p -> "Rajesh".equals(p.getFirstName()) || "Ramesh".equals(p.getFirstName()))
-                        .findFirst()
-                        .orElseGet(() -> parentRepository.findAll().stream().findFirst().orElse(null)));
-    }
-
-    private Student resolveStudent(String username) {
-        if (username == null || username.trim().isEmpty()) return null;
-
-        String searchName = username;
-        if (username.contains("@")) {
-            searchName = username.substring(0, username.indexOf("@"));
-        }
-
-        if (searchName.startsWith("student_")) {
-            String suffix = searchName.substring(8);
-            for (Student s : studentRepository.findAll()) {
-                if (("Pilot-" + suffix).equals(s.getRollNumber())) {
-                    return s;
-                }
-            }
-        }
-        return studentRepository.findByFirstNameIgnoreCase(searchName).orElse(null);
     }
 }

@@ -1,5 +1,6 @@
 package com.schoolos.management;
 
+import com.schoolos.user.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,7 +19,7 @@ public class TeacherTaskApiController {
 
     @Autowired
     private TeacherTaskService teacherTaskService;
-    
+
     @Autowired
     private StudentRepository studentRepository;
 
@@ -31,20 +32,19 @@ public class TeacherTaskApiController {
     @Autowired
     private AttendanceRepository attendanceRepository;
 
+    @Autowired
+    private CurrentUserService currentUserService;
+
     @PostMapping("/teacher/tasks/create")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ResponseEntity<?> createTask(@RequestBody TeacherTaskRequest request, Authentication authentication) {
         try {
             String username = authentication != null ? authentication.getName() : "teacher_1";
-            System.err.println("--- CREATE TASK ---");
-            System.err.println("Username from auth: " + username);
-            UUID teacherId = teacherTaskService.resolveTeacherId(username);
-            System.err.println("Resolved Teacher ID: " + teacherId);
-            TeacherTask task = teacherTaskService.createTask(request, username);
-            System.err.println("Task created with ID: " + task.getId());
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
+            TeacherTask task = teacherTaskService.createTask(request, username, tenantId, academicYearId);
             return ResponseEntity.ok(task);
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
@@ -59,17 +59,13 @@ public class TeacherTaskApiController {
             username = "teacher_1";
         }
         UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
-        UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000000"); // Fixed tenant
-        
-        List<ClassSection> sections = classSectionRepo.findByTeacherIdAndTenantId(teacherId, tenantId);
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+
+        List<ClassSection> sections = (tenantId != null)
+                ? classSectionRepo.findByTeacherIdAndTenantId(teacherId, tenantId)
+                : List.of();
         List<Student> students = studentRepository.findByClassSectionIn(sections);
-        System.err.println("--- SEARCH MY STUDENTS ---");
-        System.err.println("teacherId=" + teacherId + ", tenantId=" + tenantId);
-        System.err.println("sections size=" + sections.size() + ", students size=" + students.size());
-        if (students.size() > 0) {
-            System.err.println("First student: " + students.get(0).getFirstName() + " " + students.get(0).getLastName());
-        }
-        
+
         String lowerQuery = query.toLowerCase();
         List<Map<String, String>> result = students.stream()
             .filter(s -> (s.getFirstName() + " " + s.getLastName()).toLowerCase().contains(lowerQuery))
@@ -124,20 +120,16 @@ public class TeacherTaskApiController {
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ResponseEntity<?> getMyTasks(Authentication authentication) {
         String username = authentication != null ? authentication.getName() : "teacher_1";
-        System.err.println("--- GET MY TASKS ---");
-        System.err.println("Username from auth: " + username);
-        UUID teacherId = teacherTaskService.resolveTeacherId(username);
-        System.err.println("Resolved Teacher ID: " + teacherId);
-        List<TeacherTask> tasks = teacherTaskService.getTasksCreatedByTeacher(username);
-        System.err.println("Found tasks: " + tasks.size());
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        List<TeacherTask> tasks = teacherTaskService.getTasksCreatedByTeacher(username, tenantId);
         return ResponseEntity.ok(tasks);
     }
 
     @GetMapping("/student/attendance")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> getStudentAttendance(Authentication authentication) {
-        String username = authentication != null ? authentication.getName() : "student_1";
-        Student student = resolveStudent(username);
+        Student student = currentUserService.getCurrentStudent(authentication)
+                .orElseThrow(() -> new IllegalArgumentException("Student record not found"));
         LocalDate start = LocalDate.now().minusDays(60);
         LocalDate end = LocalDate.now();
         List<Map<String, Object>> records = attendanceRepository
@@ -156,10 +148,10 @@ public class TeacherTaskApiController {
     @GetMapping("/student/tasks")
     @PreAuthorize("hasAnyRole('STUDENT')")
     public ResponseEntity<?> getStudentTasks(Authentication authentication) {
-        String username = authentication != null ? authentication.getName() : "student_1";
-        Student student = resolveStudent(username);
+        Student student = currentUserService.getCurrentStudent(authentication)
+                .orElseThrow(() -> new IllegalArgumentException("Student record not found"));
         int standard = extractStandard(student);
-        return ResponseEntity.ok(teacherTaskService.getTasksForStudent(student.getId(), standard));
+        return ResponseEntity.ok(teacherTaskService.getTasksForStudent(student.getId(), standard, student.getTenantId()));
     }
 
     @GetMapping("/student/tasks/{taskId}/questions")
@@ -168,28 +160,6 @@ public class TeacherTaskApiController {
         return ResponseEntity.ok(teacherTaskService.getQuestionsForTask(taskId));
     }
 
-    private Student resolveStudent(String username) {
-        if (username == null || username.trim().isEmpty()) {
-            throw new IllegalArgumentException("Username is null or empty");
-        }
-        
-        String searchName = username;
-        if (username.contains("@")) {
-            searchName = username.substring(0, username.indexOf("@"));
-        }
-
-        if (searchName.startsWith("student_")) {
-            String suffix = searchName.substring(8);
-            for (Student s : studentRepository.findAll()) {
-                if (("Pilot-" + suffix).equals(s.getRollNumber())) {
-                    return s;
-                }
-            }
-        }
-        return studentRepository.findByFirstNameIgnoreCase(searchName)
-            .orElseThrow(() -> new IllegalArgumentException("Student record not found for username: " + username));
-    }
-    
     private int extractStandard(Student student) {
         try {
             String grade = student.getClassSection().getGradeName(); 

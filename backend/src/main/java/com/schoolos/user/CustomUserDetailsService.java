@@ -14,15 +14,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        System.out.println(">>> CustomUserDetailsService.loadUserByUsername called for email: " + email);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    System.out.println(">>> User NOT FOUND: " + email);
-                    return new UsernameNotFoundException("User not found with email: " + email);
-                });
-
-        System.out.println(">>> User found! email=" + user.getEmail() + " active=" + user.isActive());
-        System.out.println(">>> Password hash in DB: " + user.getPasswordHash());
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
         if (!user.isActive()) {
             throw new UsernameNotFoundException("User account is disabled: " + email);

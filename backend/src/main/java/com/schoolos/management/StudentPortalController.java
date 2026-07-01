@@ -4,6 +4,7 @@ import com.schoolos.academics.MathSkill;
 import com.schoolos.academics.MathSkillRepository;
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -88,24 +89,12 @@ public class StudentPortalController {
     @Autowired
     private UserRepository userRepository;
 
-    private Student resolveStudent(String username) {
-        if (username == null || username.trim().isEmpty()) {
-            throw new IllegalArgumentException("Username is null or empty");
-        }
-        if (username.contains("@")) {
-            username = username.substring(0, username.indexOf("@"));
-        }
-        if (username.startsWith("student_")) {
-            String suffix = username.substring(8);
-            for (Student s : studentRepository.findAll()) {
-                if (("Pilot-" + suffix).equals(s.getRollNumber())) {
-                    return s;
-                }
-            }
-        }
-        String finalUsername = username;
-        return studentRepository.findByFirstNameIgnoreCase(finalUsername)
-            .orElseThrow(() -> new IllegalArgumentException("Student record not found for username: " + finalUsername));
+    @Autowired
+    private CurrentUserService currentUserService;
+
+    private Student resolveStudent(Authentication authentication) {
+        return currentUserService.getCurrentStudent(authentication)
+                .orElseThrow(() -> new IllegalArgumentException("Student record not found"));
     }
 
     @GetMapping("/test/reset")
@@ -376,8 +365,7 @@ public class StudentPortalController {
     public String getStudentPortal(@RequestParam(value = "tab", required = false, defaultValue = "dashboard") String activeTab,
                                    Model model, Authentication authentication) {
         model.addAttribute("activeTab", activeTab);
-        String username = (authentication != null) ? authentication.getName() : "arjun";
-        Student student = resolveStudent(username);
+        Student student = resolveStudent(authentication);
 
         UUID studentId = student.getId();
 
@@ -566,8 +554,7 @@ public class StudentPortalController {
             }
         }
 
-        String username = (authentication != null) ? authentication.getName() : "arjun";
-        Student student = resolveStudent(username);
+        Student student = resolveStudent(authentication);
         UUID studentId = student.getId();
 
         AcademicSubmission submission = new AcademicSubmission();
@@ -598,8 +585,7 @@ public class StudentPortalController {
         RewardItem reward = rewardItemRepository.findById(rewardId)
             .orElseThrow(() -> new IllegalArgumentException("Invalid reward item ID: " + rewardId));
 
-        String username = (authentication != null) ? authentication.getName() : "arjun";
-        Student student = resolveStudent(username);
+        Student student = resolveStudent(authentication);
 
         UUID studentId = student.getId();
 
@@ -724,8 +710,7 @@ public class StudentPortalController {
             ParentReward reward = parentRewardRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid parent reward ID: " + id));
 
-            String username = (authentication != null) ? authentication.getName() : "arjun";
-            Student student = resolveStudent(username);
+            Student student = resolveStudent(authentication);
             if (student == null) {
                 throw new IllegalArgumentException("No student found");
             }
