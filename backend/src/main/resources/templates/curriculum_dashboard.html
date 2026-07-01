@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curriculum Intelligence &middot; ACADIA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(30, 41, 59, 0.8);
+        }
+    </style>
+    
+    
+
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class="bg-[#0b0f19] text-slate-200 font-sans  max- overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+
+    <header class="bg-[#0f172a] border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div style="display:flex; align-items:center; gap:10px;">
+  <img src="/images/acadia-logo.png" alt="ACADIA"
+       style="height:32px; mix-blend-mode:screen;">
+  <span style="font-size:16px; font-weight:600; color:white;
+               letter-spacing:2px;">ACADIA</span>
+</div>
+            <div class="flex items-center gap-4">
+                <a href="/web/admin/dashboard" class="text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-800 p-2 rounded-xl bg-slate-900/50 hover:bg-slate-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                        Curriculum Progress
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5 font-medium">School-Wide Academic Analytics</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <select id="classFilter" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-4 py-2 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all">
+                    <option value="ALL">All Classes</option>
+                    <option value="5">Class 5</option>
+                    <option value="6">Class 6</option>
+                    <option value="7">Class 7</option>
+                    <option value="8">Class 8</option>
+                    <option value="9">Class 9</option>
+                    <option value="10">Class 10</option>
+                </select>
+            </div>
+        </div>
+    </header>
+<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
+
+
+    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 min-h-0 flex flex-col overflow-y-auto space-y-6" >
+        
+        <!-- Loading Skeleton -->
+        <div id="loadingSkeleton" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 animate-pulse">
+                <div class="h-28 bg-slate-800 rounded-2xl"></div>
+                <div class="h-28 bg-slate-800 rounded-2xl"></div>
+                <div class="h-28 bg-slate-800 rounded-2xl"></div>
+                <div class="h-28 bg-slate-800 rounded-2xl"></div>
+            </div>
+            <div class="h-64 bg-slate-800 rounded-2xl animate-pulse"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
+                <div class="h-64 bg-slate-800 rounded-2xl"></div>
+                <div class="h-64 bg-slate-800 rounded-2xl"></div>
+            </div>
+        </div>
+
+        <div id="dashboardContent" class="space-y-6">
+            <!-- Row 1: KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
+                <div class="glass-panel rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-black/20">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Students</p>
+                        <h3 id="kpiTotalStudents" class="text-2xl font-bold text-white mt-1">--</h3>
+                    </div>
+                    <div class="p-3 rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/10">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    </div>
+                </div>
+                
+                <div class="glass-panel rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-black/20">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Overall Completion</p>
+                        <h3 id="kpiCompletion" class="text-2xl font-bold text-white mt-1">--%</h3>
+                    </div>
+                    <div class="p-3 rounded-xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/10">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-black/20">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Chapters Awaiting</p>
+                        <h3 id="kpiPending" class="text-2xl font-bold text-white mt-1">--</h3>
+                    </div>
+                    <div class="p-3 rounded-xl bg-amber-600/10 text-amber-400 border border-amber-500/10">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-black/20">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total XP Awarded</p>
+                        <h3 id="kpiTotalXp" class="text-2xl font-bold text-emerald-400 mt-1">--</h3>
+                    </div>
+                    <div class="p-3 rounded-xl bg-emerald-600/10 text-emerald-400 border border-emerald-500/10">
+                        <span class="text-lg font-bold block leading-none tracking-tighter">XP</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Class/Subject Completion Bars -->
+            <div class="glass-panel rounded-2xl shadow-xl p-6">
+                <h3 id="barsPanelTitle" class="text-lg font-bold text-white mb-4 tracking-tight">Class Completion Progress</h3>
+                <div id="barsContainer" class="space-y-5">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
+            <!-- Row 3: Two Panels -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+                <div class="glass-panel rounded-2xl shadow-xl p-6 flex flex-col">
+                    <h3 class="text-lg font-bold text-white mb-1 tracking-tight flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                        Needs Attention
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4">Bottom 5 Chapters by Completion Rate</p>
+                    <div id="needsAttentionContainer" class="space-y-3 flex-1">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl shadow-xl p-6 flex flex-col">
+                    <h3 class="text-lg font-bold text-white mb-1 tracking-tight flex items-center gap-2">
+                        <span class="text-lg leading-none">🏆</span> Top Scholars
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4">Top 5 Students by Curriculum XP</p>
+                    <div id="topScholarsContainer" class="space-y-3 flex-1">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterDropdown = document.getElementById('classFilter');
+            filterDropdown.addEventListener('change', (e) => loadData(e.target.value));
+            
+            // Initial load
+            loadData('ALL');
+        });
+
+        function getColorClass(percent) {
+            if (percent <= 30) return 'bg-red-500';
+            if (percent <= 60) return 'bg-amber-500';
+            return 'bg-emerald-500';
+        }
+
+        async function loadData(standard) {
+            const loading = document.getElementById('loadingSkeleton');
+            const content = document.getElementById('dashboardContent');
+            
+            loading.classList.remove('hidden');
+            content.classList.add('hidden');
+
+            try {
+                const url = standard === 'ALL' 
+                    ? '/api/admin/progress/school' 
+                    : '/api/admin/progress/class?standard=' + standard;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                
+                if (standard === 'ALL') {
+                    renderSchoolWide(data);
+                } else {
+                    renderClassDetail(data);
+                }
+            } catch (err) {
+                console.error("Error loading curriculum data:", err);
+            } finally {
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+            }
+        }
+
+        function renderSchoolWide(data) {
+            document.getElementById('kpiTotalStudents').textContent = data.totalStudents || 0;
+            document.getElementById('kpiCompletion').textContent = (data.overallCompletionPercent || 0) + '%';
+            document.getElementById('kpiPending').textContent = data.pendingVerifications || 0;
+            document.getElementById('kpiTotalXp').textContent = data.totalXpAwarded || 0;
+
+            document.getElementById('barsPanelTitle').textContent = 'Class Completion Progress';
+            
+            const barsContainer = document.getElementById('barsContainer');
+            barsContainer.innerHTML = '';
+            
+            if (data.byClass) {
+                Object.keys(data.byClass).forEach(std => {
+                    const classData = data.byClass[std];
+                    const pct = classData.completionPercent || 0;
+                    const color = getColorClass(pct);
+                    
+                    barsContainer.innerHTML += `
+                        <div>
+                            <div class="flex justify-between text-sm mb-1.5">
+                                <span class="font-semibold text-white">Class ${std} <span class="text-slate-400 text-xs ml-1">(${classData.students} students)</span></span>
+                                <span class="font-bold text-white">${pct}%</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-2 border border-slate-700/50 overflow-hidden">
+                                <div class="${color} h-full rounded-full transition-all duration-1000 ease-out" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            renderNeedsAttention(data.lowestCompletionChapters);
+            renderTopScholars(data.topStudents);
+        }
+
+        function renderClassDetail(data) {
+            document.getElementById('kpiTotalStudents').textContent = data.totalStudents || 0;
+            document.getElementById('kpiCompletion').textContent = 'N/A';
+            document.getElementById('kpiPending').textContent = '--';
+            document.getElementById('kpiTotalXp').textContent = '--';
+
+            document.getElementById('barsPanelTitle').textContent = `Subject Completion - Class ${data.standard}`;
+            
+            const barsContainer = document.getElementById('barsContainer');
+            barsContainer.innerHTML = '';
+            
+            if (data.subjects) {
+                Object.keys(data.subjects).forEach(sub => {
+                    const subjData = data.subjects[sub];
+                    const pct = subjData.avgCompletionPercent || 0;
+                    const color = getColorClass(pct);
+                    
+                    barsContainer.innerHTML += `
+                        <div>
+                            <div class="flex justify-between text-sm mb-1.5">
+                                <span class="font-semibold text-white">${sub} <span class="text-slate-400 text-xs ml-1">(${subjData.totalChapters} chapters)</span></span>
+                                <span class="font-bold text-white">${pct}%</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-2 border border-slate-700/50 overflow-hidden">
+                                <div class="${color} h-full rounded-full transition-all duration-1000 ease-out" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Sort chapters descending for class view and limit to 5
+            const sortedCh = (data.chapters || []).sort((a,b) => a.completionPercent - b.completionPercent).slice(0, 5);
+            renderNeedsAttention(sortedCh);
+            
+            const sortedSt = (data.students || []).slice(0, 5);
+            renderTopScholars(sortedSt);
+        }
+
+        function renderNeedsAttention(chapters) {
+            const container = document.getElementById('needsAttentionContainer');
+            if (!chapters || chapters.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">No data available</p>';
+                return;
+            }
+            
+            container.innerHTML = chapters.map(ch => `
+                <div class="bg-slate-900/50 border border-slate-800/80 rounded-xl p-3 flex justify-between items-center hover:border-slate-700 transition-colors">
+                    <div>
+                        <h4 class="text-sm font-semibold text-white">${ch.topicName}</h4>
+                        <p class="text-xs text-slate-400 uppercase tracking-wider mt-0.5">${ch.subject} <span class="mx-1 opacity-50">•</span> Class ${ch.standard || '--'}</p>
+                    </div>
+                    <div class="text-right pl-3">
+                        <span class="text-sm font-bold ${ch.completionPercent <= 30 ? 'text-red-400' : 'text-amber-400'}">${ch.completionPercent}%</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTopScholars(students) {
+            const container = document.getElementById('topScholarsContainer');
+            if (!students || students.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">No data available</p>';
+                return;
+            }
+
+            container.innerHTML = students.map((st, idx) => `
+                <div class="bg-slate-900/50 border border-slate-800/80 rounded-xl p-3 flex justify-between items-center hover:border-slate-700 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 shrink-0 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-xs border border-indigo-500/20 shadow-inner">
+                            #${idx + 1}
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-white">${st.name}</h4>
+                            ${st.standard ? `<p class="text-xs text-slate-400 uppercase tracking-wider mt-0.5">Class ${st.standard}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="text-right pl-3">
+                        ${st.xp !== undefined 
+                            ? `<span class="text-sm font-bold text-emerald-400">${st.xp} XP</span>`
+                            : `<span class="text-sm font-bold text-indigo-400">${st.completionPercent}%</span>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+
+
+    <footer style="text-align:center; padding:8px;
+               font-size:11px; color:rgba(255,255,255,0.2);
+               border-top:1px solid rgba(255,255,255,0.05);
+               flex-shrink:0;">
+  ACADIA &middot; Connect | Manage | Empower
+</footer>
+</div>
+</body>
+</html>

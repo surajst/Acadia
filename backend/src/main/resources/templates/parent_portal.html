@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Portal &middot; ACADIA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+        
+        body { 
+            font-family: 'Outfit', 'Inter', sans-serif; 
+            background-color: #0b0f19; 
+            color: #e2e8f0; 
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glow-avatar {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+        }
+
+        .glow-progress {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+
+        .toast-enter {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Custom scrollbar to match dark theme aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+    <script>
+        function closeToast() {
+            const toast = document.getElementById('toast');
+            if(toast) { toast.style.display = 'none'; }
+        }
+    </script>
+    
+    
+
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class=" relative overflow-x-hidden selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+
+    <!-- Glowing Background blobs for glassmorphic depth -->
+    <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-600/10 blur-[120px] pointer-events-none"></div>
+
+    <!-- Top Navigation Header -->
+    <header class="glass-panel border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/web/parent/portal" class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-300 font-black text-lg transition-transform hover:scale-105">
+                    🛡️
+                </a>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">Parent Trust Gateway</h1>
+                    <p class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Secure Guardian Workspace</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wider uppercase">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Verified Guardian Session
+                </span>
+            </div>
+        </div>
+    </header>
+<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
+
+
+    <!-- Success Toast Notification -->
+    <div th:if="${param.success}" id="toast" class="toast-enter fixed top-6 right-6 z-50 flex items-center w-full max-w-sm p-4 bg-slate-900/95 rounded-2xl shadow-2xl border border-emerald-500/30">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-emerald-300 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+            </svg>
+        </div>
+        <div class="ms-3 text-sm font-bold text-slate-100" 
+             th:text="${param.success[0] == 'task_assigned' ? 'Home task assigned successfully!' : (param.success[0] == 'reward_added' ? 'Custom reward added successfully!' : (param.success[0] == 'quest_approved' ? 'Task completion approved! Child awarded XP.' : (param.success[0] == 'reward_released' ? 'Reward successfully delivered/released!' : (param.success[0] == 'approved' ? 'Co-sign approved and unlocked!' : (param.success[0] == 'held' ? 'Reward placed on hold.' : 'Action processed successfully!')))))}">Action processed successfully!</div>
+        <button type="button" onclick="closeToast()" class="ms-auto -mx-1.5 -my-1.5 bg-slate-900 text-slate-400 hover:text-slate-100 rounded-lg p-1.5 hover:bg-slate-800 inline-flex items-center justify-center h-8 w-8 transition-colors">
+            <span class="sr-only">Close</span>
+            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 lg:grid-cols-4 gap-8 relative z-10">
+        
+        <!-- Left Sidebar Navigation -->
+        <aside class="space-y-6 lg:col-span-1">
+            <div class="glass-panel rounded-2xl p-4 shadow-xl shadow-black/20 space-y-4">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 px-2">Navigation Scope</h3>
+                <nav class="space-y-1">
+                    <!-- ADMIN items -->
+                    <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
+                        <span>⚙️</span> School Configuration
+                    </a>
+                    <a th:if="${currentUserRole == 'ADMIN'}" href="#staff-registry" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
+                        <span>💼</span> Staff Registry
+                    </a>
+
+                    <!-- TEACHER items -->
+                    <a th:if="${currentUserRole == 'TEACHER'}" href="/web/admin/dashboard" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
+                        <span>📊</span> Student Rosters & Metrics
+                    </a>
+                    <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/attendance" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
+                        <span>📅</span> Daily Attendance Log
+                    </a>
+                    <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/dashboard" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
+                        <span>🎯</span> Milestone Verification
+                    </a>
+
+                    <!-- STUDENT items -->
+                    <a th:if="${currentUserRole == 'STUDENT'}" th:href="@{/web/student/portal(tab='dashboard')}" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
+                        <span>🛡️</span> My Learning Dashboard
+                    </a>
+
+                    <!-- PARENT items (Self) -->
+                    <a th:if="${currentUserRole == 'PARENT'}" href="/web/parent/portal" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600/20 text-emerald-400 border border-emerald-500/20 shadow-inner">
+                        <span>🛡️</span> Parent Portal Gateway
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Guardian Guidance Info -->
+            <div class="glass-panel rounded-2xl p-5 text-sm text-slate-300 space-y-3 leading-relaxed shadow-xl shadow-black/20">
+                <p class="font-bold uppercase tracking-wider flex items-center gap-1.5 text-emerald-400">
+                    <span>🛡️</span> Co-Sign Verification
+                </p>
+                <p>Welcome to the Parent Portal. Here you can review and validate your child's reward redemption requests. Your explicit approval is required to unlock physical items or privileges using their accumulated classroom experience points.</p>
+            </div>
+        </aside>
+
+        <!-- Right Main Panel -->
+        <main class="lg:col-span-3 space-y-8" >
+            
+            <!-- Child Profile Header & Indicators -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Child Overview Card -->
+                <div class="glass-panel rounded-3xl p-6 md:col-span-2 relative overflow-hidden shadow-2xl shadow-black/40 flex items-center gap-5">
+                    <div class="fixed top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="h-20 w-20 rounded-full bg-gradient-to-tr from-emerald-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-3xl border-2 border-emerald-300/40 shrink-0 glow-avatar">
+                        <span th:text="${student != null ? student.firstName.substring(0,1) : 'A'}">A</span>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wider">
+                            👶 Child Roster Linked
+                        </div>
+                        <h2 class="text-2xl font-extrabold text-white tracking-tight" th:text="${student != null ? student.firstName + ' ' + student.lastName : 'Arjun Sharma'}">Arjun Sharma</h2>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider" th:text="${student != null ? 'Roll: ' + student.rollNumber + ' | Class: ' + student.classSection.gradeName + ' - ' + student.classSection.sectionName : 'Roll: 6A-01 | Class: Grade 6 - A'}">Roll: 6A-01 | Class: Grade 6 - A</p>
+                    </div>
+                </div>
+
+                <!-- Dynamic Live Attendance Indicator -->
+                <div class="glass-panel rounded-3xl p-6 shadow-2xl shadow-black/40 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="fixed -right-8 -bottom-8 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                            Live Attendance
+                        </h3>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    </div>
+                    
+                    <div class="space-y-1.5">
+                        <div class="text-xs text-slate-500 font-medium">Daily intake status:</div>
+                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-black border tracking-wider"
+                             th:classappend="${attendanceStatus == 'PRESENT' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : (attendanceStatus == 'ABSENT' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.2)]' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.2)]')}">
+                            <span class="w-2 h-2 rounded-full" th:classappend="${attendanceStatus == 'PRESENT' ? 'bg-emerald-400 animate-pulse' : (attendanceStatus == 'ABSENT' ? 'bg-rose-400 animate-pulse' : 'bg-amber-400 animate-pulse')}"></span>
+                            <span th:text="${attendanceStatus}">PRESENT</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Scholar Level & Progress Info -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl shadow-black/20 space-y-6 relative overflow-hidden">
+                <div class="fixed bottom-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Arjun's Accumulated Experience Points</p>
+                        <h3 class="text-3xl font-extrabold text-white tracking-tight mt-1 flex items-baseline gap-2">
+                            <span th:text="${totalXp}">750</span>
+                            <span class="text-xs font-semibold text-indigo-400 uppercase tracking-widest">Total XP</span>
+                        </h3>
+                    </div>
+                    <div class="text-xs font-bold text-slate-300 bg-slate-900/60 border border-slate-800/60 rounded-xl px-4 py-2.5 shrink-0 flex items-center gap-1.5">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px]" th:text="${'Level ' + scholarLevel}">Level 2</span>
+                        <span>Next level in <strong class="text-indigo-400" th:text="${xpToNextLevel + ' XP'}">250 XP</strong></span>
+                    </div>
+                </div>
+
+                <!-- XP visual progress bar -->
+                <div class="space-y-2">
+                    <div class="w-full h-3 bg-slate-950/60 rounded-full p-0.5 border border-slate-800/80 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-emerald-500 via-indigo-500 to-indigo-400 rounded-full transition-all duration-500 glow-progress" 
+                             th:style="'width: ' + ${levelProgress} + '%'"></div>
+                    </div>
+                    <p class="text-right text-[9px] font-bold text-indigo-300 uppercase tracking-wider" th:text="${levelProgress + '% Completed'}">60% Completed</p>
+                </div>
+            </div>
+
+            <!-- Feature 3: Attendance History -->
+            <section class="glass-panel rounded-3xl p-4 shadow-xl shadow-black/20" id="parent-attendance-section">
+                <button id="attendance-toggle-btn" class="w-full flex items-center justify-between text-left" onclick="toggleParentSection('attendance')">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">📅</span>
+                        <div>
+                            <h3 class="text-sm font-bold text-white" th:text="${student != null ? student.firstName + '''s Attendance' : 'Attendance History'}">Arjun's Attendance</h3>
+                            <p class="text-[10px] text-slate-400">Last 60 days — click to expand</p>
+                        </div>
+                    </div>
+                    <span id="attendance-chevron" class="text-slate-400 text-xs transition-transform">▼</span>
+                </button>
+                <div id="attendance-body" class="hidden mt-4">
+                    <div id="parent-attendance-summary" class="mb-3"><p class="text-slate-500 text-xs">Loading...</p></div>
+                    <div id="parent-attendance-list" class="space-y-1.5"><p class="text-slate-500 text-xs italic">Loading records...</p></div>
+                </div>
+            </section>
+
+            <!-- Feature 4: Syllabus Progress -->
+            <section class="glass-panel rounded-3xl p-4 shadow-xl shadow-black/20" id="parent-syllabus-section">
+                <button id="syllabus-toggle-btn" class="w-full flex items-center justify-between text-left" onclick="toggleParentSection('syllabus')">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">📚</span>
+                        <div>
+                            <h3 class="text-sm font-bold text-white" th:text="${student != null ? student.firstName + '''s Syllabus Progress' : 'Syllabus Progress'}">Arjun's Syllabus Progress</h3>
+                            <p class="text-[10px] text-slate-400">Read-only view — click to expand</p>
+                        </div>
+                    </div>
+                    <span id="syllabus-chevron" class="text-slate-400 text-xs transition-transform">▼</span>
+                </button>
+                <div id="syllabus-body" class="hidden mt-4">
+                    <div id="parent-syllabus-container"><p class="text-slate-500 text-xs italic">Loading syllabus...</p></div>
+                </div>
+            </section>
+
+            <!-- Action Hub: Quest Assignment & Reward Creation -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Assign New Task Form -->
+                <section class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl shadow-black/20 space-y-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                            <span>🏠</span> Assign Home Task
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">Create a task for your child to complete at home. They will claim completion, and you will verify it to award XP.</p>
+                    </div>
+
+                    <form action="/web/parent/assign-task" method="POST" class="space-y-5">
+                        <input type="hidden" name="studentId" th:value="${student?.id}"/>
+                        
+                        <div class="space-y-2">
+                            <label for="taskDescription" class="text-xs font-bold uppercase tracking-wider text-slate-400 block px-1">Task Description</label>
+                            <input type="text" id="taskDescription" name="taskDescription" required placeholder="e.g. Wash the dishes, Complete 2 math units..."
+                                   class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800/80 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-200 text-sm transition-all outline-none"/>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="xpBounty" class="text-xs font-bold uppercase tracking-wider text-slate-400 block px-1">XP Bounty</label>
+                            <input type="number" id="xpBounty" name="xpBounty" required min="1" placeholder="e.g. 100"
+                                   class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800/80 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-200 text-sm transition-all outline-none"/>
+                        </div>
+
+                        <button type="submit" 
+                                class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35 transition-all text-sm uppercase tracking-wider cursor-pointer">
+                            Assign Task
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Add Custom Reward Form -->
+                <section class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl shadow-black/20 space-y-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                            <span>🎁</span> Create Custom Reward
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">Define a parent-verified custom reward. Your child can redeem it using their combined XP balance.</p>
+                    </div>
+
+                    <form action="/web/parent/add-reward" method="POST" class="space-y-5">
+                        <input type="hidden" name="studentId" th:value="${student?.id}"/>
+
+                        <div class="space-y-2">
+                            <label for="rewardTitle" class="text-xs font-bold uppercase tracking-wider text-slate-400 block px-1">Reward Title</label>
+                            <input type="text" id="rewardTitle" name="rewardTitle" required placeholder="e.g. Weekend Movie Night, Pizza Dinner..."
+                                   class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800/80 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-200 text-sm transition-all outline-none"/>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="xpCost" class="text-xs font-bold uppercase tracking-wider text-slate-400 block px-1">XP Cost</label>
+                            <input type="number" id="xpCost" name="xpCost" required min="1" placeholder="e.g. 150"
+                                   class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800/80 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-200 text-sm transition-all outline-none"/>
+                        </div>
+
+                        <button type="submit" 
+                                class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35 transition-all text-sm uppercase tracking-wider cursor-pointer">
+                            Create Reward
+                        </button>
+                    </form>
+                </section>
+            </div>
+
+            <!-- Pending Task Completion Approvals Queue -->
+            <section class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl shadow-black/20 space-y-6">
+                <div class="border-b border-slate-800/40 pb-5">
+                    <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <span>🛡️</span> Home Task Completion Verifications
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">Review home tasks completed by your child. Approve their completion to grant them the XP bounty.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Task Approval Loop -->
+                    <div th:each="quest : ${parentQuests}" 
+                         th:if="${quest.status == 'COMPLETED_AWAITING_APPROVAL'}"
+                         class="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-500/20 transition-all group">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-3xl">🏠</span>
+                                <span class="px-2.5 py-1 bg-indigo-600/10 text-indigo-400 border border-indigo-500/10 rounded-lg text-xs font-bold font-mono"
+                                      th:text="${'+' + quest.xpBounty + ' XP'}">+100 XP</span>
+                            </div>
+                            <div>
+                                <h4 class="text-base font-bold text-white group-hover:text-emerald-300 transition-colors"
+                                    th:text="${quest.taskDescription}">Clean your room</h4>
+                                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Your child has claimed completion of this home task. Please verify and approve.</p>
+                            </div>
+                        </div>
+
+                        <!-- Stylized Actions -->
+                        <div class="mt-6">
+                            <a th:href="@{/web/parent/quest/{id}/approve(id=${quest.id})}"
+                               class="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35 cursor-pointer">
+                                ✓ Approve & Grant XP
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Fallback empty state -->
+                    <div th:if="${#lists.isEmpty(parentQuests) or !#lists.contains(parentQuests.![status], 'COMPLETED_AWAITING_APPROVAL')}" 
+                         class="col-span-1 md:col-span-2 text-center py-10 bg-slate-900/10 border border-dashed border-slate-800/60 rounded-3xl">
+                        <span class="text-3xl">🎉</span>
+                        <p class="text-sm font-bold text-slate-300 mt-3">No pending task verifications found.</p>
+                        <p class="text-xs text-slate-500 mt-1">There are no home tasks currently awaiting completion approval.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Claimed Custom Reward Delivery Releases Queue -->
+            <section class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl shadow-black/20 space-y-6">
+                <div class="border-b border-slate-800/40 pb-5">
+                    <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <span>🎁</span> Custom Reward Delivery Queue
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">Release and deliver custom rewards that your child has claimed. Mark them as delivered when completed.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Reward Release Loop -->
+                    <div th:each="reward : ${parentRewards}" 
+                         th:if="${reward.status == 'CLAIMED_AWAITING_DELIVERY'}"
+                         class="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-500/20 transition-all group">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-3xl">🎁</span>
+                                <span class="px-2.5 py-1 bg-indigo-600/10 text-indigo-400 border border-indigo-500/10 rounded-lg text-xs font-bold font-mono"
+                                      th:text="${reward.xpCost + ' XP'}">150 XP</span>
+                            </div>
+                            <div>
+                                <h4 class="text-base font-bold text-white group-hover:text-emerald-300 transition-colors"
+                                    th:text="${reward.rewardTitle}">Weekend Movie Night</h4>
+                                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Your child has redeemed this custom reward. Deliver the reward and release/confirm it here.</p>
+                            </div>
+                        </div>
+
+                        <!-- Stylized Actions -->
+                        <div class="mt-6">
+                            <a th:href="@{/web/parent/reward/{id}/release(id=${reward.id})}"
+                               class="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35 cursor-pointer">
+                                ✓ Release & Mark Delivered
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Fallback empty state -->
+                    <div th:if="${#lists.isEmpty(parentRewards) or !#lists.contains(parentRewards.![status], 'CLAIMED_AWAITING_DELIVERY')}" 
+                         class="col-span-1 md:col-span-2 text-center py-10 bg-slate-900/10 border border-dashed border-slate-800/60 rounded-3xl">
+                        <span class="text-3xl">🎉</span>
+                        <p class="text-sm font-bold text-slate-300 mt-3">No pending reward deliveries found.</p>
+                        <p class="text-xs text-slate-500 mt-1">There are no custom parent rewards currently awaiting delivery release.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pending Co-Sign Section -->
+            <section class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl shadow-black/20 space-y-6">
+                <div class="border-b border-slate-800/40 pb-5">
+                    <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <span>🛡️</span> Pending Reward Co-Sign Requests
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">Review reward redemptions that have been requested by your child. You must approve and unlock them to deduct their XP cost and finalize the claim, or place them on hold.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Reward Co-Sign Loop -->
+                    <div th:each="reward : ${pendingRewards}" 
+                         class="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-500/20 transition-all group">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-3xl">🎁</span>
+                                <span class="px-2.5 py-1 bg-indigo-600/10 text-indigo-400 border border-indigo-500/10 rounded-lg text-xs font-bold font-mono"
+                                      th:text="${reward.xpCost + ' XP'}">500 XP</span>
+                            </div>
+                            <div>
+                                <h4 class="text-base font-bold text-white group-hover:text-emerald-300 transition-colors"
+                                    th:text="${reward.rewardTitle}">Library Premium Pass</h4>
+                                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Requested reward claim requires parental validation. Verify appropriate homework compliance before authorizing.</p>
+                            </div>
+                        </div>
+
+                        <!-- Stylized Actions -->
+                        <div class="grid grid-cols-2 gap-3 mt-6">
+                            <a th:href="@{/web/parent/reward/{id}/approve(id=${reward.id})}"
+                               class="py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35">
+                                ✓ Approve & Unlock
+                            </a>
+                            <a th:href="@{/web/parent/reward/{id}/hold(id=${reward.id})}"
+                               class="py-2.5 px-4 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/40 font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 hover:text-white">
+                                ✕ Hold Reward
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Fallback empty state -->
+                    <div th:if="${#lists.isEmpty(pendingRewards)}" class="col-span-1 md:col-span-2 text-center py-12 bg-slate-900/10 border border-dashed border-slate-800/60 rounded-3xl">
+                        <span class="text-4xl">🎉</span>
+                        <p class="text-sm font-bold text-slate-300 mt-3">No pending reward co-signs found.</p>
+                        <p class="text-xs text-slate-500 mt-1">Your child has no pending reward approvals currently awaiting validation.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Learning History Log -->
+            <section class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl shadow-black/20 space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                        <span>📜</span> Child Learning History Ledger
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">Monitor recent educational milestone submissions logged by your child.</p>
+                </div>
+
+                <div class="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                    <div th:each="sub : ${submissions}" 
+                         class="bg-slate-950/40 border border-slate-800/60 rounded-2xl p-4 space-y-3">
+                        <div class="flex items-start justify-between gap-3 flex-wrap">
+                            <div>
+                                <h4 class="text-sm font-bold text-white" th:text="${sub.skillName}">6th Grade Fraction Mastery</h4>
+                                <p class="text-[9px] text-slate-500 mt-0.5" th:text="${#temporals.format(sub.submittedAt, 'yyyy-MM-dd HH:mm')}">2026-05-18 17:00</p>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase border"
+                                  th:classappend="${sub.status == 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : (sub.status == 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20')}"
+                                  th:text="${sub.status}">PENDING</span>
+                        </div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(submissions)}" class="text-center py-6">
+                        <p class="text-xs text-slate-500 font-medium">No previous learning entries found.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+
+</div>
+
+<script>
+(function() {
+    var _attendanceSectionLoaded = false;
+    var _syllabusSectionLoaded = false;
+
+    window.toggleParentSection = function(section) {
+        var body = document.getElementById(section + '-body');
+        var chevron = document.getElementById(section + '-chevron');
+        if (!body) return;
+        var isHidden = body.classList.contains('hidden');
+        body.classList.toggle('hidden', !isHidden);
+        if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+        if (isHidden && section === 'attendance' && !_attendanceSectionLoaded) {
+            _attendanceSectionLoaded = true;
+            loadParentAttendance();
+        }
+        if (isHidden && section === 'syllabus' && !_syllabusSectionLoaded) {
+            _syllabusSectionLoaded = true;
+            loadParentSyllabus();
+        }
+    };
+
+    async function loadParentAttendance() {
+        var summaryEl = document.getElementById('parent-attendance-summary');
+        var listEl = document.getElementById('parent-attendance-list');
+        try {
+            var resp = await fetch('/api/parent/child-attendance');
+            if (!resp.ok) { if(listEl) listEl.innerHTML = '<p class="text-slate-500 text-xs">Could not load.</p>'; return; }
+            var records = await resp.json();
+            var present = records.filter(function(r){ return r.status==='PRESENT'; }).length;
+            var absent  = records.filter(function(r){ return r.status==='ABSENT';  }).length;
+            var tardy   = records.filter(function(r){ return r.status==='TARDY';   }).length;
+            var total   = records.length;
+            if (summaryEl) {
+                summaryEl.innerHTML =
+                    '<div class="flex gap-2 flex-wrap mb-3">'
+                    + '<span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-300">' + present + ' Present</span>'
+                    + '<span class="px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-xs font-bold text-red-300">' + absent + ' Absent</span>'
+                    + (tardy > 0 ? '<span class="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-300">' + tardy + ' Tardy</span>' : '')
+                    + '<span class="px-3 py-1 rounded-full bg-slate-800/60 border border-slate-700/40 text-xs font-bold text-white">' + (total > 0 ? Math.round(present/total*100) : 0) + '% Rate</span>'
+                    + '</div>';
+            }
+            if (!listEl) return;
+            var flagged = records.filter(function(r) { return r.status !== 'PRESENT'; });
+            if (flagged.length === 0) {
+                listEl.innerHTML = '<p class="text-slate-500 text-xs italic py-2">No absences or tardies in the last 60 days. 🎉</p>';
+                return;
+            }
+            var mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            listEl.innerHTML = '<p class="text-[10px] text-slate-500 mb-2 uppercase tracking-wider font-bold">Flagged Days (Absent / Tardy)</p>'
+                + flagged.map(function(r) {
+                    var isAbsent = r.status === 'ABSENT';
+                    var d = new Date(r.date + 'T00:00:00');
+                    var dateStr = d.getDate() + ' ' + mNames[d.getMonth()];
+                    var day = r.dayOfWeek.charAt(0) + r.dayOfWeek.slice(1).toLowerCase().substring(0,2);
+                    return '<div class="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-900/40 border border-slate-800/50">'
+                        + '<span class="text-xs font-bold text-slate-500 w-7">' + day + '</span>'
+                        + '<span class="text-xs text-slate-300 flex-1">' + dateStr + '</span>'
+                        + '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + (isAbsent ? 'bg-red-500/10 border-red-500/20 text-red-300' : 'bg-amber-500/10 border-amber-500/20 text-amber-300') + '">' + (isAbsent ? 'Absent' : 'Tardy') + '</span>'
+                        + '</div>';
+                }).join('');
+        } catch(e) {
+            if(listEl) listEl.innerHTML = '<p class="text-slate-500 text-xs">Failed to load.</p>';
+        }
+    }
+
+    async function loadParentSyllabus() {
+        var container = document.getElementById('parent-syllabus-container');
+        if (!container) return;
+        try {
+            var resp = await fetch('/api/parent/child-syllabus');
+            if (!resp.ok) { container.innerHTML = '<p class="text-slate-500 text-xs">Could not load.</p>'; return; }
+            var data = await resp.json();
+            var subjects = Object.keys(data);
+            if (subjects.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-xs italic">No syllabus data found.</p>';
+                return;
+            }
+            var subjectIcons = { 'SCIENCE': '🔬', 'SOCIAL_SCIENCE': '🌍', 'ENGLISH': '📖', 'MATHEMATICS': '📐', 'HINDI': '🇮🇳' };
+            container.innerHTML = subjects.map(function(subj) {
+                var info = data[subj];
+                var icon = subjectIcons[subj] || '📚';
+                var label = subj.replace('_', ' ').charAt(0) + subj.replace('_', ' ').slice(1).toLowerCase();
+                var pct = info.total > 0 ? Math.round(info.completed / info.total * 100) : 0;
+                var topics = (info.topics || []).slice(0, 8); // Show first 8 topics
+                return '<div class="mb-4">'
+                    + '<div class="flex items-center justify-between mb-2">'
+                    + '<span class="text-xs font-bold text-slate-200">' + icon + ' ' + label + '</span>'
+                    + '<span class="text-[10px] text-slate-500">' + info.completed + '/' + info.total + ' · ' + pct + '%</span>'
+                    + '</div>'
+                    + '<div class="w-full h-1.5 bg-slate-900/60 rounded-full mb-2 overflow-hidden">'
+                    + '<div class="h-full bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full" style="width:' + pct + '%"></div>'
+                    + '</div>'
+                    + '<div class="grid grid-cols-1 gap-1">'
+                    + topics.map(function(t) {
+                        return '<div class="flex items-center gap-2 text-[10px] px-2 py-1 rounded-lg ' + (t.completed ? 'bg-emerald-500/5 text-emerald-400' : 'bg-slate-900/30 text-slate-500') + '">'
+                            + '<span>' + (t.completed ? '✓' : '○') + '</span>'
+                            + '<span class="flex-1 truncate">' + t.topicName + '</span>'
+                            + '</div>';
+                    }).join('')
+                    + (info.topics && info.topics.length > 8 ? '<p class="text-[9px] text-slate-600 px-2 mt-1">+' + (info.topics.length - 8) + ' more chapters...</p>' : '')
+                    + '</div></div>';
+            }).join('');
+        } catch(e) {
+            container.innerHTML = '<p class="text-slate-500 text-xs">Failed to load.</p>';
+        }
+    }
+})();
+</script>
+</body>
+</html>

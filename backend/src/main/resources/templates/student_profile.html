@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal &middot; ACADIA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+        
+        body { 
+            font-family: 'Outfit', 'Inter', sans-serif; 
+            background-color: #0b0f19; 
+            color: #e2e8f0; 
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .text-glow-indigo {
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .text-glow-emerald {
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .text-glow-amber {
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+        }
+
+        /* Custom scrollbar to match dark theme aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+    
+    
+
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class=" relative overflow-x-hidden selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+
+    <!-- Glowing Background blobs for glassmorphic depth -->
+    <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-600/10 blur-[120px] pointer-events-none"></div>
+
+    <header class="glass-panel border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/web/admin/dashboard" class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-300 font-black text-lg transition-transform hover:scale-105">
+                    Ω
+                </a>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                        Admin Dashboard
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5 font-medium flex items-center gap-1">
+                        <a href="/web/admin/dashboard" class="hover:text-indigo-400 transition-colors">Roster Hub</a>
+                        <span class="text-slate-600">/</span>
+                        <span class="text-slate-300">Student Profile</span>
+                    </p>
+                </div>
+            </div>
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wider uppercase">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Operational
+                </span>
+            </div>
+        </div>
+    </header>
+<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
+
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div>
+            
+
+
+            <!-- Main Panel Content -->
+            <main class="space-y-8" >
+                
+                <!-- Core Profile Hero Card -->
+                <div class="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl shadow-black/40">
+                    <div class="fixed top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    
+                    <div class="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 relative z-10">
+                        <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-extrabold text-4xl sm:text-5xl shadow-2xl shadow-indigo-500/30 border border-indigo-400/20">
+                            <span th:text="${student.firstName.substring(0,1)}">A</span>
+                        </div>
+                        
+                        <div class="text-center sm:text-left space-y-2">
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                                🎓 Student Profile synced
+                            </div>
+                            <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-none" th:text="|${student.firstName} ${student.lastName}|">
+                                Aarav Sharma
+                            </h2>
+                            
+                            <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2.5 pt-1.5">
+                                <span class="px-3 py-1 bg-slate-900/90 text-indigo-400 border border-slate-800/80 rounded-xl text-xs font-mono font-bold tracking-wider" 
+                                      th:text="|Roll: ${student.rollNumber != null ? student.rollNumber : '--'}|">
+                                    Roll: 6A01
+                                </span>
+                                <span class="px-3 py-1 bg-slate-900/90 text-slate-300 border border-slate-800/80 rounded-xl text-xs font-medium" 
+                                      th:text="|Class: ${student.classSection.gradeName} - ${student.classSection.sectionName}|">
+                                    Class: 6 - Section A
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid: Attendance Rate & Milestone XP -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <!-- High-Fidelity Attendance Analytics Card -->
+                    <div class="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl shadow-black/20 relative overflow-hidden group">
+                        <div class="fixed -right-12 -bottom-12 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                    Individual Attendance
+                                </h3>
+                                <span class="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-0.5 rounded-lg border border-emerald-500/20">
+                                    Calculated Live
+                                </span>
+                            </div>
+                            
+                            <!-- Visual Attendance rate gauge -->
+                            <div class="flex items-center gap-6">
+                                <div class="relative flex items-center justify-center">
+                                    <!-- Radial Circle backdrop / text -->
+                                    <div class="text-center">
+                                        <span class="text-5xl font-black text-white tracking-tight text-glow-emerald" th:text="|${attendancePercentage}%|">95%</span>
+                                        <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mt-1">Average Rate</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Counts -->
+                        <div class="mt-8 pt-6 border-t border-slate-800/60 space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-3 text-center">
+                                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-0.5">Days Present</span>
+                                    <span class="text-xl font-bold text-emerald-400" th:text="|${presentCount} Days|">19 Days</span>
+                                </div>
+                                <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-3 text-center">
+                                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-0.5">Days Absent</span>
+                                    <span class="text-xl font-bold text-rose-400" th:text="|${absentCount} Days|">1 Day</span>
+                                </div>
+                            </div>
+
+                            <!-- Visual ratio bar -->
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                                    <span>Ratio Break</span>
+                                    <span th:text="|${presentCount} / ${(presentCount + absentCount)} Recorded|">19 / 20 Recorded</span>
+                                </div>
+                                <div class="w-full bg-rose-500/20 rounded-full h-2 overflow-hidden flex">
+                                    <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" 
+                                         th:style="|width: ${attendancePercentage}%|"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sleek Gaming-Inspired Milestone XP Placeholder -->
+                    <div class="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl shadow-black/20 relative overflow-hidden group border border-indigo-500/10">
+                        <div class="fixed -right-12 -bottom-12 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    Milestone XP Ledger
+                                </h3>
+                                <span class="text-xs font-bold text-indigo-300 bg-indigo-600/20 px-2.5 py-0.5 rounded-lg border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.2)]">
+                                    Level 14 Scholar
+                                </span>
+                            </div>
+
+                            <!-- XP Values & progress -->
+                            <div class="space-y-3">
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-5xl font-black text-white tracking-tight text-glow-indigo" th:text="${studentMetrics != null && studentMetrics.schoolXp != null ? studentMetrics.schoolXp : 0}">1,850</span>
+                                    <span class="text-indigo-400 font-extrabold text-sm tracking-widest">TOTAL XP</span>
+                                </div>
+                                <p class="text-xs text-slate-400 font-medium">Accumulating classroom and parent milestone achievements</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar & Milestone Badges -->
+                        <div class="mt-6 pt-6 border-t border-slate-800/60 space-y-4">
+                            <!-- Progress Bar -->
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                                    <span class="text-slate-400">XP Progress</span>
+                                    <span class="text-indigo-300">150 XP to Level 15</span>
+                                </div>
+                                <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+                                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-full rounded-full" style="width: 82%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Showcase Badge Badges -->
+                            <div class="space-y-2">
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Verified Achievements</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        🌟 Homework Hero
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                                        📚 Fraction Master
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                        ⚡ Streak Captain
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parent Trust & Home Integration Container Block -->
+                <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl shadow-black/20 relative overflow-hidden group border border-indigo-500/10">
+                    <div class="fixed -right-12 -bottom-12 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                    
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            Parent Trust & Home Integration
+                        </h3>
+                        <span class="text-xs font-bold text-indigo-300 bg-indigo-600/20 px-2.5 py-0.5 rounded-lg border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.2)]">
+                            Portal Synced
+                        </span>
+                    </div>
+
+                    <!-- Metrics Top Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Parent Name Info -->
+                        <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Primary Guardian</span>
+                                <span class="text-lg font-bold text-white flex items-center gap-2">
+                                    <span>👤</span>
+                                    <span th:text="${parentName}">Ramesh Sharma</span>
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-2 font-medium">Authorized Parent Contact</p>
+                        </div>
+
+                        <!-- Household Streak Info -->
+                        <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Household Streak</span>
+                                <span class="text-lg font-extrabold text-amber-400 flex items-center gap-1.5 text-glow-amber">
+                                    <span>🔥</span>
+                                    <span th:text="|${householdStreak} Days|">12 Days</span>
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-2 font-medium">Consecutive days active at home</p>
+                        </div>
+
+                        <!-- Parent Engagement Score -->
+                        <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 space-y-3">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Engagement Score</span>
+                                    <span class="text-lg font-bold text-emerald-400 text-glow-emerald" th:text="|${parentEngagementScore}%|">94%</span>
+                                </div>
+                                <span class="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-500/20">High</span>
+                            </div>
+                            <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800">
+                                <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500" 
+                                     th:style="|width: ${parentEngagementScore}%|"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Notes Section -->
+                    <div class="bg-slate-900/40 border border-slate-800/50 rounded-2xl p-4 sm:p-5 relative">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-indigo-400 text-sm">💬</span>
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400">Recent Verification Note</h4>
+                        </div>
+                        <p class="text-sm italic text-slate-300 leading-relaxed font-serif pl-3 border-l-2 border-indigo-500" th:text="${recentParentNotes}">
+                            "Arjun completed all daily algebra milestone worksheets at home with high diligence. Family verification complete."
+                        </p>
+                    </div>
+
+                    <!-- Dispatch Activity Ledger Section -->
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                            <span>📡</span> Dispatch Activity Ledger
+                        </h4>
+                        
+                        <div class="overflow-hidden border border-slate-800/60 rounded-2xl bg-slate-900/30">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-slate-800/80 text-left text-xs text-slate-300">
+                                    <thead class="bg-slate-900/60 text-slate-400 uppercase font-bold tracking-wider text-[10px]">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3">Date</th>
+                                            <th scope="col" class="px-4 py-3">Alert Type</th>
+                                            <th scope="col" class="px-4 py-3">Message</th>
+                                            <th scope="col" class="px-4 py-3 text-right">Delivery Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50">
+                                        <tr th:each="ledger : ${dispatchLedger}" class="hover:bg-slate-800/20 transition-colors">
+                                            <td class="px-4 py-3 whitespace-nowrap font-mono text-slate-400" th:text="${ledger.date}">2026-05-20</td>
+                                            <td class="px-4 py-3 whitespace-nowrap">
+                                                <span th:text="${ledger.type}" 
+                                                      th:classappend="${ledger.type == 'MILESTONE' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : (ledger.type == 'XP_BOUNTY' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-800 text-slate-400 border-slate-700')}"
+                                                      class="px-2 py-0.5 rounded-md border text-[10px] font-bold tracking-wider">
+                                                    MILESTONE
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-3 text-slate-300" th:text="${ledger.message}">Milestone evidence '6th Grade Fraction Mastery' submitted.</td>
+                                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                                                <span th:text="${ledger.status}"
+                                                      th:classappend="${ledger.status == 'DELIVERED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}"
+                                                      class="px-2.5 py-0.5 rounded-full border text-[10px] font-bold">
+                                                    SENT
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Roster Hub Action Footer Link -->
+                <div class="flex justify-between items-center bg-[#0f172a]/60 border border-slate-800/50 rounded-2xl p-5 shadow-lg">
+                    <p class="text-xs text-slate-400">
+                        Operational registry synchronization locks automated indicators natively.
+                    </p>
+                    <a href="/web/admin/dashboard" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-indigo-200 border border-slate-800 hover:border-indigo-500/25 rounded-xl text-xs font-bold transition-all shadow-inner">
+                        ← Back to Roster Hub
+                    </a>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+
+</div>
+</body>
+</html>

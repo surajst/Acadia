@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Parent Portal &middot; ACADIA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Outfit', 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Glass ── */
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* ── Sidebar ── */
+        #parent-sidebar {
+            width: 220px;
+            min-width: 220px;
+            flex-shrink: 0;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 14px 10px 20px;
+            gap: 2px;
+        }
+        .sidebar-label {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #475569;
+            padding: 0 14px;
+            margin-bottom: 6px;
+            margin-top: 4px;
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.42);
+            cursor: pointer;
+            transition: all 0.16s ease;
+            border-left: 3px solid transparent;
+            user-select: none;
+        }
+        .sidebar-item:hover {
+            background: rgba(99,102,241,0.07);
+            color: rgba(255,255,255,0.72);
+        }
+        .sidebar-item.active {
+            border-left: 3px solid #6366F1;
+            background: rgba(99,102,241,0.12);
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .sidebar-item .tab-icon { font-size: 15px; flex-shrink: 0; }
+        .sidebar-badge {
+            margin-left: auto;
+            background: #6366F1;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 9999px;
+            padding: 1px 7px;
+            min-width: 18px;
+            text-align: center;
+            line-height: 16px;
+        }
+
+        /* ── Layout ── */
+        #parent-body-row {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            overflow: hidden;
+        }
+        #parent-content {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding: 24px 28px 32px 24px;
+        }
+
+        /* ── Tab panels ── */
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFadeIn 0.18s ease-out; }
+        @keyframes tabFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ── Mobile bottom nav ── */
+        #parent-mobile-nav {
+            display: none;
+            height: 68px;
+            background: #0d1120;
+            border-top: 1px solid rgba(99,102,241,0.15);
+            align-items: stretch;
+            flex-shrink: 0;
+            width: 100%;
+        }
+        .mobile-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.35);
+            cursor: pointer;
+            transition: color 0.15s;
+            position: relative;
+            padding: 8px 4px 10px;
+        }
+        .mobile-nav-item .tab-icon { font-size: 22px; transition: transform 0.15s; }
+        .mobile-nav-item.active { color: #818CF8; }
+        .mobile-nav-item.active .tab-icon { transform: scale(1.1); }
+        .mobile-nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 42px;
+            height: 32px;
+            background: rgba(99,102,241,0.15);
+            border-radius: 20px;
+        }
+        .mobile-badge {
+            position: absolute;
+            top: 4px; right: 14px;
+            background: #6366F1;
+            color: white;
+            font-size: 9px; font-weight: 700;
+            border-radius: 9999px;
+            padding: 0 5px; line-height: 14px;
+            min-width: 14px; text-align: center;
+        }
+
+        @media (max-width: 767px) {
+            #parent-sidebar { display: none !important; }
+            #parent-mobile-nav {
+                display: flex !important;
+                flex-shrink: 0 !important;
+                width: 100% !important;
+                padding-bottom: env(safe-area-inset-bottom, 8px) !important;
+            }
+            #parent-content { padding: 16px 12px 16px 12px; }
+            footer { display: none !important; }
+        }
+
+        /* ── Misc ── */
+        .cat-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        .metric-tile { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .metric-tile:hover { transform: translateY(-2px); }
+        .xp-bar-fill { transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .ann-body { transition: max-height 0.3s ease, opacity 0.3s ease; }
+
+        .toast-enter { animation: slideIn 0.45s ease-out forwards; }
+        @keyframes slideIn { from { transform: translateX(110%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
+
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body>
+
+    <!-- Ambient blobs -->
+    <div class="fixed top-[-15%] left-[-10%] w-[45%] h-[45%] rounded-full bg-indigo-700/10 blur-[130px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-15%] right-[-10%] w-[45%] h-[45%] rounded-full bg-emerald-700/10 blur-[130px] pointer-events-none z-0"></div>
+
+    <!-- ══ HEADER ══ -->
+    <header class="glass-dark border-b border-slate-800/60 z-50 flex-shrink-0" style="height:56px;">
+        <div class="h-full px-4 sm:px-6 flex items-center justify-between">
+            <!-- Left: Hamburger Menu (visible on mobile) -->
+            <div class="flex items-center">
+                <button class="md:hidden text-slate-300 hover:text-white transition-colors" onclick="document.getElementById('parent-sidebar').classList.toggle('hidden')">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Center: Logo -->
+            <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+                <img src="/images/acadia-logo.png" alt="ACADIA" class="h-6 md:h-7" style="mix-blend-mode:screen;">
+                <span class="hidden md:block" style="font-size:15px;font-weight:700;color:white;letter-spacing:2px;">ACADIA</span>
+            </div>
+
+            <!-- Right: Action Icons & Logout -->
+            <div class="flex items-center gap-3 md:gap-4 flex-shrink-0 text-slate-300">
+                <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-[10px] font-bold tracking-wider uppercase">
+                    Parent OS
+                </span>
+                <button class="hover:text-white transition-colors relative hidden sm:block">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 border border-slate-900 rounded-full"></span>
+                </button>
+                <form th:action="@{/logout}" method="post" class="m-0 p-0 flex">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="hover:text-white transition-colors">
+                        <svg class="w-5 h-5 text-red-400 hover:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        <span class="sr-only">Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- ══ SUCCESS TOAST ══ -->
+    <div th:if="${param.success}" id="toast"
+         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-sm p-4 bg-slate-900/95 rounded-2xl shadow-2xl border border-emerald-500/30">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-emerald-300 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+            </svg>
+        </div>
+        <div class="ms-3 text-sm font-bold text-slate-100"
+             th:text="${param.success[0] == 'task_assigned' ? 'Home task assigned successfully!' : (param.success[0] == 'reward_added' ? 'Custom reward added successfully!' : (param.success[0] == 'quest_approved' ? 'Task completion approved! Child awarded XP.' : (param.success[0] == 'reward_released' ? 'Reward successfully delivered/released!' : (param.success[0] == 'approved' ? 'Co-sign approved and unlocked!' : (param.success[0] == 'held' ? 'Reward placed on hold.' : 'Action processed successfully!')))))}">
+            Action processed successfully!
+        </div>
+        <button id="toast-close-btn" type="button"
+                class="ms-auto -mx-1.5 -my-1.5 bg-slate-900 text-slate-400 hover:text-slate-100 rounded-lg p-1.5 hover:bg-slate-800 inline-flex items-center justify-center h-8 w-8 transition-colors">
+            <span class="sr-only">Close</span>
+            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- ══ BODY ROW: SIDEBAR + CONTENT ══ -->
+    <div id="parent-body-row">
+
+        <!-- Desktop Sidebar -->
+        <nav id="parent-sidebar" aria-label="Parent navigation">
+            <p class="sidebar-label">Navigation</p>
+
+            <div class="sidebar-item active" id="nav-home" data-tab="home">
+                <span class="tab-icon">🏠</span><span>Home</span>
+            </div>
+            <div class="sidebar-item" id="nav-progress" data-tab="progress">
+                <span class="tab-icon">📊</span><span>Progress</span>
+            </div>
+            <div class="sidebar-item" id="nav-quests" data-tab="quests">
+                <span class="tab-icon">⚙️</span><span>Quests</span>
+                <span class="sidebar-badge hidden" id="quests-badge-sidebar"
+                      th:text="${awaitingQuests != null ? awaitingQuests.size() : 0}"
+                      th:classappend="${awaitingQuests != null and !awaitingQuests.isEmpty()} ? '' : ' hidden'">0</span>
+            </div>
+            <div class="sidebar-item" id="nav-feed" data-tab="feed">
+                <span class="tab-icon">📢</span><span>Feed</span>
+            </div>
+            <div class="sidebar-item" id="nav-profile" data-tab="profile">
+                <span class="tab-icon">👤</span><span>Profile</span>
+            </div>
+
+            <div class="flex-1"></div>
+
+            <div class="mx-1 mt-4 px-3 py-3 rounded-xl bg-slate-900/40 border border-slate-800/50 text-xs text-slate-500 leading-relaxed">
+                <p class="font-bold text-indigo-400/60 text-[9px] uppercase tracking-wider mb-1">Guardian Workspace</p>
+                <p>Review your child's progress, approve quests, and manage rewards from here.</p>
+            </div>
+        </nav>
+
+        <!-- Content area -->
+        <div id="parent-content">
+
+            <!-- ████ TAB: HOME ████ -->
+            <div id="tab-home" class="tab-panel active space-y-5">
+
+                <!-- Parent Info Card -->
+                <div class="rounded-xl p-4 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 shadow-lg shadow-black/20 flex justify-between items-center mt-2 mb-2">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-100" th:text="${parent.firstName} + ' ' + ${parent.lastName}">Parent Name</h2>
+                        <p class="text-xs text-slate-400 mt-1 font-medium">Guardian Workspace</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-300 font-medium" th:text="${#temporals.format(currentDate, 'dd MMM, yyyy')}">25 May, 2026</p>
+                        <p class="text-xs text-slate-400 mt-1" th:text="${#temporals.format(currentDate, 'EEEE')}">Monday</p>
+                    </div>
+                </div>
+
+                <p class="cat-label">👶 Children Progress Overview</p>
+
+                <!-- Per-child metric cards -->
+                <div th:if="${!#lists.isEmpty(students)}" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div th:each="student : ${students}"
+                         class="glass-dark rounded-2xl p-4 border border-slate-800/60 metric-tile relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-28 h-28 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+                        <!-- Child header -->
+                        <div class="flex items-center gap-3 mb-4 relative z-10">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-indigo-600/20 shrink-0">
+                                <span th:text="${student.firstName.substring(0,1)}">A</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white text-sm leading-tight"
+                                    th:text="${student.firstName} + ' ' + ${student.lastName}">Arnav Sharma</h3>
+                                <p class="text-[10px] text-slate-500 mt-0.5"
+                                   th:text="${student.classSection != null ? student.classSection.gradeName + ' — ' + student.classSection.sectionName : 'Class N/A'}">
+                                    Grade 7 — A
+                                </p>
+                            </div>
+                            <span class="ml-auto shrink-0 px-2.5 py-1 text-[10px] font-bold bg-indigo-600/15 text-indigo-400 border border-indigo-500/25 rounded-full">
+                                ⚡ Active
+                            </span>
+                        </div>
+
+                        <!-- Metrics grid -->
+                        <div th:with="metrics=${studentMetrics[student.id.toString()]}"
+                             class="grid grid-cols-2 gap-3 md:grid-cols-4 relative z-10">
+                            <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800/60">
+                                <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">School XP</p>
+                                <p class="text-xl font-black text-indigo-400" th:text="${metrics?.schoolXp ?: 0}">0</p>
+                                <div class="mt-1.5 h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="xp-bar-fill h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                                         th:style="|width: ${metrics != null ? (metrics.schoolXp > 1000 ? 100 : metrics.schoolXp / 10) : 0}%|"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800/60">
+                                <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Parent XP</p>
+                                <p class="text-xl font-black text-emerald-400" th:text="${metrics?.parentXp ?: 0}">0</p>
+                                <div class="mt-1.5 h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="xp-bar-fill h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                                         th:style="|width: ${metrics != null ? (metrics.parentXp > 1000 ? 100 : metrics.parentXp / 10) : 0}%|"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800/60">
+                                <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Active Streak</p>
+                                <p class="text-base font-black text-amber-400 flex items-center gap-1">
+                                    🔥 <span th:text="${(metrics?.activeStreak ?: 0) + ' Days'}">0 Days</span>
+                                </p>
+                            </div>
+                            <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800/60">
+                                <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Pending Review</p>
+                                <p class="text-base font-black text-pink-400">
+                                    📋 <span th:text="${pendingQuestCounts[student.id.toString()] ?: 0}">0</span>
+                                    <span class="text-xs font-medium text-slate-500 ml-0.5">quests</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assign Task CTA on Home -->
+                <div class="flex justify-end">
+                    <button id="home-assign-task-btn"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 border border-emerald-500/30 cursor-pointer">
+                        ➕ Assign Task
+                    </button>
+                </div>
+
+                <!-- Quick nav tiles -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="tab-quick-link glass-dark rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="progress">
+                        <div class="text-2xl mb-2">📊</div>
+                        <p class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">Progress</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Syllabus view</p>
+                    </div>
+                    <div class="tab-quick-link glass-dark rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="quests">
+                        <div class="text-2xl mb-2">⚙️</div>
+                        <p class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">Quests</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Approve &amp; deliver</p>
+                    </div>
+                    <div class="tab-quick-link glass-dark rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="feed">
+                        <div class="text-2xl mb-2">📢</div>
+                        <p class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">Feed</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Announcements</p>
+                    </div>
+                    <div class="tab-quick-link glass-dark rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="profile">
+                        <div class="text-2xl mb-2">👤</div>
+                        <p class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">Profile</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Assign &amp; create</p>
+                    </div>
+                </div>
+
+            </div><!-- /tab-home -->
+
+            <!-- ████ TAB: PROGRESS ████ -->
+            <div id="tab-progress" class="tab-panel space-y-5">
+
+                <section th:each="student : ${students}"
+                         th:id="'child-progress-section-' + ${student.id}"
+                         th:data-childid="${student.id}"
+                         class="child-progress-container glass-dark rounded-2xl overflow-hidden border border-slate-800/60 flex flex-col p-4 md:p-6">
+
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                                <span>📚</span>
+                                <span th:text="${student.firstName} + '\'s Syllabus Progress'">Child's Progress</span>
+                            </h3>
+                        </div>
+                        <div class="bg-indigo-600/10 text-indigo-300 border border-indigo-500/20 px-4 py-2 rounded-2xl text-center shrink-0">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">School XP</span>
+                            <span class="text-xl font-black"
+                                  th:text="${studentMetrics[student.id.toString()]?.schoolXp ?: 0} + ' XP'">0 XP</span>
+                        </div>
+                    </div>
+
+                    <!-- Skeleton -->
+                    <div th:id="'progress-skeleton-' + ${student.id}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-slate-900/40 border border-slate-800/40 rounded-2xl p-5 animate-pulse space-y-3">
+                            <div class="h-4 bg-slate-700/50 rounded w-1/3"></div>
+                            <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
+                            <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
+                        </div>
+                        <div class="bg-slate-900/40 border border-slate-800/40 rounded-2xl p-5 animate-pulse space-y-3">
+                            <div class="h-4 bg-slate-700/50 rounded w-1/3"></div>
+                            <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
+                            <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
+                        </div>
+                        <div class="bg-slate-900/40 border border-slate-800/40 rounded-2xl p-5 animate-pulse space-y-3">
+                            <div class="h-4 bg-slate-700/50 rounded w-1/3"></div>
+                            <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
+                            <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
+                        </div>
+                    </div>
+
+                    <!-- Error -->
+                    <div th:id="'progress-error-' + ${student.id}" class="hidden text-center py-6 bg-rose-500/10 border border-dashed border-rose-500/30 rounded-2xl">
+                        <span class="text-2xl">❌</span>
+                        <p class="text-sm text-rose-400 mt-2 font-bold" th:id="'progress-error-msg-' + ${student.id}">You are not authorized to view this child's progress</p>
+                    </div>
+
+                    <!-- Subject cards container -->
+                    <div th:id="'progress-subjects-' + ${student.id}" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </section>
+
+            </div><!-- /tab-progress -->
+
+            <!-- ████ TAB: QUESTS ████ -->
+            <div id="tab-quests" class="tab-panel space-y-5">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <!-- Approval Queue -->
+                    <div class="glass-dark rounded-2xl overflow-hidden border border-slate-800/60 flex flex-col">
+                        <div class="px-5 py-3.5 border-b border-slate-800/50 flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                            <h3 class="text-sm font-bold text-white tracking-tight">Approval Queue</h3>
+                            <span class="ml-auto text-[10px] font-bold px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full"
+                                  th:text="${awaitingQuests.size()} + ' pending'">0 pending</span>
+                        </div>
+                        <div class="flex-1">
+                            <div th:if="${#lists.isEmpty(awaitingQuests)}"
+                                 class="py-4 px-6 flex flex-col items-center justify-center text-center gap-2" style="max-height:100px;">
+                                <span class="text-2xl">✅</span>
+                                <p class="text-slate-500 text-sm font-medium">No tasks awaiting approval.</p>
+                            </div>
+                            <div th:each="quest : ${awaitingQuests}"
+                                 class="flex items-center gap-3 px-5 py-3 border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors group last:border-b-0">
+                                <div class="w-9 h-9 shrink-0 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm group-hover:scale-105 transition-transform">
+                                    <span th:text="${quest.student.firstName.substring(0,1)}">A</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-semibold text-white truncate" th:text="${quest.taskDescription}">Complete Homework</h4>
+                                    <p class="text-[10px] text-slate-500 mt-0.5" th:text="${quest.student.firstName}">Arnav</p>
+                                </div>
+                                <div class="flex flex-col items-end gap-1.5 shrink-0">
+                                    <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20"
+                                          th:text="${'+' + quest.xpBounty + ' XP'}">+100 XP</span>
+                                    <button th:id="'approve-btn-' + ${quest.id}"
+                                            th:data-quest-id="${quest.id}"
+                                            class="approve-quest-btn text-[10px] font-bold px-3 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-md cursor-pointer">
+                                        Approve &amp; Reward
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deliveries Pending -->
+                    <div class="glass-dark rounded-2xl overflow-hidden border border-slate-800/60 flex flex-col">
+                        <div class="px-5 py-3.5 border-b border-slate-800/50 flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-pink-500/10 text-pink-400 border border-pink-500/20 flex items-center justify-center">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                            </span>
+                            <h3 class="text-sm font-bold text-white tracking-tight">Deliveries Pending</h3>
+                            <span class="ml-auto text-[10px] font-bold px-2 py-0.5 bg-pink-500/10 text-pink-400 border border-pink-500/20 rounded-full"
+                                  th:text="${awaitingRewards.size()} + ' items'">0 items</span>
+                        </div>
+                        <div class="flex-1">
+                            <div th:if="${#lists.isEmpty(awaitingRewards)}"
+                                 class="py-4 px-6 flex flex-col items-center justify-center text-center gap-2" style="max-height:100px;">
+                                <span class="text-2xl">📦</span>
+                                <p class="text-slate-500 text-sm font-medium">No rewards pending delivery.</p>
+                            </div>
+                            <div th:each="reward : ${awaitingRewards}"
+                                 class="flex items-center gap-3 px-5 py-3 border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors group last:border-b-0">
+                                <div class="w-9 h-9 shrink-0 rounded-full bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 font-bold text-sm group-hover:scale-105 transition-transform">
+                                    <span th:text="${reward.student.firstName.substring(0,1)}">A</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-semibold text-white truncate" th:text="${reward.rewardTitle}">Movie Night</h4>
+                                    <p class="text-[10px] text-slate-500 mt-0.5" th:text="${reward.student.firstName}">Arnav</p>
+                                </div>
+                                <div class="flex flex-col items-end gap-1.5 shrink-0">
+                                    <a th:href="@{/web/parent/reward/{id}/release(id=${reward.id})}"
+                                       class="text-[10px] font-bold px-3 py-1 rounded-full bg-pink-600 hover:bg-pink-500 text-white transition-colors shadow-md cursor-pointer">
+                                        Release & Mark Delivered
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assign Task Button CTA -->
+                <div class="flex justify-end">
+                    <button id="open-assign-task-btn"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 border border-emerald-500/30 cursor-pointer">
+                        ➕ Assign Task
+                    </button>
+                </div>
+
+            </div><!-- /tab-quests -->
+
+            <!-- ████ TAB: FEED ████ -->
+            <div id="tab-feed" class="tab-panel space-y-5">
+
+                <div class="glass-dark rounded-2xl overflow-hidden border border-slate-800/60">
+                    <div class="px-5 py-3.5 border-b border-slate-800/50 flex items-center gap-2.5 shrink-0">
+                        <span class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                            </svg>
+                        </span>
+                        <h3 class="text-sm font-bold text-white tracking-tight">Announcements</h3>
+                    </div>
+
+                    <div class="p-4 bg-[#0f172a]/50">
+                        <div th:if="${#lists.isEmpty(announcements)}"
+                             class="glass-dark rounded-2xl py-4 px-6 text-center border border-dashed border-slate-700/50" style="max-height:100px;">
+                            <p class="text-slate-500 font-medium text-sm">No active announcements for your child's grade.</p>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div th:each="ann, annStat : ${announcements}"
+                                 class="glass-dark rounded-2xl border border-slate-800/60 overflow-hidden metric-tile">
+                                <button type="button"
+                                        th:data-index="${annStat.index}"
+                                        class="ann-toggle-btn w-full flex items-start gap-3 px-5 py-4 text-left hover:bg-slate-800/20 transition-colors group cursor-pointer">
+                                    <span class="shrink-0 mt-1 w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="font-bold text-white text-sm group-hover:text-indigo-300 transition-colors"
+                                            th:text="${ann.title}">Announcement Title</h4>
+                                        <p class="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed"
+                                           th:text="${ann.content}">Announcement content preview...</p>
+                                    </div>
+                                    <div class="shrink-0 flex flex-col items-end gap-1.5">
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                                              th:text="${ann.targetGrade}">ALL</span>
+                                        <span class="text-[10px] text-slate-600"
+                                              th:text="${#temporals.format(ann.createdAt, 'MMM dd')}">May 20</span>
+                                        <svg th:id="'ann-chevron-' + ${annStat.index}"
+                                             class="w-3.5 h-3.5 text-slate-600 mt-1 transition-transform duration-200"
+                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </div>
+                                </button>
+                                <div th:id="'ann-body-' + ${annStat.index}"
+                                     class="hidden px-5 pb-5 border-t border-slate-800/50">
+                                    <div class="pt-4 space-y-2">
+                                        <p class="text-sm text-slate-300 leading-relaxed" th:text="${ann.content}">
+                                            Full announcement content goes here.
+                                        </p>
+                                        <div class="flex items-center gap-2 pt-2">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+                                            <span class="text-[10px] text-indigo-400 font-semibold tracking-wider uppercase">Active Broadcast</span>
+                                            <span class="text-[10px] text-slate-600 ml-auto"
+                                                  th:text="${#temporals.format(ann.createdAt, 'MMM dd, yyyy')}">May 20, 2026</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /tab-feed -->
+
+            <!-- ████ TAB: PROFILE ████ -->
+            <div id="tab-profile" class="tab-panel space-y-5">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <!-- Assign Home Task Form -->
+                    <section class="glass-dark rounded-2xl p-4 border border-slate-800/60 space-y-4">
+                        <div>
+                            <h3 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                                <span>🏠</span> Assign Home Task
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Create a task for your child to complete at home.</p>
+                        </div>
+                        <form id="assignTaskForm-profile" action="/web/parent/assign-task" method="POST" class="space-y-3">
+                            <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
+                            <div th:if="${students != null and !#lists.isEmpty(students)}">
+                                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Select Child</label>
+                                <select id="profile-assignStudentId" name="studentId" required
+                                        class="w-full px-3 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60 transition-all">
+                                    <option value="" disabled selected>Choose a child...</option>
+                                    <option th:each="student : ${students}"
+                                            th:value="${student.id}"
+                                            th:text="${student.firstName} + ' ' + ${student.lastName}"></option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="profile-taskTitle" class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Task Title</label>
+                                <input type="text" id="profile-taskTitle" name="taskDescription" required
+                                       placeholder="e.g. Wash the dishes"
+                                       class="w-full px-3 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                            </div>
+                            <div>
+                                <label for="profile-taskDesc" class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Description (optional)</label>
+                                <textarea id="profile-taskDesc" name="taskNotes" rows="2"
+                                          placeholder="Describe the instructions..."
+                                          class="w-full px-3 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all resize-none"></textarea>
+                            </div>
+                            <div>
+                                <label for="profile-xpBounty" class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">XP Bounty</label>
+                                <input type="number" id="profile-xpBounty" name="xpBounty" required min="1"
+                                       placeholder="e.g. 150"
+                                       class="w-full px-3 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                            </div>
+                            <button type="submit"
+                                    class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 cursor-pointer uppercase tracking-wider">
+                                Assign Task
+                            </button>
+                        </form>
+                    </section>
+
+                    <!-- Create Custom Reward Form -->
+                    <section class="glass-dark rounded-2xl p-4 border border-slate-800/60 space-y-4">
+                        <div>
+                            <h3 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                                <span>🎁</span> Create Custom Reward
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Define a parent-verified custom reward your child can redeem.</p>
+                        </div>
+                        <form action="/web/parent/add-reward" method="POST" class="space-y-3">
+                            <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
+                            <div th:if="${students != null and !#lists.isEmpty(students)}">
+                                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Select Child</label>
+                                <select name="studentId" id="rewardStudentId" required
+                                        class="w-full px-3 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60 transition-all">
+                                    <option value="" disabled selected>Choose a child...</option>
+                                    <option th:each="student : ${students}"
+                                            th:value="${student.id}"
+                                            th:text="${student.firstName} + ' ' + ${student.lastName}"></option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="rewardTitle" class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Reward Title</label>
+                                <input type="text" id="rewardTitle" name="rewardTitle" required
+                                       placeholder="e.g. Weekend Movie Night"
+                                       class="w-full px-3 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                            </div>
+                            <div>
+                                <label for="xpCost" class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">XP Cost</label>
+                                <input type="number" id="xpCost" name="xpCost" required min="1"
+                                       placeholder="e.g. 150"
+                                       class="w-full px-3 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                            </div>
+                            <button type="submit"
+                                    class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 cursor-pointer uppercase tracking-wider">
+                                Create Reward
+                            </button>
+                        </form>
+                    </section>
+                </div>
+
+            </div><!-- /tab-profile -->
+
+        </div><!-- /parent-content -->
+
+    </div><!-- /parent-body-row -->
+
+    <!-- ══ MOBILE BOTTOM NAV ══ -->
+    <nav id="parent-mobile-nav" aria-label="Mobile parent navigation">
+        <div class="mobile-nav-item active" id="mobile-nav-home" data-tab="home">
+            <span class="tab-icon">🏠</span><span>Home</span>
+        </div>
+        <div class="mobile-nav-item" id="mobile-nav-progress" data-tab="progress">
+            <span class="tab-icon">📊</span><span>Progress</span>
+        </div>
+        <div class="mobile-nav-item" id="mobile-nav-quests" data-tab="quests">
+            <span class="tab-icon">⚙️</span><span>Quests</span>
+            <span class="mobile-badge hidden" id="quests-badge-mobile"
+                  th:text="${awaitingQuests != null ? awaitingQuests.size() : 0}"
+                  th:classappend="${awaitingQuests != null and !awaitingQuests.isEmpty()} ? '' : ' hidden'">0</span>
+        </div>
+        <div class="mobile-nav-item" id="mobile-nav-feed" data-tab="feed">
+            <span class="tab-icon">📢</span><span>Feed</span>
+        </div>
+        <div class="mobile-nav-item" id="mobile-nav-profile" data-tab="profile">
+            <span class="tab-icon">👤</span><span>Profile</span>
+        </div>
+    </nav>
+
+    <!-- ══ ASSIGN TASK MODAL (legacy modal kept for quest tab button) ══ -->
+    <div id="assignTaskModal"
+         class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-[#0f172a] border border-slate-700/60 rounded-2xl p-4 max-w-md w-full shadow-2xl shadow-black/60 relative">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <h3 class="text-base font-bold text-white tracking-tight">➕ Assign Home Quest</h3>
+                </div>
+                <button id="close-assign-modal-btn" type="button"
+                        class="text-slate-500 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800/60">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="assignTaskModalForm" class="space-y-4">
+                <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
+                <div>
+                    <label for="assignStudentId" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Select Child</label>
+                    <select id="assignStudentId" required
+                            class="w-full px-4 py-2.5 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60 transition-all">
+                        <option value="" disabled selected>Choose a child...</option>
+                        <option th:each="student : ${students}"
+                                th:value="${student.id}"
+                                th:text="${student.firstName} + ' ' + ${student.lastName}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label for="taskTitle" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Task Title</label>
+                    <input type="text" id="taskTitle" required placeholder="e.g. Wash the dishes"
+                           class="w-full px-4 py-2.5 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                </div>
+                <div>
+                    <label for="taskDesc" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Description</label>
+                    <textarea id="taskDesc" rows="3" placeholder="Describe the instructions clearly..."
+                              class="w-full px-4 py-2.5 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all resize-none"></textarea>
+                </div>
+                <div>
+                    <label for="xpBounty" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">XP Bounty</label>
+                    <input type="number" id="xpBounty" required min="1" placeholder="e.g. 150"
+                           class="w-full px-4 py-2.5 bg-slate-900/70 border border-slate-700/60 rounded-xl text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                </div>
+                <div class="flex justify-end gap-3 pt-1">
+                    <button type="button" id="cancel-assign-modal-btn"
+                            class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-all border border-slate-700/50 cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 cursor-pointer">
+                        Assign Quest ✓
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer style="text-align:center;padding:6px;font-size:11px;color:rgba(255,255,255,0.12);border-top:1px solid rgba(255,255,255,0.04);flex-shrink:0;">
+        ACADIA &middot; Connect | Manage | Empower
+    </footer>
+
+    <!-- ══ ALL JAVASCRIPT — NO INLINE HANDLERS ══ -->
+    <script>
+    (function() {
+        'use strict';
+
+        /* ─── CONSTANTS ─── */
+        var TABS = ['home', 'progress', 'quests', 'feed', 'profile'];
+
+        /* ─── TAB SWITCHING ─── */
+        function switchTab(tabId) {
+            if (!TABS.includes(tabId)) tabId = 'home';
+
+            TABS.forEach(function(t) {
+                var panel = document.getElementById('tab-' + t);
+                if (panel) {
+                    if (t === tabId) { panel.classList.add('active'); panel.style.display = ''; }
+                    else             { panel.classList.remove('active'); panel.style.display = 'none'; }
+                }
+                var navItem = document.getElementById('nav-' + t);
+                if (navItem) navItem.classList.toggle('active', t === tabId);
+                var mobileItem = document.getElementById('mobile-nav-' + t);
+                if (mobileItem) mobileItem.classList.toggle('active', t === tabId);
+            });
+
+            var content = document.getElementById('parent-content');
+            if (content) content.scrollTop = 0;
+
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.set('tab', tabId);
+                history.replaceState(null, '', url.toString());
+            } catch(e) {}
+
+            // Lazy load progress on first visit
+            if (tabId === 'progress' && !window._progressLoaded) {
+                window._progressLoaded = true;
+                loadAllChildProgress();
+            }
+        }
+        window.switchTab = switchTab;
+
+        /* ─── WIRE ALL data-tab CLICKS ─── */
+        function wireTabClicks() {
+            document.querySelectorAll('[data-tab]').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            });
+        }
+
+        /* ─── TOAST CLOSE ─── */
+        function wireToast() {
+            var btn = document.getElementById('toast-close-btn');
+            if (btn) btn.addEventListener('click', function() {
+                var t = document.getElementById('toast');
+                if (t) t.style.display = 'none';
+            });
+        }
+
+        /* ─── ANNOUNCEMENT ACCORDION ─── */
+        function wireAnnouncements() {
+            document.querySelectorAll('.ann-toggle-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = this.dataset.index;
+                    var body    = document.getElementById('ann-body-' + idx);
+                    var chevron = document.getElementById('ann-chevron-' + idx);
+                    if (!body) return;
+                    var isHidden = body.classList.contains('hidden');
+                    body.classList.toggle('hidden', !isHidden);
+                    if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+                });
+            });
+        }
+
+        /* ─── QUEST APPROVAL (AJAX) ─── */
+        function wireQuestApproval() {
+            document.querySelectorAll('.approve-quest-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var questId = this.dataset.questId;
+                    var self    = this;
+                    fetch('/api/parent/approve-quest/' + questId, { method: 'POST' })
+                        .then(function(r) {
+                            if (r.ok) {
+                                self.disabled = true;
+                                self.className = 'text-[10px] font-bold px-3 py-1 rounded-full bg-slate-700 text-slate-400 border border-slate-600 cursor-default';
+                                self.innerText = '✓ Verified';
+                            }
+                        })
+                        .catch(function(err) { console.error('Approve quest error:', err); });
+                });
+            });
+        }
+
+        /* ─── ASSIGN TASK MODAL (quest tab) ─── */
+        function wireAssignModal() {
+            var openBtn   = document.getElementById('open-assign-task-btn');
+            var closeBtn  = document.getElementById('close-assign-modal-btn');
+            var cancelBtn = document.getElementById('cancel-assign-modal-btn');
+            var modal     = document.getElementById('assignTaskModal');
+            var form      = document.getElementById('assignTaskModalForm');
+
+            function openModal() {
+                if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+            }
+            function closeModal() {
+                if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+            }
+
+            var homeBtn = document.getElementById('home-assign-task-btn');
+            if (homeBtn)   homeBtn.addEventListener('click', openModal);
+            if (openBtn)   openBtn.addEventListener('click', openModal);
+            if (closeBtn)  closeBtn.addEventListener('click', closeModal);
+            if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+            if (modal) {
+                modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+            }
+            window.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+            if (form) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    var studentId   = document.getElementById('assignStudentId').value;
+                    var title       = document.getElementById('taskTitle').value;
+                    var description = document.getElementById('taskDesc').value;
+                    var xpReward    = parseInt(document.getElementById('xpBounty').value, 10);
+
+                    var csrfInput = document.querySelector('input[name="_csrf"]');
+                    var csrfToken = csrfInput ? csrfInput.value : '';
+
+                    try {
+                        var response = await fetch('/api/parent/assign-quest', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                            body: JSON.stringify({ studentId, title, description, xpReward })
+                        });
+                        if (response.ok) {
+                            closeModal();
+                            alert('Quest successfully assigned! 🎯');
+                            window.location.reload();
+                        } else {
+                            var text = await response.text();
+                            var errMsg = 'Failed to assign quest';
+                            try { var data = JSON.parse(text); errMsg = data.error || errMsg; } catch(pe) { errMsg = 'Status ' + response.status; }
+                            alert('Error: ' + errMsg);
+                        }
+                    } catch(err) { alert('Connection error: ' + err.message); }
+                });
+            }
+        }
+
+        /* ─── CHILD PROGRESS LOADING ─── */
+        function loadAllChildProgress() {
+            document.querySelectorAll('.child-progress-container').forEach(function(container) {
+                loadChildProgress(container.dataset.childid);
+            });
+        }
+
+        async function loadChildProgress(childId) {
+            try {
+                var resp = await fetch('/api/parent/child-progress?studentId=' + childId);
+                if (resp.status === 403) {
+                    document.getElementById('progress-skeleton-' + childId).classList.add('hidden');
+                    document.getElementById('progress-error-' + childId).classList.remove('hidden');
+                    return;
+                }
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                var data = await resp.json();
+                document.getElementById('progress-skeleton-' + childId).classList.add('hidden');
+                renderParentProgressSubjects(childId, data);
+            } catch(e) {
+                var sk = document.getElementById('progress-skeleton-' + childId);
+                if (sk) sk.classList.add('hidden');
+                var err = document.getElementById('progress-error-' + childId);
+                if (err) err.classList.remove('hidden');
+                var msg = document.getElementById('progress-error-msg-' + childId);
+                if (msg) msg.textContent = 'Failed to load progress.';
+            }
+        }
+
+        function toggleTopics(id) {
+            var el  = document.getElementById(id);
+            var key = id.replace('topics-', '');
+            var icon = document.getElementById('toggle-icon-' + key);
+            if (!el) return;
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if (icon) icon.textContent = '▼';
+            } else {
+                el.classList.add('hidden');
+                if (icon) icon.textContent = '▶';
+            }
+        }
+        window.toggleTopics = toggleTopics;
+
+        function renderParentProgressSubjects(childId, data) {
+            var container = document.getElementById('progress-subjects-' + childId);
+            container.innerHTML = '';
+
+            var SUBJECT_LABELS = {
+                SCIENCE:        { label: 'Science',        emoji: '🔬', color: 'emerald' },
+                SOCIAL_SCIENCE: { label: 'Social Science', emoji: '🌍', color: 'amber'   },
+                ENGLISH:        { label: 'English',        emoji: '📖', color: 'sky'      }
+            };
+            var COLOR_MAP = {
+                emerald: { bar:'from-emerald-600 to-emerald-400', text:'text-emerald-400', border:'border-emerald-500/20', bg:'bg-emerald-500/10' },
+                amber:   { bar:'from-amber-500 to-amber-400',     text:'text-amber-400',   border:'border-amber-500/20',   bg:'bg-amber-500/10'   },
+                sky:     { bar:'from-sky-500 to-sky-400',         text:'text-sky-400',     border:'border-sky-500/20',     bg:'bg-sky-500/10'     }
+            };
+
+            if (Object.keys(data).length === 0) return;
+            container.classList.remove('hidden');
+
+            Object.entries(data).forEach(function([subjectKey, subjectData]) {
+                var meta   = SUBJECT_LABELS[subjectKey] || { label: subjectKey, emoji: '📘', color: 'sky' };
+                var colors = COLOR_MAP[meta.color] || COLOR_MAP.sky;
+                var pct    = subjectData.total > 0 ? Math.round((subjectData.completed / subjectData.total) * 100) : 0;
+
+                var card = document.createElement('div');
+                card.id        = 'subject-card-' + subjectKey;
+                card.className = 'glass-dark border border-slate-800/60 rounded-2xl p-4 flex flex-col gap-4';
+
+                var topicsId   = 'topics-' + subjectKey;
+                var topicsRows = '';
+                subjectData.topics.forEach(function(topic) {
+                    if (topic.status === 'APPROVED' || topic.completed) {
+                        topicsRows += `<div class="flex items-start gap-2.5 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10"><span class="text-sm mt-0.5">✅</span><div class="flex-1 min-w-0"><p class="text-xs text-slate-300 font-medium">${topic.topicName}</p></div><span class="text-[10px] font-bold text-emerald-400 shrink-0">+${topic.xpReward} XP</span></div>`;
+                    } else if (topic.status === 'PENDING') {
+                        topicsRows += `<div class="flex items-start gap-2.5 p-2 rounded-lg bg-amber-500/5 border border-amber-500/10"><span class="text-sm mt-0.5">⏳</span><div class="flex-1 min-w-0"><p class="text-xs text-slate-300 font-medium">${topic.topicName}</p></div></div>`;
+                    } else if (topic.status === 'REJECTED') {
+                        topicsRows += `<div class="flex items-start gap-2.5 p-2 rounded-lg bg-rose-500/5 border border-rose-500/10"><span class="text-sm mt-0.5">❌</span><div class="flex-1 min-w-0"><p class="text-xs text-slate-300 font-medium">${topic.topicName}</p>${topic.rejectionReason ? `<p class="text-[10px] text-rose-400 mt-1">${topic.rejectionReason}</p>` : ''}</div></div>`;
+                    } else {
+                        topicsRows += `<div class="flex items-start gap-2.5 p-2 rounded-lg bg-slate-800/20 border border-slate-700/30"><span class="text-sm text-slate-600 mt-0.5">○</span><div class="flex-1 min-w-0"><p class="text-xs text-slate-500 font-medium">${topic.topicName}</p></div></div>`;
+                    }
+                });
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">${meta.emoji}</span>
+                            <h4 class="text-base font-bold text-white">${meta.label}</h4>
+                        </div>
+                        <span class="text-[10px] font-bold ${colors.text} ${colors.bg} border ${colors.border} px-2 py-0.5 rounded-full">${pct}% done</span>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800/50">
+                            <div class="h-full bg-gradient-to-r ${colors.bar} rounded-full" style="width:${pct}%"></div>
+                        </div>
+                        <p class="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">${subjectData.completed} / ${subjectData.total} chapters</p>
+                    </div>
+                    <div>
+                        <button class="acc-toggle-btn flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-200 uppercase tracking-wider transition-colors mb-3" data-topics-id="${topicsId}" data-subject-key="${subjectKey}">
+                            <span id="toggle-icon-${subjectKey}">▶</span> Show / Hide Chapters
+                        </button>
+                        <div id="${topicsId}" class="hidden space-y-1.5 max-h-64 overflow-y-auto pr-1">${topicsRows}</div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            // Wire accordion toggles (no inline handlers)
+            container.querySelectorAll('.acc-toggle-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    toggleTopics(this.dataset.topicsId);
+                });
+            });
+        }
+
+        /* ─── INIT ─── */
+        document.addEventListener('DOMContentLoaded', function() {
+            wireTabClicks();
+            wireToast();
+            wireAnnouncements();
+            wireQuestApproval();
+            wireAssignModal();
+
+            // Hide all non-active panels
+            TABS.forEach(function(t) {
+                var panel = document.getElementById('tab-' + t);
+                if (panel && !panel.classList.contains('active')) panel.style.display = 'none';
+            });
+
+            // Determine initial tab
+            var urlParams = new URLSearchParams(window.location.search);
+            var initial = urlParams.get('tab') || 'home';
+            switchTab(initial);
+
+            // If landing on progress, load immediately
+            if (initial === 'progress') {
+                window._progressLoaded = true;
+                loadAllChildProgress();
+            }
+
+            // Show badge if quests exist
+            var badgeSidebar = document.getElementById('quests-badge-sidebar');
+            var badgeMobile  = document.getElementById('quests-badge-mobile');
+            if (badgeSidebar && parseInt(badgeSidebar.textContent, 10) > 0) badgeSidebar.classList.remove('hidden');
+            if (badgeMobile  && parseInt(badgeMobile.textContent, 10) > 0)  badgeMobile.classList.remove('hidden');
+        });
+
+    })();
+    </script>
+
+</body>
+</html>

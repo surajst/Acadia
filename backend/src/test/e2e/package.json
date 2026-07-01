@@ -1,0 +1,13 @@
+{
+  "name": "schoolos-e2e",
+  "version": "1.0.0",
+  "description": "E2E Playwright tests for SchoolOS",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

@@ -1,0 +1,32 @@
+# Bundled toolchains (portable JDK/Maven checked into backend/)
+backend/apache-maven-3.9.6/
+backend/jdk-21.0.3+9/
+
+# Build output
+backend/target/
+mobile-app/dist/
+mobile-app/.expo/
+
+# Local dev database
+backend/data/
+
+# Logs and runtime artifacts
+backend/startup_log.txt
+**/*.log
+test-results/
+
+# Dependencies
+mobile-app/node_modules/
+**/node_modules/
+
+# IDE
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.local
+*.env

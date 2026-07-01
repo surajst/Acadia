@@ -1,0 +1,281 @@
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
+import { useContext, useState, useEffect } from 'react';
+import { DataContext } from './_layout';
+import { useRouter } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
+import { getUnreadNotificationCount } from '../../services/api';
+
+interface ParentQuest {
+  taskDescription: string;
+  xpBounty: number;
+}
+
+export default function DashboardScreen() {
+  const ctx = useContext(DataContext);
+  const role = ctx?.role ?? null;
+  const data = ctx?.data ?? {};
+  const refreshData = ctx?.refreshData ?? (async () => {});
+  const { firstName } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (role === 'TEACHER') {
+      getUnreadNotificationCount().then(setUnreadCount).catch(() => setUnreadCount(0));
+    }
+  }, [role]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshData();
+    if (role === 'TEACHER') {
+      try {
+        const count = await getUnreadNotificationCount();
+        setUnreadCount(count);
+      } catch (e) {
+        setUnreadCount(0);
+      }
+    }
+    setRefreshing(false);
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    if (role === 'TEACHER') return `${timeGreeting}, ${firstName || 'Educator'}!`;
+    if (role === 'PARENT') return `Hello, ${data.parent?.firstName || 'Guardian'}!`;
+    return `Hello, ${data.student?.firstName || 'Scholar'}!`;
+  };
+
+  const getSubGreeting = () => {
+    if (role === 'TEACHER') return 'Greenwood High · Staff Dashboard';
+    if (role === 'PARENT') return 'Parent Portal';
+    return `${data.student?.gradeName || 'Grade N/A'} - ${data.student?.sectionName || 'N/A'}`;
+  };
+
+  const attendanceMarked = data.attendanceSummary?.markedToday ?? 0;
+  const attendanceTotal = data.attendanceSummary?.totalClasses ?? 0;
+  const attendancePending = data.attendanceSummary?.pendingToday ?? 0;
+  const classes = Array.isArray(data.classes) ? data.classes : [];
+  const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+  const parentQuests = Array.isArray(data.parentQuests) ? data.parentQuests : [];
+
+  return (
+    <ScrollView
+      style={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+    >
+      {role === 'TEACHER' && (
+        <View style={styles.notificationHeaderRow}>
+          <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.bellButton}>
+            <SymbolView name={{ ios: 'bell', android: 'notifications', web: 'notifications' }} tintColor="#fff" size={24} />
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={styles.infoCard}>
+        <Text style={styles.greeting}>{getGreeting()}</Text>
+        <Text style={styles.subGreeting}>{getSubGreeting()}</Text>
+        {role === 'TEACHER' && (
+          <View style={styles.dateChip}>
+            <Text style={styles.dateChipText}>
+              {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {role === 'TEACHER' ? (
+        <>
+          <View style={styles.metricsContainer}>
+            <View style={styles.metricBox}>
+              <Text style={styles.metricLabel}>Classes</Text>
+              <Text style={styles.metricValue}>{classes.length}</Text>
+            </View>
+            <View style={styles.metricBox}>
+              <Text style={styles.metricLabel}>Attendance</Text>
+              <Text style={[styles.metricValue, {
+                color: attendancePending > 0 ? '#f59e0b' : '#22c55e'
+              }]}>
+                {attendanceMarked}/{attendanceTotal}
+              </Text>
+            </View>
+            <View style={styles.metricBox}>
+              <Text style={[styles.metricLabel, {
+                color: tasks.length > 0 ? '#f59e0b' : '#94a3b8'
+              }]}>
+                Pending Tasks
+              </Text>
+              <Text style={styles.metricValue}>{tasks.length}</Text>
+            </View>
+          </View>
+
+          {attendancePending > 0 && (
+            <View style={styles.alertCard}>
+              <View style={styles.alertDot} />
+              <Text style={styles.alertText}>
+                {attendancePending} class{attendancePending > 1 ? 'es' : ''} still need attendance marked today
+              </Text>
+            </View>
+          )}
+
+          {Array.isArray(data.timetable) && data.timetable.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Today's Schedule</Text>
+              {data.timetable.map((period: any) => (
+                <View key={period.id} style={styles.periodItem}>
+                  <View style={[styles.periodTimeBadge, { backgroundColor: period.attendanceMarked ? '#05966920' : '#f59e0b20' }]}>
+                    <Text style={[styles.periodTime, { color: period.attendanceMarked ? '#059669' : '#f59e0b' }]}>
+                      P{period.periodNumber}
+                    </Text>
+                  </View>
+                  <View style={styles.periodInfo}>
+                    <Text style={styles.periodSubject}>{period.subjectName}</Text>
+                    <Text style={styles.periodMeta}>{period.startTime} – {period.endTime} · {period.roomNumber}</Text>
+                  </View>
+                  <View style={[styles.periodStatus, { backgroundColor: period.attendanceMarked ? '#05966915' : '#f59e0b15' }]}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: period.attendanceMarked ? '#059669' : '#f59e0b' }}>
+                      {period.attendanceMarked ? 'Done' : 'Pending'}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>My Classes</Text>
+            {classes.map((cls: any) => (
+              <View key={cls.id} style={styles.listItem}>
+                <View>
+                  <Text style={styles.itemTitle}>{cls.className}</Text>
+                  <Text style={styles.itemSubtitle}>{cls.studentCount} students</Text>
+                </View>
+                <View style={styles.statusBadge}>
+                  <Text style={{ color: '#22c55e', fontSize: 12, fontWeight: '600' }}>Active</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {tasks.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Recent Tasks</Text>
+              {tasks.slice(0, 3).map((task: any, i: number) => (
+                <View key={i} style={styles.listItem}>
+                  <Text style={styles.itemTitle}>{task.title ?? task.taskDescription ?? 'Task'}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: '#f59e0b22' }]}>
+                    <Text style={{ color: '#f59e0b', fontSize: 12, fontWeight: '600' }}>Pending</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </>
+      ) : (
+        <View style={styles.metricsContainer}>
+          <View style={styles.metricBox}>
+            <Text style={styles.metricLabel}>School XP</Text>
+            <Text style={styles.metricValue}>{data.metrics?.schoolXp ?? 0}</Text>
+          </View>
+          <View style={styles.metricBox}>
+            <Text style={styles.metricLabel}>Parent XP</Text>
+            <Text style={styles.metricValue}>{data.metrics?.parentXp ?? 0}</Text>
+          </View>
+          <View style={styles.metricBox}>
+            <Text style={styles.metricLabel}>Streak</Text>
+            <Text style={styles.metricValue}>{data.metrics?.activeStreak ?? 0}</Text>
+          </View>
+        </View>
+      )}
+
+      {role !== 'TEACHER' && (
+        <View style={styles.levelCard}>
+          <Text style={styles.levelTitle}>Scholar Level {data.metrics?.scholarLevel ?? 1}</Text>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${data.metrics?.levelProgress ?? 0}%` }]} />
+          </View>
+          <Text style={styles.levelHint}>{data.metrics?.xpToNextLevel ?? 500} XP to next level</Text>
+        </View>
+      )}
+
+      {role === 'PARENT' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Child: {data.student?.firstName || 'Unknown'} {data.student?.lastName || 'Student'}
+          </Text>
+          <Text style={styles.infoText}>
+            Attendance Today: {data.attendanceStatus || 'NOT MARKED'}
+          </Text>
+        </View>
+      )}
+
+      {role === 'STUDENT' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Pending Quests</Text>
+          {parentQuests.length === 0 ? (
+            <Text style={styles.infoText}>No active quests.</Text>
+          ) : (
+            parentQuests.map((q: ParentQuest, i: number) => (
+              <View key={i} style={styles.listItem}>
+                <Text style={styles.itemTitle}>{q.taskDescription}</Text>
+                <Text style={styles.itemReward}>+{q.xpBounty} XP</Text>
+              </View>
+            ))
+          )}
+        </View>
+      )}
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: '#0f172a', padding: 16 },
+  errorText: { color: '#ef4444', fontSize: 16 },
+  infoCard: { backgroundColor: '#1e293b', padding: 20, borderRadius: 16, marginBottom: 16 },
+  greeting: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
+  subGreeting: { color: '#94a3b8', fontSize: 16, marginTop: 4 },
+  metricsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  metricBox: { backgroundColor: '#1e293b', padding: 16, borderRadius: 16, flex: 1, marginHorizontal: 4, alignItems: 'center' },
+  metricLabel: { color: '#94a3b8', fontSize: 12, marginBottom: 4 },
+  metricValue: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  alertCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f59e0b15', borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#f59e0b30', gap: 8 },
+  alertDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#f59e0b' },
+  alertText: { color: '#f59e0b', fontSize: 13, flex: 1 },
+  levelCard: { backgroundColor: '#1e293b', padding: 20, borderRadius: 16, marginBottom: 24 },
+  levelTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
+  progressBarBg: { height: 8, backgroundColor: '#334155', borderRadius: 4, marginBottom: 8 },
+  progressBarFill: { height: '100%', backgroundColor: '#6366f1', borderRadius: 4 },
+  levelHint: { color: '#94a3b8', fontSize: 12, textAlign: 'right' },
+  section: { marginBottom: 24 },
+  sectionTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
+  infoText: { color: '#94a3b8', fontSize: 14 },
+  listItem: { backgroundColor: '#1e293b', padding: 16, borderRadius: 12, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  itemTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  itemSubtitle: { color: '#64748b', fontSize: 12, marginTop: 4 },
+  itemReward: { color: '#4ade80', fontWeight: 'bold' },
+  statusBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  periodItem: { backgroundColor: '#1e293b', borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  periodTimeBadge: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  periodTime: { fontSize: 13, fontWeight: '700' },
+  periodInfo: { flex: 1 },
+  periodSubject: { color: '#f1f5f9', fontSize: 14, fontWeight: '600' },
+  periodMeta: { color: '#64748b', fontSize: 12, marginTop: 2 },
+  periodStatus: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  dateChip: { alignSelf: 'flex-start', backgroundColor: '#6366f120', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 10, borderWidth: 1, borderColor: '#6366f130' },
+  dateChipText: { color: '#818cf8', fontSize: 12, fontWeight: '500' },
+  notificationHeaderRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
+  bellButton: { padding: 8, position: 'relative' },
+  badge: { position: 'absolute', top: 2, right: 2, backgroundColor: '#ef4444', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
+  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+});

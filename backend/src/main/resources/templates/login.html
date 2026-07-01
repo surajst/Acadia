@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In &middot; ACADIA</title>
+    
+    
+    <style>
+        body { 
+            background: radial-gradient(circle at center, rgba(59, 30, 120, 0.3) 0%, #050A1A 60%);
+            background-color: #050A1A; 
+            color: #ffffff; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bg-blur-tl {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(79,70,229,0.15) 0%, transparent 70%);
+            position: fixed;
+            top: -100px;
+            left: -100px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-blur-br {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
+            position: fixed;
+            bottom: -100px;
+            right: -100px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        main {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 32px 40px;
+            box-sizing: border-box;
+        }
+
+        .logo-img {
+            width: 200px;
+            display: block;
+            margin: 0 auto 4px;
+        }
+
+        .divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            margin: 24px 0;
+        }
+
+        .welcome-title {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            margin: 16px 0 8px 0;
+        }
+
+        .welcome-subtitle {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            text-align: center;
+            margin: 0 0 28px 0;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: block;
+            text-align: left;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .form-input:focus {
+            border-color: #6366F1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            outline: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            height: 48px;
+            border-radius: 10px;
+            background: linear-gradient(to right, #4F46E5, #7C3AED);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 15px;
+            margin-top: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .footer-text {
+            color: rgba(255, 255, 255, 0.25);
+            font-size: 11px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #fca5a5;
+            font-size: 13px;
+        }
+    </style>
+
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body>
+    <div class="bg-blur-tl"></div>
+    <div class="bg-blur-br"></div>
+    
+    <main>
+        <div class="login-card">
+            <img src="/images/acadia-logo.png" alt="ACADIA" class="logo-img">
+            
+            <div class="divider"></div>
+            
+            <h1 class="welcome-title">Welcome back</h1>
+            <p class="welcome-subtitle">Sign in to your portal</p>
+            
+            <div th:if="${param.error}" class="error-msg">
+                Invalid username or password. Please try again.
+            </div>
+
+            <form th:action="@{/login}" method="POST">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="Enter your username" required>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required>
+                </div>
+                
+                <button type="submit" class="btn-submit">Sign In</button>
+            </form>
+            
+            <div class="footer-text">Secure Portal — School Management System</div>
+        </div>
+    </main>
+</body>
+</html>

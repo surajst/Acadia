@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard &middot; ACADIA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    
+    
+
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class="bg-slate-50 text-slate-800 " style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+    <!-- Header -->
+    <header class="bg-blue-900 text-white shadow-md py-6 px-4 md:px-8 shrink-0">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">ACADIA Admin Control</h1>
+                <p class="text-blue-200 mt-1 text-sm font-medium">Broadcast Center</p>
+            </div>
+            <a href="/web/feed" class="text-sm bg-blue-800 hover:bg-blue-700 text-blue-100 px-4 py-2 rounded-lg border border-blue-700 transition shadow-inner">View Live Feed</a>
+        </div>
+    </header>
+<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
+
+
+    <!-- Main Content -->
+    <main class="max-w-xl mx-auto px-4 md:px-8 py-12" >
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50">
+                <h2 class="text-lg font-bold text-slate-800">New Announcement</h2>
+                <p class="text-sm text-slate-500">Securely broadcast to parent feeds.</p>
+            </div>
+            
+            <form action="/web/admin/post" method="POST" class="p-6 space-y-6">
+                <!-- Title -->
+                <div>
+                    <label for="title" class="block text-sm font-medium text-slate-700 mb-1">Headline Title</label>
+                    <input type="text" id="title" name="title" required
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        placeholder="e.g. Important Update">
+                </div>
+
+                <!-- Target Grade -->
+                <div>
+                    <label for="targetGrade" class="block text-sm font-medium text-slate-700 mb-1">Target Audience</label>
+                    <select id="targetGrade" name="targetGrade" required
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
+                        <option value="" disabled selected>Select an audience...</option>
+                        <option value="ALL">All Grades (School-wide)</option>
+                        <option value="Grade 6">Grade 6</option>
+                        <option value="Grade 7">Grade 7</option>
+                        <option value="Grade 8">Grade 8</option>
+                        <option value="Grade 9">Grade 9</option>
+                        <option value="Grade 10">Grade 10</option>
+                    </select>
+                </div>
+
+                <!-- Content -->
+                <div>
+                    <label for="content" class="block text-sm font-medium text-slate-700 mb-1">Message Content</label>
+                    <textarea id="content" name="content" rows="5" required
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-none"
+                        placeholder="Type the full announcement here..."></textarea>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition-colors duration-200">
+                        Broadcast Notice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+</div>
+</body>
+</html>
