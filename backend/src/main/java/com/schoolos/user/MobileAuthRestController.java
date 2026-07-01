@@ -43,17 +43,19 @@ public class MobileAuthRestController {
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
         try {
             UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.email);
-            
+
             if (passwordEncoder.matches(loginRequest.password, userDetails.getPassword())) {
-                String jwt = jwtUtils.generateToken(userDetails);
-                
+                // Retrieve full user for profile details + tenant/academic-year claims
+                User user = userRepository.findByEmail(loginRequest.email).orElse(null);
+
+                String jwt = (user != null)
+                        ? jwtUtils.generateToken(userDetails, user.getTenantId(), user.getAcademicYearId())
+                        : jwtUtils.generateToken(userDetails);
+
                 String role = userDetails.getAuthorities().stream()
                     .map(a -> a.getAuthority().replace("ROLE_", ""))
                     .findFirst()
                     .orElse("USER");
-
-                // Retrieve full user for profile details
-                User user = userRepository.findByEmail(loginRequest.email).orElse(null);
                 String fullName = user != null ? user.getFullName() : loginRequest.email;
                 String[] nameParts = fullName.split(" ", 2);
                 String fName = nameParts[0];

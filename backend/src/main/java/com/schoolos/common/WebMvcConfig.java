@@ -12,5 +12,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(new SecurityInterceptor())
                 .addPathPatterns("/web/**")
                 .excludePathPatterns("/web/login", "/web/auth/**");
+
+        registry.addInterceptor(new TenantTierInterceptor())
+                .addPathPatterns("/web/admin/**", "/api/admin/**");
     }
 }
