@@ -2,13 +2,15 @@ package com.schoolos.management;
 
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.parentapp.AttendanceRecord;
+import com.schoolos.parentapp.DateRange;
+import com.schoolos.parentapp.SisDataProvider;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,21 +25,21 @@ public class ParentPortalApiController {
     private final StudentMetricRepository studentMetricRepository;
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
-    private final AttendanceRepository attendanceRepository;
     private final StudentProgressService studentProgressService;
+    private final SisDataProvider sisDataProvider;
 
     public ParentPortalApiController(ParentQuestRepository parentQuestRepository,
                                      StudentMetricRepository studentMetricRepository,
                                      StudentRepository studentRepository,
                                      ParentRepository parentRepository,
-                                     AttendanceRepository attendanceRepository,
-                                     StudentProgressService studentProgressService) {
+                                     StudentProgressService studentProgressService,
+                                     SisDataProvider sisDataProvider) {
         this.parentQuestRepository = parentQuestRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.studentRepository = studentRepository;
         this.parentRepository = parentRepository;
-        this.attendanceRepository = attendanceRepository;
         this.studentProgressService = studentProgressService;
+        this.sisDataProvider = sisDataProvider;
     }
 
     // ─── Resolve helpers ────────────────────────────────────────────────────
@@ -138,19 +140,15 @@ public class ParentPortalApiController {
         if (child == null) {
             return ResponseEntity.ok(List.of());
         }
-        LocalDate start = LocalDate.now().minusDays(60);
-        LocalDate end = LocalDate.now();
-        List<Map<String, Object>> records = attendanceRepository
-                .findByStudentAndAttendanceDateBetween(child, start, end)
-                .stream()
-                .sorted((a, b) -> b.getAttendanceDate().compareTo(a.getAttendanceDate()))
+        List<AttendanceRecord> records = sisDataProvider.getAttendance(child.getId(), DateRange.lastDays(60));
+        List<Map<String, Object>> response = records.stream()
                 .map(a -> Map.<String, Object>of(
-                        "date", a.getAttendanceDate().toString(),
-                        "status", a.getStatus().name(),
-                        "dayOfWeek", a.getAttendanceDate().getDayOfWeek().toString()
+                        "date", a.date().toString(),
+                        "status", a.status(),
+                        "dayOfWeek", a.date().getDayOfWeek().toString()
                 ))
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(records);
+        return ResponseEntity.ok(response);
     }
 
     // ─── Feature 4: Parent Syllabus Progress ────────────────────────────────

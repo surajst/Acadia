@@ -2,8 +2,10 @@ package com.schoolos.management;
 
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
-import com.schoolos.academics.AssessmentService;
-import com.schoolos.academics.SubjectPerformance;
+import com.schoolos.parentapp.AttendanceRecord;
+import com.schoolos.parentapp.DateRange;
+import com.schoolos.parentapp.SisDataProvider;
+import com.schoolos.parentapp.StudentSummary;
 import com.schoolos.user.UserRepository;
 import com.schoolos.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,20 +42,17 @@ public class MobileParentRestController {
     private ParentQuestRepository parentQuestRepository;
 
     @Autowired
-    private AttendanceRepository attendanceRepository;
-
-    @Autowired
     private ParentRepository parentRepository;
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private AssessmentService assessmentService;
+    private SisDataProvider sisDataProvider;
 
     private Parent resolveParent(String username) {
         if (username == null) return null;
-        
+
         String searchName = username;
         if (username.contains("@")) {
             User user = userRepository.findByEmail(username).orElse(null);
@@ -63,22 +60,35 @@ public class MobileParentRestController {
                 searchName = user.getFullName().split(" ")[0];
             }
         }
-        
+
         final String finalSearch = searchName;
         Parent parent = parentRepository.findAll().stream()
-                .filter(p -> finalSearch.equalsIgnoreCase(p.getFirstName()) || 
+                .filter(p -> finalSearch.equalsIgnoreCase(p.getFirstName()) ||
                             (p.getEmail() != null && p.getEmail().toLowerCase().startsWith(finalSearch.toLowerCase())))
                 .findFirst()
                 .orElse(null);
-                
+
         if (parent == null) {
             parent = parentRepository.findAll().stream()
                     .filter(p -> "Rajesh".equals(p.getFirstName()) || "Ramesh".equals(p.getFirstName()))
                     .findFirst()
                     .orElseGet(() -> parentRepository.findAll().stream().findFirst().orElse(null));
         }
-        
+
         return parent;
+    }
+
+    private UUID resolveStudentId(UUID studentId, Authentication authentication) {
+        if (studentId != null) return studentId;
+        String username = (authentication != null) ? authentication.getName() : "ramesh";
+        Parent parent = resolveParent(username);
+        if (parent != null) {
+            List<Student> students = studentRepository.findByParentsContaining(parent);
+            if (!students.isEmpty()) {
+                return students.get(0).getId();
+            }
+        }
+        return null;
     }
 
     @GetMapping("/dashboard")
@@ -114,30 +124,16 @@ public class MobileParentRestController {
         List<AcademicSubmission> submissions = academicSubmissionRepository.findByStudentId(studentId);
         List<ParentReward> pendingRewards = parentRewardRepository.findByStudentIdAndStatus(studentId, "PENDING");
         List<ParentQuest> parentQuests = parentQuestRepository.findByStudentId(studentId);
-        
+
         final UUID sId = studentId;
         List<ParentReward> parentRewards = parentRewardRepository.findAll().stream()
             .filter(r -> r.getStudent() != null && sId.equals(r.getStudent().getId()))
             .collect(Collectors.toList());
 
-        // Attendance Status
-        String attendanceStatus = "NOT MARKED";
-        List<Attendance> attendances = attendanceRepository.findAll().stream()
-            .filter(a -> a.getStudent() != null && sId.equals(a.getStudent().getId()))
-            .collect(Collectors.toList());
-
-        LocalDate today = LocalDate.now();
-        Attendance todayAttendance = attendances.stream()
-            .filter(a -> today.equals(a.getAttendanceDate()))
-            .findFirst()
-            .orElse(null);
-
-        if (todayAttendance != null) {
-            attendanceStatus = todayAttendance.getStatus().name();
-        } else if (!attendances.isEmpty()) {
-            attendances.sort((a, b) -> b.getAttendanceDate().compareTo(a.getAttendanceDate()));
-            attendanceStatus = attendances.get(0).getStatus().name();
-        }
+        // Attendance Status — via SisDataProvider (most-recent-first, full history), fall back to "not marked"
+        List<AttendanceRecord> allAttendance = sisDataProvider.getAttendance(studentId,
+                new DateRange(java.time.LocalDate.of(2000, 1, 1), java.time.LocalDate.now()));
+        String attendanceStatus = allAttendance.isEmpty() ? "NOT MARKED" : allAttendance.get(0).status();
 
         Map<String, Object> response = new HashMap<>();
 
@@ -150,14 +146,17 @@ public class MobileParentRestController {
             response.put("parent", parentInfo);
         }
 
-        // Student Info
+        // Student Info — via SisDataProvider
+        StudentSummary studentSummary = sisDataProvider.getStudent(studentId).orElse(null);
         Map<String, Object> studentInfo = new HashMap<>();
-        studentInfo.put("id", student.getId());
-        studentInfo.put("firstName", student.getFirstName());
-        studentInfo.put("lastName", student.getLastName());
-        if (student.getClassSection() != null) {
-            studentInfo.put("gradeName", student.getClassSection().getGradeName());
-            studentInfo.put("sectionName", student.getClassSection().getSectionName());
+        if (studentSummary != null) {
+            studentInfo.put("id", studentSummary.id());
+            studentInfo.put("firstName", studentSummary.firstName());
+            studentInfo.put("lastName", studentSummary.lastName());
+            if (studentSummary.gradeName() != null) {
+                studentInfo.put("gradeName", studentSummary.gradeName());
+                studentInfo.put("sectionName", studentSummary.sectionName());
+            }
         }
         response.put("student", studentInfo);
 
@@ -177,7 +176,7 @@ public class MobileParentRestController {
         response.put("pendingRewards", pendingRewards);
         response.put("parentQuests", parentQuests);
         response.put("parentRewards", parentRewards);
-        response.put("subjectPerformance", assessmentService.getSubjectPerformance(studentId));
+        response.put("subjectPerformance", sisDataProvider.getSubjectPerformance(studentId));
 
         return ResponseEntity.ok(response);
     }
@@ -187,22 +186,12 @@ public class MobileParentRestController {
             @RequestParam(value = "studentId", required = false) UUID studentId,
             Authentication authentication) {
 
-        if (studentId == null) {
-            String username = (authentication != null) ? authentication.getName() : "ramesh";
-            Parent parent = resolveParent(username);
-            if (parent != null) {
-                List<Student> students = studentRepository.findByParentsContaining(parent);
-                if (!students.isEmpty()) {
-                    studentId = students.get(0).getId();
-                }
-            }
-        }
-
-        if (studentId == null) {
+        UUID resolvedId = resolveStudentId(studentId, authentication);
+        if (resolvedId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "No student found"));
         }
 
-        return ResponseEntity.ok(assessmentService.getSubjectPerformance(studentId));
+        return ResponseEntity.ok(sisDataProvider.getSubjectPerformance(resolvedId));
     }
 
     @GetMapping("/attendance")
@@ -210,30 +199,19 @@ public class MobileParentRestController {
             @RequestParam(value = "studentId", required = false) UUID studentId,
             Authentication authentication) {
 
-        // If no studentId provided, resolve from the authenticated parent
-        if (studentId == null) {
-            String username = (authentication != null) ? authentication.getName() : "ramesh";
-            Parent parent = resolveParent(username);
-            if (parent != null) {
-                List<Student> students = studentRepository.findByParentsContaining(parent);
-                if (!students.isEmpty()) {
-                    studentId = students.get(0).getId();
-                }
-            }
-        }
-
-        if (studentId == null) {
+        UUID resolvedId = resolveStudentId(studentId, authentication);
+        if (resolvedId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "No student found"));
         }
 
-        final UUID sid = studentId;
-        List<Map<String, String>> log = attendanceRepository.findAll().stream()
-                .filter(a -> a.getStudent() != null && sid.equals(a.getStudent().getId()))
-                .sorted(Comparator.comparing(Attendance::getAttendanceDate))
+        // Full history, oldest-first, to match prior behavior
+        List<Map<String, String>> log = sisDataProvider.getAttendance(resolvedId, new DateRange(java.time.LocalDate.of(2000, 1, 1), java.time.LocalDate.now()))
+                .stream()
+                .sorted((a, b) -> a.date().compareTo(b.date()))
                 .map(a -> {
                     Map<String, String> entry = new HashMap<>();
-                    entry.put("date", a.getAttendanceDate().toString());
-                    entry.put("status", a.getStatus().name());
+                    entry.put("date", a.date().toString());
+                    entry.put("status", a.status());
                     return entry;
                 })
                 .collect(Collectors.toList());
