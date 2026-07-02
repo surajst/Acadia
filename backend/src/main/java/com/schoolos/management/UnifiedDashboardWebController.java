@@ -55,6 +55,12 @@ public class UnifiedDashboardWebController {
     @Autowired
     private CurrentUserService currentUserService;
 
+    @Autowired
+    private AdminProgressService adminProgressService;
+
+    @Autowired
+    private FeeManagementService feeManagementService;
+
     /** Redirect bridge: /web/management/attendance → canonical teacher attendance route */
     @GetMapping("/web/management/attendance")
     public String managementAttendanceRedirect() {
@@ -166,6 +172,21 @@ public class UnifiedDashboardWebController {
             // gracefully catch
         }
         int attendancePercentage = totalStudents == 0 ? 0 : (int) Math.round(((double)(totalStudents - activeAbsences) / totalStudents) * 100);
+
+        // PRINCIPAL: read-only school-wide rollups instead of classroom-roster
+        // data — oversight without the ADMIN/TEACHER data-entry surfaces.
+        if ("PRINCIPAL".equals(role)) {
+            try {
+                model.addAttribute("schoolProgress", adminProgressService.getSchoolWideProgress());
+            } catch (Exception e) {
+                model.addAttribute("schoolProgress", Collections.emptyMap());
+            }
+            try {
+                model.addAttribute("feeSummary", feeManagementService.getSchoolWideFeeSummary(tenantId));
+            } catch (Exception e) {
+                model.addAttribute("feeSummary", Collections.emptyMap());
+            }
+        }
 
         model.addAttribute("availableClassesMenu", assignedClassrooms);
         model.addAttribute("studentDisplayRoster", conditionalRoster);

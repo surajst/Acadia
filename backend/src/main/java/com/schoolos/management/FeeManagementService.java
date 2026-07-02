@@ -24,6 +24,36 @@ public class FeeManagementService {
     @Autowired
     private FeeTransactionRepository feeTransactionRepository;
 
+    /**
+     * Read-only school-wide fee rollup — used by the PRINCIPAL oversight
+     * dashboard. Aggregates existing FeeInvoice rows; no new business logic.
+     */
+    public java.util.Map<String, Object> getSchoolWideFeeSummary(UUID tenantId) {
+        List<FeeInvoice> invoices = tenantId != null ? feeInvoiceRepository.findByTenantId(tenantId) : List.of();
+
+        BigDecimal totalExpected = BigDecimal.ZERO;
+        BigDecimal totalCollected = BigDecimal.ZERO;
+        long overdueCount = 0;
+
+        for (FeeInvoice invoice : invoices) {
+            if (invoice.getTotalAmount() != null) totalExpected = totalExpected.add(invoice.getTotalAmount());
+            if (invoice.getAmountPaid() != null) totalCollected = totalCollected.add(invoice.getAmountPaid());
+            if (invoice.getStatus() != FeeInvoice.FeeStatus.PAID) overdueCount++;
+        }
+
+        int collectionPercent = totalExpected.compareTo(BigDecimal.ZERO) > 0
+                ? totalCollected.multiply(BigDecimal.valueOf(100)).divide(totalExpected, 0, java.math.RoundingMode.HALF_UP).intValue()
+                : 0;
+
+        java.util.Map<String, Object> summary = new java.util.HashMap<>();
+        summary.put("totalInvoices", invoices.size());
+        summary.put("totalExpected", totalExpected);
+        summary.put("totalCollected", totalCollected);
+        summary.put("collectionPercent", collectionPercent);
+        summary.put("outstandingInvoiceCount", overdueCount);
+        return summary;
+    }
+
     @Transactional
     public void recordPayment(UUID invoiceId, BigDecimal paymentAmount, String mode) {
         if (paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {

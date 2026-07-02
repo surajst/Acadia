@@ -54,6 +54,7 @@ public class SecurityConfig {
                 // NO .sessionManagement(STATELESS) — allows both JWT and session
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/onboard/**").permitAll() // public self-serve school signup
+                        .requestMatchers("/api/principal/**").hasAnyRole("ADMIN", "PRINCIPAL") // read-only oversight
                         .requestMatchers("/api/teacher/timetable/seed").hasRole("ADMIN") // DEV ONLY seed - ADMIN only
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
@@ -76,7 +77,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/web/onboard/signup").permitAll() // public "create your school" form
                         .requestMatchers("/web/onboard/setup").hasRole("ADMIN")
-                        .requestMatchers("/web/admin/dashboard").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers("/web/admin/dashboard").hasAnyRole("ADMIN", "TEACHER", "PRINCIPAL")
                         .requestMatchers("/web/admin/**").hasRole("ADMIN")
                         .requestMatchers("/web/teacher/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/web/student/**").hasAnyRole("STUDENT", "PARENT", "ADMIN")
@@ -91,6 +92,8 @@ public class SecurityConfig {
                             String redirectUrl = "/";
                             var authorities = authentication.getAuthorities();
                             if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                                redirectUrl = "/web/admin/dashboard";
+                            } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_PRINCIPAL"))) {
                                 redirectUrl = "/web/admin/dashboard";
                             } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"))) {
                                 redirectUrl = "/web/teacher/dashboard";

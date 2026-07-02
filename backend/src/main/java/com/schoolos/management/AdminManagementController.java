@@ -85,7 +85,7 @@ public class AdminManagementController {
         long totalClassrooms = 0;
         try {
             totalStudents = studentRepository.count();
-            totalStaff = userRepository.countByRole(UserRole.ADMIN) + userRepository.countByRole(UserRole.TEACHER);
+            totalStaff = userRepository.countByRole(UserRole.ADMIN) + userRepository.countByRole(UserRole.PRINCIPAL) + userRepository.countByRole(UserRole.TEACHER);
             totalClassrooms = schoolClassRepository.count();
         } catch (Exception e) {
             // gracefully catch
@@ -164,7 +164,7 @@ public class AdminManagementController {
     public List<java.util.Map<String, Object>> listStaff(Authentication authentication) {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         if (tenantId == null) return Collections.emptyList();
-        return userRepository.findByTenantIdAndRoleIn(tenantId, Arrays.asList(UserRole.ADMIN, UserRole.TEACHER))
+        return userRepository.findByTenantIdAndRoleIn(tenantId, Arrays.asList(UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.TEACHER))
                 .stream()
                 .map(u -> java.util.Map.<String, Object>of(
                         "id", u.getId(),
@@ -183,8 +183,8 @@ public class AdminManagementController {
                             @RequestParam("password") String password,
                             @RequestParam("role") UserRole role,
                             Authentication authentication) {
-        if (role != UserRole.ADMIN && role != UserRole.TEACHER) {
-            return java.util.Map.of("error", "Staff role must be ADMIN or TEACHER");
+        if (role != UserRole.ADMIN && role != UserRole.PRINCIPAL && role != UserRole.TEACHER) {
+            return java.util.Map.of("error", "Staff role must be ADMIN, PRINCIPAL, or TEACHER");
         }
         if (userRepository.existsByEmail(email)) {
             return java.util.Map.of("error", "Email already in use: " + email);

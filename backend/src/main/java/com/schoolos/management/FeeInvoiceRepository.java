@@ -8,4 +8,5 @@ import java.util.UUID;
 @Repository
 public interface FeeInvoiceRepository extends JpaRepository<FeeInvoice, UUID> {
     List<FeeInvoice> findByStudentId(UUID studentId);
+    List<FeeInvoice> findByTenantId(UUID tenantId);
 }
