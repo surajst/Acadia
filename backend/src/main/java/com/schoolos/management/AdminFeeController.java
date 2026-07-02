@@ -128,7 +128,7 @@ public class AdminFeeController {
             }
         }
 
-        feeManagementService.recordPayment(invoiceId, amount, paymentMode);
+        feeManagementService.recordPayment(invoiceId, amount, paymentMode, authentication);
         return "redirect:/web/admin/fees?success=payment_recorded";
     }
 

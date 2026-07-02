@@ -1,6 +1,8 @@
 package com.schoolos.management;
 
+import com.schoolos.common.AuditLogService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -23,6 +25,9 @@ public class FeeManagementService {
 
     @Autowired
     private FeeTransactionRepository feeTransactionRepository;
+
+    @Autowired
+    private AuditLogService auditLogService;
 
     /**
      * Read-only school-wide fee rollup — used by the PRINCIPAL oversight
@@ -55,7 +60,7 @@ public class FeeManagementService {
     }
 
     @Transactional
-    public void recordPayment(UUID invoiceId, BigDecimal paymentAmount, String mode) {
+    public void recordPayment(UUID invoiceId, BigDecimal paymentAmount, String mode, Authentication authentication) {
         if (paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Payment amount must be greater than zero");
         }
@@ -80,6 +85,9 @@ public class FeeManagementService {
         txn.setAcademicYearId(invoice.getAcademicYearId());
 
         feeTransactionRepository.saveAndFlush(txn);
+
+        auditLogService.log(authentication, "FEE_PAYMENT_RECORDED", "FeeInvoice", invoiceId,
+                "Recorded payment of " + paymentAmount + " (" + mode + ") on invoice " + invoiceId);
     }
 
     @Transactional

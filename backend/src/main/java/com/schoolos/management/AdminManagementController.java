@@ -1,5 +1,6 @@
 package com.schoolos.management;
 
+import com.schoolos.common.AuditLogService;
 import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.User;
 import com.schoolos.user.UserRepository;
@@ -52,6 +53,9 @@ public class AdminManagementController {
 
     @Autowired
     private ParentRepository parentRepository;
+
+    @Autowired
+    private AuditLogService auditLogService;
 
     @GetMapping("/web/admin/management")
     public String showAdminManagement(Model model, Authentication authentication) {
@@ -155,6 +159,8 @@ public class AdminManagementController {
         classSection.setSectionName(sectionName);
         classSection.setRoomNumber(roomNumber);
         classSectionRepository.save(classSection);
+        auditLogService.log(authentication, "CLASS_SECTION_ADDED", "ClassSection", classSection.getId(),
+                "Added class section " + gradeName + " - " + sectionName);
 
         return "redirect:/web/admin/management?success=class_section_added";
     }
@@ -203,6 +209,8 @@ public class AdminManagementController {
         staff.setRole(role);
         staff.setActive(true);
         userRepository.save(staff);
+        auditLogService.log(authentication, "STAFF_INVITED", "User", staff.getId(),
+                "Invited " + role.name() + " " + fullName + " (" + email + ")");
 
         return java.util.Map.of("status", "created", "id", staff.getId());
     }
@@ -295,6 +303,8 @@ public class AdminManagementController {
         metric.setParentXp(0);
         metric.setActiveStreak(0);
         studentMetricRepository.save(metric);
+        auditLogService.log(authentication, "STUDENT_ADDED", "Student", student.getId(),
+                "Added student " + firstName + " " + lastName + " (roll " + rollNumber + ")");
 
         return "redirect:/web/admin/management?success=student_added";
     }
@@ -348,6 +358,9 @@ public class AdminManagementController {
             }
         }
 
+        auditLogService.log(authentication, "PARENT_ADDED", "Parent", parent.getId(),
+                "Added parent " + firstName + " " + lastName);
+
         return java.util.Map.of("status", "created", "id", parent.getId());
     }
 
@@ -368,6 +381,10 @@ public class AdminManagementController {
             }
         }
 
+        String studentName = studentRepository.findById(id)
+                .map(s -> s.getFirstName() + " " + s.getLastName())
+                .orElse(id.toString());
+
         try {
             // Clean up dependencies recursively before deleting student
             jdbcTemplate.update("DELETE FROM fee_transactions WHERE invoice_id IN (SELECT id FROM fee_invoices WHERE student_id = ?)", id);
@@ -382,6 +399,8 @@ public class AdminManagementController {
         } catch (Exception e) {
             throw new RuntimeException("Failed to remove student: " + e.getMessage(), e);
         }
+
+        auditLogService.log(authentication, "STUDENT_REMOVED", "Student", id, "Removed student " + studentName);
 
         return "redirect:/web/admin/management?success=student_removed";
     }

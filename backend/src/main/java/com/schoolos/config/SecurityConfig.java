@@ -78,6 +78,7 @@ public class SecurityConfig {
                         .requestMatchers("/web/onboard/signup").permitAll() // public "create your school" form
                         .requestMatchers("/web/onboard/setup").hasRole("ADMIN")
                         .requestMatchers("/web/admin/dashboard").hasAnyRole("ADMIN", "TEACHER", "PRINCIPAL")
+                        .requestMatchers("/web/admin/audit-log", "/web/admin/audit-log/**").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers("/web/admin/**").hasRole("ADMIN")
                         .requestMatchers("/web/teacher/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/web/student/**").hasAnyRole("STUDENT", "PARENT", "ADMIN")

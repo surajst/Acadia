@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Log &middot; ACADIA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(30, 41, 59, 0.8);
+        }
+    </style>
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class="bg-[#0b0f19] text-slate-200 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+
+    <header class="bg-[#0f172a] border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <img src="/images/acadia-logo.png" alt="ACADIA" style="height:32px; mix-blend-mode:screen;">
+                <span style="font-size:16px; font-weight:600; color:white; letter-spacing:2px;">ACADIA</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="/web/admin/dashboard" class="text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-800 p-2 rounded-xl bg-slate-900/50 hover:bg-slate-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                        Audit Log
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5 font-medium">Who changed what, when &mdash; read-only</p>
+                </div>
+            </div>
+            <div></div>
+        </div>
+    </header>
+
+    <div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0;">
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <section class="glass-panel rounded-2xl p-6">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-slate-400 border-b border-slate-800">
+                            <th class="py-2 pr-4">Time</th>
+                            <th class="py-2 pr-4">Actor</th>
+                            <th class="py-2 pr-4">Action</th>
+                            <th class="py-2 pr-4">Entity</th>
+                            <th class="py-2 pr-4">Summary</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditRows"></tbody>
+                </table>
+                <div id="emptyState" class="text-slate-500 text-sm py-6 text-center" style="display:none">No audit entries yet.</div>
+
+                <div class="flex justify-center gap-3 mt-6">
+                    <button id="prevPage" class="bg-slate-800 hover:bg-slate-700 text-white text-sm px-4 py-2 rounded-xl transition-colors border border-slate-700">&larr; Newer</button>
+                    <span id="pageLabel" class="text-slate-400 text-sm px-2 py-2"></span>
+                    <button id="nextPage" class="bg-slate-800 hover:bg-slate-700 text-white text-sm px-4 py-2 rounded-xl transition-colors border border-slate-700">Older &rarr;</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        const pageSize = 50;
+
+        async function loadAuditLog() {
+            const res = await fetch(`/web/admin/audit-log/data?page=${currentPage}&size=${pageSize}`);
+            const entries = await res.json();
+
+            const tbody = document.getElementById('auditRows');
+            const emptyState = document.getElementById('emptyState');
+
+            if (entries.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+                tbody.innerHTML = entries.map(e => `
+                    <tr class="border-b border-slate-800/60">
+                        <td class="py-2 pr-4 text-slate-400 font-mono text-xs">${e.createdAt.replace('T', ' ').slice(0, 19)}</td>
+                        <td class="py-2 pr-4">${e.actorEmail}</td>
+                        <td class="py-2 pr-4"><span class="px-2 py-0.5 bg-indigo-500/10 text-indigo-300 rounded text-xs font-semibold">${e.action}</span></td>
+                        <td class="py-2 pr-4 text-slate-400">${e.entityType}</td>
+                        <td class="py-2 pr-4">${e.summary}</td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('pageLabel').textContent = `Page ${currentPage + 1}`;
+            document.getElementById('prevPage').disabled = currentPage === 0;
+            document.getElementById('nextPage').disabled = entries.length < pageSize;
+        }
+
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 0) { currentPage--; loadAuditLog(); }
+        });
+        document.getElementById('nextPage').addEventListener('click', () => {
+            currentPage++; loadAuditLog();
+        });
+
+        loadAuditLog();
+    </script>
+</body>
+</html>

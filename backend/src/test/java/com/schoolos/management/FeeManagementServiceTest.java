@@ -45,7 +45,7 @@ public class FeeManagementServiceTest {
     @Test
     public void testRecordPayment_UnpaidToPartiallyPaid() {
         // Record a partial payment of 5000 INR
-        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "ONLINE");
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "ONLINE", null);
 
         FeeInvoice updated = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
         assertEquals(new BigDecimal("5000.00"), updated.getAmountPaid());
@@ -61,7 +61,7 @@ public class FeeManagementServiceTest {
     @Test
     public void testRecordPayment_FullyPaid() {
         // Record a payment of 20000 INR
-        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("20000.00"), "CASH");
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("20000.00"), "CASH", null);
 
         FeeInvoice updated = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
         assertEquals(new BigDecimal("20000.00"), updated.getAmountPaid());
@@ -77,14 +77,14 @@ public class FeeManagementServiceTest {
     @Test
     public void testRecordPayment_NegativeAmountThrows() {
         assertThrows(IllegalArgumentException.class, () -> {
-            feeManagementService.recordPayment(testInvoiceId, new BigDecimal("-100.00"), "CHECK");
+            feeManagementService.recordPayment(testInvoiceId, new BigDecimal("-100.00"), "CHECK", null);
         });
     }
 
     @Test
     public void testRecordPayment_InvalidInvoiceThrows() {
         assertThrows(IllegalArgumentException.class, () -> {
-            feeManagementService.recordPayment(UUID.randomUUID(), new BigDecimal("100.00"), "CASH");
+            feeManagementService.recordPayment(UUID.randomUUID(), new BigDecimal("100.00"), "CASH", null);
         });
     }
 }

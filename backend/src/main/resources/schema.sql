@@ -321,4 +321,18 @@ CREATE TABLE IF NOT EXISTS teacher_tasks (
     question_3 VARCHAR(500)
 );
 
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    academic_year_id UUID NOT NULL,
+    actor_user_id UUID,
+    actor_email VARCHAR(255),
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(100),
+    entity_id UUID,
+    summary VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_audit_log_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
 
