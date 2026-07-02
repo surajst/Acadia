@@ -81,6 +81,10 @@
                         <span>📋</span>
                         <span>My Tasks</span>
                     </a>
+                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/assessments}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                        <span>🧮</span>
+                        <span>Gradebook</span>
+                    </a>
 
                     <!-- STUDENT items -->
                     <a th:if="${currentUserRole == 'STUDENT'}" href="/web/student/portal" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
@@ -113,16 +117,38 @@
         </aside>
 
         <main class="flex-1 min-h-0 overflow-y-auto space-y-6 pb-6 pr-2" >
+            <!-- Today's Schedule (TEACHER only) -->
+            <div th:if="${currentUserRole == 'TEACHER'}" id="todaySchedulePanel" class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Today's Schedule</h2>
+                        <p class="text-slate-400 mt-1 text-sm">Your periods for today, with attendance status per class.</p>
+                    </div>
+                    <span class="text-xs uppercase tracking-wider text-slate-400" id="todayScheduleDate"></span>
+                </div>
+                <div id="todayScheduleRows" class="grid gap-3">
+                    <p class="text-slate-500 text-sm">Loading schedule…</p>
+                </div>
+            </div>
+
             <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-6 space-y-4">
                 <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h2 class="text-2xl font-bold text-white">Verification Queue</h2>
+                        <h2 class="text-2xl font-bold text-white">Verification Queue
+                            <span class="text-sm font-semibold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-0.5 align-middle ml-2" th:text="${#lists.size(pendingSubmissions)} + ' pending'">0 pending</span>
+                        </h2>
                         <p class="text-slate-400 mt-1 text-sm">Review academic milestone submissions from students and award XP balances.</p>
                     </div>
-                    <span class="inline-flex items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-wider text-slate-300">
-                        <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Real-time review mode
-                    </span>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="bulkApproveMilestones()" th:if="${not #lists.isEmpty(pendingSubmissions)}"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors">
+                            Approve Selected
+                        </button>
+                        <span class="inline-flex items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-wider text-slate-300">
+                            <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Real-time review mode
+                        </span>
+                    </div>
                 </div>
 
                 <div class="grid gap-6">
@@ -147,6 +173,7 @@
                          class="bg-slate-900/40 backdrop-blur-md border border-slate-800/60 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-slate-700/60 hover:bg-slate-800/50 shadow-xl shadow-black/10">
                         <div class="space-y-3 flex-1">
                             <div class="flex flex-wrap items-center gap-3">
+                                <input type="checkbox" class="milestone-checkbox h-4 w-4 rounded border-slate-700 bg-slate-900" th:value="${task.id}">
                                 <span class="text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-300 px-2.5 py-1 rounded-md border border-indigo-500/20" th:text="${task.skillName}">Fraction Mastery</span>
                                 <span class="text-xs font-medium text-amber-300 bg-amber-400/10 px-2.5 py-1 rounded-md border border-amber-400/20" th:text="'+' + ${task.xpBounty} + ' Academic XP'">+250 XP</span>
                             </div>
@@ -208,9 +235,15 @@
             <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-6 space-y-4 mt-8">
                 <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h2 class="text-2xl font-bold text-white">Syllabus Verification Queue</h2>
+                        <h2 class="text-2xl font-bold text-white">Syllabus Verification Queue
+                            <span class="text-sm font-semibold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-0.5 align-middle ml-2" th:text="${#lists.size(pendingProgressQueue)} + ' pending'">0 pending</span>
+                        </h2>
                         <p class="text-slate-400 mt-1 text-sm">Review student syllabus completions and award XP.</p>
                     </div>
+                    <button type="button" onclick="bulkApproveSyllabus()" th:if="${not #lists.isEmpty(pendingProgressQueue)}"
+                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors">
+                        Approve Selected
+                    </button>
                 </div>
 
                 <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl p-6">
@@ -227,6 +260,7 @@
                              class="bg-slate-900/40 backdrop-blur-md border border-slate-800/60 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-slate-700/60 hover:bg-slate-800/50 shadow-xl shadow-black/10">
                             <div class="space-y-3 flex-1">
                                 <div class="flex flex-wrap items-center gap-3">
+                                    <input type="checkbox" class="syllabus-checkbox h-4 w-4 rounded border-slate-700 bg-slate-900" th:value="${prog.id}">
                                     <span class="text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-300 px-2.5 py-1 rounded-md border border-indigo-500/20" th:text="${prog.subjectName}">Subject</span>
                                     <span class="text-xs font-medium text-emerald-300 bg-emerald-400/10 px-2.5 py-1 rounded-md border border-emerald-400/20" th:text="${prog.topicName}">Topic</span>
                                 </div>
@@ -379,6 +413,78 @@
                 alert('Network error. Please try again.');
             }
         }
+
+        async function bulkApproveMilestones() {
+            const ids = Array.from(document.querySelectorAll('.milestone-checkbox:checked')).map(cb => cb.value);
+            if (ids.length === 0) { alert('Select at least one submission first.'); return; }
+            if (!confirm(`Approve ${ids.length} selected submission(s)?`)) return;
+
+            const csrfToken = document.querySelector('input[name="_csrf"]').value;
+            for (const id of ids) {
+                const formData = new URLSearchParams();
+                formData.append('submissionId', id);
+                await fetch('/api/teacher/milestone/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
+                    body: formData
+                });
+            }
+            window.location.reload();
+        }
+
+        async function bulkApproveSyllabus() {
+            const ids = Array.from(document.querySelectorAll('.syllabus-checkbox:checked')).map(cb => cb.value);
+            if (ids.length === 0) { alert('Select at least one topic first.'); return; }
+            if (!confirm(`Approve ${ids.length} selected topic(s)?`)) return;
+
+            const csrfToken = document.querySelector('input[name="_csrf"]').value;
+            for (const id of ids) {
+                const formData = new URLSearchParams();
+                formData.append('studentProgressId', id);
+                await fetch('/api/teacher/progress/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
+                    body: formData
+                });
+            }
+            window.location.reload();
+        }
+
+        async function loadTodaySchedule() {
+            const panel = document.getElementById('todaySchedulePanel');
+            if (!panel) return; // not a TEACHER view
+
+            const dateLabel = document.getElementById('todayScheduleDate');
+            dateLabel.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+
+            const rows = document.getElementById('todayScheduleRows');
+            try {
+                const res = await fetch('/api/teacher/timetable/today');
+                const periods = await res.json();
+                if (!Array.isArray(periods) || periods.length === 0) {
+                    rows.innerHTML = '<p class="text-slate-500 text-sm">No periods scheduled for today.</p>';
+                    return;
+                }
+                rows.innerHTML = periods.map(p => `
+                    <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/60 rounded-xl px-4 py-3">
+                        <div class="flex items-center gap-4">
+                            <span class="text-xs font-mono text-slate-400 w-24">${p.startTime}–${p.endTime}</span>
+                            <span class="text-sm font-semibold text-white">${p.subjectName}</span>
+                            <span class="text-xs text-slate-400">${p.className}</span>
+                            <span class="text-xs text-slate-500">${p.roomNumber || ''}</span>
+                        </div>
+                        <span class="text-xs px-2.5 py-1 rounded-md border ${p.attendanceMarked
+                            ? 'text-emerald-300 bg-emerald-400/10 border-emerald-400/20'
+                            : 'text-amber-300 bg-amber-400/10 border-amber-400/20'}">
+                            ${p.attendanceMarked ? 'Attendance marked' : 'Attendance pending'}
+                        </span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                rows.innerHTML = '<p class="text-slate-500 text-sm">Could not load schedule.</p>';
+            }
+        }
+        loadTodaySchedule();
     </script>
 
 
