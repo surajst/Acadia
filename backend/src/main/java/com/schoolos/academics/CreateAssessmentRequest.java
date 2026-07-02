@@ -1,13 +1,11 @@
 package com.schoolos.academics;
 
-import com.schoolos.management.SubjectType;
-
 import java.time.LocalDate;
 import java.util.UUID;
 
 public class CreateAssessmentRequest {
     private String title;
-    private SubjectType subjectType;
+    private String subjectCode;
     private UUID classSectionId;
     private AssessmentTerm term;
     private Integer maxScore;
@@ -16,8 +14,8 @@ public class CreateAssessmentRequest {
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
-    public SubjectType getSubjectType() { return subjectType; }
-    public void setSubjectType(SubjectType subjectType) { this.subjectType = subjectType; }
+    public String getSubjectCode() { return subjectCode; }
+    public void setSubjectCode(String subjectCode) { this.subjectCode = subjectCode; }
 
     public UUID getClassSectionId() { return classSectionId; }
     public void setClassSectionId(UUID classSectionId) { this.classSectionId = classSectionId; }

@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useContext, useState, useEffect, useCallback } from 'react';
 import { DataContext } from './_layout';
-import { getStudentSyllabus } from '../../services/api';
+import { getStudentSyllabus, getSubjects } from '../../services/api';
 
 interface Topic {
   id: string;
@@ -16,32 +16,8 @@ interface Topic {
   completed: boolean;
 }
 
-// Display labels for subject enum values
-const SUBJECT_DISPLAY: Record<string, string> = {
-  SCIENCE:        'Science',
-  SOCIAL_SCIENCE: 'Social Science',
-  ENGLISH:        'English',
-  MATHEMATICS:    'Math',
-};
-
-// Accent colour per subject (used on group headers)
-const SUBJECT_ACCENT: Record<string, string> = {
-  SCIENCE:        '#22c55e',
-  SOCIAL_SCIENCE: '#f59e0b',
-  ENGLISH:        '#3b82f6',
-  MATHEMATICS:    '#a855f7',
-};
-
-// Chip labels → backend enum (MATHEMATICS omitted — 0 topics in DB)
-const CHIP_LABELS = ['All', 'Science', 'Social Science', 'English'];
-const CHIP_TO_ENUM: Record<string, string> = {
-  'Science':        'SCIENCE',
-  'Social Science': 'SOCIAL_SCIENCE',
-  'English':        'ENGLISH',
-};
-
-// Preferred display order for subject groups
-const SUBJECT_ORDER = ['SCIENCE', 'SOCIAL_SCIENCE', 'ENGLISH', 'MATHEMATICS'];
+// Fallback accent palette, applied in catalog order when a subject has no colorHex set.
+const FALLBACK_ACCENTS = ['#22c55e', '#f59e0b', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
 
 export default function SyllabusScreen() {
   const { role } = useContext(DataContext);
@@ -50,6 +26,9 @@ export default function SyllabusScreen() {
   const [topics, setTopics]               = useState<Topic[]>([]);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState<string | null>(null);
+  const [subjectOrder, setSubjectOrder]     = useState<string[]>([]);
+  const [subjectDisplay, setSubjectDisplay] = useState<Record<string, string>>({});
+  const [subjectAccent, setSubjectAccent]   = useState<Record<string, string>>({});
 
   const fetchSyllabus = useCallback(async () => {
     try {
@@ -66,6 +45,27 @@ export default function SyllabusScreen() {
 
   useEffect(() => { fetchSyllabus(); }, [fetchSyllabus]);
 
+  useEffect(() => {
+    getSubjects()
+      .then((subjects) => {
+        const list = Array.isArray(subjects) ? subjects : [];
+        setSubjectOrder(list.map((s) => s.code));
+        setSubjectDisplay(Object.fromEntries(list.map((s) => [s.code, s.displayName])));
+        setSubjectAccent(Object.fromEntries(
+          list.map((s, i) => [s.code, s.colorHex || FALLBACK_ACCENTS[i % FALLBACK_ACCENTS.length]])
+        ));
+      })
+      .catch(() => {});
+  }, []);
+
+  // Chips are built from subjects that actually have topics, in catalog order.
+  const availableCodes = Array.from(new Set(topics.map((t) => t.subjectType)))
+    .sort((a, b) => subjectOrder.indexOf(a) - subjectOrder.indexOf(b));
+  const CHIP_LABELS = ['All', ...availableCodes.map((code) => subjectDisplay[code] ?? code)];
+  const CHIP_TO_CODE: Record<string, string> = Object.fromEntries(
+    availableCodes.map((code) => [subjectDisplay[code] ?? code, code])
+  );
+
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchSyllabus();
@@ -75,7 +75,7 @@ export default function SyllabusScreen() {
   // Filter by active chip
   const filtered = activeSubject === 'All'
     ? topics
-    : topics.filter(t => t.subjectType === CHIP_TO_ENUM[activeSubject]);
+    : topics.filter(t => t.subjectType === CHIP_TO_CODE[activeSubject]);
 
   // Group by subjectType, sort groups by preferred display order
   const grouped: Record<string, Topic[]> = {};
@@ -84,7 +84,7 @@ export default function SyllabusScreen() {
     grouped[t.subjectType].push(t);
   });
   const subjectKeys = Object.keys(grouped).sort(
-    (a, b) => SUBJECT_ORDER.indexOf(a) - SUBJECT_ORDER.indexOf(b),
+    (a, b) => subjectOrder.indexOf(a) - subjectOrder.indexOf(b),
   );
 
   if (loading) {
@@ -132,7 +132,7 @@ export default function SyllabusScreen() {
           subjectKeys.map(subjectKey => {
             const subjectTopics = grouped[subjectKey];
             const completedCount = subjectTopics.filter(t => t.completed).length;
-            const accent = SUBJECT_ACCENT[subjectKey] ?? '#6366f1';
+            const accent = subjectAccent[subjectKey] ?? '#6366f1';
 
             return (
               <View key={subjectKey} style={styles.subjectGroup}>
@@ -141,7 +141,7 @@ export default function SyllabusScreen() {
                 {activeSubject === 'All' && (
                   <View style={[styles.subjectHeader, { borderLeftColor: accent }]}>
                     <Text style={styles.subjectName}>
-                      {SUBJECT_DISPLAY[subjectKey] ?? subjectKey}
+                      {subjectDisplay[subjectKey] ?? subjectKey}
                     </Text>
                     <Text style={[styles.subjectProgress, { color: accent }]}>
                       {completedCount}/{subjectTopics.length} completed
@@ -160,7 +160,7 @@ export default function SyllabusScreen() {
                       <View style={styles.topicTextContainer}>
                         <Text style={styles.itemTitle}>{topic.topicName}</Text>
                         <Text style={styles.itemSubtitle}>
-                          {SUBJECT_DISPLAY[topic.subjectType] ?? topic.subjectType} • {topic.xpReward} XP
+                          {subjectDisplay[topic.subjectType] ?? topic.subjectType} • {topic.xpReward} XP
                         </Text>
                       </View>
                       {topic.completed && (

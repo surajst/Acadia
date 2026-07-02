@@ -11,25 +11,22 @@ import {
 import { useContext, useState, useEffect } from 'react';
 import * as Sharing from 'expo-sharing';
 import { DataContext } from './_layout';
-import { getSubjectPerformance, downloadReportCard } from '../../services/api';
+import { getSubjectPerformance, getSubjects, downloadReportCard } from '../../services/api';
 
 const TERMS = ['TERM1', 'TERM2', 'FINAL'] as const;
 type Term = typeof TERMS[number];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SubjectPerformance = {
-  subjectType: string;
+  subjectCode: string;
   averagePercentage: number;
   trend: number[];
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const SUBJECT_LABEL: Record<string, string> = {
-  MATHEMATICS: 'Mathematics',
-  SCIENCE: 'Science',
-  SOCIAL_SCIENCE: 'Social Science',
-  ENGLISH: 'English',
-  LANGUAGE: 'Language',
+type Subject = {
+  code: string;
+  displayName: string;
+  colorHex?: string | null;
 };
 
 function scoreColor(pct: number): string {
@@ -39,9 +36,8 @@ function scoreColor(pct: number): string {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function SubjectCard({ subject }: { subject: SubjectPerformance }) {
+function SubjectCard({ subject, label }: { subject: SubjectPerformance; label: string }) {
   const color = scoreColor(subject.averagePercentage);
-  const label = SUBJECT_LABEL[subject.subjectType] ?? subject.subjectType;
 
   return (
     <View style={styles.subjectCard}>
@@ -79,8 +75,19 @@ export default function PerformanceScreen() {
   const [loading, setLoading] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState<Term>('TERM1');
   const [downloading, setDownloading] = useState(false);
+  const [subjectCatalog, setSubjectCatalog] = useState<Record<string, string>>({});
 
   const studentId = data?.student?.id;
+
+  useEffect(() => {
+    getSubjects()
+      .then((result) => {
+        const catalog: Record<string, string> = {};
+        (Array.isArray(result) ? result : []).forEach((s) => { catalog[s.code] = s.displayName; });
+        setSubjectCatalog(catalog);
+      })
+      .catch(() => setSubjectCatalog({}));
+  }, []);
 
   const handleDownloadReportCard = async () => {
     setDownloading(true);
@@ -172,7 +179,9 @@ export default function PerformanceScreen() {
         {loading ? (
           <ActivityIndicator color="#6366f1" style={{ marginTop: 20 }} />
         ) : subjects && subjects.length > 0 ? (
-          subjects.map((s) => <SubjectCard key={s.subjectType} subject={s} />)
+          subjects.map((s) => (
+            <SubjectCard key={s.subjectCode} subject={s} label={subjectCatalog[s.subjectCode] ?? s.subjectCode} />
+          ))
         ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No graded assessments yet.</Text>

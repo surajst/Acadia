@@ -9,8 +9,8 @@ import java.util.UUID;
 public interface CurriculumRepository extends JpaRepository<Curriculum, UUID> {
     
     // Fetch all topics for a given syllabus, standard, and subject, ordered by topicOrder
-    List<Curriculum> findByTenantIdAndSyllabusTypeAndStandardAndSubjectTypeOrderByTopicOrderAsc(
-        UUID tenantId, SyllabusType syllabusType, Integer standard, SubjectType subjectType
+    List<Curriculum> findByTenantIdAndSyllabusTypeAndStandardAndSubjectCodeOrderByTopicOrderAsc(
+        UUID tenantId, SyllabusType syllabusType, Integer standard, String subjectCode
     );
 
     // Fetch all curriculum records to extract distinct subjects for a given syllabus and standard

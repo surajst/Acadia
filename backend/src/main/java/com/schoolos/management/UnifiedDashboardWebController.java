@@ -92,8 +92,9 @@ public class UnifiedDashboardWebController {
         UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
         String activeTeacherName = username;
 
-        // If sections are populated, align tenantId
-        if (!checkSections.isEmpty()) {
+        // If sections are populated and tenant couldn't be resolved from the
+        // authenticated user, align tenantId from the data as a last resort.
+        if (tenantId == null && !checkSections.isEmpty()) {
             tenantId = checkSections.get(0).getTenantId();
         }
 
@@ -356,7 +357,7 @@ public class UnifiedDashboardWebController {
                 Curriculum curriculum = sp.getCurriculum();
                 
                 String studentName = student != null ? student.getFirstName() + " " + student.getLastName() : "Unknown Student";
-                String subjectName = curriculum != null && curriculum.getSubjectType() != null ? curriculum.getSubjectType().name() : "Unknown";
+                String subjectName = curriculum != null && curriculum.getSubjectCode() != null ? curriculum.getSubjectCode() : "Unknown";
                 String topicName = curriculum != null ? curriculum.getTopicName() : "Unknown Topic";
                 
                 pendingProgressQueue.add(new StudentProgressDto(
@@ -481,7 +482,7 @@ public class UnifiedDashboardWebController {
 
         try {
             checkSections = classSectionRepo.findAll();
-            if (!checkSections.isEmpty()) {
+            if (tenantId == null && !checkSections.isEmpty()) {
                 tenantId = checkSections.get(0).getTenantId();
             }
         } catch (Exception e) {

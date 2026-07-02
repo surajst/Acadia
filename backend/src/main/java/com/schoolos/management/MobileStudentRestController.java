@@ -171,7 +171,7 @@ public class MobileStudentRestController {
             Map<String, Object> entry = new java.util.LinkedHashMap<>();
             entry.put("id", topic.getId());
             entry.put("topicName", topic.getTopicName());
-            entry.put("subjectType", topic.getSubjectType().name());
+            entry.put("subjectType", topic.getSubjectCode());
             entry.put("standard", topic.getStandard());
             entry.put("xpReward", topic.getXpReward());
             entry.put("topicOrder", topic.getTopicOrder());

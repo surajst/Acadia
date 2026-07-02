@@ -46,7 +46,7 @@ public class StudentProgressService {
 
         Map<String, List<TopicDto>> grouped = new LinkedHashMap<>();
         for (Curriculum topic : allTopics) {
-            String subject = topic.getSubjectType().name();
+            String subject = topic.getSubjectCode();
             grouped.computeIfAbsent(subject, k -> new ArrayList<>());
 
             StudentProgress progress = progressByTopic.get(topic.getId());

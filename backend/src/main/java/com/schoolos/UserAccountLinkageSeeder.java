@@ -1,11 +1,14 @@
 package com.schoolos;
 
+import com.schoolos.academics.SubjectService;
 import com.schoolos.management.Parent;
 import com.schoolos.management.ParentRepository;
 import com.schoolos.management.Student;
 import com.schoolos.management.StudentRepository;
 import com.schoolos.management.TeacherTask;
 import com.schoolos.management.TeacherTaskRepository;
+import com.schoolos.tenant.AcademicYear;
+import com.schoolos.tenant.AcademicYearRepository;
 import com.schoolos.tenant.Tenant;
 import com.schoolos.tenant.TenantRepository;
 import com.schoolos.user.User;
@@ -17,6 +20,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * One-time backfill linking existing seeded PARENT/STUDENT login accounts to
@@ -43,6 +47,12 @@ public class UserAccountLinkageSeeder implements CommandLineRunner {
 
     @Autowired
     private TenantRepository tenantRepository;
+
+    @Autowired
+    private AcademicYearRepository academicYearRepository;
+
+    @Autowired
+    private SubjectService subjectService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -77,8 +87,22 @@ public class UserAccountLinkageSeeder implements CommandLineRunner {
         }
 
         backfillTeacherTaskTenant();
+        seedDefaultSubjectsForAllTenants();
 
         System.out.println("--- USER ACCOUNT LINKAGE BACKFILL COMPLETED ---\n");
+    }
+
+    /** Idempotent — does nothing for a tenant that already has subjects. */
+    private void seedDefaultSubjectsForAllTenants() {
+        for (Tenant tenant : tenantRepository.findAll()) {
+            List<AcademicYear> years = academicYearRepository.findByTenantId(tenant.getId());
+            UUID academicYearId = years.stream()
+                    .filter(AcademicYear::isCurrent)
+                    .map(AcademicYear::getId)
+                    .findFirst()
+                    .orElseGet(() -> years.stream().map(AcademicYear::getId).findFirst().orElse(null));
+            subjectService.seedDefaultSubjectsIfNone(tenant.getId(), academicYearId);
+        }
     }
 
     /**

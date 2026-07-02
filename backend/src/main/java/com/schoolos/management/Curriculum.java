@@ -23,9 +23,8 @@ public class Curriculum {
     @Column(name = "standard", nullable = false)
     private Integer standard;
     
-    @Enumerated(EnumType.STRING)
     @Column(name = "subject_type", nullable = false)
-    private SubjectType subjectType;
+    private String subjectCode;
 
     @Column(name = "topic_name", nullable = false)
     private String topicName;
@@ -78,12 +77,12 @@ public class Curriculum {
         this.standard = standard;
     }
 
-    public SubjectType getSubjectType() {
-        return subjectType;
+    public String getSubjectCode() {
+        return subjectCode;
     }
 
-    public void setSubjectType(SubjectType subjectType) {
-        this.subjectType = subjectType;
+    public void setSubjectCode(String subjectCode) {
+        this.subjectCode = subjectCode;
     }
 
     public String getTopicName() {

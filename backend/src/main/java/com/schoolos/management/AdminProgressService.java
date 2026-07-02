@@ -60,7 +60,7 @@ public class AdminProgressService {
 
             Map<String, Object> bySubject = new LinkedHashMap<>();
             Map<String, List<Curriculum>> stdCurrBySubject = stdCurriculum.stream()
-                    .collect(Collectors.groupingBy(c -> c.getSubjectType().name()));
+                    .collect(Collectors.groupingBy(c -> c.getSubjectCode()));
             
             for (Map.Entry<String, List<Curriculum>> subjEntry : stdCurrBySubject.entrySet()) {
                 String subject = subjEntry.getKey();
@@ -95,7 +95,7 @@ public class AdminProgressService {
             Map<String, Object> map = new HashMap<>();
             map.put("chapterId", c.getId());
             map.put("topicName", c.getTopicName());
-            map.put("subject", c.getSubjectType().name());
+            map.put("subject", c.getSubjectCode());
             map.put("standard", std);
             map.put("completionPercent", compPct);
             return map;
@@ -164,7 +164,7 @@ public class AdminProgressService {
         
         Map<String, Object> subjects = new LinkedHashMap<>();
         Map<String, List<Curriculum>> currBySubject = classCurriculum.stream()
-                .collect(Collectors.groupingBy(c -> c.getSubjectType().name()));
+                .collect(Collectors.groupingBy(c -> c.getSubjectCode()));
                 
         for (Map.Entry<String, List<Curriculum>> entry : currBySubject.entrySet()) {
             String subject = entry.getKey();
@@ -194,7 +194,7 @@ public class AdminProgressService {
             Map<String, Object> map = new HashMap<>();
             map.put("chapterId", c.getId());
             map.put("topicName", c.getTopicName());
-            map.put("subject", c.getSubjectType().name());
+            map.put("subject", c.getSubjectCode());
             map.put("completedByStudents", compCount);
             map.put("completionPercent", pct);
             chapters.add(map);

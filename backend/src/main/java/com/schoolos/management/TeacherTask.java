@@ -27,9 +27,8 @@ public class TeacherTask {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "subject_type", nullable = false)
-    private SubjectType subjectType;
+    private String subjectCode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "task_type", nullable = false)
@@ -85,8 +84,8 @@ public class TeacherTask {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     
-    public SubjectType getSubjectType() { return subjectType; }
-    public void setSubjectType(SubjectType subjectType) { this.subjectType = subjectType; }
+    public String getSubjectCode() { return subjectCode; }
+    public void setSubjectCode(String subjectCode) { this.subjectCode = subjectCode; }
     
     public TaskType getTaskType() { return taskType; }
     public void setTaskType(TaskType taskType) { this.taskType = taskType; }

@@ -26,7 +26,7 @@ public class TeacherTaskService {
         task.setAcademicYearId(academicYearId);
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
-        task.setSubjectType(request.getSubjectType());
+        task.setSubjectCode(request.getSubjectCode());
         task.setTaskType(request.getTaskType());
         task.setStandard(request.getStandard());
 

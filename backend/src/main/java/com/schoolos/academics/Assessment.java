@@ -2,7 +2,6 @@ package com.schoolos.academics;
 
 import com.schoolos.common.BaseTenantEntity;
 import com.schoolos.management.ClassSection;
-import com.schoolos.management.SubjectType;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -17,9 +16,8 @@ public class Assessment extends BaseTenantEntity {
     @Column(nullable = false)
     private String title;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "subject_type", nullable = false)
-    private SubjectType subjectType;
+    private String subjectCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_section_id", nullable = false)
@@ -44,8 +42,8 @@ public class Assessment extends BaseTenantEntity {
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
-    public SubjectType getSubjectType() { return subjectType; }
-    public void setSubjectType(SubjectType subjectType) { this.subjectType = subjectType; }
+    public String getSubjectCode() { return subjectCode; }
+    public void setSubjectCode(String subjectCode) { this.subjectCode = subjectCode; }
 
     public ClassSection getClassSection() { return classSection; }
     public void setClassSection(ClassSection classSection) { this.classSection = classSection; }

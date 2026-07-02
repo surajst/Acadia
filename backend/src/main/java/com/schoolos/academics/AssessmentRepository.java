@@ -10,5 +10,5 @@ import java.util.UUID;
 @Repository
 public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
     List<Assessment> findByClassSection(ClassSection classSection);
-    List<Assessment> findByClassSectionAndSubjectType(ClassSection classSection, com.schoolos.management.SubjectType subjectType);
+    List<Assessment> findByClassSectionAndSubjectCode(ClassSection classSection, String subjectCode);
 }

@@ -6,7 +6,7 @@ import java.util.UUID;
 public class TeacherTaskRequest {
     private String title;
     private String description;
-    private SubjectType subjectType;
+    private String subjectCode;
     private TaskType taskType;
     private Integer standard;
     private Boolean assignedToClass;
@@ -23,8 +23,8 @@ public class TeacherTaskRequest {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public SubjectType getSubjectType() { return subjectType; }
-    public void setSubjectType(SubjectType subjectType) { this.subjectType = subjectType; }
+    public String getSubjectCode() { return subjectCode; }
+    public void setSubjectCode(String subjectCode) { this.subjectCode = subjectCode; }
 
     public TaskType getTaskType() { return taskType; }
     public void setTaskType(TaskType taskType) { this.taskType = taskType; }

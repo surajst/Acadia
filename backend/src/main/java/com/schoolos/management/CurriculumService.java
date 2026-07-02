@@ -17,21 +17,21 @@ public class CurriculumService {
         this.curriculumRepository = curriculumRepository;
     }
 
-    public List<Curriculum> getTopics(UUID tenantId, SyllabusType syllabus, int standard, SubjectType subject) {
-        if (subject == null) {
+    public List<Curriculum> getTopics(UUID tenantId, SyllabusType syllabus, int standard, String subjectCode) {
+        if (subjectCode == null) {
             return curriculumRepository.findByTenantIdAndSyllabusTypeAndStandardOrderByTopicOrderAsc(
                     tenantId, syllabus, standard);
         }
-        return curriculumRepository.findByTenantIdAndSyllabusTypeAndStandardAndSubjectTypeOrderByTopicOrderAsc(
-                tenantId, syllabus, standard, subject);
+        return curriculumRepository.findByTenantIdAndSyllabusTypeAndStandardAndSubjectCodeOrderByTopicOrderAsc(
+                tenantId, syllabus, standard, subjectCode);
     }
 
-    public List<SubjectType> getSubjects(UUID tenantId, SyllabusType syllabus, int standard) {
+    public List<String> getSubjects(UUID tenantId, SyllabusType syllabus, int standard) {
         List<Curriculum> records = curriculumRepository.findByTenantIdAndSyllabusTypeAndStandard(
                 tenantId, syllabus, standard);
 
         return records.stream()
-                .map(Curriculum::getSubjectType)
+                .map(Curriculum::getSubjectCode)
                 .distinct()
                 .collect(Collectors.toList());
     }

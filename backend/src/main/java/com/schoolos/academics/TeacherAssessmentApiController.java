@@ -50,7 +50,7 @@ public class TeacherAssessmentApiController {
         assessment.setTenantId(classSection.getTenantId());
         assessment.setAcademicYearId(classSection.getAcademicYearId());
         assessment.setTitle(request.getTitle());
-        assessment.setSubjectType(request.getSubjectType());
+        assessment.setSubjectCode(request.getSubjectCode());
         assessment.setClassSection(classSection);
         assessment.setTerm(request.getTerm());
         assessment.setMaxScore(request.getMaxScore());

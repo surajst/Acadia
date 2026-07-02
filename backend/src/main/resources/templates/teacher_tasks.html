@@ -70,11 +70,7 @@
                     <div class="space-y-1">
                         <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Subject</label>
                         <select id="subjectType" required class="w-full px-4 py-2 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none">
-                            <option value="MATHEMATICS">Mathematics</option>
-                            <option value="SCIENCE">Science</option>
-                            <option value="SOCIAL_SCIENCE">Social Science</option>
-                            <option value="ENGLISH">English</option>
-                            <option value="LANGUAGE">Language</option>
+                            <option value="">Loading subjects...</option>
                         </select>
                     </div>
 
@@ -193,10 +189,24 @@
     </main>
 
     <script>
+        async function loadSubjectOptions() {
+            const subjectSelect = document.getElementById('subjectType');
+            try {
+                const response = await fetch('/api/subjects');
+                const subjects = await response.json();
+                subjectSelect.innerHTML = subjects.map(s => `<option value="${s.code}">${s.displayName}</option>`).join('');
+            } catch (err) {
+                console.error('Error loading subjects:', err);
+                subjectSelect.innerHTML = '<option value="">Unable to load subjects</option>';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            loadSubjectOptions();
+
             const taskTypeSelect = document.getElementById('taskType');
             const readingSection = document.getElementById('readingQuestionsSection');
-            
+
             taskTypeSelect.addEventListener('change', (e) => {
                 if (e.target.value === 'READING') {
                     readingSection.classList.add('show');
@@ -283,7 +293,7 @@
                 const request = {
                     title: document.getElementById('taskTitle').value,
                     description: document.getElementById('taskDescription').value,
-                    subjectType: document.getElementById('subjectType').value,
+                    subjectCode: document.getElementById('subjectType').value,
                     taskType: document.getElementById('taskType').value,
                     standard: parseInt(document.getElementById('standard').value),
                     assignedToClass: isAssignedToClass,
@@ -351,7 +361,7 @@
                     return `
                         <tr class="hover:bg-slate-800/30 transition-colors">
                             <td class="px-4 py-4 font-semibold text-white">${task.title}</td>
-                            <td class="px-4 py-4">${task.subjectType}</td>
+                            <td class="px-4 py-4">${task.subjectCode}</td>
                             <td class="px-4 py-4"><span class="px-2 py-1 text-[10px] rounded bg-indigo-500/10 text-indigo-300 font-bold">${task.taskType}</span></td>
                             <td class="px-4 py-4">Class ${task.standard}</td>
                             <td class="px-4 py-4">${task.assignedToClass ? '🏫 Whole Class' : '👤 Individual'}</td>

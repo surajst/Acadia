@@ -2,7 +2,6 @@ package com.schoolos.academics;
 
 import com.schoolos.management.Student;
 import com.schoolos.management.StudentRepository;
-import com.schoolos.management.SubjectType;
 import com.schoolos.tenant.Tenant;
 import com.schoolos.tenant.TenantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +37,9 @@ public class ReportCardService {
     @Autowired
     private SpringTemplateEngine templateEngine;
 
+    @Autowired
+    private SubjectService subjectService;
+
     public byte[] generateReportCardPdf(UUID studentId, AssessmentTerm term) {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
@@ -46,12 +48,17 @@ public class ReportCardService {
                 .filter(s -> s.getAssessment().getTerm() == term)
                 .collect(Collectors.toList());
 
-        Map<SubjectType, List<StudentAssessmentScore>> bySubject = termScores.stream()
-                .collect(Collectors.groupingBy(s -> s.getAssessment().getSubjectType()));
+        Map<String, String> subjectDisplayNames = subjectService.listAllSubjects(student.getTenantId()).stream()
+                .collect(Collectors.toMap(Subject::getCode, Subject::getDisplayName, (a, b) -> a));
+
+        Map<String, List<StudentAssessmentScore>> bySubject = termScores.stream()
+                .collect(Collectors.groupingBy(s -> s.getAssessment().getSubjectCode()));
 
         List<Map<String, Object>> subjectRows = bySubject.entrySet().stream()
-                .sorted(Comparator.comparing(e -> e.getKey().name()))
-                .map(entry -> buildSubjectRow(entry.getKey(), entry.getValue()))
+                .sorted(Comparator.comparing(Map.Entry::getKey))
+                .map(entry -> buildSubjectRow(
+                        subjectDisplayNames.getOrDefault(entry.getKey(), entry.getKey()),
+                        entry.getValue()))
                 .collect(Collectors.toList());
 
         double overallAverage = subjectRows.stream()
@@ -78,7 +85,7 @@ public class ReportCardService {
         return renderPdf(html);
     }
 
-    private Map<String, Object> buildSubjectRow(SubjectType subjectType, List<StudentAssessmentScore> scores) {
+    private Map<String, Object> buildSubjectRow(String subjectDisplayName, List<StudentAssessmentScore> scores) {
         List<Map<String, Object>> assessmentRows = scores.stream()
                 .sorted(Comparator.comparing(s -> s.getAssessment().getAssessmentDate()))
                 .map(s -> {
@@ -97,7 +104,7 @@ public class ReportCardService {
                 .orElse(0.0);
 
         Map<String, Object> row = new HashMap<>();
-        row.put("subjectName", subjectType.name());
+        row.put("subjectName", subjectDisplayName);
         row.put("assessments", assessmentRows);
         row.put("averagePercentage", round1(average));
         row.put("grade", letterGrade(average));

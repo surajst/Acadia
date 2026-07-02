@@ -73,6 +73,14 @@ export const getSubjectPerformance = async (studentId) => {
   return Array.isArray(response.data) ? response.data : (response.data.value ?? []);
 };
 
+export const getSubjects = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/subjects`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : (response.data.value ?? []);
+};
+
 export const downloadReportCard = async (term, studentId) => {
   const token = await AsyncStorage.getItem('userToken');
   const params = new URLSearchParams({ term });

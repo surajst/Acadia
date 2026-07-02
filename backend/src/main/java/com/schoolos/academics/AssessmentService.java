@@ -1,6 +1,5 @@
 package com.schoolos.academics;
 
-import com.schoolos.management.SubjectType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +23,8 @@ public class AssessmentService {
     public List<SubjectPerformance> getSubjectPerformance(UUID studentId) {
         List<StudentAssessmentScore> scores = scoreRepository.findByStudentId(studentId);
 
-        Map<SubjectType, List<StudentAssessmentScore>> bySubject = scores.stream()
-                .collect(Collectors.groupingBy(s -> s.getAssessment().getSubjectType()));
+        Map<String, List<StudentAssessmentScore>> bySubject = scores.stream()
+                .collect(Collectors.groupingBy(s -> s.getAssessment().getSubjectCode()));
 
         return bySubject.entrySet().stream()
                 .map(entry -> {
@@ -44,7 +43,7 @@ public class AssessmentService {
 
                     return new SubjectPerformance(entry.getKey(), Math.round(average * 10) / 10.0, percentages);
                 })
-                .sorted(Comparator.comparing(sp -> sp.subjectType().name()))
+                .sorted(Comparator.comparing(SubjectPerformance::subjectCode))
                 .collect(Collectors.toList());
     }
 }

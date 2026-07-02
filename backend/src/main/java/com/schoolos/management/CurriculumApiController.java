@@ -29,22 +29,22 @@ public class CurriculumApiController {
     public ResponseEntity<List<Curriculum>> getTopics(
             @RequestParam("syllabus") SyllabusType syllabus,
             @RequestParam("standard") int standard,
-            @RequestParam(value = "subject", required = false) SubjectType subject,
+            @RequestParam(value = "subject", required = false) String subjectCode,
             Authentication authentication) {
 
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
-        List<Curriculum> topics = curriculumService.getTopics(tenantId, syllabus, standard, subject);
+        List<Curriculum> topics = curriculumService.getTopics(tenantId, syllabus, standard, subjectCode);
         return ResponseEntity.ok(topics);
     }
 
     @GetMapping("/subjects")
-    public ResponseEntity<List<SubjectType>> getSubjects(
+    public ResponseEntity<List<String>> getSubjects(
             @RequestParam("syllabus") SyllabusType syllabus,
             @RequestParam("standard") int standard,
             Authentication authentication) {
 
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
-        List<SubjectType> subjects = curriculumService.getSubjects(tenantId, syllabus, standard);
+        List<String> subjects = curriculumService.getSubjects(tenantId, syllabus, standard);
         return ResponseEntity.ok(subjects);
     }
 }

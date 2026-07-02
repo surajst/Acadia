@@ -223,6 +223,31 @@ CREATE TABLE IF NOT EXISTS fee_transactions (
     CONSTRAINT fk_fee_transaction_invoice FOREIGN KEY (invoice_id) REFERENCES fee_invoices(id)
 );
 
+CREATE TABLE IF NOT EXISTS subjects (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    academic_year_id UUID NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    display_name VARCHAR(100) NOT NULL,
+    color_hex VARCHAR(20),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    CONSTRAINT fk_subject_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS grade_subjects (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    academic_year_id UUID NOT NULL,
+    grade_name VARCHAR(100) NOT NULL,
+    subject_id UUID NOT NULL,
+    CONSTRAINT fk_grade_subject_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+    CONSTRAINT fk_grade_subject_subject FOREIGN KEY (subject_id) REFERENCES subjects(id)
+);
+
+-- subject_type columns below store a Subject.code string (e.g. "MATHEMATICS"),
+-- not a JPA-enforced FK — historical rows stay readable if a Subject is renamed
+-- or deactivated later. Column name kept as-is to avoid a rename migration.
 CREATE TABLE IF NOT EXISTS curriculums (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,

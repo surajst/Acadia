@@ -207,7 +207,7 @@ public class StudentPortalController {
             task1.setId(UUID.randomUUID());
             task1.setTitle("Chapter Summary — Food and Health");
             task1.setDescription("Write a 10-line summary of Chapter 7: Food and Health. Include key nutrients and their functions.");
-            task1.setSubjectType(SubjectType.SCIENCE);
+            task1.setSubjectCode("SCIENCE");
             task1.setTaskType(TaskType.HOMEWORK);
             task1.setStandard(6);
             task1.setAssignedToClass(true);
@@ -222,7 +222,7 @@ public class StudentPortalController {
             task2.setId(UUID.randomUUID());
             task2.setTitle("Reading: The Mughal Empire");
             task2.setDescription("Read Chapter 3 of your Social Science textbook and answer the comprehension questions below.");
-            task2.setSubjectType(SubjectType.SOCIAL_SCIENCE);
+            task2.setSubjectCode("SOCIAL_SCIENCE");
             task2.setTaskType(TaskType.READING);
             task2.setStandard(6);
             task2.setAssignedToClass(true);
@@ -240,7 +240,7 @@ public class StudentPortalController {
             task3.setId(UUID.randomUUID());
             task3.setTitle("Grammar Practice — Tenses");
             task3.setDescription("Complete exercises 1–10 on page 45 of your English workbook. Focus on simple past and present perfect tenses.");
-            task3.setSubjectType(SubjectType.ENGLISH);
+            task3.setSubjectCode("ENGLISH");
             task3.setTaskType(TaskType.HOMEWORK);
             task3.setStandard(6);
             task3.setAssignedToClass(true);
