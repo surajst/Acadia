@@ -53,6 +53,7 @@ public class SecurityConfig {
                 ))
                 // NO .sessionManagement(STATELESS) — allows both JWT and session
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/onboard/**").permitAll() // public self-serve school signup
                         .requestMatchers("/api/teacher/timetable/seed").hasRole("ADMIN") // DEV ONLY seed - ADMIN only
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
@@ -73,6 +74,8 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/web/onboard/signup").permitAll() // public "create your school" form
+                        .requestMatchers("/web/onboard/setup").hasRole("ADMIN")
                         .requestMatchers("/web/admin/dashboard").hasAnyRole("ADMIN", "TEACHER")
                         .requestMatchers("/web/admin/**").hasRole("ADMIN")
                         .requestMatchers("/web/teacher/**").hasAnyRole("TEACHER", "ADMIN")
@@ -108,6 +111,7 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 "/login", "/logout", "/test/**",
                                 "/web/admin/student/add", "/web/admin/rewards/create", "/web/admin/post",
+                                "/web/admin/class-sections/add", "/web/admin/staff/add", "/web/admin/parent/add",
                                 "/web/student/**", "/web/parent/**", "/web/teacher/**",
                                 "/web/management/upload/process",
                                 "/api/parent/**"

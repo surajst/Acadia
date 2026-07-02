@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Up Your School &middot; ACADIA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(30, 41, 59, 0.8);
+        }
+        .step-panel { display: none; }
+        .step-panel.active { display: block; }
+    </style>
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class="bg-[#0b0f19] text-slate-200 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+
+    <header class="bg-[#0f172a] border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <img src="/images/acadia-logo.png" alt="ACADIA" style="height:32px; mix-blend-mode:screen;">
+                <span style="font-size:16px; font-weight:600; color:white; letter-spacing:2px;">ACADIA</span>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                    Set Up Your School
+                </h1>
+                <p class="text-xs text-slate-400 mt-0.5 font-medium">A quick walkthrough to get your workspace ready</p>
+            </div>
+            <a href="/web/admin/dashboard" class="text-xs text-slate-400 hover:text-white transition-colors">Skip to Dashboard &rarr;</a>
+        </div>
+    </header>
+
+    <div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0;">
+        <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+            <!-- Step indicator -->
+            <div class="flex items-center justify-center gap-2 mb-8" id="stepIndicator">
+                <div class="step-dot active" data-step="1"></div>
+                <div class="step-dot" data-step="2"></div>
+                <div class="step-dot" data-step="3"></div>
+                <div class="step-dot" data-step="4"></div>
+            </div>
+
+            <!-- Step 1: Grades & Sections -->
+            <section class="step-panel active glass-panel rounded-2xl p-6" data-step-panel="1">
+                <h2 class="text-lg font-semibold text-white mb-1">Step 1 &middot; Grades &amp; Sections</h2>
+                <p class="text-sm text-slate-400 mb-4">Set up the grade levels and sections your school uses.</p>
+
+                <table class="w-full text-sm mb-6">
+                    <thead>
+                        <tr class="text-left text-slate-400 border-b border-slate-800">
+                            <th class="py-2 pr-4">Grade</th>
+                            <th class="py-2 pr-4">Section</th>
+                            <th class="py-2 pr-4">Room</th>
+                        </tr>
+                    </thead>
+                    <tbody id="classSectionRows"></tbody>
+                </table>
+
+                <form id="classSectionForm" class="flex flex-wrap gap-3 items-end">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Grade</label>
+                        <input id="gradeName" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="Grade 6">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Section</label>
+                        <input id="sectionName" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="A">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Room (optional)</label>
+                        <input id="roomNumber" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="Room 101">
+                    </div>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Add</button>
+                </form>
+
+                <div class="flex justify-end mt-6">
+                    <button onclick="goToStep(2)" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
+                </div>
+            </section>
+
+            <!-- Step 2: Subjects -->
+            <section class="step-panel glass-panel rounded-2xl p-6" data-step-panel="2">
+                <h2 class="text-lg font-semibold text-white mb-1">Step 2 &middot; Subjects</h2>
+                <p class="text-sm text-slate-400 mb-4">
+                    Every ACADIA school starts with 5 default subjects (Math, Science, Social Science, English, Language).
+                    Add, rename, or deactivate subjects, and assign them per grade, on the Subjects page.
+                </p>
+                <a href="/web/admin/subjects" target="_blank" class="inline-block bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors border border-slate-700">
+                    Open Subjects Manager &#8599;
+                </a>
+                <div class="flex justify-between mt-6">
+                    <button onclick="goToStep(1)" class="text-slate-400 hover:text-white text-sm px-4 py-2">&larr; Back</button>
+                    <button onclick="goToStep(3)" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
+                </div>
+            </section>
+
+            <!-- Step 3: Invite Staff -->
+            <section class="step-panel glass-panel rounded-2xl p-6" data-step-panel="3">
+                <h2 class="text-lg font-semibold text-white mb-1">Step 3 &middot; Invite Staff</h2>
+                <p class="text-sm text-slate-400 mb-4">Add teachers and additional admins to your school.</p>
+
+                <table class="w-full text-sm mb-6">
+                    <thead>
+                        <tr class="text-left text-slate-400 border-b border-slate-800">
+                            <th class="py-2 pr-4">Name</th>
+                            <th class="py-2 pr-4">Email</th>
+                            <th class="py-2 pr-4">Role</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffRows"></tbody>
+                </table>
+
+                <div id="staffError" class="text-red-400 text-xs mb-3" style="display:none"></div>
+
+                <form id="staffForm" class="flex flex-wrap gap-3 items-end">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Full Name</label>
+                        <input id="staffFullName" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="Jane Doe">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Email</label>
+                        <input id="staffEmail" type="email" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="teacher@school.edu">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Temporary Password</label>
+                        <input id="staffPassword" type="password" required minlength="8" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Role</label>
+                        <select id="staffRole" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                            <option value="TEACHER">Teacher</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Invite</button>
+                </form>
+
+                <div class="flex justify-between mt-6">
+                    <button onclick="goToStep(2)" class="text-slate-400 hover:text-white text-sm px-4 py-2">&larr; Back</button>
+                    <button onclick="goToStep(4)" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
+                </div>
+            </section>
+
+            <!-- Step 4: Done -->
+            <section class="step-panel glass-panel rounded-2xl p-6 text-center" data-step-panel="4">
+                <h2 class="text-2xl font-bold text-white mb-2">You're all set! 🎉</h2>
+                <p class="text-sm text-slate-400 mb-6">Your school is ready. You can add students and parents from the Admin Dashboard.</p>
+                <a href="/web/admin/dashboard" class="inline-block bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-colors">Go to Dashboard</a>
+            </section>
+        </main>
+    </div>
+
+    <style>
+        .step-dot {
+            width: 32px; height: 4px; border-radius: 2px; background: #1e293b;
+        }
+        .step-dot.active, .step-dot.done { background: #6366f1; }
+    </style>
+
+    <script>
+        let currentStep = 1;
+
+        function goToStep(step) {
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-step-panel="${step}"]`).classList.add('active');
+            document.querySelectorAll('.step-dot').forEach(d => {
+                const s = parseInt(d.dataset.step);
+                d.classList.toggle('active', s === step);
+                d.classList.toggle('done', s < step);
+            });
+            currentStep = step;
+            if (step === 1) loadClassSections();
+            if (step === 3) loadStaff();
+        }
+
+        async function loadClassSections() {
+            const res = await fetch('/web/admin/class-sections');
+            const sections = await res.json();
+            document.getElementById('classSectionRows').innerHTML = sections.map(cs => `
+                <tr class="border-b border-slate-800/60">
+                    <td class="py-2 pr-4">${cs.gradeName}</td>
+                    <td class="py-2 pr-4">${cs.sectionName}</td>
+                    <td class="py-2 pr-4 text-slate-400">${cs.roomNumber || '—'}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="3" class="py-3 text-slate-500">No sections yet.</td></tr>';
+        }
+
+        document.getElementById('classSectionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const params = new URLSearchParams({
+                gradeName: document.getElementById('gradeName').value.trim(),
+                sectionName: document.getElementById('sectionName').value.trim(),
+                roomNumber: document.getElementById('roomNumber').value.trim(),
+            });
+            await fetch('/web/admin/class-sections/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString(),
+            });
+            e.target.reset();
+            loadClassSections();
+        });
+
+        async function loadStaff() {
+            const res = await fetch('/web/admin/staff');
+            const staff = await res.json();
+            document.getElementById('staffRows').innerHTML = staff.map(s => `
+                <tr class="border-b border-slate-800/60">
+                    <td class="py-2 pr-4">${s.fullName}</td>
+                    <td class="py-2 pr-4 text-slate-400">${s.email}</td>
+                    <td class="py-2 pr-4">${s.role}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="3" class="py-3 text-slate-500">No staff invited yet.</td></tr>';
+        }
+
+        document.getElementById('staffForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorBox = document.getElementById('staffError');
+            errorBox.style.display = 'none';
+            const params = new URLSearchParams({
+                fullName: document.getElementById('staffFullName').value.trim(),
+                email: document.getElementById('staffEmail').value.trim(),
+                password: document.getElementById('staffPassword').value,
+                role: document.getElementById('staffRole').value,
+            });
+            const res = await fetch('/web/admin/staff/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString(),
+            });
+            const data = await res.json();
+            if (data.error) {
+                errorBox.textContent = data.error;
+                errorBox.style.display = 'block';
+                return;
+            }
+            e.target.reset();
+            loadStaff();
+        });
+
+        loadClassSections();
+    </script>
+</body>
+</html>

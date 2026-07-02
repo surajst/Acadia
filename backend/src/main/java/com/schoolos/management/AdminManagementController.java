@@ -1,9 +1,11 @@
 package com.schoolos.management;
 
 import com.schoolos.user.CurrentUserService;
+import com.schoolos.user.User;
 import com.schoolos.user.UserRepository;
 import com.schoolos.user.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -43,6 +46,12 @@ public class AdminManagementController {
 
     @Autowired
     private CurrentUserService currentUserService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private ParentRepository parentRepository;
 
     @GetMapping("/web/admin/management")
     public String showAdminManagement(Model model, Authentication authentication) {
@@ -123,12 +132,89 @@ public class AdminManagementController {
         return "redirect:/web/admin/management";
     }
 
+    @GetMapping("/web/admin/class-sections")
+    @ResponseBody
+    public List<ClassSection> listClassSections(Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        return tenantId != null ? classSectionRepository.findByTenantId(tenantId) : Collections.emptyList();
+    }
+
+    @PostMapping("/web/admin/class-sections/add")
+    public String addClassSection(@RequestParam("gradeName") String gradeName,
+                                   @RequestParam("sectionName") String sectionName,
+                                   @RequestParam(value = "roomNumber", required = false) String roomNumber,
+                                   Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
+
+        ClassSection classSection = new ClassSection();
+        classSection.setId(UUID.randomUUID());
+        classSection.setTenantId(tenantId);
+        classSection.setAcademicYearId(academicYearId);
+        classSection.setGradeName(gradeName);
+        classSection.setSectionName(sectionName);
+        classSection.setRoomNumber(roomNumber);
+        classSectionRepository.save(classSection);
+
+        return "redirect:/web/admin/management?success=class_section_added";
+    }
+
+    @GetMapping("/web/admin/staff")
+    @ResponseBody
+    public List<java.util.Map<String, Object>> listStaff(Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        if (tenantId == null) return Collections.emptyList();
+        return userRepository.findByTenantIdAndRoleIn(tenantId, Arrays.asList(UserRole.ADMIN, UserRole.TEACHER))
+                .stream()
+                .map(u -> java.util.Map.<String, Object>of(
+                        "id", u.getId(),
+                        "fullName", u.getFullName(),
+                        "email", u.getEmail(),
+                        "role", u.getRole().name(),
+                        "active", u.isActive()
+                ))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @PostMapping("/web/admin/staff/add")
+    @ResponseBody
+    public Object addStaff(@RequestParam("fullName") String fullName,
+                            @RequestParam("email") String email,
+                            @RequestParam("password") String password,
+                            @RequestParam("role") UserRole role,
+                            Authentication authentication) {
+        if (role != UserRole.ADMIN && role != UserRole.TEACHER) {
+            return java.util.Map.of("error", "Staff role must be ADMIN or TEACHER");
+        }
+        if (userRepository.existsByEmail(email)) {
+            return java.util.Map.of("error", "Email already in use: " + email);
+        }
+
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
+
+        User staff = new User();
+        staff.setId(UUID.randomUUID());
+        staff.setTenantId(tenantId);
+        staff.setAcademicYearId(academicYearId);
+        staff.setEmail(email);
+        staff.setPasswordHash(passwordEncoder.encode(password));
+        staff.setFullName(fullName);
+        staff.setRole(role);
+        staff.setActive(true);
+        userRepository.save(staff);
+
+        return java.util.Map.of("status", "created", "id", staff.getId());
+    }
+
     @PostMapping("/web/admin/student/add")
     @Transactional
     public String addStudent(@RequestParam("firstName") String firstName,
                              @RequestParam("lastName") String lastName,
                              @RequestParam("rollNumber") String rollNumber,
                              @RequestParam("schoolClassId") UUID schoolClassId,
+                             @RequestParam(value = "loginEmail", required = false) String loginEmail,
+                             @RequestParam(value = "loginPassword", required = false) String loginPassword,
                              Authentication authentication) {
         // Enforce role checks so only ADMIN roles can register students
         if (authentication != null) {
@@ -176,6 +262,27 @@ public class AdminManagementController {
         student.setRollNumber(rollNumber);
         student.setSchoolClass(schoolClass);
         student.setClassSection(classSection);
+
+        // Optionally provision a real login for this student, so they aren't
+        // stuck with a null userId (and thus unable to log in at all) —
+        // previously this endpoint never set userId.
+        if (loginEmail != null && !loginEmail.isBlank() && loginPassword != null && !loginPassword.isBlank()) {
+            if (userRepository.existsByEmail(loginEmail)) {
+                throw new RuntimeException("Email already in use: " + loginEmail);
+            }
+            User studentUser = new User();
+            studentUser.setId(UUID.randomUUID());
+            studentUser.setTenantId(tenantId);
+            studentUser.setAcademicYearId(academicYearId);
+            studentUser.setEmail(loginEmail);
+            studentUser.setPasswordHash(passwordEncoder.encode(loginPassword));
+            studentUser.setFullName(firstName + " " + lastName);
+            studentUser.setRole(UserRole.STUDENT);
+            studentUser.setActive(true);
+            userRepository.save(studentUser);
+            student.setUserId(studentUser.getId());
+        }
+
         studentRepository.save(student);
 
         // Automatically instantiate and save a default StudentMetric record
@@ -190,6 +297,58 @@ public class AdminManagementController {
         studentMetricRepository.save(metric);
 
         return "redirect:/web/admin/management?success=student_added";
+    }
+
+    @PostMapping("/web/admin/parent/add")
+    @Transactional
+    @ResponseBody
+    public Object addParent(@RequestParam("firstName") String firstName,
+                             @RequestParam("lastName") String lastName,
+                             @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
+                             @RequestParam(value = "studentId", required = false) UUID studentId,
+                             @RequestParam(value = "loginEmail", required = false) String loginEmail,
+                             @RequestParam(value = "loginPassword", required = false) String loginPassword,
+                             Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
+
+        Parent parent = new Parent();
+        parent.setId(UUID.randomUUID());
+        parent.setTenantId(tenantId);
+        parent.setAcademicYearId(academicYearId);
+        parent.setFirstName(firstName);
+        parent.setLastName(lastName);
+        parent.setPhoneNumber(phoneNumber);
+
+        if (loginEmail != null && !loginEmail.isBlank() && loginPassword != null && !loginPassword.isBlank()) {
+            if (userRepository.existsByEmail(loginEmail)) {
+                return java.util.Map.of("error", "Email already in use: " + loginEmail);
+            }
+            User parentUser = new User();
+            parentUser.setId(UUID.randomUUID());
+            parentUser.setTenantId(tenantId);
+            parentUser.setAcademicYearId(academicYearId);
+            parentUser.setEmail(loginEmail);
+            parentUser.setPasswordHash(passwordEncoder.encode(loginPassword));
+            parentUser.setFullName(firstName + " " + lastName);
+            parentUser.setRole(UserRole.PARENT);
+            parentUser.setActive(true);
+            userRepository.save(parentUser);
+            parent.setUserId(parentUser.getId());
+            parent.setEmail(loginEmail);
+        }
+
+        parentRepository.save(parent);
+
+        if (studentId != null) {
+            Student student = studentRepository.findById(studentId).orElse(null);
+            if (student != null) {
+                student.getParents().add(parent);
+                studentRepository.save(student);
+            }
+        }
+
+        return java.util.Map.of("status", "created", "id", parent.getId());
     }
 
     @PostMapping("/web/admin/student/{id}/remove")
