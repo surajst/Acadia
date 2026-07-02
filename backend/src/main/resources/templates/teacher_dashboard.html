@@ -85,6 +85,10 @@
                         <span>🧮</span>
                         <span>Gradebook</span>
                     </a>
+                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/messages}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                        <span>✉️</span>
+                        <span>Messages</span>
+                    </a>
 
                     <!-- STUDENT items -->
                     <a th:if="${currentUserRole == 'STUDENT'}" href="/web/student/portal" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">

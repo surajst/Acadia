@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages &middot; ACADIA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(30, 41, 59, 0.8);
+        }
+        .conv-item.active { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); }
+        .bubble-mine { background: rgba(79,70,229,0.25); margin-left: auto; }
+        .bubble-theirs { background: rgba(30,41,59,0.7); }
+    </style>
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class="bg-[#0b0f19] text-slate-200 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+
+    <header class="bg-[#0f172a] border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <a href="/web/teacher/dashboard" class="text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-800 p-2 rounded-xl bg-slate-900/50 hover:bg-slate-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                        Messages
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5 font-medium">Direct messages with parents about their child</p>
+                </div>
+            </div>
+            <div></div>
+        </div>
+    </header>
+
+    <div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0;">
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" style="min-height:60vh">
+
+                <!-- Conversation list + new message -->
+                <section class="glass-panel rounded-2xl p-4 md:col-span-1 flex flex-col">
+                    <div class="mb-3">
+                        <label class="block text-xs text-slate-400 mb-1">New message to</label>
+                        <select id="newMessageStudent" class="w-full bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2"></select>
+                        <div class="flex gap-2 mt-2">
+                            <input id="newMessageBody" placeholder="Type a message…" class="flex-1 bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                            <button id="sendNewMessageBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors">Send</button>
+                        </div>
+                    </div>
+                    <div class="border-t border-slate-800 pt-3 flex-1 overflow-y-auto" id="conversationList"></div>
+                </section>
+
+                <!-- Thread -->
+                <section class="glass-panel rounded-2xl p-4 md:col-span-2 flex flex-col">
+                    <h2 id="threadTitle" class="text-sm font-semibold text-white mb-3">Select a conversation</h2>
+                    <div id="threadMessages" class="flex-1 overflow-y-auto space-y-2 mb-3"></div>
+                    <div id="replyBox" class="flex gap-2" style="display:none">
+                        <input id="replyBody" placeholder="Type a reply…" class="flex-1 bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                        <button id="sendReplyBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Send</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let activeConversationId = null;
+
+        async function loadRoster() {
+            const res = await fetch('/api/teacher/messages/roster');
+            const students = await res.json();
+            document.getElementById('newMessageStudent').innerHTML = students.map(s =>
+                `<option value="${s.studentId}">${s.studentName} (${s.className})</option>`
+            ).join('') || '<option value="">No students assigned</option>';
+        }
+
+        async function loadConversations() {
+            const res = await fetch('/api/messages/conversations');
+            const conversations = await res.json();
+            const list = document.getElementById('conversationList');
+            list.innerHTML = conversations.map(c => `
+                <div class="conv-item ${c.id === activeConversationId ? 'active' : ''} cursor-pointer border border-slate-800/60 rounded-xl p-3 mb-2 hover:border-indigo-500/30 transition-colors"
+                     data-id="${c.id}" onclick="openConversation('${c.id}')">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-semibold text-white">${c.studentName}</span>
+                        ${c.unread ? '<span class="h-2 w-2 rounded-full bg-indigo-400"></span>' : ''}
+                    </div>
+                    <p class="text-xs text-slate-400 truncate mt-1">${c.lastMessagePreview || ''}</p>
+                </div>
+            `).join('') || '<p class="text-slate-500 text-sm">No conversations yet.</p>';
+            return conversations;
+        }
+
+        async function openConversation(id) {
+            activeConversationId = id;
+            document.getElementById('replyBox').style.display = 'flex';
+            const convs = await loadConversations();
+            const conv = convs.find(c => c.id === id);
+            document.getElementById('threadTitle').textContent = conv ? `Conversation about ${conv.studentName}` : 'Conversation';
+
+            const res = await fetch(`/api/messages/conversations/${id}`);
+            const messages = await res.json();
+            document.getElementById('threadMessages').innerHTML = messages.map(m => `
+                <div class="max-w-[80%] rounded-xl px-3 py-2 text-sm ${m.mine ? 'bubble-mine' : 'bubble-theirs'}">
+                    ${m.body}
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('sendNewMessageBtn').addEventListener('click', async () => {
+            const studentId = document.getElementById('newMessageStudent').value;
+            const body = document.getElementById('newMessageBody').value.trim();
+            if (!studentId || !body) return;
+            const res = await fetch('/api/messages/conversations/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ studentId, body }),
+            });
+            const conv = await res.json();
+            document.getElementById('newMessageBody').value = '';
+            if (conv.id) await openConversation(conv.id);
+        });
+
+        document.getElementById('sendReplyBtn').addEventListener('click', async () => {
+            if (!activeConversationId) return;
+            const body = document.getElementById('replyBody').value.trim();
+            if (!body) return;
+            await fetch(`/api/messages/conversations/${activeConversationId}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ body }),
+            });
+            document.getElementById('replyBody').value = '';
+            await openConversation(activeConversationId);
+        });
+
+        loadRoster();
+        loadConversations();
+    </script>
+</body>
+</html>

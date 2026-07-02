@@ -146,6 +146,9 @@
                     <a th:if="${currentUserRole == 'PARENT'}" href="/web/parent/portal" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600/20 text-emerald-400 border border-emerald-500/20 shadow-inner">
                         <span>🛡️</span> Parent Portal Gateway
                     </a>
+                    <a th:if="${currentUserRole == 'PARENT'}" href="#messages-section" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
+                        <span>✉️</span> Messages
+                    </a>
                 </nav>
             </div>
 
@@ -496,6 +499,39 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Messages -->
+            <section id="messages-section" class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl shadow-black/20 space-y-5">
+                <div>
+                    <h3 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                        <span>✉️</span> Messages
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">Message your child's teachers directly.</p>
+                </div>
+
+                <div th:if="${student != null}" class="flex flex-wrap gap-2">
+                    <select id="msgTeacherSelect" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2 flex-1 min-w-[160px]" th:data-student-id="${student.id}"></select>
+                </div>
+                <div th:if="${student != null}" class="flex gap-2">
+                    <input id="msgNewBody" placeholder="Type a message…" class="flex-1 bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                    <button id="msgSendNewBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Send</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                    <div class="bg-slate-950/40 border border-slate-800/60 rounded-2xl p-4">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Conversations</h4>
+                        <div id="msgConversationList" class="space-y-2"></div>
+                    </div>
+                    <div class="bg-slate-950/40 border border-slate-800/60 rounded-2xl p-4">
+                        <h4 id="msgThreadTitle" class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Select a conversation</h4>
+                        <div id="msgThreadMessages" class="space-y-2 mb-3" style="min-height:80px"></div>
+                        <div id="msgReplyBox" class="flex gap-2" style="display:none">
+                            <input id="msgReplyBody" placeholder="Type a reply…" class="flex-1 bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                            <button id="msgSendReplyBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -609,6 +645,103 @@
             container.innerHTML = '<p class="text-slate-500 text-xs">Failed to load.</p>';
         }
     }
+
+    /* ─── MESSAGING ─── */
+    var activeConversationId = null;
+
+    function initMessaging() {
+        var teacherSelect = document.getElementById('msgTeacherSelect');
+        if (!teacherSelect) return; // no linked student — nothing to message about
+        var studentId = teacherSelect.dataset.studentId;
+
+        fetch('/api/parent/messages/teachers?studentId=' + studentId)
+            .then(function(res) { return res.json(); })
+            .then(function(teachers) {
+                teacherSelect.innerHTML = teachers.map(function(t) {
+                    return '<option value="' + t.teacherId + '">' + t.teacherName + ' (' + t.subjectName + ')</option>';
+                }).join('') || '<option value="">No teachers found</option>';
+            });
+
+        var sendNewBtn = document.getElementById('msgSendNewBtn');
+        if (sendNewBtn) {
+            sendNewBtn.addEventListener('click', function() {
+                var teacherId = teacherSelect.value;
+                var body = document.getElementById('msgNewBody').value.trim();
+                if (!teacherId || !body) return;
+                fetch('/api/messages/conversations/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId: studentId, teacherId: teacherId, body: body })
+                }).then(function(res) { return res.json(); }).then(function(conv) {
+                    document.getElementById('msgNewBody').value = '';
+                    if (conv.id) openConversation(conv.id);
+                });
+            });
+        }
+
+        var sendReplyBtn = document.getElementById('msgSendReplyBtn');
+        if (sendReplyBtn) {
+            sendReplyBtn.addEventListener('click', function() {
+                if (!activeConversationId) return;
+                var body = document.getElementById('msgReplyBody').value.trim();
+                if (!body) return;
+                fetch('/api/messages/conversations/' + activeConversationId + '/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ body: body })
+                }).then(function() {
+                    document.getElementById('msgReplyBody').value = '';
+                    openConversation(activeConversationId);
+                });
+            });
+        }
+
+        loadConversations();
+    }
+
+    function loadConversations() {
+        return fetch('/api/messages/conversations')
+            .then(function(res) { return res.json(); })
+            .then(function(conversations) {
+                var list = document.getElementById('msgConversationList');
+                if (conversations.length === 0) {
+                    list.innerHTML = '<p class="text-slate-500 text-xs">No conversations yet.</p>';
+                    return conversations;
+                }
+                list.innerHTML = conversations.map(function(c) {
+                    return '<div class="cursor-pointer border border-slate-800/60 rounded-xl p-3 hover:border-indigo-500/30 transition-colors" data-conv-id="' + c.id + '">' +
+                        '<div class="flex items-center justify-between">' +
+                        '<span class="text-sm font-semibold text-white">' + c.teacherName + '</span>' +
+                        (c.unread ? '<span class="h-2 w-2 rounded-full bg-indigo-400"></span>' : '') +
+                        '</div>' +
+                        '<p class="text-xs text-slate-400 truncate mt-1">' + (c.lastMessagePreview || '') + '</p>' +
+                        '</div>';
+                }).join('');
+                list.querySelectorAll('[data-conv-id]').forEach(function(el) {
+                    el.addEventListener('click', function() { openConversation(this.dataset.convId); });
+                });
+                return conversations;
+            });
+    }
+
+    function openConversation(id) {
+        activeConversationId = id;
+        document.getElementById('msgReplyBox').style.display = 'flex';
+        loadConversations().then(function(convs) {
+            var conv = convs.find(function(c) { return c.id === id; });
+            document.getElementById('msgThreadTitle').textContent = conv ? conv.teacherName : 'Conversation';
+        });
+        fetch('/api/messages/conversations/' + id)
+            .then(function(res) { return res.json(); })
+            .then(function(messages) {
+                document.getElementById('msgThreadMessages').innerHTML = messages.map(function(m) {
+                    return '<div class="max-w-[85%] rounded-xl px-3 py-2 text-sm ' +
+                        (m.mine ? 'bg-indigo-600/25 ml-auto' : 'bg-slate-900/70') + '">' + m.body + '</div>';
+                }).join('');
+            });
+    }
+
+    initMessaging();
 })();
 </script>
 </body>

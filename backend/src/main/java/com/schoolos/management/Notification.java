@@ -25,7 +25,10 @@ public class Notification extends BaseTenantEntity {
     private String body;
 
     @Column(nullable = false)
-    private String type; // ATTENDANCE, TASK, ANNOUNCEMENT, SYSTEM
+    private String type; // ATTENDANCE, TASK, ANNOUNCEMENT, SYSTEM, MESSAGE
+
+    @Column(name = "related_entity_id")
+    private UUID relatedEntityId; // e.g. Conversation.id for MESSAGE notifications
 
     @Column(nullable = false)
     private boolean read = false;
@@ -45,6 +48,8 @@ public class Notification extends BaseTenantEntity {
     public void setBody(String body) { this.body = body; }
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+    public UUID getRelatedEntityId() { return relatedEntityId; }
+    public void setRelatedEntityId(UUID relatedEntityId) { this.relatedEntityId = relatedEntityId; }
     public boolean isRead() { return read; }
     public void setRead(boolean read) { this.read = read; }
     public LocalDateTime getCreatedAt() { return createdAt; }
