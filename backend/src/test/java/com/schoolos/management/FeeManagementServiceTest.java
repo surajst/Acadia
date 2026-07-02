@@ -23,20 +23,46 @@ public class FeeManagementServiceTest {
     @Autowired
     private FeeTransactionRepository feeTransactionRepository;
 
+    @Autowired
+    private StudentRepository studentRepository;
+
+    @Autowired
+    private ClassSectionRepository classSectionRepository;
+
     private UUID testInvoiceId;
 
     @BeforeEach
     public void setup() {
+        UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        UUID academicYearId = UUID.fromString("00000000-0000-0000-0000-111111111111");
+
+        ClassSection classSection = new ClassSection();
+        classSection.setId(UUID.randomUUID());
+        classSection.setTenantId(tenantId);
+        classSection.setAcademicYearId(academicYearId);
+        classSection.setGradeName("Grade 1");
+        classSection.setSectionName("A");
+        classSectionRepository.saveAndFlush(classSection);
+
+        Student student = new Student();
+        student.setId(UUID.randomUUID());
+        student.setTenantId(tenantId);
+        student.setAcademicYearId(academicYearId);
+        student.setFirstName("Test");
+        student.setLastName("Student");
+        student.setClassSection(classSection);
+        studentRepository.saveAndFlush(student);
+
         // Create a test invoice
         FeeInvoice invoice = new FeeInvoice();
         invoice.setId(UUID.randomUUID());
-        invoice.setStudentId(UUID.randomUUID());
+        invoice.setStudentId(student.getId());
         invoice.setTotalAmount(new BigDecimal("20000.00"));
         invoice.setAmountPaid(BigDecimal.ZERO);
-        
-        invoice.setTenantId(UUID.fromString("00000000-0000-0000-0000-000000000000"));
-        invoice.setAcademicYearId(UUID.fromString("00000000-0000-0000-0000-111111111111"));
-        
+
+        invoice.setTenantId(tenantId);
+        invoice.setAcademicYearId(academicYearId);
+
         invoice.updateBalances();
         FeeInvoice saved = feeInvoiceRepository.saveAndFlush(invoice);
         testInvoiceId = saved.getId();
