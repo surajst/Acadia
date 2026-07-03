@@ -13,6 +13,10 @@ import java.util.UUID;
 @Table(name = "users")
 public class User extends BaseTenantEntity {
 
+    public enum ApprovalStatus {
+        PENDING, APPROVED, REJECTED
+    }
+
     @Id
     private UUID id;
 
@@ -32,6 +36,16 @@ public class User extends BaseTenantEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
+    /**
+     * Nullable — null is treated as APPROVED for backward compatibility with
+     * every pre-existing account. Only new staff (TEACHER/ADMIN/PRINCIPAL)
+     * invites are set to PENDING, gating login until a PRINCIPAL/ADMIN
+     * approves them (see CustomUserDetailsService).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", length = 20)
+    private ApprovalStatus approvalStatus;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -49,4 +63,7 @@ public class User extends BaseTenantEntity {
 
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+
+    public ApprovalStatus getApprovalStatus() { return approvalStatus; }
+    public void setApprovalStatus(ApprovalStatus approvalStatus) { this.approvalStatus = approvalStatus; }
 }

@@ -208,11 +208,12 @@ public class AdminManagementController {
         staff.setFullName(fullName);
         staff.setRole(role);
         staff.setActive(true);
+        staff.setApprovalStatus(com.schoolos.user.User.ApprovalStatus.PENDING);
         userRepository.save(staff);
         auditLogService.log(authentication, "STAFF_INVITED", "User", staff.getId(),
-                "Invited " + role.name() + " " + fullName + " (" + email + ")");
+                "Invited " + role.name() + " " + fullName + " (" + email + ") — awaiting PRINCIPAL/ADMIN approval");
 
-        return java.util.Map.of("status", "created", "id", staff.getId());
+        return java.util.Map.of("status", "created", "id", staff.getId(), "approvalStatus", "PENDING");
     }
 
     @PostMapping("/web/admin/student/add")

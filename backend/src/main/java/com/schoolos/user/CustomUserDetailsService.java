@@ -21,6 +21,11 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User account is disabled: " + email);
         }
 
+        if (user.getApprovalStatus() == User.ApprovalStatus.PENDING
+                || user.getApprovalStatus() == User.ApprovalStatus.REJECTED) {
+            throw new UsernameNotFoundException("Account is awaiting PRINCIPAL/ADMIN approval: " + email);
+        }
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPasswordHash())

@@ -13,6 +13,10 @@ public class FeeInvoice extends BaseTenantEntity {
         UNPAID, PARTIALLY_PAID, PAID
     }
 
+    public enum FeeWaiverStatus {
+        NONE, PENDING, APPROVED, REJECTED
+    }
+
     @Id
     private UUID id;
 
@@ -32,6 +36,16 @@ public class FeeInvoice extends BaseTenantEntity {
     @Column(name = "status", nullable = false, length = 50)
     private FeeStatus status;
 
+    @Column(name = "waiver_amount", precision = 19, scale = 2)
+    private BigDecimal waiverAmount;
+
+    @Column(name = "waiver_reason", length = 500)
+    private String waiverReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "waiver_status", length = 20)
+    private FeeWaiverStatus waiverStatus = FeeWaiverStatus.NONE;
+
     public FeeInvoice() {}
 
     public FeeInvoice(UUID id, UUID studentId, BigDecimal totalAmount, BigDecimal amountPaid) {
@@ -45,12 +59,16 @@ public class FeeInvoice extends BaseTenantEntity {
     public void updateBalances() {
         BigDecimal paid = this.amountPaid != null ? this.amountPaid : BigDecimal.ZERO;
         BigDecimal total = this.totalAmount != null ? this.totalAmount : BigDecimal.ZERO;
+        BigDecimal waiver = (this.waiverStatus == FeeWaiverStatus.APPROVED && this.waiverAmount != null)
+                ? this.waiverAmount : BigDecimal.ZERO;
 
-        this.amountDue = total.subtract(paid);
+        BigDecimal effectiveTotal = total.subtract(waiver).max(BigDecimal.ZERO);
+        this.amountDue = effectiveTotal.subtract(paid).max(BigDecimal.ZERO);
 
-        if (paid.compareTo(BigDecimal.ZERO) <= 0) {
+        BigDecimal covered = paid.add(waiver);
+        if (covered.compareTo(BigDecimal.ZERO) <= 0) {
             this.status = FeeStatus.UNPAID;
-        } else if (paid.compareTo(total) >= 0) {
+        } else if (covered.compareTo(total) >= 0) {
             this.status = FeeStatus.PAID;
         } else {
             this.status = FeeStatus.PARTIALLY_PAID;
@@ -105,5 +123,29 @@ public class FeeInvoice extends BaseTenantEntity {
 
     public void setStatus(FeeStatus status) {
         this.status = status;
+    }
+
+    public BigDecimal getWaiverAmount() {
+        return waiverAmount;
+    }
+
+    public void setWaiverAmount(BigDecimal waiverAmount) {
+        this.waiverAmount = waiverAmount;
+    }
+
+    public String getWaiverReason() {
+        return waiverReason;
+    }
+
+    public void setWaiverReason(String waiverReason) {
+        this.waiverReason = waiverReason;
+    }
+
+    public FeeWaiverStatus getWaiverStatus() {
+        return waiverStatus;
+    }
+
+    public void setWaiverStatus(FeeWaiverStatus waiverStatus) {
+        this.waiverStatus = waiverStatus;
     }
 }

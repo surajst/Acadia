@@ -1,5 +1,6 @@
 package com.schoolos.management;
 
+import com.schoolos.common.NotificationDeliveryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -19,13 +20,16 @@ public class AttendanceApiController {
     private final ClassSectionRepository classSectionRepository;
     private final StudentRepository studentRepository;
     private final AttendanceRepository attendanceRepository;
+    private final NotificationDeliveryService notificationDeliveryService;
 
     public AttendanceApiController(ClassSectionRepository classSectionRepository,
                                    StudentRepository studentRepository,
-                                   AttendanceRepository attendanceRepository) {
+                                   AttendanceRepository attendanceRepository,
+                                   NotificationDeliveryService notificationDeliveryService) {
         this.classSectionRepository = classSectionRepository;
         this.studentRepository = studentRepository;
         this.attendanceRepository = attendanceRepository;
+        this.notificationDeliveryService = notificationDeliveryService;
     }
 
     // ── GET today's attendance for a class section ──────────────────────────
@@ -97,10 +101,11 @@ public class AttendanceApiController {
 
             if (entry.status() == AttendanceStatus.ABSENT) {
                 for (Parent parent : student.getParents()) {
-                    System.out.println("[ALERT WHATSAPP DISPATCH] Sending to "
-                            + parent.getFirstName() + " " + parent.getLastName()
-                            + " (" + parent.getPhoneNumber() + "): Alert! Student "
-                            + student.getFirstName() + " was marked ABSENT today.");
+                    notificationDeliveryService.send(parent.getPhoneNumber(),
+                            "[ALERT WHATSAPP DISPATCH] Sending to "
+                                    + parent.getFirstName() + " " + parent.getLastName()
+                                    + " (" + parent.getPhoneNumber() + "): Alert! Student "
+                                    + student.getFirstName() + " was marked ABSENT today.");
                 }
             }
         }

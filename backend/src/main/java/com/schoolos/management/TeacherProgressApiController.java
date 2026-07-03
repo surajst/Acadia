@@ -2,6 +2,7 @@ package com.schoolos.management;
 
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.common.NotificationDeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,9 +31,12 @@ public class TeacherProgressApiController {
     @Autowired
     private StudentRepository studentRepository;
 
+    @Autowired
+    private NotificationDeliveryService notificationDeliveryService;
+
     @Transactional
     @PostMapping("/approve")
-    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
     public ResponseEntity<?> approveProgress(@RequestParam("studentProgressId") UUID studentProgressId) {
         try {
             StudentProgress progress = studentProgressRepository.findById(studentProgressId)
@@ -67,8 +71,9 @@ public class TeacherProgressApiController {
             studentMetricRepository.saveAndFlush(metric);
 
             // Dispatch Mock WhatsApp Notification
-            System.out.println("[ALERT WHATSAPP DISPATCH] Sending to Student " + student.getFirstName() + " " + student.getLastName() + 
-                               ": ✅ " + curriculum.getTopicName() + " verified! +" + curriculum.getXpReward() + " XP awarded.");
+            notificationDeliveryService.send(student.getFirstName() + " " + student.getLastName(),
+                    "[ALERT WHATSAPP DISPATCH] Sending to Student " + student.getFirstName() + " " + student.getLastName() +
+                            ": ✅ " + curriculum.getTopicName() + " verified! +" + curriculum.getXpReward() + " XP awarded.");
 
             return ResponseEntity.ok(Map.of("message", "Progress approved successfully", "xpAwarded", curriculum.getXpReward()));
 
@@ -79,7 +84,7 @@ public class TeacherProgressApiController {
 
     @Transactional
     @PostMapping("/reject")
-    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
     public ResponseEntity<?> rejectProgress(@RequestParam("studentProgressId") UUID studentProgressId,
                                             @RequestParam(value = "reason", required = false) String reason) {
         try {
@@ -96,8 +101,9 @@ public class TeacherProgressApiController {
             String displayReason = (reason != null && !reason.trim().isEmpty()) ? reason : "No reason provided";
 
             // Dispatch Mock WhatsApp Notification
-            System.out.println("[ALERT WHATSAPP DISPATCH] Sending to Student " + student.getFirstName() + " " + student.getLastName() + 
-                               ": ❌ " + curriculum.getTopicName() + " needs review — " + displayReason + ".");
+            notificationDeliveryService.send(student.getFirstName() + " " + student.getLastName(),
+                    "[ALERT WHATSAPP DISPATCH] Sending to Student " + student.getFirstName() + " " + student.getLastName() +
+                            ": ❌ " + curriculum.getTopicName() + " needs review — " + displayReason + ".");
 
             return ResponseEntity.ok(Map.of("message", "Progress rejected"));
 

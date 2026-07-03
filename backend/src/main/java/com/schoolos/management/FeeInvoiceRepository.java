@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface FeeInvoiceRepository extends JpaRepository<FeeInvoice, UUID> {
     List<FeeInvoice> findByStudentId(UUID studentId);
     List<FeeInvoice> findByTenantId(UUID tenantId);
+    List<FeeInvoice> findByTenantIdAndWaiverStatus(UUID tenantId, FeeInvoice.FeeWaiverStatus waiverStatus);
 }

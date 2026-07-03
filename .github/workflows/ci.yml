@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run backend unit tests
+        working-directory: backend
+        run: mvn -B test
+
+      - name: Build backend jar
+        working-directory: backend
+        run: mvn -B clean package -DskipTests
+
+      - name: Launch backend
+        working-directory: backend
+        run: |
+          nohup java -jar target/backend-0.0.1-SNAPSHOT.jar --app.dev-mode=true > backend.log 2>&1 &
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/login || true)
+            if [ "$code" = "200" ]; then echo "Backend is up"; exit 0; fi
+            sleep 2
+          done
+          echo "Backend failed to start in time"
+          cat backend.log
+          exit 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright and dependencies
+        working-directory: backend/src/test/e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright e2e suite
+        working-directory: backend/src/test/e2e
+        run: npx playwright test --config=playwright.web.config.js
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: backend/src/test/e2e/playwright-report/
+          retention-days: 14
+
+      - name: Dump backend log on failure
+        if: failure()
+        run: cat backend/backend.log || true

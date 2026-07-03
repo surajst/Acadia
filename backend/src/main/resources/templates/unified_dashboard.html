@@ -126,6 +126,20 @@
             </div>
         </div>
 
+        <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-5 mb-6">
+            <h3 class="text-sm font-bold text-white tracking-tight mb-3">Pending Staff Approvals</h3>
+            <div id="pendingStaffList" class="space-y-2">
+                <p class="text-xs text-slate-500">Loading…</p>
+            </div>
+        </div>
+
+        <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-5 mb-6">
+            <h3 class="text-sm font-bold text-white tracking-tight mb-3">Pending Fee Waivers</h3>
+            <div id="pendingWaiversList" class="space-y-2">
+                <p class="text-xs text-slate-500">Loading…</p>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch flex-1 min-h-0">
             
             <div class="lg:col-span-2 flex flex-col min-h-0">
@@ -326,6 +340,16 @@
                             <div>
                                 <h4 class="text-sm font-semibold text-white group-hover:text-sky-400 transition-colors">Setup Wizard</h4>
                                 <p class="text-xs text-slate-400 mt-0.5">Grades &amp; sections, subjects, staff invites</p>
+                            </div>
+                        </a>
+
+                        <a th:if="${currentUserRole == 'PRINCIPAL'}" href="/web/teacher/dashboard" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">Verification Queue</h4>
+                                <p class="text-xs text-slate-400 mt-0.5">Approve milestone &amp; syllabus submissions</p>
                             </div>
                         </a>
 
@@ -706,6 +730,74 @@
             const annModal = document.getElementById('announcementModal');
             if (annModal && event.target === annModal) { closeAnnouncementModal(); }
         });
+
+        async function loadPendingWaivers() {
+            const list = document.getElementById('pendingWaiversList');
+            if (!list) return;
+            const res = await fetch('/api/principal/fees/waivers/pending');
+            const waivers = await res.json();
+            if (waivers.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-500">No pending waiver requests.</p>';
+                return;
+            }
+            list.innerHTML = waivers.map(w => `
+                <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/60 rounded-xl px-4 py-3">
+                    <div>
+                        <span class="text-sm font-semibold text-white">${w.studentName}</span>
+                        <span class="text-xs text-slate-400 ml-2">₹${w.waiverAmount} — ${w.waiverReason || ''}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="decideWaiver('${w.invoiceId}', 'reject')" class="px-3 py-1.5 bg-slate-800 text-slate-300 hover:bg-rose-900/40 hover:text-rose-400 rounded-lg text-xs font-bold transition-colors">Reject</button>
+                        <button onclick="decideWaiver('${w.invoiceId}', 'approve')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors">Approve</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function decideWaiver(invoiceId, action) {
+            const csrfToken = document.querySelector('input[name="_csrf"]').value;
+            await fetch(`/api/principal/fees/${invoiceId}/waiver/${action}`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken },
+            });
+            loadPendingWaivers();
+        }
+
+        loadPendingWaivers();
+
+        async function loadPendingStaff() {
+            const list = document.getElementById('pendingStaffList');
+            if (!list) return;
+            const res = await fetch('/api/principal/staff/pending');
+            const staff = await res.json();
+            if (staff.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-500">No pending staff approvals.</p>';
+                return;
+            }
+            list.innerHTML = staff.map(s => `
+                <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/60 rounded-xl px-4 py-3">
+                    <div>
+                        <span class="text-sm font-semibold text-white">${s.fullName}</span>
+                        <span class="text-xs text-slate-400 ml-2">${s.role} — ${s.email}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="decideStaff('${s.id}', 'reject')" class="px-3 py-1.5 bg-slate-800 text-slate-300 hover:bg-rose-900/40 hover:text-rose-400 rounded-lg text-xs font-bold transition-colors">Reject</button>
+                        <button onclick="decideStaff('${s.id}', 'approve')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors">Approve</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function decideStaff(userId, action) {
+            const csrfToken = document.querySelector('input[name="_csrf"]').value;
+            await fetch(`/api/principal/staff/${userId}/${action}`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken },
+            });
+            loadPendingStaff();
+        }
+
+        loadPendingStaff();
     </script>
 
 

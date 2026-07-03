@@ -199,6 +199,39 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
+          name="gradebook"
+          options={{
+            title: 'Gradebook',
+            href: isTeacher ? undefined : null,
+            tabBarIcon: ({ color }) => (
+              <SymbolView name={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }} tintColor={color} size={28} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="timetable"
+          options={{
+            title: 'Timetable',
+            href: isTeacher ? undefined : null,
+            tabBarIcon: ({ color }) => (
+              <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor={color} size={28} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="messages"
+          options={{
+            title: 'Messages',
+            href: (isTeacher || isParent) ? undefined : null,
+            tabBarIcon: ({ color }) => (
+              <SymbolView name={{ ios: 'message', android: 'chat', web: 'chat' }} tintColor={color} size={28} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
           name="profile"
           options={{
             title: 'Profile',

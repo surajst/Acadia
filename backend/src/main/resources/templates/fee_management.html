@@ -238,16 +238,25 @@
                                         </span>
                                     </td>
                                     <!-- Collect action -->
-                                    <td class="py-4 px-6 text-center">
+                                    <td class="py-4 px-6 text-center space-y-1.5">
                                         <button th:if="${dto.invoice.status.name() != 'PAID'}"
                                                 th:data-id="${dto.invoice.id}"
                                                 th:data-name="${dto.student != null ? dto.student.firstName + ' ' + dto.student.lastName : 'Student'}"
                                                 th:data-due="${dto.invoice.amountDue}"
                                                 onclick="openPaymentModal(this.getAttribute('data-id'), this.getAttribute('data-name'), this.getAttribute('data-due'))"
-                                                class="px-3 py-1.5 bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-lg border border-emerald-500/20 text-xs font-bold transition-all cursor-pointer">
+                                                class="px-3 py-1.5 bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-lg border border-emerald-500/20 text-xs font-bold transition-all cursor-pointer block w-full">
                                             Record Payment
                                         </button>
                                         <span th:if="${dto.invoice.status.name() == 'PAID'}" class="text-xs text-slate-500 font-semibold italic">Settled</span>
+
+                                        <button th:if="${dto.invoice.status.name() != 'PAID' and (dto.invoice.waiverStatus == null or dto.invoice.waiverStatus.name() == 'NONE' or dto.invoice.waiverStatus.name() == 'REJECTED')}"
+                                                th:data-id="${dto.invoice.id}"
+                                                onclick="requestWaiver(this.getAttribute('data-id'))"
+                                                class="px-3 py-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded-lg border border-slate-700 text-xs font-bold transition-all cursor-pointer block w-full">
+                                            Request Waiver
+                                        </button>
+                                        <span th:if="${dto.invoice.waiverStatus != null and dto.invoice.waiverStatus.name() == 'PENDING'}" class="text-[10px] text-amber-400 font-semibold uppercase tracking-wide block">Waiver Pending</span>
+                                        <span th:if="${dto.invoice.waiverStatus != null and dto.invoice.waiverStatus.name() == 'APPROVED'}" class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wide block">Waiver Applied</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -352,6 +361,23 @@
             const modal = document.getElementById('paymentModal');
             modal.classList.remove('flex');
             modal.classList.add('hidden');
+        }
+
+        async function requestWaiver(invoiceId) {
+            const amount = prompt('Waiver amount (₹):');
+            if (!amount || isNaN(parseFloat(amount))) return;
+            const reason = prompt('Reason for waiver:') || 'No reason provided';
+
+            const csrfToken = document.querySelector('input[name="_csrf"]').value;
+            const params = new URLSearchParams({ waiverAmount: amount, reason: reason });
+            const res = await fetch(`/api/admin/fees/${invoiceId}/waiver/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
+                body: params.toString(),
+            });
+            const data = await res.json();
+            if (data.error) { alert(data.error); return; }
+            window.location.reload();
         }
     </script>
 

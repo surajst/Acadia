@@ -28,6 +28,16 @@ test.describe('Sprint 3: PRINCIPAL role and access boundaries', () => {
       return res.json();
     }, principalEmail);
     expect(inviteResult.status).toBe('created');
+    expect(inviteResult.approvalStatus).toBe('PENDING');
+
+    // New staff invites are PENDING until approved — the inviting admin approves here
+    const approveResult = await page.evaluate(async (email) => {
+      const staff = await (await fetch('/web/admin/staff')).json();
+      const principal = staff.find(s => s.email === email);
+      const res = await fetch(`/api/principal/staff/${principal.id}/approve`, { method: 'POST' });
+      return res.json();
+    }, principalEmail);
+    expect(approveResult.status).toBe('approved');
 
     // Log in as the new principal
     await page.context().clearCookies();

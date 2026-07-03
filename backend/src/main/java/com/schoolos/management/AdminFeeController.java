@@ -3,6 +3,7 @@ package com.schoolos.management;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -130,6 +131,21 @@ public class AdminFeeController {
 
         feeManagementService.recordPayment(invoiceId, amount, paymentMode, authentication);
         return "redirect:/web/admin/fees?success=payment_recorded";
+    }
+
+    @PostMapping("/api/admin/fees/{invoiceId}/waiver/request")
+    @ResponseBody
+    @PreAuthorize("hasRole('ADMIN')")
+    public Object requestWaiver(@PathVariable UUID invoiceId,
+                                 @RequestParam("waiverAmount") BigDecimal waiverAmount,
+                                 @RequestParam("reason") String reason,
+                                 Authentication authentication) {
+        try {
+            FeeInvoice invoice = feeManagementService.requestWaiver(invoiceId, waiverAmount, reason, authentication);
+            return Map.of("status", "requested", "waiverStatus", invoice.getWaiverStatus());
+        } catch (IllegalArgumentException e) {
+            return Map.of("error", e.getMessage());
+        }
     }
 
     @ExceptionHandler(Exception.class)

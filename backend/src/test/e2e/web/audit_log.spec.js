@@ -57,6 +57,13 @@ test.describe('Sprint 4: Audit Trail', () => {
     }, principalEmail);
     expect(inviteResult.status).toBe('created');
 
+    // New staff invites are PENDING until approved — the inviting admin approves here
+    await page.evaluate(async (email) => {
+      const staff = await (await fetch('/web/admin/staff')).json();
+      const principal = staff.find(s => s.email === email);
+      await fetch(`/api/principal/staff/${principal.id}/approve`, { method: 'POST' });
+    }, principalEmail);
+
     await page.context().clearCookies();
     await login(page, principalEmail, 'PilotLaunchSecure2026!');
     const principalResponse = await page.goto('/web/admin/audit-log');

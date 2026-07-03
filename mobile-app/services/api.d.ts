@@ -76,6 +76,22 @@ export function submitClassAttendance(
 ): Promise<ApiObject>;
 export function getUserProfile(): Promise<UserProfile>;
 
+export function getTeacherClasses(): Promise<ApiObject[]>;
+export function getAssessmentsForClass(classSectionId: string): Promise<ApiObject[]>;
+export function createAssessment(payload: ApiObject): Promise<ApiObject>;
+export function getAssessmentDetail(assessmentId: string): Promise<ApiObject>;
+export function submitAssessmentScores(assessmentId: string, scores: ApiObject[]): Promise<ApiObject>;
+
+export function getTimetableToday(): Promise<ApiObject[]>;
+export function getTimetableWeek(): Promise<Record<string, ApiObject[]>>;
+
+export function getConversations(): Promise<ApiObject[]>;
+export function startConversation(payload: ApiObject): Promise<ApiObject>;
+export function getConversationThread(conversationId: string): Promise<ApiObject[]>;
+export function sendConversationReply(conversationId: string, body: string): Promise<ApiObject>;
+export function getTeacherMessageRoster(): Promise<ApiObject[]>;
+export function getParentMessageTeachers(studentId: string): Promise<ApiObject[]>;
+
 declare const api: AxiosInstance;
 
 export default api;

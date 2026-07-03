@@ -65,7 +65,7 @@
                     </a>
 
                     <!-- TEACHER items -->
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/admin/dashboard}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'TEACHER' or currentUserRole == 'PRINCIPAL'}" th:href="@{/web/admin/dashboard}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
                         <span>📊</span>
                         <span>Student Rosters</span>
                     </a>

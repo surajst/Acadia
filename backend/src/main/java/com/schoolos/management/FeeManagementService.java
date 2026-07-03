@@ -91,6 +91,46 @@ public class FeeManagementService {
     }
 
     @Transactional
+    public FeeInvoice requestWaiver(UUID invoiceId, BigDecimal waiverAmount, String reason, Authentication authentication) {
+        if (waiverAmount == null || waiverAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Waiver amount must be greater than zero");
+        }
+
+        FeeInvoice invoice = feeInvoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new IllegalArgumentException("FeeInvoice not found with ID: " + invoiceId));
+
+        invoice.setWaiverAmount(waiverAmount);
+        invoice.setWaiverReason(reason);
+        invoice.setWaiverStatus(FeeInvoice.FeeWaiverStatus.PENDING);
+        feeInvoiceRepository.saveAndFlush(invoice);
+
+        auditLogService.log(authentication, "FEE_WAIVER_REQUESTED", "FeeInvoice", invoiceId,
+                "Requested a waiver of " + waiverAmount + " on invoice " + invoiceId + " (" + reason + ")");
+
+        return invoice;
+    }
+
+    @Transactional
+    public FeeInvoice decideWaiver(UUID invoiceId, boolean approve, Authentication authentication) {
+        FeeInvoice invoice = feeInvoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new IllegalArgumentException("FeeInvoice not found with ID: " + invoiceId));
+
+        if (invoice.getWaiverStatus() != FeeInvoice.FeeWaiverStatus.PENDING) {
+            throw new IllegalArgumentException("This invoice has no pending waiver request");
+        }
+
+        invoice.setWaiverStatus(approve ? FeeInvoice.FeeWaiverStatus.APPROVED : FeeInvoice.FeeWaiverStatus.REJECTED);
+        invoice.updateBalances();
+        feeInvoiceRepository.saveAndFlush(invoice);
+
+        auditLogService.log(authentication, approve ? "FEE_WAIVER_APPROVED" : "FEE_WAIVER_REJECTED",
+                "FeeInvoice", invoiceId,
+                (approve ? "Approved" : "Rejected") + " waiver of " + invoice.getWaiverAmount() + " on invoice " + invoiceId);
+
+        return invoice;
+    }
+
+    @Transactional
     public void initializeInvoices() {
         UUID defaultTenantId = UUID.fromString("00000000-0000-0000-0000-000000000000");
         UUID defaultAcademicYearId = UUID.fromString("00000000-0000-0000-0000-111111111111");

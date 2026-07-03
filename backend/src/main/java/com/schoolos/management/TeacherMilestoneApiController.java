@@ -29,7 +29,7 @@ public class TeacherMilestoneApiController {
 
     @Transactional
     @PostMapping("/approve")
-    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
     public ResponseEntity<?> approveMilestone(@RequestParam("submissionId") UUID submissionId) {
         try {
             AcademicSubmission submission = academicSubmissionRepository.findById(submissionId)
@@ -71,7 +71,7 @@ public class TeacherMilestoneApiController {
 
     @Transactional
     @PostMapping("/reject")
-    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
     public ResponseEntity<?> rejectMilestone(@RequestParam("submissionId") UUID submissionId,
                                             @RequestParam(value = "reason", required = false) String reason) {
         try {

@@ -76,6 +76,16 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     await page.click('#staffForm button[type="submit"]');
     await expect(page.locator('#staffRows')).toContainText(teacherEmail, { timeout: 10000 });
 
+    // New staff invites are PENDING until PRINCIPAL/ADMIN approves — the inviting
+    // admin can do that themselves since ADMIN is included in the approval role check.
+    const approveResult = await page.evaluate(async (email) => {
+      const staff = await (await fetch('/web/admin/staff')).json();
+      const teacher = staff.find(s => s.email === email);
+      const res = await fetch(`/api/principal/staff/${teacher.id}/approve`, { method: 'POST' });
+      return res.json();
+    }, teacherEmail);
+    expect(approveResult.status).toBe('approved');
+
     // The invited teacher can independently log in and reach their own dashboard
     await page.context().clearCookies();
     await login(page, teacherEmail, 'PilotLaunchSecure2026!');

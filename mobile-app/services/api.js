@@ -178,4 +178,115 @@ export const markAllNotificationsRead = async () => {
   });
 };
 
+// ─── Gradebook (teacher) ────────────────────────────────────────────────────
+
+export const getTeacherClasses = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/classes`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : (response.data.value ?? []);
+};
+
+export const getAssessmentsForClass = async (classSectionId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/assessments/class/${classSectionId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const createAssessment = async (payload) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/teacher/assessments/create`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const getAssessmentDetail = async (assessmentId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/assessments/${assessmentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const submitAssessmentScores = async (assessmentId, scores) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/teacher/assessments/${assessmentId}/scores`, { scores }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// ─── Timetable (teacher) ────────────────────────────────────────────────────
+
+export const getTimetableToday = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/timetable/today`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getTimetableWeek = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/timetable/week`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data ?? {};
+};
+
+// ─── Messaging (teacher + parent) ───────────────────────────────────────────
+
+export const getConversations = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/messages/conversations`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const startConversation = async (payload) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/messages/conversations/start`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const getConversationThread = async (conversationId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/messages/conversations/${conversationId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const sendConversationReply = async (conversationId, body) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/messages/conversations/${conversationId}/messages`, { body }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const getTeacherMessageRoster = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/messages/roster`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getParentMessageTeachers = async (studentId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/parent/messages/teachers`, {
+    params: { studentId },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
 export default api;

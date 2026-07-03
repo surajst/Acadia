@@ -98,6 +98,8 @@ public class TenantOnboardingService {
         admin.setFullName(adminFullName);
         admin.setRole(UserRole.ADMIN);
         admin.setActive(true);
+        // Bootstrap admin — there's no PRINCIPAL/ADMIN yet to approve them.
+        admin.setApprovalStatus(User.ApprovalStatus.APPROVED);
         userRepository.save(admin);
 
         subjectService.seedDefaultSubjectsIfNone(tenant.getId(), academicYear.getId());

@@ -1,5 +1,6 @@
 package com.schoolos.announcement;
 
+import com.schoolos.common.NotificationDeliveryService;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,9 +10,12 @@ import java.util.UUID;
 public class AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
+    private final NotificationDeliveryService notificationDeliveryService;
 
-    public AnnouncementService(AnnouncementRepository announcementRepository) {
+    public AnnouncementService(AnnouncementRepository announcementRepository,
+                                NotificationDeliveryService notificationDeliveryService) {
         this.announcementRepository = announcementRepository;
+        this.notificationDeliveryService = notificationDeliveryService;
     }
 
     public Announcement createAnnouncement(Announcement announcement) {
@@ -23,9 +27,10 @@ public class AnnouncementService {
         }
         
         Announcement saved = announcementRepository.save(announcement);
-        
-        System.out.println("[MOCK WHATSAPP DISPATCH] Sending to " + saved.getTargetGrade() + ": " + saved.getTitle());
-        
+
+        notificationDeliveryService.send(saved.getTargetGrade(),
+                "[MOCK WHATSAPP DISPATCH] Sending to " + saved.getTargetGrade() + ": " + saved.getTitle());
+
         return saved;
     }
 

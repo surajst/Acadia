@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.common.NotificationDeliveryService;
 import com.schoolos.user.CurrentUserService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -57,6 +58,9 @@ public class UnifiedDashboardWebController {
 
     @Autowired
     private AdminProgressService adminProgressService;
+
+    @Autowired
+    private NotificationDeliveryService notificationDeliveryService;
 
     @Autowired
     private FeeManagementService feeManagementService;
@@ -570,7 +574,8 @@ public class UnifiedDashboardWebController {
 
                 if (status == AttendanceStatus.ABSENT) {
                     for (Parent parent : student.getParents()) {
-                        System.out.println("[ALERT WHATSAPP DISPATCH] Sending to " + parent.getFirstName() + " " + parent.getLastName() + " (" + parent.getPhoneNumber() + "): Alert! Student " + student.getFirstName() + " was marked ABSENT today.");
+                        notificationDeliveryService.send(parent.getPhoneNumber(),
+                                "[ALERT WHATSAPP DISPATCH] Sending to " + parent.getFirstName() + " " + parent.getLastName() + " (" + parent.getPhoneNumber() + "): Alert! Student " + student.getFirstName() + " was marked ABSENT today.");
                     }
                 }
             }

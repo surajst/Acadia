@@ -81,6 +81,7 @@ public class SecurityConfig {
                         .requestMatchers("/web/admin/dashboard").hasAnyRole("ADMIN", "TEACHER", "PRINCIPAL")
                         .requestMatchers("/web/admin/audit-log", "/web/admin/audit-log/**").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers("/web/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/web/teacher/dashboard").hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
                         .requestMatchers("/web/teacher/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/web/student/**").hasAnyRole("STUDENT", "PARENT", "ADMIN")
                         .requestMatchers("/web/parent/**").hasAnyRole("PARENT", "ADMIN")
