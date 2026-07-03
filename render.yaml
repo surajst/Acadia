@@ -49,3 +49,18 @@ services:
         fromDatabase:
           name: acadia-postgres
           property: password
+
+  # Static web build of the Expo mobile app — lets parents/students/teachers
+  # use it from any browser with zero install, no app-store review needed.
+  # EXPO_PUBLIC_API_HOST below points it at the deployed backend above; if
+  # you ever recreate acadia-backend and get a different onrender.com
+  # subdomain, update this value to match.
+  - type: web
+    name: acadia-mobile-web
+    runtime: static
+    rootDir: mobile-app
+    buildCommand: npm install && npx expo export -p web
+    staticPublishPath: ./dist
+    envVars:
+      - key: EXPO_PUBLIC_API_HOST
+        value: https://acadia-backend-rx3l.onrender.com

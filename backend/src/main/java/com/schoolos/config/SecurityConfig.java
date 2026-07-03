@@ -135,6 +135,12 @@ public class SecurityConfig {
                 "http://10.0.2.2:8081",
                 "http://10.0.2.2:8080"
         ));
+        // Wildcard pattern for the mobile-app web export deployed as a
+        // separate Render static site — a distinct origin from the backend,
+        // so it needs its own CORS allowance rather than the dev-only list
+        // above. Origin patterns (not exact origins) are required for
+        // wildcards when allowCredentials is true.
+        configuration.setAllowedOriginPatterns(Arrays.asList("https://*.onrender.com"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         configuration.setAllowCredentials(true);
