@@ -11,7 +11,7 @@
     {
       "name": "backend",
       "runtimeExecutable": "jdk-21.0.3+9/bin/java.exe",
-      "runtimeArgs": ["-jar", "target/backend-0.0.1-SNAPSHOT.jar", "--server.port=18080"],
+      "runtimeArgs": ["-jar", "target/backend-0.0.1-SNAPSHOT.jar", "--server.port=18080", "--app.dev-mode=true"],
       "port": 18080,
       "cwd": "backend"
     }
