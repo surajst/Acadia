@@ -7,7 +7,9 @@ import java.util.UUID;
 
 @Repository
 public interface CurriculumRepository extends JpaRepository<Curriculum, UUID> {
-    
+
+    List<Curriculum> findByTenantId(UUID tenantId);
+
     // Fetch all topics for a given syllabus, standard, and subject, ordered by topicOrder
     List<Curriculum> findByTenantIdAndSyllabusTypeAndStandardAndSubjectCodeOrderByTopicOrderAsc(
         UUID tenantId, SyllabusType syllabusType, Integer standard, String subjectCode

@@ -13,4 +13,5 @@ public interface ClassSectionRepository extends JpaRepository<ClassSection, UUID
     
     // 👈 Add this line back so UploadWebController stops complaining!
     Optional<ClassSection> findByGradeNameAndSectionName(String gradeName, String sectionName);
+    Optional<ClassSection> findByTenantIdAndGradeNameAndSectionName(UUID tenantId, String gradeName, String sectionName);
 }

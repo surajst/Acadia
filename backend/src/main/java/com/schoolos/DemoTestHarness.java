@@ -12,6 +12,7 @@ import com.schoolos.management.ParentRepository;
 import com.schoolos.management.ParentQuest;
 import com.schoolos.management.ParentReward;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
+@ConditionalOnProperty(name = "app.dev-mode", havingValue = "true")
 public class DemoTestHarness implements CommandLineRunner {
 
     private final AnnouncementService announcementService;
@@ -34,9 +36,10 @@ public class DemoTestHarness implements CommandLineRunner {
     private final com.schoolos.management.ParentRewardRepository parentRewardRepository;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
+    private final String demoAdminPassword;
 
-    public DemoTestHarness(AnnouncementService announcementService, 
-                           AnnouncementRepository announcementRepository, 
+    public DemoTestHarness(AnnouncementService announcementService,
+                           AnnouncementRepository announcementRepository,
                            ClassSectionRepository classSectionRepository,
                            StudentRepository studentRepository,
                            ParentRepository parentRepository,
@@ -46,7 +49,8 @@ public class DemoTestHarness implements CommandLineRunner {
                            com.schoolos.management.ParentQuestRepository parentQuestRepository,
                            com.schoolos.management.ParentRewardRepository parentRewardRepository,
                            JdbcTemplate jdbcTemplate,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           @org.springframework.beans.factory.annotation.Value("${demo.admin.password:PilotLaunchSecure2026!}") String demoAdminPassword) {
         this.announcementService = announcementService;
         this.announcementRepository = announcementRepository;
         this.classSectionRepository = classSectionRepository;
@@ -59,6 +63,7 @@ public class DemoTestHarness implements CommandLineRunner {
         this.parentRewardRepository = parentRewardRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.passwordEncoder = passwordEncoder;
+        this.demoAdminPassword = demoAdminPassword;
     }
 
     // ── Deterministic Test Identity UUIDs ─────────────────────────────────────
@@ -100,11 +105,11 @@ public class DemoTestHarness implements CommandLineRunner {
 
             // Admin user with pinned UUID
             jdbcTemplate.update("INSERT INTO users (id, tenant_id, academic_year_id, email, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                ADMIN_UUID, activeTenantId, activeAcademicYearId, "admin@greenwood.com", passwordEncoder.encode("PilotLaunchSecure2026!"), "Admin User", "ADMIN", true);
+                ADMIN_UUID, activeTenantId, activeAcademicYearId, "admin@greenwood.com", passwordEncoder.encode(demoAdminPassword), "Admin User", "ADMIN", true);
 
             // Teacher user with pinned UUID
             jdbcTemplate.update("INSERT INTO users (id, tenant_id, academic_year_id, email, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                TEACHER_UUID, activeTenantId, activeAcademicYearId, "teacher@greenwood.com", passwordEncoder.encode("PilotLaunchSecure2026!"), "Class Teacher", "TEACHER", true);
+                TEACHER_UUID, activeTenantId, activeAcademicYearId, "teacher@greenwood.com", passwordEncoder.encode(demoAdminPassword), "Class Teacher", "TEACHER", true);
 
             Announcement announcement = new Announcement();
             announcement.setTitle("Rain Holiday");
@@ -283,7 +288,7 @@ public class DemoTestHarness implements CommandLineRunner {
         System.out.println("\n===========================================================");
         System.out.println("[TEST CREDENTIALS] Use these to log in at /web/login:");
         System.out.println("Email: " + userEmail);
-        System.out.println("Password: PilotLaunchSecure2026!");
+        System.out.println("Password: " + demoAdminPassword);
         System.out.println("===========================================================\n");
 
         System.out.println("--- DEMO TEST HARNESS COMPLETED ---\n");

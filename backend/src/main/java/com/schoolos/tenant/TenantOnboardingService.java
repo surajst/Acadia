@@ -2,6 +2,8 @@ package com.schoolos.tenant;
 
 import com.schoolos.academics.SubjectService;
 import com.schoolos.common.AuditLogService;
+import com.schoolos.management.ClassSection;
+import com.schoolos.management.ClassSectionRepository;
 import com.schoolos.user.User;
 import com.schoolos.user.UserRepository;
 import com.schoolos.user.UserRole;
@@ -35,6 +37,9 @@ public class TenantOnboardingService {
 
     @Autowired
     private AuditLogService auditLogService;
+
+    @Autowired
+    private ClassSectionRepository classSectionRepository;
 
     public static class DuplicateSubdomainException extends RuntimeException {
         public DuplicateSubdomainException(String subdomain) {
@@ -103,6 +108,16 @@ public class TenantOnboardingService {
         userRepository.save(admin);
 
         subjectService.seedDefaultSubjectsIfNone(tenant.getId(), academicYear.getId());
+
+        // Ensure a new school isn't left with zero classes if the admin never
+        // completes a manual follow-up step.
+        ClassSection firstSection = new ClassSection();
+        firstSection.setId(UUID.randomUUID());
+        firstSection.setTenantId(tenant.getId());
+        firstSection.setAcademicYearId(academicYear.getId());
+        firstSection.setGradeName("Grade 1");
+        firstSection.setSectionName("A");
+        classSectionRepository.save(firstSection);
 
         auditLogService.logDirect(tenant.getId(), academicYear.getId(), admin.getId(), admin.getEmail(),
                 "SCHOOL_CREATED", "Tenant", tenant.getId(),

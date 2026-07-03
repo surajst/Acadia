@@ -1,5 +1,7 @@
 package com.schoolos.management;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -9,5 +11,6 @@ import java.util.UUID;
 public interface FeeInvoiceRepository extends JpaRepository<FeeInvoice, UUID> {
     List<FeeInvoice> findByStudentId(UUID studentId);
     List<FeeInvoice> findByTenantId(UUID tenantId);
+    Page<FeeInvoice> findByTenantId(UUID tenantId, Pageable pageable);
     List<FeeInvoice> findByTenantIdAndWaiverStatus(UUID tenantId, FeeInvoice.FeeWaiverStatus waiverStatus);
 }

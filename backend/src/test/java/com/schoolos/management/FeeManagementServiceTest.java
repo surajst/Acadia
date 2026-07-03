@@ -4,13 +4,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
+// app.dev-mode=true lets the context boot with the insecure default JWT
+// secret/demo password, same as how CI runs the packaged jar for e2e tests.
 @SpringBootTest
+@TestPropertySource(properties = "app.dev-mode=true")
 @Transactional
 public class FeeManagementServiceTest {
 
@@ -71,7 +75,7 @@ public class FeeManagementServiceTest {
     @Test
     public void testRecordPayment_UnpaidToPartiallyPaid() {
         // Record a partial payment of 5000 INR
-        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "ONLINE", null);
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "ONLINE", null, null);
 
         FeeInvoice updated = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
         assertEquals(new BigDecimal("5000.00"), updated.getAmountPaid());
@@ -87,7 +91,7 @@ public class FeeManagementServiceTest {
     @Test
     public void testRecordPayment_FullyPaid() {
         // Record a payment of 20000 INR
-        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("20000.00"), "CASH", null);
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("20000.00"), "CASH", null, null);
 
         FeeInvoice updated = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
         assertEquals(new BigDecimal("20000.00"), updated.getAmountPaid());
@@ -103,14 +107,14 @@ public class FeeManagementServiceTest {
     @Test
     public void testRecordPayment_NegativeAmountThrows() {
         assertThrows(IllegalArgumentException.class, () -> {
-            feeManagementService.recordPayment(testInvoiceId, new BigDecimal("-100.00"), "CHECK", null);
+            feeManagementService.recordPayment(testInvoiceId, new BigDecimal("-100.00"), "CHECK", null, null);
         });
     }
 
     @Test
     public void testRecordPayment_InvalidInvoiceThrows() {
         assertThrows(IllegalArgumentException.class, () -> {
-            feeManagementService.recordPayment(UUID.randomUUID(), new BigDecimal("100.00"), "CASH", null);
+            feeManagementService.recordPayment(UUID.randomUUID(), new BigDecimal("100.00"), "CASH", null, null);
         });
     }
 }

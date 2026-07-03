@@ -4,6 +4,7 @@ import com.schoolos.announcement.Announcement;
 import com.schoolos.announcement.AnnouncementRepository;
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.user.CurrentUserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,38 +27,27 @@ public class ParentPortalWebController {
     private final StudentRepository studentRepository;
     private final AnnouncementRepository announcementRepository;
     private final StudentMetricRepository studentMetricRepository;
+    private final CurrentUserService currentUserService;
 
     public ParentPortalWebController(ParentRepository parentRepository,
                                      ParentQuestRepository parentQuestRepository,
                                      ParentRewardRepository parentRewardRepository,
                                      StudentRepository studentRepository,
                                      AnnouncementRepository announcementRepository,
-                                     StudentMetricRepository studentMetricRepository) {
+                                     StudentMetricRepository studentMetricRepository,
+                                     CurrentUserService currentUserService) {
         this.parentRepository = parentRepository;
         this.parentQuestRepository = parentQuestRepository;
         this.parentRewardRepository = parentRewardRepository;
         this.studentRepository = studentRepository;
         this.announcementRepository = announcementRepository;
         this.studentMetricRepository = studentMetricRepository;
+        this.currentUserService = currentUserService;
     }
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, Authentication authentication) {
-        String username = (authentication != null) ? authentication.getName() : null;
-        Parent parent = null;
-        if (username != null) {
-            parent = parentRepository.findAll().stream()
-                    .filter(p -> username.equalsIgnoreCase(p.getFirstName()) || (p.getEmail() != null && p.getEmail().toLowerCase().startsWith(username.toLowerCase())))
-                    .findFirst()
-                    .orElse(null);
-        }
-        if (parent == null) {
-            // Look up parent: prefer Rajesh/Ramesh (Arnav's parent), fall back to first available
-            parent = parentRepository.findAll().stream()
-                    .filter(p -> "Rajesh".equals(p.getFirstName()) || "Ramesh".equals(p.getFirstName()))
-                    .findFirst()
-                    .orElseGet(() -> parentRepository.findAll().stream().findFirst().orElse(null));
-        }
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
 
         if (parent == null) {
             model.addAttribute("errorMessage", "No parent data found. Please seed the database first.");
@@ -85,14 +75,12 @@ public class ParentPortalWebController {
 
         UUID tenantId = parent.getTenantId();
         UUID academicYearId = parent.getAcademicYearId();
-        if (tenantId == null || academicYearId == null) {
-            for (Student s : studentRepository.findAll()) {
-                if (s.getTenantId() != null) {
-                    tenantId = s.getTenantId();
-                    academicYearId = s.getAcademicYearId();
-                    break;
-                }
-            }
+        if ((tenantId == null || academicYearId == null) && !students.isEmpty()) {
+            // Fall back to this parent's own linked child's tenant/year, never
+            // to an arbitrary student from another family/tenant.
+            Student first = students.get(0);
+            tenantId = first.getTenantId();
+            academicYearId = first.getAcademicYearId();
         }
 
         List<Announcement> announcements = announcementRepository.findByTenantIdAndAcademicYearIdAndTargetGradeIn(

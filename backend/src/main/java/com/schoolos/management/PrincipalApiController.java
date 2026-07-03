@@ -55,13 +55,15 @@ public class PrincipalApiController {
     }
 
     @GetMapping("/progress/school")
-    public ResponseEntity<Map<String, Object>> getSchoolProgress() {
-        return ResponseEntity.ok(adminProgressService.getSchoolWideProgress());
+    public ResponseEntity<Map<String, Object>> getSchoolProgress(Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        return ResponseEntity.ok(adminProgressService.getSchoolWideProgress(tenantId));
     }
 
     @GetMapping("/progress/class")
-    public ResponseEntity<Map<String, Object>> getClassProgress(@RequestParam int standard) {
-        return ResponseEntity.ok(adminProgressService.getClassProgress(standard));
+    public ResponseEntity<Map<String, Object>> getClassProgress(@RequestParam int standard, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        return ResponseEntity.ok(adminProgressService.getClassProgress(tenantId, standard));
     }
 
     @GetMapping("/fee-summary")
@@ -109,7 +111,8 @@ public class PrincipalApiController {
     @PostMapping("/fees/{invoiceId}/waiver/approve")
     public ResponseEntity<?> approveWaiver(@PathVariable UUID invoiceId, Authentication authentication) {
         try {
-            FeeInvoice invoice = feeManagementService.decideWaiver(invoiceId, true, authentication);
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            FeeInvoice invoice = feeManagementService.decideWaiver(invoiceId, true, tenantId, authentication);
             return ResponseEntity.ok(Map.of("status", "approved", "amountDue", invoice.getAmountDue()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -119,7 +122,8 @@ public class PrincipalApiController {
     @PostMapping("/fees/{invoiceId}/waiver/reject")
     public ResponseEntity<?> rejectWaiver(@PathVariable UUID invoiceId, Authentication authentication) {
         try {
-            feeManagementService.decideWaiver(invoiceId, false, authentication);
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            feeManagementService.decideWaiver(invoiceId, false, tenantId, authentication);
             return ResponseEntity.ok(Map.of("status", "rejected"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

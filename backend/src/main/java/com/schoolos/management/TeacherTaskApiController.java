@@ -2,6 +2,7 @@ package com.schoolos.management;
 
 import com.schoolos.user.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -34,6 +35,9 @@ public class TeacherTaskApiController {
 
     @Autowired
     private CurrentUserService currentUserService;
+
+    @Value("${app.dev-mode:false}")
+    private boolean devMode;
 
     @PostMapping("/teacher/tasks/create")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
@@ -84,6 +88,9 @@ public class TeacherTaskApiController {
 
     @GetMapping("/teacher/test-students")
     public ResponseEntity<?> testStudents() {
+        if (!devMode) {
+            return ResponseEntity.status(403).body(Map.of("error", "Disabled in production"));
+        }
         try {
             List<Map<String, Object>> sectionData = classSectionRepo.findAll().stream().map(s -> {
                 Map<String, Object> m = new java.util.HashMap<>();

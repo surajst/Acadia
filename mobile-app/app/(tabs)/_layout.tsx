@@ -2,13 +2,13 @@ import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import { useCallback, useState, useEffect, createContext } from 'react';
-import { getStudentDashboard, getParentDashboard } from '../../services/api';
+import { getStudentDashboard, getParentDashboard, getApiHost } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useAuth } from '@/context/AuthContext';
 
-export const DataContext = createContext<any>({ role: null, data: {}, refreshData: async () => {} });
+export const DataContext = createContext<any>({ role: null, data: {}, refreshData: async () => {}, selectedChildId: null, selectChild: (_id: string) => {} });
 
 const ROLE_STUDENT = 'STUDENT';
 const ROLE_PARENT  = 'PARENT';
@@ -17,18 +17,24 @@ const ROLE_TEACHER = 'TEACHER';
 export default function TabLayout() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const { userRole: role } = useAuth();
   const headerShown = useClientOnlyValue(false, true);
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async (childId?: string | null) => {
     setLoading(true);
     try {
       if (role === ROLE_PARENT) {
-        const parentData = await getParentDashboard();
+        const parentData = await getParentDashboard(childId ?? selectedChildId ?? undefined);
         setData(parentData);
+        // Keep the selection in sync with whichever child the server resolved
+        // (e.g. on first load, before the parent has picked one explicitly).
+        if (parentData?.student?.id) {
+          setSelectedChildId(parentData.student.id);
+        }
       } else if (role === ROLE_TEACHER) {
         const token = await AsyncStorage.getItem('userToken');
-        const BASE_HOST = (typeof window !== 'undefined') ? 'http://localhost:8080' : (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080');
+        const BASE_HOST = getApiHost();
         const [classesResp, tasksResp, attendanceSummaryResp, timetableResp] = await Promise.all([
           fetch(`${BASE_HOST}/api/teacher/classes`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -60,7 +66,12 @@ export default function TabLayout() {
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, [role, selectedChildId]);
+
+  const selectChild = useCallback((childId: string) => {
+    setSelectedChildId(childId);
+    void fetchDashboardData(childId);
+  }, [fetchDashboardData]);
 
   useEffect(() => {
     void fetchDashboardData();
@@ -72,7 +83,7 @@ export default function TabLayout() {
 
   if (loading) {
     return (
-      <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData }}>
+      <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
         <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#6366f1" />
         </View>
@@ -82,14 +93,14 @@ export default function TabLayout() {
 
   if (!data) {
     return (
-      <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData }}>
+      <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
         <View style={{ flex: 1, backgroundColor: '#0f172a' }} />
       </DataContext.Provider>
     );
   }
 
   return (
-    <DataContext.Provider value={{ role, data, refreshData: fetchDashboardData }}>
+    <DataContext.Provider value={{ role, data, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
       <Tabs
         screenOptions={{
           tabBarActiveTintColor:   '#6366f1',

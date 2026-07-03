@@ -7,6 +7,13 @@
       "runtimeArgs": ["expo", "start", "--web", "--port", "8081"],
       "port": 8081,
       "cwd": "mobile-app"
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "jdk-21.0.3+9/bin/java.exe",
+      "runtimeArgs": ["-jar", "target/backend-0.0.1-SNAPSHOT.jar", "--server.port=18080"],
+      "port": 18080,
+      "cwd": "backend"
     }
   ]
 }

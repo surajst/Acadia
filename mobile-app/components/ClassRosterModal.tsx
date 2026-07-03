@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   getClassRoster,
   submitClassAttendance,
+  getApiHost,
 } from '../services/api';
 
 interface RosterStudent {
@@ -40,7 +41,7 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const BASE_HOST = (typeof window !== 'undefined') ? 'http://localhost:8080' : (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080');
+  const BASE_HOST = getApiHost();
 
   useEffect(() => {
     if (isVisible) {

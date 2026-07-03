@@ -4,11 +4,13 @@ import com.schoolos.management.FeeManagementService;
 import com.schoolos.management.FeeInvoiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
 @Order(3)
+@ConditionalOnProperty(name = "app.dev-mode", havingValue = "true")
 public class FeeDataSeeder implements CommandLineRunner {
 
     @Autowired

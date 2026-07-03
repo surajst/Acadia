@@ -1,5 +1,6 @@
 package com.schoolos.management;
 
+import com.schoolos.user.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,9 @@ public class AdminFeeController {
 
     @Autowired
     private FeeManagementService feeManagementService;
+
+    @Autowired
+    private CurrentUserService currentUserService;
 
     public static class EnrichedInvoiceDto {
         private final FeeInvoice invoice;
@@ -68,8 +72,10 @@ public class AdminFeeController {
         }
         model.addAttribute("currentUserRole", role);
 
-        // 1. Calculate high-level financial summary metrics
-        List<FeeInvoice> allInvoices = feeInvoiceRepository.findAll();
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+
+        // 1. Calculate high-level financial summary metrics — scoped to this tenant only
+        List<FeeInvoice> allInvoices = tenantId != null ? feeInvoiceRepository.findByTenantId(tenantId) : List.of();
         BigDecimal totalExpectedRevenue = BigDecimal.ZERO;
         BigDecimal totalCollected = BigDecimal.ZERO;
         BigDecimal totalOutstandingDeficit = BigDecimal.ZERO;
@@ -84,8 +90,10 @@ public class AdminFeeController {
         model.addAttribute("totalCollected", totalCollected);
         model.addAttribute("totalOutstandingDeficit", totalOutstandingDeficit);
 
-        // 2. Fetch paginated invoices chunk to prevent DOM bloat
-        Page<FeeInvoice> invoicePage = feeInvoiceRepository.findAll(PageRequest.of(page, size));
+        // 2. Fetch paginated invoices chunk, scoped to this tenant only
+        Page<FeeInvoice> invoicePage = tenantId != null
+                ? feeInvoiceRepository.findByTenantId(tenantId, PageRequest.of(page, size))
+                : Page.empty();
         
         // 3. Batch resolve corresponding students to avoid N+1 queries
         List<UUID> studentIds = invoicePage.getContent().stream()
@@ -129,7 +137,8 @@ public class AdminFeeController {
             }
         }
 
-        feeManagementService.recordPayment(invoiceId, amount, paymentMode, authentication);
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        feeManagementService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
         return "redirect:/web/admin/fees?success=payment_recorded";
     }
 
@@ -141,7 +150,8 @@ public class AdminFeeController {
                                  @RequestParam("reason") String reason,
                                  Authentication authentication) {
         try {
-            FeeInvoice invoice = feeManagementService.requestWaiver(invoiceId, waiverAmount, reason, authentication);
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            FeeInvoice invoice = feeManagementService.requestWaiver(invoiceId, waiverAmount, reason, tenantId, authentication);
             return Map.of("status", "requested", "waiverStatus", invoice.getWaiverStatus());
         } catch (IllegalArgumentException e) {
             return Map.of("error", e.getMessage());

@@ -16,6 +16,8 @@ export default function DashboardScreen() {
   const role = ctx?.role ?? null;
   const data = ctx?.data ?? {};
   const refreshData = ctx?.refreshData ?? (async () => {});
+  const selectedChildId = ctx?.selectedChildId ?? null;
+  const selectChild = ctx?.selectChild ?? (() => {});
   const { firstName } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
@@ -61,6 +63,7 @@ export default function DashboardScreen() {
   const classes = Array.isArray(data.classes) ? data.classes : [];
   const tasks = Array.isArray(data.tasks) ? data.tasks : [];
   const parentQuests = Array.isArray(data.parentQuests) ? data.parentQuests : [];
+  const children = Array.isArray(data.children) ? data.children : [];
 
   return (
     <ScrollView
@@ -91,6 +94,25 @@ export default function DashboardScreen() {
           </View>
         )}
       </View>
+
+      {role === 'PARENT' && children.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.childSwitcherRow} contentContainerStyle={{ paddingHorizontal: 16 }}>
+          {children.map((child: any) => {
+            const active = child.id === selectedChildId;
+            return (
+              <TouchableOpacity
+                key={child.id}
+                onPress={() => selectChild(child.id)}
+                style={[styles.childChip, active && styles.childChipActive]}
+              >
+                <Text style={[styles.childChipText, active && styles.childChipTextActive]}>
+                  {child.firstName} {child.lastName}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
 
       {role === 'TEACHER' ? (
         <>
@@ -243,6 +265,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0f172a', padding: 16 },
   errorText: { color: '#ef4444', fontSize: 16 },
   infoCard: { backgroundColor: '#1e293b', padding: 20, borderRadius: 16, marginBottom: 16 },
+  childSwitcherRow: { marginHorizontal: -16, marginBottom: 16 },
+  childChip: { backgroundColor: '#1e293b', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: '#334155' },
+  childChipActive: { backgroundColor: '#6366f1', borderColor: '#6366f1' },
+  childChipText: { color: '#94a3b8', fontSize: 14, fontWeight: '600' },
+  childChipTextActive: { color: '#fff' },
   greeting: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
   subGreeting: { color: '#94a3b8', fontSize: 16, marginTop: 4 },
   metricsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },

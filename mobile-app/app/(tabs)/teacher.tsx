@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ActivityIndicator
 import { SymbolView } from 'expo-symbols';
 import ClassRosterModal from '@/components/ClassRosterModal';
 import { useAuth } from '@/context/AuthContext';
+import { getApiHost } from '../../services/api';
 
 interface RosterCardProps {
   className: string;
@@ -75,7 +76,7 @@ export default function TeacherScreen() {
   const [rosterVisible, setRosterVisible] = useState(false);
   const [selectedClass, setSelectedClass] = useState<{id: string, name: string} | null>(null);
 
-  const BASE_HOST = (typeof window !== 'undefined') ? 'http://localhost:8080' : (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080');
+  const BASE_HOST = getApiHost();
 
   useEffect(() => {
     const fetchClasses = async () => {

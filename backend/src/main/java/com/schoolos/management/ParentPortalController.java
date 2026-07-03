@@ -2,6 +2,7 @@ package com.schoolos.management;
 
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.user.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,7 +23,6 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Controller
 public class ParentPortalController {
@@ -51,58 +51,32 @@ public class ParentPortalController {
     @Autowired
     private StudentProgressService studentProgressService;
 
-    private Parent resolveParent(String username) {
-        if (username == null) return null;
-        
-        Parent parent = parentRepository.findAll().stream()
-                .filter(p -> username.equalsIgnoreCase(p.getFirstName()) || 
-                            (p.getEmail() != null && p.getEmail().toLowerCase().startsWith(username.toLowerCase())))
-                .findFirst()
-                .orElse(null);
-                
-        if (parent == null) {
-            parent = parentRepository.findAll().stream()
-                    .filter(p -> "Rajesh".equals(p.getFirstName()) || "Ramesh".equals(p.getFirstName()))
-                    .findFirst()
-                    .orElseGet(() -> parentRepository.findAll().stream().findFirst().orElse(null));
-        }
-        
-        return parent;
+    @Autowired
+    private CurrentUserService currentUserService;
+
+    /**
+     * Resolves the actual logged-in parent via CurrentUserService (User ->
+     * Parent by userId FK). Replaces a prior fuzzy firstName/email-prefix
+     * heuristic that fell back to "the first parent named Rajesh or Ramesh,
+     * or just the first parent in the tenant" when no match was found — that
+     * heuristic could silently resolve to the wrong parent, which would have
+     * defeated any ownership check built on top of it.
+     */
+    private Parent resolveParent(Authentication authentication) {
+        return currentUserService.getCurrentParent(authentication).orElse(null);
     }
 
-    private Student resolveStudent(String username) {
-        if ("arjun".equalsIgnoreCase(username)) {
-            UUID arjunId = UUID.fromString("00000000-0000-0000-0000-000000000091");
-            Student student = studentRepository.findById(arjunId).orElse(null);
-            if (student != null) {
-                return student;
-            }
+    private void assertOwnsQuestsStudent(ParentQuest quest, Authentication authentication) {
+        Parent parent = resolveParent(authentication);
+        if (parent == null || !quest.getStudent().getParents().contains(parent)) {
+            throw new IllegalArgumentException("Not authorized for this quest");
         }
+    }
 
-        try {
-            return studentRepository.findByFirstNameIgnoreCase(username).orElseGet(() -> {
-                List<Student> all = studentRepository.findAll();
-                return all.isEmpty() ? null : all.get(0);
-            });
-        } catch (Exception ex) {
-            try {
-                List<Student> all = studentRepository.findAll();
-                for (Student s : all) {
-                    if (s.getFirstName() != null && s.getFirstName().equalsIgnoreCase(username)) {
-                        if ("arjun".equalsIgnoreCase(username) && "00000000-0000-0000-0000-000000000091".equals(s.getId().toString())) {
-                            return s;
-                        }
-                    }
-                }
-                for (Student s : all) {
-                    if (s.getFirstName() != null && s.getFirstName().equalsIgnoreCase(username)) {
-                        return s;
-                    }
-                }
-                return all.isEmpty() ? null : all.get(0);
-            } catch (Exception e) {
-                return null;
-            }
+    private void assertOwnsRewardsStudent(ParentReward reward, Authentication authentication) {
+        Parent parent = resolveParent(authentication);
+        if (parent == null || !reward.getStudent().getParents().contains(parent)) {
+            throw new IllegalArgumentException("Not authorized for this reward");
         }
     }
 
@@ -119,8 +93,7 @@ public class ParentPortalController {
         }
         model.addAttribute("currentUserRole", role);
 
-        String username = (authentication != null) ? authentication.getName() : "ramesh";
-        Parent parent = resolveParent(username);
+        Parent parent = resolveParent(authentication);
 
         Student student = null;
         if (parent != null) {
@@ -135,21 +108,22 @@ public class ParentPortalController {
         }
 
         if (student == null) {
-            student = resolveStudent("arjun");
-        }
-
-        if (student == null) {
-            student = new Student();
-            student.setId(UUID.fromString("00000000-0000-0000-0000-000000000091"));
-            student.setFirstName("Arjun");
-            student.setLastName("Sharma");
-            student.setRollNumber("6A-01");
-            
-            ClassSection mockSection = new ClassSection();
-            mockSection.setId(UUID.randomUUID());
-            mockSection.setGradeName("Grade 6");
-            mockSection.setSectionName("A");
-            student.setClassSection(mockSection);
+            // No child linked to this parent account — show an honest empty
+            // state rather than falling back to another tenant's real data.
+            model.addAttribute("student", null);
+            model.addAttribute("studentMetrics", null);
+            model.addAttribute("totalXp", 0);
+            model.addAttribute("scholarLevel", 1);
+            model.addAttribute("levelProgress", 0);
+            model.addAttribute("xpToNextLevel", 500);
+            model.addAttribute("submissions", Collections.emptyList());
+            model.addAttribute("pendingRewards", Collections.emptyList());
+            model.addAttribute("attendanceStatus", "NOT MARKED");
+            model.addAttribute("parentQuests", Collections.emptyList());
+            model.addAttribute("parentRewards", Collections.emptyList());
+            model.addAttribute("currentDate", LocalDate.now());
+            model.addAttribute("systemScope", "PARENT_PORTAL");
+            return "parent_portal";
         }
 
         UUID studentId = student.getId();
@@ -200,10 +174,7 @@ public class ParentPortalController {
         // Live Attendance Status resolution
         String attendanceStatus = "NOT MARKED";
         try {
-            final UUID sId = studentId;
-            List<Attendance> attendances = attendanceRepository.findAll().stream()
-                .filter(a -> a.getStudent() != null && sId.equals(a.getStudent().getId()))
-                .collect(Collectors.toList());
+            List<Attendance> attendances = attendanceRepository.findByStudentId(studentId);
 
             LocalDate today = LocalDate.now();
             Attendance todayAttendance = attendances.stream()
@@ -234,10 +205,7 @@ public class ParentPortalController {
 
         List<ParentReward> parentRewards = null;
         try {
-            final UUID sId = studentId;
-            parentRewards = parentRewardRepository.findAll().stream()
-                .filter(r -> r.getStudent() != null && sId.equals(r.getStudent().getId()))
-                .collect(Collectors.toList());
+            parentRewards = parentRewardRepository.findByStudentId(studentId);
         } catch (Exception e) {
             // gracefully catch
         }
@@ -268,6 +236,7 @@ public class ParentPortalController {
         try {
             ParentReward reward = parentRewardRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid parent reward ID: " + id));
+            assertOwnsRewardsStudent(reward, authentication);
 
             reward.setStatus("APPROVED");
             parentRewardRepository.saveAndFlush(reward);
@@ -284,6 +253,7 @@ public class ParentPortalController {
         try {
             ParentReward reward = parentRewardRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid parent reward ID: " + id));
+            assertOwnsRewardsStudent(reward, authentication);
 
             reward.setStatus("HELD");
             parentRewardRepository.saveAndFlush(reward);
@@ -301,14 +271,16 @@ public class ParentPortalController {
                              @RequestParam("xpBounty") Integer xpBounty,
                              Authentication authentication) {
         try {
-            String username = (authentication != null) ? authentication.getName() : "ramesh";
-            Parent parent = resolveParent(username);
+            Parent parent = resolveParent(authentication);
             if (parent == null) {
                 throw new IllegalArgumentException("No parent record found");
             }
 
             Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid student ID"));
+            if (!student.getParents().contains(parent)) {
+                throw new IllegalArgumentException("Not authorized for this student");
+            }
 
             ParentQuest quest = new ParentQuest();
             quest.setId(UUID.randomUUID());
@@ -336,14 +308,16 @@ public class ParentPortalController {
                             @RequestParam("xpCost") Integer xpCost,
                             Authentication authentication) {
         try {
-            String username = (authentication != null) ? authentication.getName() : "ramesh";
-            Parent parent = resolveParent(username);
+            Parent parent = resolveParent(authentication);
             if (parent == null) {
                 throw new IllegalArgumentException("No parent record found");
             }
 
             Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid student ID"));
+            if (!student.getParents().contains(parent)) {
+                throw new IllegalArgumentException("Not authorized for this student");
+            }
 
             ParentReward reward = new ParentReward();
             reward.setId(UUID.randomUUID());
@@ -368,6 +342,7 @@ public class ParentPortalController {
         try {
             ParentQuest quest = parentQuestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid parent quest ID: " + id));
+            assertOwnsQuestsStudent(quest, authentication);
 
             quest.setStatus("APPROVED");
             parentQuestRepository.saveAndFlush(quest);
@@ -401,6 +376,7 @@ public class ParentPortalController {
         try {
             ParentReward reward = parentRewardRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid parent reward ID: " + id));
+            assertOwnsRewardsStudent(reward, authentication);
 
             reward.setStatus("DELIVERED");
             parentRewardRepository.saveAndFlush(reward);
@@ -450,8 +426,7 @@ public class ParentPortalController {
             @RequestParam("studentId") UUID studentId,
             Authentication authentication) {
         
-        String username = (authentication != null) ? authentication.getName() : "ramesh";
-        Parent parent = resolveParent(username);
+        Parent parent = resolveParent(authentication);
         if (parent == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No parent record found");
         }

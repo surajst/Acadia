@@ -11,4 +11,5 @@ public interface TeacherTaskRepository extends JpaRepository<TeacherTask, UUID> 
     List<TeacherTask> findByCreatedByTeacherIdAndTenantId(UUID teacherId, UUID tenantId);
     List<TeacherTask> findByStandardAndAssignedToClassTrueAndTenantId(Integer standard, UUID tenantId);
     List<TeacherTask> findByStudentIdAndTenantId(UUID studentId, UUID tenantId);
+    List<TeacherTask> findByTenantId(UUID tenantId);
 }

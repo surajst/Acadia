@@ -70,9 +70,11 @@ public class AdminManagementController {
         }
         model.addAttribute("currentUserRole", role);
 
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+
         List<SchoolClass> classList = Collections.emptyList();
         try {
-            classList = schoolClassRepository.findAll();
+            classList = tenantId != null ? schoolClassRepository.findByTenantId(tenantId) : Collections.emptyList();
         } catch (Exception e) {
             // gracefully catch
         }
@@ -83,14 +85,16 @@ public class AdminManagementController {
         } catch (Exception e) {
             // gracefully catch
         }
-        
+
         long totalStudents = 0;
         long totalStaff = 0;
         long totalClassrooms = 0;
         try {
-            totalStudents = studentRepository.count();
-            totalStaff = userRepository.countByRole(UserRole.ADMIN) + userRepository.countByRole(UserRole.PRINCIPAL) + userRepository.countByRole(UserRole.TEACHER);
-            totalClassrooms = schoolClassRepository.count();
+            totalStudents = tenantId != null ? studentRepository.findByTenantId(tenantId).size() : 0;
+            totalStaff = userRepository.countByRoleAndTenantId(UserRole.ADMIN, tenantId)
+                    + userRepository.countByRoleAndTenantId(UserRole.PRINCIPAL, tenantId)
+                    + userRepository.countByRoleAndTenantId(UserRole.TEACHER, tenantId);
+            totalClassrooms = tenantId != null ? schoolClassRepository.countByTenantId(tenantId) : 0;
         } catch (Exception e) {
             // gracefully catch
         }
@@ -245,9 +249,9 @@ public class AdminManagementController {
         SchoolClass schoolClass = schoolClassRepository.findById(schoolClassId)
             .orElseThrow(() -> new RuntimeException("SchoolClass not found: " + schoolClassId));
 
-        ClassSection classSection = classSectionRepository.findByGradeNameAndSectionName(schoolClass.getGradeLevel(), schoolClass.getSectionName())
+        ClassSection classSection = classSectionRepository.findByTenantIdAndGradeNameAndSectionName(tenantId, schoolClass.getGradeLevel(), schoolClass.getSectionName())
             .orElseGet(() -> {
-                List<ClassSection> sections = classSectionRepository.findAll();
+                List<ClassSection> sections = tenantId != null ? classSectionRepository.findByTenantId(tenantId) : List.of();
                 if (!sections.isEmpty()) {
                     return sections.get(0);
                 }

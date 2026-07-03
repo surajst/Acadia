@@ -8,4 +8,6 @@ import java.util.UUID;
 @Repository
 public interface SchoolClassRepository extends JpaRepository<SchoolClass, UUID> {
     List<SchoolClass> findByGradeLevel(String gradeLevel);
+    List<SchoolClass> findByTenantId(UUID tenantId);
+    long countByTenantId(UUID tenantId);
 }

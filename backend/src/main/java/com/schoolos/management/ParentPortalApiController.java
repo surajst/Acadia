@@ -54,12 +54,21 @@ public class ParentPortalApiController {
 
     @PostMapping("/approve-quest/{id}")
     @Transactional
-    public ResponseEntity<?> approveQuest(@PathVariable UUID id) {
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<?> approveQuest(@PathVariable UUID id, Authentication authentication) {
         Optional<ParentQuest> questOpt = parentQuestRepository.findById(id);
         if (questOpt.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Quest not found"));
         }
         ParentQuest quest = questOpt.get();
+
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
+        if (parent == null || !quest.getStudent().getParents().contains(parent)) {
+            // Same message whether the quest belongs to someone else or the
+            // caller has no parent record — don't reveal which.
+            return ResponseEntity.status(403).body(Map.of("error", "Not authorized for this quest"));
+        }
+
         quest.setStatus("VERIFIED");
         parentQuestRepository.save(quest);
 
@@ -88,6 +97,7 @@ public class ParentPortalApiController {
 
     @PostMapping("/assign-quest")
     @Transactional
+    @PreAuthorize("hasRole('PARENT')")
     public ResponseEntity<?> assignQuest(@RequestBody AssignQuestDto dto, Authentication authentication) {
         Optional<Student> studentOpt = studentRepository.findById(dto.getStudentId());
         if (studentOpt.isEmpty()) {
@@ -97,6 +107,9 @@ public class ParentPortalApiController {
         Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
         if (parent == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Parent not found"));
+        }
+        if (!student.getParents().contains(parent)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Not authorized for this student"));
         }
 
         ParentQuest quest = new ParentQuest();

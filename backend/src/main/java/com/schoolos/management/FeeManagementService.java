@@ -60,13 +60,14 @@ public class FeeManagementService {
     }
 
     @Transactional
-    public void recordPayment(UUID invoiceId, BigDecimal paymentAmount, String mode, Authentication authentication) {
+    public void recordPayment(UUID invoiceId, BigDecimal paymentAmount, String mode, UUID currentTenantId, Authentication authentication) {
         if (paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Payment amount must be greater than zero");
         }
 
         FeeInvoice invoice = feeInvoiceRepository.findById(invoiceId)
             .orElseThrow(() -> new IllegalArgumentException("FeeInvoice not found with ID: " + invoiceId));
+        assertSameTenant(invoice, currentTenantId);
 
         BigDecimal currentPaid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO;
         invoice.setAmountPaid(currentPaid.add(paymentAmount));
@@ -91,13 +92,14 @@ public class FeeManagementService {
     }
 
     @Transactional
-    public FeeInvoice requestWaiver(UUID invoiceId, BigDecimal waiverAmount, String reason, Authentication authentication) {
+    public FeeInvoice requestWaiver(UUID invoiceId, BigDecimal waiverAmount, String reason, UUID currentTenantId, Authentication authentication) {
         if (waiverAmount == null || waiverAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Waiver amount must be greater than zero");
         }
 
         FeeInvoice invoice = feeInvoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new IllegalArgumentException("FeeInvoice not found with ID: " + invoiceId));
+        assertSameTenant(invoice, currentTenantId);
 
         invoice.setWaiverAmount(waiverAmount);
         invoice.setWaiverReason(reason);
@@ -111,9 +113,10 @@ public class FeeManagementService {
     }
 
     @Transactional
-    public FeeInvoice decideWaiver(UUID invoiceId, boolean approve, Authentication authentication) {
+    public FeeInvoice decideWaiver(UUID invoiceId, boolean approve, UUID currentTenantId, Authentication authentication) {
         FeeInvoice invoice = feeInvoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new IllegalArgumentException("FeeInvoice not found with ID: " + invoiceId));
+        assertSameTenant(invoice, currentTenantId);
 
         if (invoice.getWaiverStatus() != FeeInvoice.FeeWaiverStatus.PENDING) {
             throw new IllegalArgumentException("This invoice has no pending waiver request");
@@ -128,6 +131,19 @@ public class FeeManagementService {
                 (approve ? "Approved" : "Rejected") + " waiver of " + invoice.getWaiverAmount() + " on invoice " + invoiceId);
 
         return invoice;
+    }
+
+    /**
+     * Every fee mutation takes an invoiceId from the caller — without this,
+     * an admin from one tenant could act on another tenant's invoice by ID
+     * alone. currentTenantId may be null only for legacy/system callers that
+     * don't have a request-scoped tenant (none currently do); a real,
+     * mismatched tenant always throws.
+     */
+    private void assertSameTenant(FeeInvoice invoice, UUID currentTenantId) {
+        if (currentTenantId != null && !currentTenantId.equals(invoice.getTenantId())) {
+            throw new IllegalArgumentException("FeeInvoice not found with ID: " + invoice.getId());
+        }
     }
 
     @Transactional

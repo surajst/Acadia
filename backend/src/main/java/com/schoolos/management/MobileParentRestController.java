@@ -46,30 +46,43 @@ public class MobileParentRestController {
     @Autowired
     private CurrentUserService currentUserService;
 
+    /**
+     * Resolves the student a parent-scoped request should act on. If a
+     * studentId is supplied it must belong to one of this parent's own
+     * linked children — otherwise falls back to the first linked child.
+     * This prevents a parent from reading another family's data by simply
+     * passing a different studentId query param.
+     */
     private UUID resolveStudentId(UUID studentId, Authentication authentication) {
-        if (studentId != null) return studentId;
-        return currentUserService.getCurrentParent(authentication)
+        List<Student> children = currentUserService.getCurrentParent(authentication)
                 .map(parent -> studentRepository.findByParentsContaining(parent))
-                .filter(students -> !students.isEmpty())
-                .map(students -> students.get(0).getId())
-                .orElse(null);
+                .orElse(List.of());
+        if (children.isEmpty()) return null;
+        if (studentId != null) {
+            boolean owned = children.stream().anyMatch(s -> s.getId().equals(studentId));
+            if (owned) return studentId;
+        }
+        return children.get(0).getId();
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboardData(Authentication authentication) {
+    public ResponseEntity<?> getDashboardData(
+            @RequestParam(value = "studentId", required = false) UUID requestedStudentId,
+            Authentication authentication) {
         Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
-
-        Student student = null;
-        if (parent != null) {
-            List<Student> students = studentRepository.findByParentsContaining(parent);
-            if (!students.isEmpty()) {
-                student = students.get(0);
-            }
-        }
-
-        if (student == null) {
+        if (parent == null) {
             return ResponseEntity.badRequest().body("No student found for this parent.");
         }
+
+        List<Student> children = studentRepository.findByParentsContaining(parent);
+        if (children.isEmpty()) {
+            return ResponseEntity.badRequest().body("No student found for this parent.");
+        }
+
+        Student student = children.stream()
+                .filter(s -> requestedStudentId != null && s.getId().equals(requestedStudentId))
+                .findFirst()
+                .orElse(children.get(0));
 
         UUID studentId = student.getId();
 
@@ -84,10 +97,7 @@ public class MobileParentRestController {
         List<ParentReward> pendingRewards = parentRewardRepository.findByStudentIdAndStatus(studentId, "PENDING");
         List<ParentQuest> parentQuests = parentQuestRepository.findByStudentId(studentId);
 
-        final UUID sId = studentId;
-        List<ParentReward> parentRewards = parentRewardRepository.findAll().stream()
-            .filter(r -> r.getStudent() != null && sId.equals(r.getStudent().getId()))
-            .collect(Collectors.toList());
+        List<ParentReward> parentRewards = parentRewardRepository.findByStudentId(studentId);
 
         // Attendance Status — via SisDataProvider (most-recent-first, full history), fall back to "not marked"
         List<AttendanceRecord> allAttendance = sisDataProvider.getAttendance(studentId,
@@ -116,6 +126,21 @@ public class MobileParentRestController {
             }
         }
         response.put("student", studentInfo);
+
+        // All children linked to this parent, so the app can offer a switcher
+        // for families with more than one child at the school.
+        List<Map<String, Object>> childrenList = children.stream().map(s -> {
+            Map<String, Object> c = new HashMap<>();
+            c.put("id", s.getId());
+            c.put("firstName", s.getFirstName());
+            c.put("lastName", s.getLastName());
+            if (s.getClassSection() != null) {
+                c.put("gradeName", s.getClassSection().getGradeName());
+                c.put("sectionName", s.getClassSection().getSectionName());
+            }
+            return c;
+        }).collect(Collectors.toList());
+        response.put("children", childrenList);
 
         // Metrics
         Map<String, Object> metrics = new HashMap<>();

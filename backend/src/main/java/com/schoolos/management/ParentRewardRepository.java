@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface ParentRewardRepository extends JpaRepository<ParentReward, UUID> {
     List<ParentReward> findByParentIdAndStatus(UUID parentId, String status);
     List<ParentReward> findByStudentIdAndStatus(UUID studentId, String status);
+    List<ParentReward> findByStudentId(UUID studentId);
 }

@@ -162,10 +162,10 @@
                                 <input
                                     id="rosterSearchInput"
                                     type="text"
-                                    placeholder="Search by name..."
+                                    placeholder="Search by name... (press Enter)"
                                     th:value="${filterName}"
                                     class="w-full pl-9 pr-4 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                                    oninput="applyRosterFilter()"
+                                    onkeydown="if(event.key==='Enter'){ navigateRoster(); }"
                                 />
                             </div>
 
@@ -174,7 +174,7 @@
                                 <select
                                     id="rosterGradeFilter"
                                     class="w-full px-3 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                                    onchange="applyRosterFilter()"
+                                    onchange="navigateRoster()"
                                 >
                                     <option value="">All Grades</option>
                                     <option th:each="grade : ${allGradeNames}"
@@ -185,7 +185,8 @@
                             </div>
 
                             <!-- Result counter badge -->
-                            <span id="rosterResultCount" class="text-xs font-mono font-bold text-indigo-400/80 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full whitespace-nowrap"></span>
+                            <span id="rosterResultCount" class="text-xs font-mono font-bold text-indigo-400/80 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full whitespace-nowrap"
+                                  th:text="${totalRosterItems} + ' student' + (${totalRosterItems} != 1 ? 's' : '')">0 students</span>
                         </div>
                     </div>
                     
@@ -235,15 +236,28 @@
                             </tbody>
                         </table>
 
-                        <!-- Empty state (shown by JS when no results) -->
-                        <div id="rosterEmptyState" class="hidden py-12 text-center text-slate-500 font-medium">
+                        <!-- Empty state -->
+                        <div id="rosterEmptyState" th:class="${#lists.isEmpty(students)} ? 'py-12 text-center text-slate-500 font-medium' : 'hidden py-12 text-center text-slate-500 font-medium'">
                             No students match your search criteria.
                         </div>
 
-                        <!-- Pagination Controls -->
+                        <!-- Pagination Controls (server-driven) -->
                         <div id="rosterPagination" class="flex items-center justify-between px-5 py-3 border-t border-slate-800/40 bg-[#0f172a]/90 shrink-0">
-                            <span id="rosterPageInfo" class="text-xs text-slate-400"></span>
-                            <div class="flex items-center gap-2" id="rosterPageButtons"></div>
+                            <span id="rosterPageInfo" class="text-xs text-slate-400"
+                                  th:text="${totalRosterItems == 0} ? '' : |Page ${currentPage + 1} of ${totalPages} (${totalRosterItems} students)|">Page 1 of 1</span>
+                            <div class="flex items-center gap-2" id="rosterPageButtons">
+                                <a th:href="@{/web/admin/dashboard(page=${currentPage - 1}, size=${pageSize}, name=${filterName}, gradeLevel=${filterGrade})}"
+                                   th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40' : 'hover:bg-slate-700 hover:text-white'"
+                                   class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-700/60 bg-slate-800 text-slate-300 transition-all cursor-pointer">
+                                    ← Prev
+                                </a>
+                                <span class="px-2 py-1.5 text-xs text-slate-500" th:text="${currentPage + 1} + ' / ' + (${totalPages} == 0 ? 1 : ${totalPages})">1 / 1</span>
+                                <a th:href="@{/web/admin/dashboard(page=${currentPage + 1}, size=${pageSize}, name=${filterName}, gradeLevel=${filterGrade})}"
+                                   th:classappend="${currentPage + 1 >= totalPages} ? 'pointer-events-none opacity-40' : 'hover:bg-slate-700 hover:text-white'"
+                                   class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-700/60 bg-slate-800 text-slate-300 transition-all cursor-pointer">
+                                    Next →
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -541,130 +555,18 @@
     </div>
 
     <script>
-        /* =========================================================
-           ROSTER PAGINATION + LIVE FILTER ENGINE
-           Reads all .roster-row elements rendered by Thymeleaf,
-           filters by name text and grade data-attribute in real-time,
-           then paginates the visible set at PAGE_SIZE rows per page.
-        ========================================================= */
-        const PAGE_SIZE = 8;
-        let rosterCurrentPage = 1;
-        let rosterFilteredRows = [];
-
-        function getAllRosterRows() {
-            return Array.from(document.querySelectorAll('#rosterTableBody .roster-row'));
+        /* Roster search/grade filter now triggers a real server request
+           (page resets to 0 whenever the filter changes) instead of
+           re-paginating an already-fully-loaded client-side row set. */
+        function navigateRoster() {
+            const name = document.getElementById('rosterSearchInput')?.value || '';
+            const gradeLevel = document.getElementById('rosterGradeFilter')?.value || '';
+            const params = new URLSearchParams();
+            if (name.trim()) params.set('name', name.trim());
+            if (gradeLevel.trim()) params.set('gradeLevel', gradeLevel.trim());
+            params.set('page', '0');
+            window.location.href = '/web/admin/dashboard?' + params.toString();
         }
-
-        function applyRosterFilter() {
-            rosterCurrentPage = 1;
-            renderRoster();
-        }
-
-        function renderRoster() {
-            const nameQuery = (document.getElementById('rosterSearchInput')?.value || '').toLowerCase().trim();
-            const gradeQuery = (document.getElementById('rosterGradeFilter')?.value || '').trim();
-            const allRows = getAllRosterRows();
-
-            // Filter
-            rosterFilteredRows = allRows.filter(row => {
-                const name = (row.getAttribute('data-name') || '').toLowerCase();
-                const grade = (row.getAttribute('data-grade') || '');
-                const nameMatch = !nameQuery || name.includes(nameQuery);
-                const gradeMatch = !gradeQuery || grade === gradeQuery;
-                return nameMatch && gradeMatch;
-            });
-
-            // Hide all rows
-            allRows.forEach(r => r.classList.add('hidden'));
-
-            const totalItems = rosterFilteredRows.length;
-            const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-            rosterCurrentPage = Math.min(rosterCurrentPage, totalPages);
-
-            // Show page slice
-            const start = (rosterCurrentPage - 1) * PAGE_SIZE;
-            const pageRows = rosterFilteredRows.slice(start, start + PAGE_SIZE);
-            pageRows.forEach(r => r.classList.remove('hidden'));
-
-            // Empty state
-            const emptyEl = document.getElementById('rosterEmptyState');
-            if (emptyEl) emptyEl.classList.toggle('hidden', totalItems > 0);
-
-            // Result count badge
-            const countEl = document.getElementById('rosterResultCount');
-            if (countEl) countEl.textContent = totalItems + ' student' + (totalItems !== 1 ? 's' : '');
-
-            // Page info text
-            const pageInfoEl = document.getElementById('rosterPageInfo');
-            if (pageInfoEl) {
-                if (totalItems === 0) {
-                    pageInfoEl.textContent = '';
-                } else {
-                    const from = start + 1;
-                    const to = Math.min(start + PAGE_SIZE, totalItems);
-                    pageInfoEl.textContent = 'Showing ' + from + '–' + to + ' of ' + totalItems + ' students';
-                }
-            }
-
-            // Pagination controls
-            const btnContainer = document.getElementById('rosterPageButtons');
-            if (btnContainer) {
-                btnContainer.innerHTML = '';
-
-                // Previous
-                const prevBtn = document.createElement('button');
-                prevBtn.textContent = '← Prev';
-                prevBtn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ' +
-                    (rosterCurrentPage === 1
-                        ? 'bg-slate-900/30 border-slate-800/40 text-slate-600 cursor-not-allowed'
-                        : 'bg-slate-800 border-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer');
-                prevBtn.disabled = rosterCurrentPage === 1;
-                prevBtn.onclick = () => { rosterCurrentPage--; renderRoster(); };
-                btnContainer.appendChild(prevBtn);
-
-                // Page number buttons (show max 5 around current)
-                const pageWindow = 2;
-                for (let p = 1; p <= totalPages; p++) {
-                    if (totalPages > 7 && Math.abs(p - rosterCurrentPage) > pageWindow && p !== 1 && p !== totalPages) {
-                        // Show ellipsis at the boundaries only
-                        if (p === rosterCurrentPage - pageWindow - 1 || p === rosterCurrentPage + pageWindow + 1) {
-                            const ellipsis = document.createElement('span');
-                            ellipsis.textContent = '…';
-                            ellipsis.className = 'px-2 py-1.5 text-xs text-slate-600';
-                            btnContainer.appendChild(ellipsis);
-                        }
-                        continue;
-                    }
-                    const pageBtn = document.createElement('button');
-                    pageBtn.textContent = p;
-                    const isActive = p === rosterCurrentPage;
-                    pageBtn.className = 'w-8 h-8 text-xs font-bold rounded-lg border transition-all ' +
-                        (isActive
-                            ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20 cursor-default'
-                            : 'bg-slate-800 border-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer');
-                    pageBtn.disabled = isActive;
-                    pageBtn.onclick = () => { rosterCurrentPage = p; renderRoster(); };
-                    btnContainer.appendChild(pageBtn);
-                }
-
-                // Next
-                const nextBtn = document.createElement('button');
-                nextBtn.textContent = 'Next →';
-                nextBtn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ' +
-                    (rosterCurrentPage === totalPages
-                        ? 'bg-slate-900/30 border-slate-800/40 text-slate-600 cursor-not-allowed'
-                        : 'bg-slate-800 border-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer');
-                nextBtn.disabled = rosterCurrentPage === totalPages;
-                nextBtn.onclick = () => { rosterCurrentPage++; renderRoster(); };
-                btnContainer.appendChild(nextBtn);
-            }
-        }
-
-        // Boot the engine on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Respect any server-side pre-filtered values already in the inputs
-            renderRoster();
-        });
     </script>
 
     <script>

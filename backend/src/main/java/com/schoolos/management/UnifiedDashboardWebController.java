@@ -11,6 +11,9 @@ import com.schoolos.common.NotificationDeliveryService;
 import com.schoolos.user.CurrentUserService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -76,6 +79,8 @@ public class UnifiedDashboardWebController {
             @RequestParam(value = "classId", required = false) UUID classId,
             @RequestParam(value = "name", required = false) String nameFilter,
             @RequestParam(value = "gradeLevel", required = false) String gradeLevelFilter,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
             Model model, Authentication authentication) {
         String role = "TEACHER";
         if (authentication != null) {
@@ -127,10 +132,15 @@ public class UnifiedDashboardWebController {
         String effectiveName = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
         String effectiveGrade = (gradeLevelFilter != null && !gradeLevelFilter.isBlank()) ? gradeLevelFilter.trim() : null;
 
+        Pageable pageable = PageRequest.of(page, size);
         List<Student> conditionalRoster = Collections.emptyList();
+        long totalRosterItems = 0;
+        int totalRosterPages = 0;
         try {
-            if (classId != null) {
-                // Class-specific view: apply name/grade filters if present
+            if (classId != null && (effectiveName != null || effectiveGrade != null)) {
+                // Class-specific view with name/grade filters: no dedicated paginated
+                // query exists for this combination, so filter in-memory (bounded by
+                // one class section's roster size, not the whole tenant).
                 List<Student> byClass = studentRepository.findBySchoolClassId(classId);
                 conditionalRoster = byClass.stream()
                     .filter(s -> effectiveName == null ||
@@ -140,16 +150,30 @@ public class UnifiedDashboardWebController {
                                  (s.getClassSection() != null &&
                                   effectiveGrade.equals(s.getClassSection().getGradeName())))
                     .collect(Collectors.toList());
+                totalRosterItems = conditionalRoster.size();
+                totalRosterPages = 1;
+            } else if (classId != null) {
+                Page<Student> classPage = studentRepository.findBySchoolClassId(classId, pageable);
+                conditionalRoster = classPage.getContent();
+                totalRosterItems = classPage.getTotalElements();
+                totalRosterPages = classPage.getTotalPages();
             } else if (effectiveName != null || effectiveGrade != null) {
                 // Filtered search across all sections visible to this user
+                Page<Student> searchPage;
                 if (!assignedClassrooms.isEmpty()) {
-                    conditionalRoster = studentRepository.findByClassSectionInAndNameAndGrade(
-                        assignedClassrooms, effectiveName, effectiveGrade);
+                    searchPage = studentRepository.findByClassSectionInAndNameAndGrade(
+                        assignedClassrooms, effectiveName, effectiveGrade, pageable);
                 } else {
-                    conditionalRoster = studentRepository.findByNameContainingAndGrade(effectiveName, effectiveGrade);
+                    searchPage = studentRepository.findByNameContainingAndGrade(tenantId, effectiveName, effectiveGrade, pageable);
                 }
+                conditionalRoster = searchPage.getContent();
+                totalRosterItems = searchPage.getTotalElements();
+                totalRosterPages = searchPage.getTotalPages();
             } else if (!assignedClassrooms.isEmpty()) {
-                conditionalRoster = studentService.findByClassSectionIn(assignedClassrooms);
+                Page<Student> rosterPage = studentService.findByClassSectionIn(assignedClassrooms, pageable);
+                conditionalRoster = rosterPage.getContent();
+                totalRosterItems = rosterPage.getTotalElements();
+                totalRosterPages = rosterPage.getTotalPages();
             }
         } catch (Exception e) {
             // gracefully catch
@@ -181,7 +205,7 @@ public class UnifiedDashboardWebController {
         // data — oversight without the ADMIN/TEACHER data-entry surfaces.
         if ("PRINCIPAL".equals(role)) {
             try {
-                model.addAttribute("schoolProgress", adminProgressService.getSchoolWideProgress());
+                model.addAttribute("schoolProgress", adminProgressService.getSchoolWideProgress(tenantId));
             } catch (Exception e) {
                 model.addAttribute("schoolProgress", Collections.emptyMap());
             }
@@ -202,6 +226,10 @@ public class UnifiedDashboardWebController {
         model.addAttribute("totalStudents", totalStudents);
         model.addAttribute("activeAbsences", activeAbsences);
         model.addAttribute("attendancePercentage", attendancePercentage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalRosterPages);
+        model.addAttribute("totalRosterItems", totalRosterItems);
+        model.addAttribute("pageSize", size);
 
         return "unified_dashboard";
     }

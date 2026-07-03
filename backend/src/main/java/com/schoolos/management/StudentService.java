@@ -1,5 +1,7 @@
 package com.schoolos.management;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
@@ -18,5 +20,12 @@ public class StudentService {
             return Collections.emptyList();
         }
         return studentRepository.findByClassSectionIn(classSections);
+    }
+
+    public Page<Student> findByClassSectionIn(List<ClassSection> classSections, Pageable pageable) {
+        if (classSections == null || classSections.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return studentRepository.findByClassSectionIn(classSections, pageable);
     }
 }

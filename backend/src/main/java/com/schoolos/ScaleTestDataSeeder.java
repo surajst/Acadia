@@ -13,6 +13,7 @@ import com.schoolos.user.UserRepository;
 import com.schoolos.user.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.util.UUID;
 
 @Component
 @Order(2)
+@ConditionalOnProperty(name = "app.dev-mode", havingValue = "true")
 public class ScaleTestDataSeeder implements CommandLineRunner {
 
     @Autowired
@@ -46,6 +48,9 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
 
     @Autowired
     private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @org.springframework.beans.factory.annotation.Value("${demo.admin.password:PilotLaunchSecure2026!}")
+    private String demoAdminPassword;
 
     @Override
     @Transactional
@@ -265,7 +270,7 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
 
     private void seedPilotDatabaseCredentials(UUID tenantId, UUID academicYearId) {
         System.out.println(">> Scale Simulation Seeder -> Seeding Pilot Database Credentials");
-        String pilotPassword = passwordEncoder.encode("PilotLaunchSecure2026!");
+        String pilotPassword = passwordEncoder.encode(demoAdminPassword);
         
         // Helper array to seed roles easily
         String[][] pilotAccounts = {

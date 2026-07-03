@@ -7,6 +7,8 @@ import com.schoolos.academics.StudentMetricRepository;
 import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -92,6 +95,9 @@ public class StudentPortalController {
     @Autowired
     private CurrentUserService currentUserService;
 
+    @Value("${app.dev-mode:false}")
+    private boolean devMode;
+
     private Student resolveStudent(Authentication authentication) {
         return currentUserService.getCurrentStudent(authentication)
                 .orElseThrow(() -> new IllegalArgumentException("Student record not found"));
@@ -101,6 +107,9 @@ public class StudentPortalController {
     @ResponseBody
     @Transactional
     public String testReset() {
+        if (!devMode) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Test reset is disabled in production");
+        }
         try {
             UUID arjunId = UUID.fromString("00000000-0000-0000-0000-000000000091");
             StudentMetric metric = studentMetricRepository.findByStudentId(arjunId).orElse(null);
@@ -524,7 +533,11 @@ public class StudentPortalController {
         } else {
             // Fallback: Check if skillName matches a TeacherTask title
             try {
-                for (TeacherTask task : teacherTaskRepository.findAll()) {
+                UUID currentTenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+                List<TeacherTask> tenantTasks = currentTenantId != null
+                        ? teacherTaskRepository.findByTenantId(currentTenantId)
+                        : List.of();
+                for (TeacherTask task : tenantTasks) {
                     if (task.getTitle().equalsIgnoreCase(skillName)) {
                         bounty = task.getXpReward() != null ? task.getXpReward() : 50;
                         teacherTaskId = task.getId();
@@ -754,6 +767,11 @@ public class StudentPortalController {
             throw new RuntimeException("Reward redemption failed: " + e.getMessage(), e);
         }
         return "redirect:/web/student/portal?tab=rewards&success=reward_redeemed";
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public org.springframework.http.ResponseEntity<String> handleResponseStatusException(ResponseStatusException ex) {
+        return org.springframework.http.ResponseEntity.status(ex.getStatusCode()).body(ex.getReason());
     }
 
     @ExceptionHandler(Exception.class)

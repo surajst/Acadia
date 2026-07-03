@@ -17,6 +17,7 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
 
     // Used by Teachers to pull students belonging only to their assigned sections
     List<Student> findByClassSectionIn(List<ClassSection> classSections);
+    Page<Student> findByClassSectionIn(List<ClassSection> classSections, Pageable pageable);
 
     // [FIX] Added to support class count dashboard
     long countByClassSection(ClassSection classSection);
@@ -30,14 +31,26 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     Optional<Student> findByUserId(UUID userId);
     List<Student> findByParentsContaining(Parent parent);
 
-    // Dynamic search: filter by name substring (first or last) across all sections
-    @Query("SELECT s FROM Student s WHERE " +
+    // Dynamic search: filter by name substring (first or last), scoped to one tenant
+    @Query("SELECT s FROM Student s WHERE s.tenantId = :tenantId AND " +
            "(:name IS NULL OR LOWER(s.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
            "OR LOWER(s.lastName) LIKE LOWER(CONCAT('%', :name, '%')))" +
            " AND (:gradeLevel IS NULL OR s.classSection.gradeName = :gradeLevel)")
     List<Student> findByNameContainingAndGrade(
+        @Param("tenantId") UUID tenantId,
         @Param("name") String name,
         @Param("gradeLevel") String gradeLevel
+    );
+
+    @Query("SELECT s FROM Student s WHERE s.tenantId = :tenantId AND " +
+           "(:name IS NULL OR LOWER(s.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
+           "OR LOWER(s.lastName) LIKE LOWER(CONCAT('%', :name, '%')))" +
+           " AND (:gradeLevel IS NULL OR s.classSection.gradeName = :gradeLevel)")
+    Page<Student> findByNameContainingAndGrade(
+        @Param("tenantId") UUID tenantId,
+        @Param("name") String name,
+        @Param("gradeLevel") String gradeLevel,
+        Pageable pageable
     );
 
     // For teachers: filter within their assigned sections
@@ -49,5 +62,16 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
         @Param("sections") List<ClassSection> sections,
         @Param("name") String name,
         @Param("gradeLevel") String gradeLevel
+    );
+
+    @Query("SELECT s FROM Student s WHERE s.classSection IN :sections" +
+           " AND (:name IS NULL OR LOWER(s.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
+           "OR LOWER(s.lastName) LIKE LOWER(CONCAT('%', :name, '%')))" +
+           " AND (:gradeLevel IS NULL OR s.classSection.gradeName = :gradeLevel)")
+    Page<Student> findByClassSectionInAndNameAndGrade(
+        @Param("sections") List<ClassSection> sections,
+        @Param("name") String name,
+        @Param("gradeLevel") String gradeLevel,
+        Pageable pageable
     );
 }

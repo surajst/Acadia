@@ -16,6 +16,7 @@ import com.schoolos.user.UserRepository;
 import com.schoolos.user.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,7 @@ import java.util.UUID;
  */
 @Component
 @Order(4)
+@ConditionalOnProperty(name = "app.dev-mode", havingValue = "true")
 public class UserAccountLinkageSeeder implements CommandLineRunner {
 
     @Autowired

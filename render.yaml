@@ -1,0 +1,51 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Deploy: push this repo to GitHub, then in the Render dashboard choose
+# "New > Blueprint" and point it at this repo. Render reads this file and
+# provisions both services below in one step.
+#
+# After the first deploy, go to Web Service > Environment and set
+# DEMO_ADMIN_PASSWORD only if you intentionally run with app.dev-mode=true
+# (not recommended once a real school's data is in this database).
+
+databases:
+  - name: acadia-postgres
+    plan: free
+    databaseName: acadia
+    user: acadia
+
+services:
+  - type: web
+    name: acadia-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /login
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: postgres
+      - key: APP_DEV_MODE
+        value: "false"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_HOST
+        fromDatabase:
+          name: acadia-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: acadia-postgres
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: acadia-postgres
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: acadia-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: acadia-postgres
+          property: password

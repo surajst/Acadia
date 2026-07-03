@@ -3,7 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 
-const BASE_HOST = (typeof window !== 'undefined') ? 'http://localhost:8080' : (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080');
+export function getApiHost() {
+  const envHost = process.env.EXPO_PUBLIC_API_HOST;
+  if (envHost) return envHost;
+  if (typeof window !== 'undefined') return 'http://localhost:8080';
+  return Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
+}
+
+const BASE_HOST = getApiHost();
 const API_URL = `${BASE_HOST}/api/mobile`;
 
 const api = axios.create({
@@ -36,8 +43,8 @@ export const getStudentDashboard = async () => {
   return response.data;
 };
 
-export const getParentDashboard = async () => {
-  const response = await api.get('/parent/dashboard');
+export const getParentDashboard = async (studentId) => {
+  const response = await api.get('/parent/dashboard', { params: studentId ? { studentId } : {} });
   return response.data;
 };
 

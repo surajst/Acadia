@@ -19,10 +19,13 @@ public class AdminProgressService {
         this.curriculumRepository = curriculumRepository;
     }
 
-    public Map<String, Object> getSchoolWideProgress() {
-        List<Student> allStudents = studentRepository.findAll();
-        List<StudentProgress> allProgress = studentProgressRepository.findAll();
-        List<Curriculum> allCurriculum = curriculumRepository.findAll();
+    public Map<String, Object> getSchoolWideProgress(UUID tenantId) {
+        List<Student> allStudents = tenantId != null ? studentRepository.findByTenantId(tenantId) : List.of();
+        Set<UUID> tenantStudentIds = allStudents.stream().map(Student::getId).collect(Collectors.toSet());
+        List<StudentProgress> allProgress = studentProgressRepository.findAll().stream()
+                .filter(p -> p.getStudent() != null && tenantStudentIds.contains(p.getStudent().getId()))
+                .collect(Collectors.toList());
+        List<Curriculum> allCurriculum = tenantId != null ? curriculumRepository.findByTenantId(tenantId) : List.of();
 
         int totalStudents = allStudents.size();
         
@@ -143,13 +146,14 @@ public class AdminProgressService {
         return response;
     }
 
-    public Map<String, Object> getClassProgress(int standard) {
-        List<Student> allStudents = studentRepository.findAll();
+    public Map<String, Object> getClassProgress(UUID tenantId, int standard) {
+        List<Student> allStudents = tenantId != null ? studentRepository.findByTenantId(tenantId) : List.of();
         List<Student> classStudents = allStudents.stream()
                 .filter(s -> extractStandard(s) == standard)
                 .collect(Collectors.toList());
-        
-        List<Curriculum> classCurriculum = curriculumRepository.findAll().stream()
+
+        List<Curriculum> tenantCurriculum = tenantId != null ? curriculumRepository.findByTenantId(tenantId) : List.of();
+        List<Curriculum> classCurriculum = tenantCurriculum.stream()
                 .filter(c -> c.getStandard() != null && c.getStandard() == standard)
                 .collect(Collectors.toList());
                 

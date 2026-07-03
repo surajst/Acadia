@@ -2,12 +2,13 @@ package com.schoolos.config.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,9 +18,23 @@ import java.util.function.Function;
 @Component
 public class JwtUtils {
 
-    // For production, use a secure key from properties
-    private static final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    // Fixed, environment-provided secret so tokens survive restarts and work
+    // across multiple instances (a random per-JVM key silently logs everyone
+    // out on every deploy). HS256 requires >= 32 bytes.
+    private final SecretKey secretKey;
     private static final long JWT_EXPIRATION_MS = 86400000; // 24 hours
+    private static final String INSECURE_DEFAULT_SECRET = "dev-only-insecure-default-change-in-production-please-32bytes-min";
+
+    public JwtUtils(@Value("${app.jwt-secret}") String jwtSecret,
+                     @Value("${app.dev-mode:false}") boolean devMode) {
+        if (!devMode && INSECURE_DEFAULT_SECRET.equals(jwtSecret)) {
+            throw new IllegalStateException(
+                "app.jwt-secret is using the insecure dev-only default outside of dev mode. " +
+                "Set the JWT_SECRET environment variable to a real random secret before starting with app.dev-mode=false."
+            );
+        }
+        this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -36,7 +51,7 @@ public class JwtUtils {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -81,7 +96,7 @@ public class JwtUtils {
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION_MS))
-                .signWith(SECRET_KEY)
+                .signWith(secretKey)
                 .compact();
     }
 

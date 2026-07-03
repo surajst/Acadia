@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/context/AuthContext';
+import { getApiHost } from '../../services/api';
 
 interface Task {
   id: string;
@@ -31,7 +32,7 @@ export default function TasksScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const BASE_HOST = (typeof window !== 'undefined') ? 'http://localhost:8080' : (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080');
+  const BASE_HOST = getApiHost();
 
   useEffect(() => {
     const fetchTasks = async () => {
