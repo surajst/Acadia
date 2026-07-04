@@ -1,5 +1,6 @@
 package com.schoolos.management;
 
+import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.User;
 import com.schoolos.user.UserRepository;
 import com.schoolos.user.UserRole;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -34,19 +36,23 @@ public class AdminAssignmentApiController {
     @Autowired
     private ClassSectionRepository classSectionRepository;
 
+    @Autowired
+    private CurrentUserService currentUserService;
+
     // ─── POST /assign ─────────────────────────────────────────────────────────
 
     @PostMapping("/assign")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseEntity<Map<String, Object>> assign(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<Map<String, Object>> assign(@RequestBody Map<String, Object> body, Authentication authentication) {
         try {
             UUID teacherId      = UUID.fromString((String) body.get("teacherId"));
             UUID classSectionId = UUID.fromString((String) body.get("classSectionId"));
             String subjectName  = (String) body.get("subjectName");
             boolean isHomeClass = Boolean.TRUE.equals(body.get("isHomeClass"));
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
 
             SubjectAssignment saved = assignmentService.assignSubject(
-                    teacherId, classSectionId, subjectName, isHomeClass);
+                    teacherId, classSectionId, subjectName, isHomeClass, tenantId);
 
             return ResponseEntity.ok(toMap(saved));
         } catch (IllegalStateException e) {
@@ -65,9 +71,10 @@ public class AdminAssignmentApiController {
 
     @DeleteMapping("/{assignmentId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseEntity<Map<String, Object>> remove(@PathVariable UUID assignmentId) {
+    public ResponseEntity<Map<String, Object>> remove(@PathVariable UUID assignmentId, Authentication authentication) {
         try {
-            assignmentService.removeAssignment(assignmentId);
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            assignmentService.removeAssignment(assignmentId, tenantId);
             Map<String, Object> resp = new HashMap<>();
             resp.put("status", "removed");
             resp.put("id", assignmentId);
@@ -83,9 +90,10 @@ public class AdminAssignmentApiController {
 
     @GetMapping("/teacher/{teacherId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseEntity<List<Map<String, Object>>> getByTeacher(@PathVariable UUID teacherId) {
+    public ResponseEntity<List<Map<String, Object>>> getByTeacher(@PathVariable UUID teacherId, Authentication authentication) {
         try {
-            List<SubjectAssignment> assignments = assignmentService.getAssignmentsForTeacher(teacherId);
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            List<SubjectAssignment> assignments = assignmentService.getAssignmentsForTeacher(teacherId, tenantId);
             List<Map<String, Object>> result = assignments.stream()
                     .map(this::toMap)
                     .collect(Collectors.toList());
@@ -99,9 +107,10 @@ public class AdminAssignmentApiController {
 
     @GetMapping("/class/{classSectionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseEntity<List<Map<String, Object>>> getByClass(@PathVariable UUID classSectionId) {
+    public ResponseEntity<List<Map<String, Object>>> getByClass(@PathVariable UUID classSectionId, Authentication authentication) {
         try {
-            List<SubjectAssignment> assignments = assignmentService.getAssignmentsForClass(classSectionId);
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            List<SubjectAssignment> assignments = assignmentService.getAssignmentsForClass(classSectionId, tenantId);
             List<Map<String, Object>> result = assignments.stream()
                     .map(this::toMap)
                     .collect(Collectors.toList());
@@ -115,11 +124,12 @@ public class AdminAssignmentApiController {
 
     @GetMapping("/all-teachers")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseEntity<List<Map<String, Object>>> allTeachers() {
+    public ResponseEntity<List<Map<String, Object>>> allTeachers(Authentication authentication) {
         try {
-            List<User> teachers = userRepository.findAll().stream()
-                    .filter(u -> u.getRole() == UserRole.TEACHER)
-                    .collect(Collectors.toList());
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            List<User> teachers = tenantId != null
+                    ? userRepository.findByTenantIdAndRoleIn(tenantId, List.of(UserRole.TEACHER))
+                    : List.of();
 
             List<Map<String, Object>> result = teachers.stream().map(teacher -> {
                 long count = assignmentRepository.findByTeacher(teacher).size();
@@ -168,7 +178,8 @@ public class AdminAssignmentApiController {
                     teacher.getId(),
                     PILOT_SECTION_ID,
                     "Mathematics",
-                    true   // isHomeClass = true
+                    true,  // isHomeClass = true
+                    null   // dev-mode-only seed path, no caller tenant to scope
             );
 
             Map<String, Object> resp = new HashMap<>();

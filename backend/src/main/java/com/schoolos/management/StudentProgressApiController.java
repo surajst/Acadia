@@ -1,5 +1,6 @@
 package com.schoolos.management;
 
+import com.schoolos.user.CurrentUserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -16,11 +17,14 @@ public class StudentProgressApiController {
 
     private final StudentProgressService studentProgressService;
     private final StudentRepository studentRepository;
+    private final CurrentUserService currentUserService;
 
     public StudentProgressApiController(StudentProgressService studentProgressService,
-                                         StudentRepository studentRepository) {
+                                         StudentRepository studentRepository,
+                                         CurrentUserService currentUserService) {
         this.studentProgressService = studentProgressService;
         this.studentRepository = studentRepository;
+        this.currentUserService = currentUserService;
     }
 
     /**
@@ -79,29 +83,13 @@ public class StudentProgressApiController {
     }
 
     /**
-     * Resolves the currently authenticated student using the same pattern
-     * as StudentPortalController.resolveStudent().
+     * Resolves the currently authenticated student via their userId FK —
+     * the previous implementation matched by firstName/roll-number pattern
+     * with no tenant scoping, so an authenticated student could be resolved
+     * to a different, same-named student in another tenant entirely.
      */
     private Student resolveStudent(Authentication authentication) {
-        String username = (authentication != null) ? authentication.getName() : null;
-        if (username == null || username.isBlank()) {
-            throw new IllegalArgumentException("Not authenticated");
-        }
-        if (username.contains("@")) {
-            username = username.substring(0, username.indexOf("@"));
-        }
-        // Pilot student accounts use username format "student_N" mapped to roll number "Pilot-N"
-        if (username.startsWith("student_")) {
-            String suffix = username.substring(8);
-            for (Student s : studentRepository.findAll()) {
-                if (("Pilot-" + suffix).equals(s.getRollNumber())) {
-                    return s;
-                }
-            }
-        }
-        final String finalUsername = username;
-        return studentRepository.findByFirstNameIgnoreCase(finalUsername)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Student record not found for username: " + finalUsername));
+        return currentUserService.getCurrentStudent(authentication)
+                .orElseThrow(() -> new IllegalArgumentException("Student record not found"));
     }
 }

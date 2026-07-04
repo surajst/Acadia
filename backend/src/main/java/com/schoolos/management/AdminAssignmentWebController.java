@@ -1,5 +1,6 @@
 package com.schoolos.management;
 
+import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.User;
 import com.schoolos.user.UserRepository;
 import com.schoolos.user.UserRole;
@@ -22,6 +23,7 @@ public class AdminAssignmentWebController {
     @Autowired private ClassSectionRepository classSectionRepository;
     @Autowired private SubjectAssignmentService assignmentService;
     @Autowired private SubjectAssignmentRepository assignmentRepository;
+    @Autowired private CurrentUserService currentUserService;
 
     // ─── GET /web/admin/assignments ───────────────────────────────────────────
 
@@ -33,16 +35,20 @@ public class AdminAssignmentWebController {
 
         model.addAttribute("currentUserRole", resolveRole(authentication));
 
-        List<User> teachers = userRepository.findAll().stream()
-                .filter(u -> u.getRole() == UserRole.TEACHER)
-                .collect(Collectors.toList());
-        model.addAttribute("teachers", teachers);
-        model.addAttribute("sections", classSectionRepository.findAll());
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
 
-        // Resolve which teacher to display: ?teacher=uuid param, else first teacher
+        List<User> teachers = tenantId != null
+                ? userRepository.findByTenantIdAndRoleIn(tenantId, List.of(UserRole.TEACHER))
+                : List.of();
+        model.addAttribute("teachers", teachers);
+        model.addAttribute("sections", tenantId != null ? classSectionRepository.findByTenantId(tenantId) : List.of());
+
+        // Resolve which teacher to display: ?teacher=uuid param (only if it's
+        // one of this tenant's own teachers), else first teacher.
         User selectedTeacher = null;
         if (teacher != null) {
-            selectedTeacher = userRepository.findById(teacher).orElse(null);
+            final UUID requestedId = teacher;
+            selectedTeacher = teachers.stream().filter(t -> t.getId().equals(requestedId)).findFirst().orElse(null);
         }
         if (selectedTeacher == null && !teachers.isEmpty()) {
             selectedTeacher = teachers.get(0);
@@ -67,9 +73,11 @@ public class AdminAssignmentWebController {
             @RequestParam UUID classSectionId,
             @RequestParam String subjectName,
             @RequestParam(defaultValue = "false") boolean isHomeClass,
+            Authentication authentication,
             RedirectAttributes redirectAttributes) {
         try {
-            assignmentService.assignSubject(teacherId, classSectionId, subjectName, isHomeClass);
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            assignmentService.assignSubject(teacherId, classSectionId, subjectName, isHomeClass, tenantId);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Assignment created successfully.");
         } catch (IllegalStateException e) {
@@ -88,9 +96,11 @@ public class AdminAssignmentWebController {
     public String remove(
             @PathVariable UUID assignmentId,
             @RequestParam(required = false) UUID teacherId,
+            Authentication authentication,
             RedirectAttributes redirectAttributes) {
         try {
-            assignmentService.removeAssignment(assignmentId);
+            UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            assignmentService.removeAssignment(assignmentId, tenantId);
             redirectAttributes.addFlashAttribute("successMessage", "Assignment removed.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage",

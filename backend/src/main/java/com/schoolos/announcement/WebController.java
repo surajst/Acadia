@@ -42,8 +42,12 @@ public class WebController {
     }
 
     @GetMapping("/feed")
-    public String feed(Model model, HttpSession session) {
-        List<Announcement> announcements = announcementRepository.findAll();
+    public String feed(Model model, HttpSession session, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+
+        List<Announcement> announcements = tenantId != null
+                ? announcementRepository.findByTenantId(tenantId)
+                : List.of();
         // Sort descending by creation date (newest first)
         announcements.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
         model.addAttribute("announcements", announcements);
@@ -53,9 +57,11 @@ public class WebController {
             model.addAttribute("userName", currentUser.getFullName());
         }
 
-        long totalStudentsCount = studentRepository.count();
-        long absencesCount = attendanceRepository.countByAttendanceDateAndStatus(LocalDate.now(), AttendanceStatus.ABSENT);
-        
+        long totalStudentsCount = tenantId != null ? studentRepository.countByTenantId(tenantId) : 0;
+        long absencesCount = tenantId != null
+                ? attendanceRepository.countByTenantIdAndAttendanceDateAndStatus(tenantId, LocalDate.now(), AttendanceStatus.ABSENT)
+                : 0;
+
         long attendanceRate = 100;
         if (totalStudentsCount > 0) {
             attendanceRate = ((totalStudentsCount - absencesCount) * 100) / totalStudentsCount;

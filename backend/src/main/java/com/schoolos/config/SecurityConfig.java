@@ -85,6 +85,7 @@ public class SecurityConfig {
                         .requestMatchers("/web/teacher/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/web/student/**").hasAnyRole("STUDENT", "PARENT", "ADMIN")
                         .requestMatchers("/web/parent/**").hasAnyRole("PARENT", "ADMIN")
+                        .requestMatchers("/feed").authenticated() // announcement feed leaked cross-tenant data while public
                         .requestMatchers("/login", "/logout").permitAll()
                         .anyRequest().permitAll()
                 )

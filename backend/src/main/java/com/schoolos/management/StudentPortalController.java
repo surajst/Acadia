@@ -320,7 +320,7 @@ public class StudentPortalController {
                         .anyMatch(a -> a.getClassSection().getId().equals(PILOT_SECTION_ID) && a.isHomeClass());
                     if (!hasHomeClassAssignment) {
                         subjectAssignmentService.assignSubject(
-                                pilotTeacher.getId(), PILOT_SECTION_ID, "Mathematics", true);
+                                pilotTeacher.getId(), PILOT_SECTION_ID, "Mathematics", true, null);
                         System.err.println("--- TEST RESET: pilot SubjectAssignment seeded ---");
                     } else {
                         System.err.println("--- TEST RESET: pilot SubjectAssignment already present ---");

@@ -41,8 +41,12 @@ public class StudentProgressService {
                         (a, b) -> a
                 ));
 
-        // Load all curriculum topics and group by subject
-        List<Curriculum> allTopics = curriculumRepository.findAll();
+        // Load this student's own tenant's curriculum topics only — never
+        // every tenant's, which would mix another school's syllabus in.
+        Student student = studentRepository.findById(studentId).orElse(null);
+        List<Curriculum> allTopics = student != null
+                ? curriculumRepository.findByTenantId(student.getTenantId())
+                : List.of();
 
         Map<String, List<TopicDto>> grouped = new LinkedHashMap<>();
         for (Curriculum topic : allTopics) {

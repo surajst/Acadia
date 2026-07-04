@@ -10,8 +10,10 @@ import com.schoolos.academics.MathSkill;
 import com.schoolos.academics.MathSkillRepository;
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.User;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,26 +30,25 @@ public class StudentPortalWebController {
     private final MathSkillRepository mathSkillRepository;
     private final ParentQuestRepository parentQuestRepository;
     private final ParentRewardRepository parentRewardRepository;
+    private final CurrentUserService currentUserService;
 
     public StudentPortalWebController(StudentRepository studentRepository,
                                       StudentMetricRepository studentMetricRepository,
                                       MathSkillRepository mathSkillRepository,
                                       ParentQuestRepository parentQuestRepository,
-                                      ParentRewardRepository parentRewardRepository) {
+                                      ParentRewardRepository parentRewardRepository,
+                                      CurrentUserService currentUserService) {
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.mathSkillRepository = mathSkillRepository;
         this.parentQuestRepository = parentQuestRepository;
         this.parentRewardRepository = parentRewardRepository;
+        this.currentUserService = currentUserService;
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model, HttpSession session) {
-        // Mock session logic: fetch Aarav explicitly as requested
-        Student student = studentRepository.findAll().stream()
-                .filter(s -> s.getFirstName().equals("Aarav"))
-                .findFirst()
-                .orElse(null);
+    public String dashboard(Model model, HttpSession session, Authentication authentication) {
+        Student student = currentUserService.getCurrentStudent(authentication).orElse(null);
 
         if (student == null) {
             return "redirect:/web/feed";

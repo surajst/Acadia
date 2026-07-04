@@ -8,4 +8,5 @@ import java.util.UUID;
 @Repository
 public interface AnnouncementRepository extends JpaRepository<Announcement, UUID> {
     List<Announcement> findByTenantIdAndAcademicYearIdAndTargetGradeIn(UUID tenantId, UUID academicYearId, List<String> targetGrades);
+    List<Announcement> findByTenantId(UUID tenantId);
 }
