@@ -146,6 +146,47 @@ public class FeeManagementService {
         }
     }
 
+    /**
+     * Real, per-student invoice creation for production use. initializeInvoices()
+     * below is a dev/seed-only bulk generator (gated behind app.dev-mode via its
+     * only callers) and was the sole way an invoice ever got created — meaning a
+     * real school had no way to bill a real student. This is the fix.
+     */
+    @Transactional
+    public FeeInvoice createInvoiceForStudent(UUID studentId, UUID currentTenantId, Authentication authentication) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with ID: " + studentId));
+        if (currentTenantId != null && !currentTenantId.equals(student.getTenantId())) {
+            throw new IllegalArgumentException("Student not found with ID: " + studentId);
+        }
+
+        String gradeLevel = student.getSchoolClass() != null ? student.getSchoolClass().getGradeLevel()
+                : student.getClassSection() != null ? student.getClassSection().getGradeName()
+                : null;
+
+        FeeStructure structure = gradeLevel != null
+                ? feeStructureRepository.findByTenantIdAndGradeLevel(currentTenantId, gradeLevel).orElse(null)
+                : null;
+        BigDecimal tuition = structure != null ? structure.getTuitionFee() : new BigDecimal("15000.00");
+        BigDecimal term = structure != null ? structure.getTermFee() : new BigDecimal("5000.00");
+
+        FeeInvoice invoice = new FeeInvoice();
+        invoice.setId(UUID.randomUUID());
+        invoice.setStudentId(student.getId());
+        invoice.setTotalAmount(tuition.add(term));
+        invoice.setAmountPaid(BigDecimal.ZERO);
+        invoice.setTenantId(student.getTenantId());
+        invoice.setAcademicYearId(student.getAcademicYearId());
+        invoice.updateBalances();
+        feeInvoiceRepository.saveAndFlush(invoice);
+
+        auditLogService.log(authentication, "FEE_INVOICE_CREATED", "FeeInvoice", invoice.getId(),
+                "Created invoice for " + student.getFirstName() + " " + student.getLastName() +
+                        " (total " + invoice.getTotalAmount() + ")");
+
+        return invoice;
+    }
+
     @Transactional
     public void initializeInvoices() {
         UUID defaultTenantId = UUID.fromString("00000000-0000-0000-0000-000000000000");

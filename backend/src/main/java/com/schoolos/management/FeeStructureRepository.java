@@ -8,4 +8,5 @@ import java.util.UUID;
 @Repository
 public interface FeeStructureRepository extends JpaRepository<FeeStructure, UUID> {
     Optional<FeeStructure> findByGradeLevel(String gradeLevel);
+    Optional<FeeStructure> findByTenantIdAndGradeLevel(UUID tenantId, String gradeLevel);
 }

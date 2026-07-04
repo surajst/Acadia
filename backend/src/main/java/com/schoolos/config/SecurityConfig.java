@@ -118,6 +118,7 @@ public class SecurityConfig {
                                 "/login", "/logout", "/test/**",
                                 "/web/admin/student/add", "/web/admin/rewards/create", "/web/admin/post",
                                 "/web/admin/class-sections/add", "/web/admin/school-classes/add", "/web/admin/staff/add", "/web/admin/parent/add",
+                                "/web/admin/fees/invoice/create", "/web/admin/fees/collect",
                                 "/web/student/**", "/web/parent/**", "/web/teacher/**",
                                 "/web/management/upload/process",
                                 "/api/parent/**"

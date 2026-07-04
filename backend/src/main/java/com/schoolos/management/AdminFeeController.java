@@ -114,6 +114,7 @@ public class AdminFeeController {
         model.addAttribute("totalItems", invoicePage.getTotalElements());
         model.addAttribute("pageSize", size);
         model.addAttribute("systemScope", "ADMIN_FINANCE");
+        model.addAttribute("allStudents", tenantId != null ? studentRepository.findByTenantId(tenantId) : List.of());
 
         return "fee_management";
     }
@@ -140,6 +141,14 @@ public class AdminFeeController {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         feeManagementService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
         return "redirect:/web/admin/fees?success=payment_recorded";
+    }
+
+    @PostMapping("/web/admin/fees/invoice/create")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String createInvoice(@RequestParam("studentId") UUID studentId, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        feeManagementService.createInvoiceForStudent(studentId, tenantId, authentication);
+        return "redirect:/web/admin/fees?success=invoice_created";
     }
 
     @PostMapping("/api/admin/fees/{invoiceId}/waiver/request")

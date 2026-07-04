@@ -71,7 +71,11 @@
                     </p>
                 </div>
             </div>
-            <div>
+            <div class="flex items-center gap-3">
+                <button onclick="openCreateInvoiceModal()"
+                        class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-indigo-200 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-inner backdrop-blur-md flex items-center gap-1.5 cursor-pointer">
+                    &#10133; Create Invoice
+                </button>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wider uppercase">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     Financial Ledger Active
@@ -344,7 +348,66 @@
         </div>
     </div>
 
+    <!-- Create Invoice Modal Box Form -->
+    <div id="createInvoiceModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-[#0f172a] border border-slate-800 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all glass-panel">
+
+            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-800/80 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-lg">🧾</span>
+                    <h3 class="text-sm font-bold text-slate-200 tracking-wider uppercase">Create Invoice</h3>
+                </div>
+                <button onclick="closeCreateInvoiceModal()" class="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800/50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
+                </button>
+            </div>
+
+            <form method="POST" action="/web/admin/fees/invoice/create" class="p-6 space-y-5">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div class="space-y-1.5">
+                    <label for="invoiceStudentSelect" class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block ml-1">Student</label>
+                    <select id="invoiceStudentSelect" name="studentId" required
+                            class="w-full bg-[#111827] border border-slate-800 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none transition-all">
+                        <option value="" disabled selected>Select a student...</option>
+                        <option th:each="s : ${allStudents}" th:value="${s.id}" th:text="|${s.firstName} ${s.lastName}|">Student Name</option>
+                    </select>
+                </div>
+
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    Total amount is auto-calculated from this tenant's fee structure for the student's grade (or a default if none is configured).
+                </p>
+
+                <div class="flex items-center justify-end gap-3 border-t border-slate-800/60 pt-5 mt-4">
+                    <button type="button" onclick="closeCreateInvoiceModal()" class="px-4 py-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-all border border-slate-800 cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/10 transition-all cursor-pointer">
+                        Create Invoice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        function openCreateInvoiceModal() {
+            const modal = document.getElementById('createInvoiceModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        function closeCreateInvoiceModal() {
+            const modal = document.getElementById('createInvoiceModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('createInvoiceModal');
+            if (modal && event.target === modal) {
+                closeCreateInvoiceModal();
+            }
+        });
+
         function openPaymentModal(invoiceId, studentName, remainingDue) {
             document.getElementById('invoiceIdInput').value = invoiceId;
             document.getElementById('studentNameDisplay').innerText = studentName;
