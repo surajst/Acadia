@@ -160,8 +160,11 @@ public class PrincipalApiController {
     }
 
     private ResponseEntity<?> decideStaff(UUID userId, boolean approve, Authentication authentication) {
+        UUID callerTenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         User staff = userRepository.findById(userId).orElse(null);
-        if (staff == null) {
+        if (staff == null || callerTenantId == null || !callerTenantId.equals(staff.getTenantId())) {
+            // Same message whether the user doesn't exist or belongs to
+            // another tenant — don't reveal which.
             return ResponseEntity.badRequest().body(Map.of("error", "Staff member not found"));
         }
         if (staff.getApprovalStatus() != User.ApprovalStatus.PENDING) {

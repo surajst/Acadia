@@ -94,23 +94,20 @@ public class UnifiedDashboardWebController {
         model.addAttribute("currentUserRole", role);
         model.addAttribute("userRoleString", role);
 
-        List<ClassSection> checkSections = Collections.emptyList();
-        try {
-            checkSections = classSectionRepo.findAll();
-        } catch (Exception e) {
-            // gracefully catch
-        }
-        
         // Setup IDs dynamically
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         String username = authentication != null ? authentication.getName() : "teacher_1";
         UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
         String activeTeacherName = username;
 
-        // If sections are populated and tenant couldn't be resolved from the
-        // authenticated user, align tenantId from the data as a last resort.
-        if (tenantId == null && !checkSections.isEmpty()) {
-            tenantId = checkSections.get(0).getTenantId();
+        // Every section visible to this tenant — used as an ADMIN-view
+        // fallback below. Never unscoped: falling back to "the first section
+        // found anywhere" would leak another tenant's roster onto this page.
+        List<ClassSection> checkSections = Collections.emptyList();
+        try {
+            checkSections = tenantId != null ? classSectionRepo.findByTenantId(tenantId) : Collections.emptyList();
+        } catch (Exception e) {
+            // gracefully catch
         }
 
         model.addAttribute("userDisplayName", activeTeacherName);
@@ -179,23 +176,20 @@ public class UnifiedDashboardWebController {
             // gracefully catch
         }
 
-        // Collect distinct grade names from all sections for the filter dropdown
-        List<String> allGradeNames = new ArrayList<>();
-        try {
-            allGradeNames = classSectionRepo.findAll().stream()
-                .map(ClassSection::getGradeName)
-                .distinct()
-                .sorted()
-                .collect(Collectors.toList());
-        } catch (Exception e) {
-            // gracefully catch
-        }
+        // Collect distinct grade names from this tenant's sections for the filter dropdown
+        List<String> allGradeNames = checkSections.stream()
+            .map(ClassSection::getGradeName)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
 
         long totalStudents = 0;
         long activeAbsences = 0;
         try {
-            totalStudents = studentRepository.count();
-            activeAbsences = attendanceRepository.countByAttendanceDateAndStatus(LocalDate.now(), AttendanceStatus.ABSENT);
+            totalStudents = tenantId != null ? studentRepository.countByTenantId(tenantId) : 0;
+            activeAbsences = tenantId != null
+                    ? attendanceRepository.countByTenantIdAndAttendanceDateAndStatus(tenantId, LocalDate.now(), AttendanceStatus.ABSENT)
+                    : 0;
         } catch (Exception e) {
             // gracefully catch
         }
@@ -310,14 +304,11 @@ public class UnifiedDashboardWebController {
         // Required sidebar menu elements mapping
         List<ClassSection> assignedClassrooms = Collections.emptyList();
         try {
-            List<ClassSection> checkSections = classSectionRepo.findAll();
             UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
             String username = authentication != null ? authentication.getName() : "teacher_1";
             UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
 
-            if (tenantId == null && !checkSections.isEmpty()) {
-                tenantId = checkSections.get(0).getTenantId();
-            }
+            List<ClassSection> checkSections = tenantId != null ? classSectionRepo.findByTenantId(tenantId) : Collections.emptyList();
 
             assignedClassrooms = classSectionRepo.findByTeacherIdAndTenantId(teacherId, tenantId);
             if (assignedClassrooms.isEmpty() && !checkSections.isEmpty()) {
@@ -357,9 +348,13 @@ public class UnifiedDashboardWebController {
         }
         model.addAttribute("currentUserRole", role);
 
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+
         List<AcademicSubmission> rawSubmissions = Collections.emptyList();
         try {
-            rawSubmissions = academicSubmissionRepository.findByStatus("PENDING");
+            rawSubmissions = tenantId != null
+                    ? academicSubmissionRepository.findByStatusAndStudentTenantId("PENDING", tenantId)
+                    : Collections.emptyList();
         } catch (Exception e) {
             // gracefully catch
         }
@@ -396,9 +391,9 @@ public class UnifiedDashboardWebController {
 
         List<StudentProgress> rawProgress = Collections.emptyList();
         try {
-            rawProgress = studentProgressRepository.findAll().stream()
-                .filter(p -> "PENDING".equals(p.getStatus()))
-                .collect(Collectors.toList());
+            rawProgress = tenantId != null
+                    ? studentProgressRepository.findByStudentTenantIdAndStatus(tenantId, "PENDING")
+                    : Collections.emptyList();
         } catch (Exception e) {
             // gracefully catch
         }
@@ -506,12 +501,16 @@ public class UnifiedDashboardWebController {
         }
         model.addAttribute("currentUserRole", role);
 
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        String username = authentication != null ? authentication.getName() : "teacher_1";
+        UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
+
         List<SchoolClass> classList = Collections.emptyList();
         SchoolClass schoolClass = null;
         List<Student> studentList = Collections.emptyList();
 
         try {
-            classList = schoolClassRepository.findAll();
+            classList = tenantId != null ? schoolClassRepository.findByTenantId(tenantId) : Collections.emptyList();
             if (classId != null) {
                 schoolClass = schoolClassRepository.findById(classId).orElse(null);
                 studentList = studentRepository.findBySchoolClassId(classId);
@@ -520,7 +519,7 @@ public class UnifiedDashboardWebController {
                     schoolClass = classList.get(0);
                     studentList = studentRepository.findBySchoolClassId(schoolClass.getId());
                 } else {
-                    studentList = studentRepository.findAll();
+                    studentList = tenantId != null ? studentRepository.findByTenantId(tenantId) : Collections.emptyList();
                 }
             }
         } catch (Exception e) {
@@ -529,15 +528,8 @@ public class UnifiedDashboardWebController {
 
         // Available ClassSections menu for matching layouts / sidebars
         List<ClassSection> checkSections = Collections.emptyList();
-        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
-        String username = authentication != null ? authentication.getName() : "teacher_1";
-        UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
-
         try {
-            checkSections = classSectionRepo.findAll();
-            if (tenantId == null && !checkSections.isEmpty()) {
-                tenantId = checkSections.get(0).getTenantId();
-            }
+            checkSections = tenantId != null ? classSectionRepo.findByTenantId(tenantId) : Collections.emptyList();
         } catch (Exception e) {
             // gracefully catch
         }
@@ -575,11 +567,6 @@ public class UnifiedDashboardWebController {
             @RequestParam(value = "classId", required = false) UUID classId) {
 
         try {
-            List<ClassSection> sections = classSectionRepo.findAll();
-            if (sections.isEmpty()) {
-                throw new IllegalStateException("No ClassSection available to record attendance");
-            }
-            ClassSection section = sections.get(0);
             LocalDate today = LocalDate.now();
 
             for (int i = 0; i < studentIds.size(); i++) {
@@ -594,7 +581,10 @@ public class UnifiedDashboardWebController {
                 attendance.setTenantId(student.getTenantId());
                 attendance.setAcademicYearId(student.getAcademicYearId());
                 attendance.setStudent(student);
-                attendance.setClassSection(student.getClassSection() != null ? student.getClassSection() : section);
+                // Never fall back to an arbitrary cross-tenant ClassSection —
+                // if this student genuinely has none, leave it null rather
+                // than misattributing the record to another tenant's class.
+                attendance.setClassSection(student.getClassSection());
                 attendance.setAttendanceDate(today);
                 attendance.setStatus(status);
 

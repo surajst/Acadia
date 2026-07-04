@@ -117,7 +117,7 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 "/login", "/logout", "/test/**",
                                 "/web/admin/student/add", "/web/admin/rewards/create", "/web/admin/post",
-                                "/web/admin/class-sections/add", "/web/admin/staff/add", "/web/admin/parent/add",
+                                "/web/admin/class-sections/add", "/web/admin/school-classes/add", "/web/admin/staff/add", "/web/admin/parent/add",
                                 "/web/student/**", "/web/parent/**", "/web/teacher/**",
                                 "/web/management/upload/process",
                                 "/api/parent/**"

@@ -10,6 +10,7 @@ import java.util.UUID;
 @Repository
 public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
     long countByAttendanceDateAndStatus(LocalDate attendanceDate, AttendanceStatus status);
+    long countByTenantIdAndAttendanceDateAndStatus(UUID tenantId, LocalDate attendanceDate, AttendanceStatus status);
     long countByStudentIdAndStatus(UUID studentId, AttendanceStatus status);
     List<Attendance> findByClassSectionAndAttendanceDate(ClassSection classSection, LocalDate date);
     List<Attendance> findByStudentAndAttendanceDate(Student student, LocalDate date);

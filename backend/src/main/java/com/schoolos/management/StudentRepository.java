@@ -14,6 +14,7 @@ import java.util.UUID;
 public interface StudentRepository extends JpaRepository<Student, UUID> {
     // Used by Admins/Principals to get everyone in the school tenant
     List<Student> findByTenantId(UUID tenantId);
+    long countByTenantId(UUID tenantId);
 
     // Used by Teachers to pull students belonging only to their assigned sections
     List<Student> findByClassSectionIn(List<ClassSection> classSections);

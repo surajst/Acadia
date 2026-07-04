@@ -169,6 +169,30 @@ public class AdminManagementController {
         return "redirect:/web/admin/management?success=class_section_added";
     }
 
+    @PostMapping("/web/admin/school-classes/add")
+    public String addSchoolClass(@RequestParam("gradeLevel") String gradeLevel,
+                                  @RequestParam("sectionName") String sectionName,
+                                  @RequestParam(value = "roomNumber", required = false) String roomNumber,
+                                  @RequestParam("totalCapacity") Integer totalCapacity,
+                                  Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
+
+        SchoolClass schoolClass = new SchoolClass();
+        schoolClass.setId(UUID.randomUUID());
+        schoolClass.setTenantId(tenantId);
+        schoolClass.setAcademicYearId(academicYearId);
+        schoolClass.setGradeLevel(gradeLevel);
+        schoolClass.setSectionName(sectionName);
+        schoolClass.setRoomNumber(roomNumber);
+        schoolClass.setTotalCapacity(totalCapacity);
+        schoolClassRepository.save(schoolClass);
+        auditLogService.log(authentication, "SCHOOL_CLASS_ADDED", "SchoolClass", schoolClass.getId(),
+                "Added classroom " + gradeLevel + " - " + sectionName);
+
+        return "redirect:/web/admin/management?success=school_class_added";
+    }
+
     @GetMapping("/web/admin/staff")
     @ResponseBody
     public List<java.util.Map<String, Object>> listStaff(Authentication authentication) {
