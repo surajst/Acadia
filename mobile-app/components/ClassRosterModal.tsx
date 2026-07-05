@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SymbolView } from 'expo-symbols';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../context/AuthContext';
 import {
   getClassRoster,
   submitClassAttendance,
@@ -34,6 +35,7 @@ interface ClassRosterModalProps {
 type AttendanceStatus = 'PRESENT' | 'ABSENT';
 
 export default function ClassRosterModal({ isVisible, onClose, sectionId, className }: ClassRosterModalProps) {
+  const { schoolName } = useAuth();
   const [students, setStudents] = useState<RosterStudent[]>([]);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, AttendanceStatus>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -159,7 +161,7 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
           <View style={styles.header}>
             <View>
               <Text style={styles.headerTitle}>{className || 'Class Roster'}</Text>
-              <Text style={styles.headerSubtitle}>Greenwood High · Daily Attendance</Text>
+              <Text style={styles.headerSubtitle}>{schoolName || 'Your School'} · Daily Attendance</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} disabled={isSubmitting}>
               <SymbolView

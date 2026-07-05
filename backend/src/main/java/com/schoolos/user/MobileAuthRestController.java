@@ -1,6 +1,8 @@
 package com.schoolos.user;
 
 import com.schoolos.config.jwt.JwtUtils;
+import com.schoolos.tenant.AcademicYearRepository;
+import com.schoolos.tenant.TenantRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,15 +25,21 @@ public class MobileAuthRestController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final UserDetailsService userDetailsService;
+    private final TenantRepository tenantRepository;
+    private final AcademicYearRepository academicYearRepository;
 
-    public MobileAuthRestController(UserRepository userRepository, 
-                                    PasswordEncoder passwordEncoder, 
-                                    JwtUtils jwtUtils, 
-                                    UserDetailsService userDetailsService) {
+    public MobileAuthRestController(UserRepository userRepository,
+                                    PasswordEncoder passwordEncoder,
+                                    JwtUtils jwtUtils,
+                                    UserDetailsService userDetailsService,
+                                    TenantRepository tenantRepository,
+                                    AcademicYearRepository academicYearRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
+        this.tenantRepository = tenantRepository;
+        this.academicYearRepository = academicYearRepository;
     }
 
     public static class LoginRequest {
@@ -60,6 +68,12 @@ public class MobileAuthRestController {
                 String[] nameParts = fullName.split(" ", 2);
                 String fName = nameParts[0];
                 String lName = nameParts.length > 1 ? nameParts[1] : "";
+                String schoolName = (user != null && user.getTenantId() != null)
+                        ? tenantRepository.findById(user.getTenantId()).map(t -> t.getName()).orElse(null)
+                        : null;
+                String academicYearName = (user != null && user.getAcademicYearId() != null)
+                        ? academicYearRepository.findById(user.getAcademicYearId()).map(y -> y.getName()).orElse(null)
+                        : null;
 
                 Map<String, Object> response = new HashMap<>();
                 response.put("token", jwt);
@@ -68,6 +82,8 @@ public class MobileAuthRestController {
                 response.put("firstName", fName);
                 response.put("lastName", lName);
                 response.put("email", loginRequest.email);
+                response.put("schoolName", schoolName);
+                response.put("academicYearName", academicYearName);
 
                 return ResponseEntity.ok(response);
             }

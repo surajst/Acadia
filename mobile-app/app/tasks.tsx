@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/context/AuthContext';
-import { getApiHost } from '../../services/api';
+import { getApiHost } from '../services/api';
 
 interface Task {
   id: string;

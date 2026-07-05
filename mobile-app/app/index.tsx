@@ -26,7 +26,14 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const response = await authenticate(email, password);
-      await login(response.data.token, response.data.role, response.data.firstName ?? '', response.data.lastName ?? '');
+      await login(
+        response.data.token,
+        response.data.role,
+        response.data.firstName ?? '',
+        response.data.lastName ?? '',
+        response.data.schoolName ?? null,
+        response.data.academicYearName ?? null,
+      );
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         setErrorMsg('Incorrect email or password.');
@@ -106,7 +113,7 @@ export default function LoginScreen() {
         </View>
 
         {/* Footer */}
-        <Text style={styles.footer}>Greenwood High · Academic Year 2025–26</Text>
+        <Text style={styles.footer}>Secure Portal · School Management System</Text>
 
       </View>
     </KeyboardAvoidingView>

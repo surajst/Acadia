@@ -72,9 +72,13 @@ function ProtectedStack() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f172a' } }}>
+      <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f172a' }, headerStyle: { backgroundColor: '#0f172a' }, headerTintColor: '#fff' }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="teacher" options={{ title: 'My Classes' }} />
+        <Stack.Screen name="tasks" options={{ title: 'Tasks' }} />
+        <Stack.Screen name="gradebook" options={{ title: 'Gradebook' }} />
+        <Stack.Screen name="timetable" options={{ title: 'Timetable' }} />
       </Stack>
     </ThemeProvider>
   );

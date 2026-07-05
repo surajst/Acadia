@@ -13,8 +13,10 @@ type AuthContextValue = {
   userRole: string | null;
   firstName: string | null;
   lastName: string | null;
+  schoolName: string | null;
+  academicYearName: string | null;
   isLoading: boolean;
-  login: (token: string, role: string, firstName: string, lastName: string) => Promise<void>;
+  login: (token: string, role: string, firstName: string, lastName: string, schoolName?: string | null, academicYearName?: string | null) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -25,6 +27,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [lastName, setLastName] = useState<string | null>(null);
+  const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [academicYearName, setAcademicYearName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -32,11 +36,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const restoreSession = async () => {
       try {
-        const [storedToken, storedRole, storedFirstName, storedLastName] = await Promise.all([
+        const [storedToken, storedRole, storedFirstName, storedLastName, storedSchoolName, storedAcademicYearName] = await Promise.all([
           AsyncStorage.getItem('userToken'),
           AsyncStorage.getItem('userRole'),
           AsyncStorage.getItem('firstName'),
           AsyncStorage.getItem('lastName'),
+          AsyncStorage.getItem('schoolName'),
+          AsyncStorage.getItem('academicYearName'),
         ]);
 
         if (isMounted) {
@@ -44,6 +50,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
           setUserRole(storedRole);
           setFirstName(storedFirstName);
           setLastName(storedLastName);
+          setSchoolName(storedSchoolName);
+          setAcademicYearName(storedAcademicYearName);
         }
       } catch (error) {
         console.error('Unable to restore the authentication session:', error);
@@ -61,17 +69,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
-  const login = async (token: string, role: string, firstName: string, lastName: string) => {
+  const login = async (token: string, role: string, firstName: string, lastName: string, schoolName?: string | null, academicYearName?: string | null) => {
     await AsyncStorage.multiSet([
       ['userToken', token],
       ['userRole', role],
       ['firstName', firstName],
       ['lastName', lastName],
+      ['schoolName', schoolName ?? ''],
+      ['academicYearName', academicYearName ?? ''],
     ]);
     setUserToken(token);
     setUserRole(role);
     setFirstName(firstName);
     setLastName(lastName);
+    setSchoolName(schoolName ?? null);
+    setAcademicYearName(academicYearName ?? null);
   };
 
   const logout = async () => {
@@ -79,6 +91,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setUserRole(null);
     setFirstName(null);
     setLastName(null);
+    setSchoolName(null);
+    setAcademicYearName(null);
     await AsyncStorage.clear();
   };
 
@@ -88,11 +102,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
       userRole,
       firstName,
       lastName,
+      schoolName,
+      academicYearName,
       isLoading,
       login,
       logout,
     }),
-    [userToken, userRole, firstName, lastName, isLoading],
+    [userToken, userRole, firstName, lastName, schoolName, academicYearName, isLoading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

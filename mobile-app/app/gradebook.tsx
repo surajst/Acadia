@@ -127,7 +127,7 @@ export default function GradebookScreen() {
             style={[styles.chip, selectedClass?.id === cls.id && styles.chipActive]}
             onPress={() => setSelectedClass(cls)}
           >
-            <Text style={[styles.chipText, selectedClass?.id === cls.id && styles.chipTextActive]}>{cls.className}</Text>
+            <Text style={[styles.chipText, selectedClass?.id === cls.id && styles.chipTextActive]}>{cls.className}{cls.subject ? ` · ${cls.subject}` : ''}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>

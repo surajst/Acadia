@@ -187,49 +187,12 @@ export default function TabLayout() {
           }}
         />
 
-        <Tabs.Screen
-          name="teacher"
-          options={{
-            title: 'My Classes',
-            href: isTeacher ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'person.badge.clock', android: 'school', web: 'school' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="tasks"
-          options={{
-            title: 'Tasks',
-            href: isTeacher ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'checklist', android: 'task_alt', web: 'task_alt' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="gradebook"
-          options={{
-            title: 'Gradebook',
-            href: isTeacher ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="timetable"
-          options={{
-            title: 'Timetable',
-            href: isTeacher ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
+        {/* My Classes, Tasks, Gradebook, and Timetable are no longer tabs —
+            they live at the root stack (app/teacher.tsx, tasks.tsx,
+            gradebook.tsx, timetable.tsx) and are reachable via the
+            Dashboard's Quick Actions card grid (see index.tsx). That keeps
+            this tab bar at 3 items instead of squeezing in 7, and gives
+            those screens a proper back button via the root Stack navigator. */}
 
         <Tabs.Screen
           name="messages"

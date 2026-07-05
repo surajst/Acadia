@@ -18,7 +18,7 @@ export default function DashboardScreen() {
   const refreshData = ctx?.refreshData ?? (async () => {});
   const selectedChildId = ctx?.selectedChildId ?? null;
   const selectChild = ctx?.selectChild ?? (() => {});
-  const { firstName } = useAuth();
+  const { firstName, schoolName } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -52,7 +52,7 @@ export default function DashboardScreen() {
   };
 
   const getSubGreeting = () => {
-    if (role === 'TEACHER') return 'Greenwood High · Staff Dashboard';
+    if (role === 'TEACHER') return `${schoolName || 'Your School'} · Staff Dashboard`;
     if (role === 'PARENT') return 'Parent Portal';
     return `${data.student?.gradeName || 'Grade N/A'} - ${data.student?.sectionName || 'N/A'}`;
   };
@@ -148,6 +148,43 @@ export default function DashboardScreen() {
             </View>
           )}
 
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.cardGrid}>
+              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/teacher')}>
+                <View style={[styles.navCardIcon, { backgroundColor: '#6366f120' }]}>
+                  <SymbolView name={{ ios: 'person.badge.clock', android: 'school', web: 'school' }} tintColor="#818cf8" size={24} />
+                </View>
+                <Text style={styles.navCardTitle}>My Classes</Text>
+                <Text style={styles.navCardSubtitle}>{classes.length} classes</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/tasks')}>
+                <View style={[styles.navCardIcon, { backgroundColor: '#f59e0b20' }]}>
+                  <SymbolView name={{ ios: 'checklist', android: 'task_alt', web: 'task_alt' }} tintColor="#f59e0b" size={24} />
+                </View>
+                <Text style={styles.navCardTitle}>Tasks</Text>
+                <Text style={styles.navCardSubtitle}>{tasks.length} pending</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/gradebook')}>
+                <View style={[styles.navCardIcon, { backgroundColor: '#22c55e20' }]}>
+                  <SymbolView name={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }} tintColor="#4ade80" size={24} />
+                </View>
+                <Text style={styles.navCardTitle}>Gradebook</Text>
+                <Text style={styles.navCardSubtitle}>Enter scores</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/timetable')}>
+                <View style={[styles.navCardIcon, { backgroundColor: '#38bdf820' }]}>
+                  <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor="#38bdf8" size={24} />
+                </View>
+                <Text style={styles.navCardTitle}>Timetable</Text>
+                <Text style={styles.navCardSubtitle}>Today's schedule</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {Array.isArray(data.timetable) && data.timetable.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Today's Schedule</Text>
@@ -171,21 +208,6 @@ export default function DashboardScreen() {
               ))}
             </View>
           )}
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>My Classes</Text>
-            {classes.map((cls: any) => (
-              <View key={cls.id} style={styles.listItem}>
-                <View>
-                  <Text style={styles.itemTitle}>{cls.className}</Text>
-                  <Text style={styles.itemSubtitle}>{cls.studentCount} students</Text>
-                </View>
-                <View style={styles.statusBadge}>
-                  <Text style={{ color: '#22c55e', fontSize: 12, fontWeight: '600' }}>Active</Text>
-                </View>
-              </View>
-            ))}
-          </View>
 
           {tasks.length > 0 && (
             <View style={styles.section}>
@@ -302,6 +324,11 @@ const styles = StyleSheet.create({
   dateChip: { alignSelf: 'flex-start', backgroundColor: '#6366f120', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 10, borderWidth: 1, borderColor: '#6366f130' },
   dateChipText: { color: '#818cf8', fontSize: 12, fontWeight: '500' },
   notificationHeaderRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  navCard: { width: '48%', backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 12 },
+  navCardIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  navCardTitle: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  navCardSubtitle: { color: '#64748b', fontSize: 12, marginTop: 2 },
   bellButton: { padding: 8, position: 'relative' },
   badge: { position: 'absolute', top: 2, right: 2, backgroundColor: '#ef4444', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },

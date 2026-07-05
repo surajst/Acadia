@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ActivityIndicator
 import { SymbolView } from 'expo-symbols';
 import ClassRosterModal from '@/components/ClassRosterModal';
 import { useAuth } from '@/context/AuthContext';
-import { getApiHost } from '../../services/api';
+import { getApiHost } from '../services/api';
 
 interface RosterCardProps {
   className: string;
@@ -70,7 +70,7 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
 }
 
 export default function TeacherScreen() {
-  const { userToken } = useAuth();
+  const { userToken, schoolName, academicYearName } = useAuth();
   const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [rosterVisible, setRosterVisible] = useState(false);
@@ -113,7 +113,9 @@ export default function TeacherScreen() {
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>My Classes</Text>
-          <Text style={styles.headerSubtitle}>Greenwood High · Academic Year 2025-26</Text>
+          <Text style={styles.headerSubtitle}>
+            {schoolName || 'Your School'}{academicYearName ? ` · ${academicYearName}` : ''}
+          </Text>
         </View>
       </View>
 

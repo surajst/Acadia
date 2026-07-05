@@ -1,26 +1,24 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SymbolView } from 'expo-symbols';
-import { DataContext } from './_layout';
-import { getTimetableWeek } from '@/services/api';
+import { getTimetableWeek, getTimetableToday } from '@/services/api';
 
 const DAY_ORDER = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 const DAY_LABELS: Record<string, string> = { MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday', THU: 'Thursday', FRI: 'Friday' };
 
 export default function TimetableScreen() {
-  const { data } = useContext(DataContext);
+  const [today, setToday] = useState<any[]>([]);
   const [week, setWeek] = useState<Record<string, any[]> | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const today = (data?.timetable ?? []) as any[];
 
   useEffect(() => {
     (async () => {
       try {
-        const w = await getTimetableWeek();
+        const [t, w] = await Promise.all([getTimetableToday(), getTimetableWeek()]);
+        setToday(Array.isArray(t) ? t : []);
         setWeek(w);
       } catch (e) {
-        console.error('Failed to fetch week timetable:', e);
+        console.error('Failed to fetch timetable:', e);
       } finally {
         setLoading(false);
       }
