@@ -34,12 +34,12 @@ public class MessagingApiController {
     // ─── Conversations ────────────────────────────────────────────────────────
 
     @GetMapping("/api/messages/conversations")
-    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT', 'ADMIN')")
     public ResponseEntity<?> listConversations(Authentication authentication) {
         User me = userRepository.findByEmail(authentication.getName()).orElseThrow();
 
         List<Conversation> conversations;
-        if (me.getRole() == UserRole.TEACHER) {
+        if (me.getRole() == UserRole.TEACHER || me.getRole() == UserRole.ADMIN) {
             conversations = conversationRepository.findByTeacherIdOrderByLastMessageAtDesc(me.getId());
         } else {
             Parent parent = parentRepository.findByUserId(me.getId()).orElse(null);
@@ -77,13 +77,34 @@ public class MessagingApiController {
     }
 
     @PostMapping("/api/messages/conversations/start")
-    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT', 'ADMIN')")
     public ResponseEntity<?> startConversation(@RequestBody StartConversationRequest request, Authentication authentication) {
         User me = userRepository.findByEmail(authentication.getName()).orElseThrow();
 
         Student student = studentRepository.findById(request.getStudentId()).orElse(null);
         if (student == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Student not found"));
+        }
+
+        if (me.getRole() == UserRole.ADMIN) {
+            // Admins aren't tied to a SubjectAssignment — they oversee the
+            // whole school, so the only scoping check that applies is tenant.
+            UUID currentTenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+            if (currentTenantId == null || !currentTenantId.equals(student.getTenantId())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Student not found"));
+            }
+            Conversation adminConversation = conversationRepository.findByStudentIdAndTeacherId(student.getId(), me.getId())
+                    .orElseGet(() -> {
+                        Conversation c = new Conversation();
+                        c.setId(UUID.randomUUID());
+                        c.setTenantId(student.getTenantId());
+                        c.setAcademicYearId(student.getAcademicYearId());
+                        c.setStudentId(student.getId());
+                        c.setTeacherId(me.getId());
+                        return conversationRepository.save(c);
+                    });
+            postMessage(adminConversation, me, student, request.getBody());
+            return ResponseEntity.ok(toConversationMap(adminConversation, student, me));
         }
 
         UUID teacherId = request.getTeacherId();
@@ -121,7 +142,7 @@ public class MessagingApiController {
     }
 
     @GetMapping("/api/messages/conversations/{id}")
-    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT', 'ADMIN')")
     public ResponseEntity<?> getThread(@PathVariable UUID id, Authentication authentication) {
         User me = userRepository.findByEmail(authentication.getName()).orElseThrow();
         Conversation conversation = conversationRepository.findById(id).orElse(null);
@@ -153,7 +174,7 @@ public class MessagingApiController {
     }
 
     @PostMapping("/api/messages/conversations/{id}/messages")
-    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT', 'ADMIN')")
     public ResponseEntity<?> reply(@PathVariable UUID id, @RequestBody ReplyRequest request, Authentication authentication) {
         User me = userRepository.findByEmail(authentication.getName()).orElseThrow();
         Conversation conversation = conversationRepository.findById(id).orElse(null);
@@ -197,6 +218,26 @@ public class MessagingApiController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/api/admin/messages/roster")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> adminRoster(Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        List<Student> students = tenantId != null ? studentRepository.findByTenantId(tenantId) : List.of();
+
+        List<Map<String, Object>> result = students.stream().map(s -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("studentId", s.getId());
+            row.put("studentName", s.getFirstName() + " " + s.getLastName());
+            row.put("className", s.getClassSection() != null
+                    ? s.getClassSection().getGradeName() + " – " + s.getClassSection().getSectionName()
+                    : "");
+            row.put("hasParent", !s.getParents().isEmpty());
+            return row;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/api/parent/messages/teachers")
     @PreAuthorize("hasRole('PARENT')")
     public ResponseEntity<?> parentTeachers(@RequestParam UUID studentId, Authentication authentication) {
@@ -222,7 +263,7 @@ public class MessagingApiController {
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private boolean canAccess(Conversation conversation, User me) {
-        if (me.getRole() == UserRole.TEACHER) {
+        if (me.getRole() == UserRole.TEACHER || me.getRole() == UserRole.ADMIN) {
             return conversation.getTeacherId().equals(me.getId());
         }
         if (me.getRole() == UserRole.PARENT) {
@@ -253,7 +294,7 @@ public class MessagingApiController {
     private void notifyOtherParticipants(Conversation conversation, User sender, Student student, String body) {
         String preview = body.length() > 100 ? body.substring(0, 100) + "…" : body;
 
-        if (sender.getRole() == UserRole.TEACHER) {
+        if (sender.getRole() == UserRole.TEACHER || sender.getRole() == UserRole.ADMIN) {
             if (student == null) return;
             for (Parent parent : student.getParents()) {
                 if (parent.getUserId() == null) continue;

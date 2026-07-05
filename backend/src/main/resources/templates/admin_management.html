@@ -92,6 +92,9 @@
                         <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/assignments" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
                             <span>&#128218;</span> Teacher Assignments
                         </a>
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/teacher/messages" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
+                            <span>&#128172;</span> Messages
+                        </a>
 
                         <!-- TEACHER items -->
                         <a th:if="${currentUserRole == 'TEACHER'}" href="/web/admin/dashboard" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
