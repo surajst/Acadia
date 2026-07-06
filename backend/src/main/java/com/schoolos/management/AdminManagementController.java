@@ -1,6 +1,8 @@
 package com.schoolos.management;
 
 import com.schoolos.common.AuditLogService;
+import com.schoolos.transport.BusRoute;
+import com.schoolos.transport.BusRouteRepository;
 import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.User;
 import com.schoolos.user.UserRepository;
@@ -57,6 +59,9 @@ public class AdminManagementController {
     @Autowired
     private AuditLogService auditLogService;
 
+    @Autowired
+    private BusRouteRepository busRouteRepository;
+
     @GetMapping("/web/admin/management")
     public String showAdminManagement(Model model, Authentication authentication) {
         String role = "ADMIN";
@@ -93,7 +98,8 @@ public class AdminManagementController {
             totalStudents = tenantId != null ? studentRepository.findByTenantId(tenantId).size() : 0;
             totalStaff = userRepository.countByRoleAndTenantId(UserRole.ADMIN, tenantId)
                     + userRepository.countByRoleAndTenantId(UserRole.PRINCIPAL, tenantId)
-                    + userRepository.countByRoleAndTenantId(UserRole.TEACHER, tenantId);
+                    + userRepository.countByRoleAndTenantId(UserRole.TEACHER, tenantId)
+                    + userRepository.countByRoleAndTenantId(UserRole.DRIVER, tenantId);
             totalClassrooms = tenantId != null ? schoolClassRepository.countByTenantId(tenantId) : 0;
         } catch (Exception e) {
             // gracefully catch
@@ -198,7 +204,7 @@ public class AdminManagementController {
     public List<java.util.Map<String, Object>> listStaff(Authentication authentication) {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         if (tenantId == null) return Collections.emptyList();
-        return userRepository.findByTenantIdAndRoleIn(tenantId, Arrays.asList(UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.TEACHER))
+        return userRepository.findByTenantIdAndRoleIn(tenantId, Arrays.asList(UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.TEACHER, UserRole.DRIVER))
                 .stream()
                 .map(u -> java.util.Map.<String, Object>of(
                         "id", u.getId(),
@@ -217,8 +223,8 @@ public class AdminManagementController {
                             @RequestParam("password") String password,
                             @RequestParam("role") UserRole role,
                             Authentication authentication) {
-        if (role != UserRole.ADMIN && role != UserRole.PRINCIPAL && role != UserRole.TEACHER) {
-            return java.util.Map.of("error", "Staff role must be ADMIN, PRINCIPAL, or TEACHER");
+        if (role != UserRole.ADMIN && role != UserRole.PRINCIPAL && role != UserRole.TEACHER && role != UserRole.DRIVER) {
+            return java.util.Map.of("error", "Staff role must be ADMIN, PRINCIPAL, TEACHER, or DRIVER");
         }
         if (userRepository.existsByEmail(email)) {
             return java.util.Map.of("error", "Email already in use: " + email);
@@ -432,6 +438,80 @@ public class AdminManagementController {
         auditLogService.log(authentication, "STUDENT_REMOVED", "Student", id, "Removed student " + studentName);
 
         return "redirect:/web/admin/management?success=student_removed";
+    }
+
+    @GetMapping("/web/admin/bus-routes")
+    @ResponseBody
+    public List<BusRoute> listBusRoutes(Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        return tenantId != null ? busRouteRepository.findByTenantId(tenantId) : Collections.emptyList();
+    }
+
+    @PostMapping("/web/admin/bus-routes/add")
+    @ResponseBody
+    public Object addBusRoute(@RequestParam("name") String name, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
+
+        BusRoute route = new BusRoute();
+        route.setId(UUID.randomUUID());
+        route.setTenantId(tenantId);
+        route.setAcademicYearId(academicYearId);
+        route.setName(name);
+        busRouteRepository.save(route);
+        auditLogService.log(authentication, "BUS_ROUTE_ADDED", "BusRoute", route.getId(), "Added bus route " + name);
+
+        return java.util.Map.of("status", "created", "id", route.getId());
+    }
+
+    @PostMapping("/web/admin/bus-routes/{id}/assign-driver")
+    @ResponseBody
+    public Object assignBusRouteDriver(@PathVariable("id") UUID id,
+                                        @RequestParam("driverId") UUID driverId,
+                                        Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+
+        BusRoute route = busRouteRepository.findById(id).orElse(null);
+        if (route == null || tenantId == null || !tenantId.equals(route.getTenantId())) {
+            return java.util.Map.of("error", "Bus route not found");
+        }
+
+        User driver = userRepository.findById(driverId).orElse(null);
+        if (driver == null || driver.getRole() != UserRole.DRIVER || !tenantId.equals(driver.getTenantId())) {
+            return java.util.Map.of("error", "Driver not found");
+        }
+
+        route.setDriverId(driverId);
+        busRouteRepository.save(route);
+        auditLogService.log(authentication, "BUS_ROUTE_DRIVER_ASSIGNED", "BusRoute", route.getId(),
+                "Assigned driver " + driver.getFullName() + " to route " + route.getName());
+
+        return java.util.Map.of("status", "assigned");
+    }
+
+    @PostMapping("/web/admin/class-sections/{id}/assign-bus-route")
+    @ResponseBody
+    public Object assignClassSectionBusRoute(@PathVariable("id") UUID id,
+                                              @RequestParam("busRouteId") UUID busRouteId,
+                                              Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+
+        ClassSection section = classSectionRepository.findById(id).orElse(null);
+        if (section == null || tenantId == null || !tenantId.equals(section.getTenantId())) {
+            return java.util.Map.of("error", "Class section not found");
+        }
+
+        BusRoute route = busRouteRepository.findById(busRouteId).orElse(null);
+        if (route == null || !tenantId.equals(route.getTenantId())) {
+            return java.util.Map.of("error", "Bus route not found");
+        }
+
+        section.setBusRouteId(busRouteId);
+        classSectionRepository.save(section);
+        auditLogService.log(authentication, "CLASS_SECTION_BUS_ROUTE_ASSIGNED", "ClassSection", section.getId(),
+                "Assigned bus route " + route.getName() + " to " + section.getGradeName() + " - " + section.getSectionName());
+
+        return java.util.Map.of("status", "assigned");
     }
 
     @ExceptionHandler(Exception.class)

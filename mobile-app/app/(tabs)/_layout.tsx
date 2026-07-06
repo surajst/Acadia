@@ -13,6 +13,7 @@ export const DataContext = createContext<any>({ role: null, data: {}, refreshDat
 const ROLE_STUDENT = 'STUDENT';
 const ROLE_PARENT  = 'PARENT';
 const ROLE_TEACHER = 'TEACHER';
+const ROLE_DRIVER  = 'DRIVER';
 
 export default function TabLayout() {
   const [data, setData] = useState<any>(null);
@@ -56,6 +57,14 @@ export default function TabLayout() {
         const timetableRaw = await timetableResp.json();
         const timetable = Array.isArray(timetableRaw) ? timetableRaw : (timetableRaw.value ?? []);
         setData({ teacher: true, classes, tasks, attendanceSummary, timetable });
+      } else if (role === ROLE_DRIVER) {
+        const token = await AsyncStorage.getItem('userToken');
+        const BASE_HOST = getApiHost();
+        const routeResp = await fetch(`${BASE_HOST}/api/mobile/driver/route/my-route`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const route = await routeResp.json();
+        setData({ driver: true, route });
       } else {
         const studentData = await getStudentDashboard();
         setData(studentData);
@@ -80,6 +89,7 @@ export default function TabLayout() {
   const isStudent = role === ROLE_STUDENT || (!role && true);
   const isParent  = role === ROLE_PARENT;
   const isTeacher = role === ROLE_TEACHER;
+  const isDriver  = role === ROLE_DRIVER;
 
   if (loading) {
     return (
@@ -183,6 +193,17 @@ export default function TabLayout() {
             href: isParent ? undefined : null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }} tintColor={color} size={28} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="bus"
+          options={{
+            title: 'Bus',
+            href: isParent ? undefined : null,
+            tabBarIcon: ({ color }) => (
+              <SymbolView name={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }} tintColor={color} size={28} />
             ),
           }}
         />

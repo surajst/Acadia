@@ -52,8 +52,22 @@ CREATE TABLE IF NOT EXISTS class_sections (
     section_name VARCHAR(255) NOT NULL,
     room_number VARCHAR(255),
     teacher_id UUID,
+    bus_route_id UUID,
     CONSTRAINT fk_class_section_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
     CONSTRAINT fk_class_section_academic_year FOREIGN KEY (academic_year_id) REFERENCES academic_years(id)
+);
+
+CREATE TABLE IF NOT EXISTS bus_routes (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    academic_year_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    driver_id UUID,
+    current_latitude DOUBLE PRECISION,
+    current_longitude DOUBLE PRECISION,
+    last_ping_at TIMESTAMP,
+    CONSTRAINT fk_bus_route_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+    CONSTRAINT fk_bus_route_academic_year FOREIGN KEY (academic_year_id) REFERENCES academic_years(id)
 );
 
 CREATE TABLE IF NOT EXISTS school_classes (

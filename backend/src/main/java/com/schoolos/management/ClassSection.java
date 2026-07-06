@@ -26,18 +26,24 @@ public class ClassSection extends BaseTenantEntity {
     @Column(name = "teacher_id") // Adds the missing link to the teacher
     private UUID teacherId;
 
+    @Column(name = "bus_route_id")
+    private UUID busRouteId;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
-    
+
     public String getGradeName() { return gradeName; }
     public void setGradeName(String gradeName) { this.gradeName = gradeName; }
-    
+
     public String getSectionName() { return sectionName; }
     public void setSectionName(String sectionName) { this.sectionName = sectionName; }
-    
+
     public String getRoomNumber() { return roomNumber; }
     public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
 
     public UUID getTeacherId() { return teacherId; }
     public void setTeacherId(UUID teacherId) { this.teacherId = teacherId; }
+
+    public UUID getBusRouteId() { return busRouteId; }
+    public void setBusRouteId(UUID busRouteId) { this.busRouteId = busRouteId; }
 }

@@ -95,6 +95,9 @@
                         <a th:if="${currentUserRole == 'ADMIN'}" href="/web/teacher/messages" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
                             <span>&#128172;</span> Messages
                         </a>
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="#bus-routes-section" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
+                            <span>&#128652;</span> Bus Routes
+                        </a>
 
                         <!-- TEACHER items -->
                         <a th:if="${currentUserRole == 'TEACHER'}" href="/web/admin/dashboard" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm transition-all">
@@ -345,6 +348,32 @@
                     </div>
                 </div>
 
+                <!-- Bus Routes Management -->
+                <div id="bus-routes-section" class="glass-panel rounded-3xl shadow-2xl overflow-hidden space-y-6 p-6">
+                    <div class="border-b border-slate-800/60 pb-5 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                                <span>&#128652;</span> Bus Routes
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Assign drivers to routes and routes to classrooms so parents can see live pickup status</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <input id="newRouteName" placeholder="e.g. Route A" class="flex-1 px-4 py-2.5 bg-slate-950/60 border border-slate-800/80 rounded-xl text-slate-200 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        <button id="addRouteBtn" class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-indigo-200 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                            &#10133; Add Route
+                        </button>
+                    </div>
+
+                    <div id="busRoutesList" class="space-y-3"></div>
+
+                    <div class="border-t border-slate-800/60 pt-5">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-3">Assign Route to Classroom</h3>
+                        <div id="classSectionRouteList" class="space-y-2"></div>
+                    </div>
+                </div>
+
                 <!-- Footer Roster Back link -->
                 <div class="flex justify-between items-center bg-[#0f172a]/60 border border-slate-800/50 rounded-2xl p-5 shadow-lg">
                     <p class="text-xs text-slate-400">
@@ -515,6 +544,106 @@
                 closeRegisterModal();
             }
         });
+
+        // ─── Bus Routes ─────────────────────────────────────────────────────
+        let driversCache = [];
+        let routesCache = [];
+        let classSectionsCache = [];
+
+        async function loadDrivers() {
+            const res = await fetch('/web/admin/staff');
+            const staff = await res.json();
+            driversCache = staff.filter(s => s.role === 'DRIVER');
+        }
+
+        async function loadClassSections() {
+            const res = await fetch('/web/admin/class-sections');
+            classSectionsCache = await res.json();
+        }
+
+        function driverName(driverId) {
+            const driver = driversCache.find(d => d.id === driverId);
+            return driver ? driver.fullName : null;
+        }
+
+        function routeStatusText(route) {
+            if (!route.lastPingAt) return 'No location reported yet';
+            const minutesAgo = Math.round((Date.now() - new Date(route.lastPingAt).getTime()) / 60000);
+            return `Last seen ${minutesAgo} min ago (${route.currentLatitude?.toFixed(4)}, ${route.currentLongitude?.toFixed(4)})`;
+        }
+
+        async function loadBusRoutes() {
+            const res = await fetch('/web/admin/bus-routes');
+            routesCache = await res.json();
+            await loadDrivers();
+
+            const driverOptions = driversCache.map(d => `<option value="${d.id}">${d.fullName}</option>`).join('');
+
+            document.getElementById('busRoutesList').innerHTML = routesCache.map(route => `
+                <div class="flex items-center justify-between bg-slate-900/40 border border-slate-800/60 rounded-xl p-4">
+                    <div>
+                        <p class="text-sm font-semibold text-white">${route.name}</p>
+                        <p class="text-xs text-slate-500 mt-0.5">${driverName(route.driverId) || 'No driver assigned'} &middot; ${routeStatusText(route)}</p>
+                    </div>
+                    <select data-route-id="${route.id}" class="assign-driver-select bg-slate-950/60 border border-slate-800/80 rounded-xl text-slate-200 text-xs px-3 py-2">
+                        <option value="">Assign driver&hellip;</option>
+                        ${driverOptions}
+                    </select>
+                </div>
+            `).join('') || '<p class="text-slate-500 text-sm">No bus routes yet.</p>';
+
+            document.querySelectorAll('.assign-driver-select').forEach(select => {
+                select.value = routesCache.find(r => r.id === select.dataset.routeId)?.driverId || '';
+                select.addEventListener('change', async () => {
+                    if (!select.value) return;
+                    await fetch(`/web/admin/bus-routes/${select.dataset.routeId}/assign-driver`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `driverId=${encodeURIComponent(select.value)}`,
+                    });
+                    await loadBusRoutes();
+                });
+            });
+
+            await loadClassSections();
+            const routeOptions = routesCache.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            document.getElementById('classSectionRouteList').innerHTML = classSectionsCache.map(section => `
+                <div class="flex items-center justify-between bg-slate-900/30 border border-slate-800/50 rounded-xl px-4 py-2.5">
+                    <span class="text-sm text-slate-300">${section.gradeName} &ndash; ${section.sectionName}</span>
+                    <select data-section-id="${section.id}" class="assign-route-select bg-slate-950/60 border border-slate-800/80 rounded-xl text-slate-200 text-xs px-3 py-2">
+                        <option value="">No route&hellip;</option>
+                        ${routeOptions}
+                    </select>
+                </div>
+            `).join('') || '<p class="text-slate-500 text-sm">No classrooms yet.</p>';
+
+            document.querySelectorAll('.assign-route-select').forEach(select => {
+                select.value = classSectionsCache.find(s => s.id === select.dataset.sectionId)?.busRouteId || '';
+                select.addEventListener('change', async () => {
+                    if (!select.value) return;
+                    await fetch(`/web/admin/class-sections/${select.dataset.sectionId}/assign-bus-route`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `busRouteId=${encodeURIComponent(select.value)}`,
+                    });
+                    await loadBusRoutes();
+                });
+            });
+        }
+
+        document.getElementById('addRouteBtn').addEventListener('click', async () => {
+            const name = document.getElementById('newRouteName').value.trim();
+            if (!name) return;
+            await fetch('/web/admin/bus-routes/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `name=${encodeURIComponent(name)}`,
+            });
+            document.getElementById('newRouteName').value = '';
+            await loadBusRoutes();
+        });
+
+        loadBusRoutes();
     </script>
 
 </div>

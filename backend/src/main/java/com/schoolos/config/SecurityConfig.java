@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/principal/**").hasAnyRole("ADMIN", "PRINCIPAL") // read-only oversight
                         .requestMatchers("/api/teacher/timetable/seed").hasRole("ADMIN") // DEV ONLY seed - ADMIN only
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
+                        .requestMatchers("/api/mobile/driver/**").hasRole("DRIVER")
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
                         .requestMatchers("/api/parent/**").hasRole("PARENT")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -120,6 +121,7 @@ public class SecurityConfig {
                                 "/web/admin/student/add", "/web/admin/rewards/create", "/web/admin/post",
                                 "/web/admin/class-sections/add", "/web/admin/school-classes/add", "/web/admin/staff/add", "/web/admin/parent/add",
                                 "/web/admin/fees/invoice/create", "/web/admin/fees/collect",
+                                "/web/admin/bus-routes/add", "/web/admin/bus-routes/*/assign-driver", "/web/admin/class-sections/*/assign-bus-route",
                                 "/web/student/**", "/web/parent/**", "/web/teacher/**",
                                 "/web/management/upload/process",
                                 "/api/parent/**"

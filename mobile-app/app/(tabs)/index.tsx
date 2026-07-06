@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Platform, Alert } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useContext, useState, useEffect } from 'react';
 import { DataContext } from './_layout';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { getUnreadNotificationCount } from '../../services/api';
+import { startTrip, stopTrip, isTripActive } from '../../services/driverLocationTask';
 
 interface ParentQuest {
   taskDescription: string;
@@ -22,12 +23,34 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [tripActive, setTripActive] = useState(false);
+  const [tripBusy, setTripBusy] = useState(false);
 
   useEffect(() => {
     if (role === 'TEACHER') {
       getUnreadNotificationCount().then(setUnreadCount).catch(() => setUnreadCount(0));
     }
+    if (role === 'DRIVER') {
+      isTripActive().then(setTripActive).catch(() => setTripActive(false));
+    }
   }, [role]);
+
+  const handleToggleTrip = async () => {
+    setTripBusy(true);
+    try {
+      if (tripActive) {
+        await stopTrip();
+        setTripActive(false);
+      } else {
+        await startTrip();
+        setTripActive(true);
+      }
+    } catch (e: any) {
+      Alert.alert('Trip sharing', e?.message ?? 'Could not update trip status.');
+    } finally {
+      setTripBusy(false);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -47,12 +70,14 @@ export default function DashboardScreen() {
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (role === 'TEACHER') return `${timeGreeting}, ${firstName || 'Educator'}!`;
+    if (role === 'DRIVER') return `${timeGreeting}, ${firstName || 'Driver'}!`;
     if (role === 'PARENT') return `Hello, ${data.parent?.firstName || 'Guardian'}!`;
     return `Hello, ${data.student?.firstName || 'Scholar'}!`;
   };
 
   const getSubGreeting = () => {
     if (role === 'TEACHER') return `${schoolName || 'Your School'} · Staff Dashboard`;
+    if (role === 'DRIVER') return `${schoolName || 'Your School'} · Bus Driver`;
     if (role === 'PARENT') return 'Parent Portal';
     return `${data.student?.gradeName || 'Grade N/A'} - ${data.student?.sectionName || 'N/A'}`;
   };
@@ -223,6 +248,40 @@ export default function DashboardScreen() {
             </View>
           )}
         </>
+      ) : role === 'DRIVER' ? (
+        <>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{data.route?.assigned ? data.route.routeName : 'No route assigned'}</Text>
+            {data.route?.assigned ? (
+              <Text style={styles.infoText}>
+                {data.route.lastPingAt
+                  ? `Last location shared ${new Date(data.route.lastPingAt).toLocaleTimeString()}`
+                  : 'No location shared yet'}
+              </Text>
+            ) : (
+              <Text style={styles.infoText}>Ask your school admin to assign you to a bus route.</Text>
+            )}
+          </View>
+
+          {Platform.OS === 'web' ? (
+            <View style={styles.alertCard}>
+              <View style={styles.alertDot} />
+              <Text style={styles.alertText}>
+                Live location sharing is only available in the native app, not the web version.
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.tripButton, tripActive && styles.tripButtonActive]}
+              disabled={!data.route?.assigned || tripBusy}
+              onPress={handleToggleTrip}
+            >
+              <Text style={styles.tripButtonText}>
+                {tripBusy ? 'Please wait…' : tripActive ? 'Stop Trip' : 'Start Trip'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </>
       ) : (
         <View style={styles.metricsContainer}>
           <View style={styles.metricBox}>
@@ -240,7 +299,7 @@ export default function DashboardScreen() {
         </View>
       )}
 
-      {role !== 'TEACHER' && (
+      {role !== 'TEACHER' && role !== 'DRIVER' && (
         <View style={styles.levelCard}>
           <Text style={styles.levelTitle}>Scholar Level {data.metrics?.scholarLevel ?? 1}</Text>
           <View style={styles.progressBarBg}>
@@ -329,6 +388,9 @@ const styles = StyleSheet.create({
   navCardIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   navCardTitle: { color: '#fff', fontSize: 15, fontWeight: '600' },
   navCardSubtitle: { color: '#64748b', fontSize: 12, marginTop: 2 },
+  tripButton: { backgroundColor: '#6366f1', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
+  tripButtonActive: { backgroundColor: '#ef4444' },
+  tripButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   bellButton: { padding: 8, position: 'relative' },
   badge: { position: 'absolute', top: 2, right: 2, backgroundColor: '#ef4444', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },

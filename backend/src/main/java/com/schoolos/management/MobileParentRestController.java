@@ -6,6 +6,8 @@ import com.schoolos.parentapp.AttendanceRecord;
 import com.schoolos.parentapp.DateRange;
 import com.schoolos.parentapp.SisDataProvider;
 import com.schoolos.parentapp.StudentSummary;
+import com.schoolos.transport.BusRoute;
+import com.schoolos.transport.BusRouteRepository;
 import com.schoolos.user.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +47,9 @@ public class MobileParentRestController {
 
     @Autowired
     private CurrentUserService currentUserService;
+
+    @Autowired
+    private BusRouteRepository busRouteRepository;
 
     /**
      * Resolves the student a parent-scoped request should act on. If a
@@ -199,5 +204,37 @@ public class MobileParentRestController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(log);
+    }
+
+    @GetMapping("/bus-location")
+    public ResponseEntity<?> getBusLocation(
+            @RequestParam(value = "studentId", required = false) UUID studentId,
+            Authentication authentication) {
+
+        UUID resolvedId = resolveStudentId(studentId, authentication);
+        if (resolvedId == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "No student found"));
+        }
+
+        Student student = studentRepository.findById(resolvedId).orElse(null);
+        UUID busRouteId = (student != null && student.getClassSection() != null)
+                ? student.getClassSection().getBusRouteId()
+                : null;
+        if (busRouteId == null) {
+            return ResponseEntity.ok(Map.of("assigned", false));
+        }
+
+        BusRoute route = busRouteRepository.findById(busRouteId).orElse(null);
+        if (route == null) {
+            return ResponseEntity.ok(Map.of("assigned", false));
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("assigned", true);
+        response.put("routeName", route.getName());
+        response.put("latitude", route.getCurrentLatitude());
+        response.put("longitude", route.getCurrentLongitude());
+        response.put("lastPingAt", route.getLastPingAt());
+        return ResponseEntity.ok(response);
     }
 }

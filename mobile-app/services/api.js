@@ -296,4 +296,31 @@ export const getParentMessageTeachers = async (studentId) => {
   return Array.isArray(response.data) ? response.data : [];
 };
 
+// ─── Bus tracking ───────────────────────────────────────────────────────────
+
+export const getMyBusRoute = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/driver/route/my-route`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const pingDriverLocation = async (latitude, longitude) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/mobile/driver/location/ping`, { latitude, longitude }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const getParentBusLocation = async (studentId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/parent/bus-location`, {
+    params: studentId ? { studentId } : {},
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export default api;
