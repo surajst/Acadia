@@ -45,12 +45,21 @@ export default function DashboardScreen() {
         await startTrip();
         setTripActive(true);
       }
+      await refreshData();
     } catch (e: any) {
       Alert.alert('Trip sharing', e?.message ?? 'Could not update trip status.');
     } finally {
       setTripBusy(false);
     }
   };
+
+  useEffect(() => {
+    if (role !== 'DRIVER' || !tripActive) return;
+    const interval = setInterval(() => {
+      refreshData();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [role, tripActive]);
 
   const onRefresh = async () => {
     setRefreshing(true);

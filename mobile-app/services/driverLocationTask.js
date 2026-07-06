@@ -43,7 +43,10 @@ export async function startTrip() {
   await Location.startLocationUpdatesAsync(DRIVER_LOCATION_TASK, {
     accuracy: Location.Accuracy.High,
     timeInterval: 30000,
-    distanceInterval: 25,
+    // TEMP: 0 so pings fire purely on the timer, for emulator testing where
+    // GPS position never actually moves. Revert to 25 before the real pilot
+    // to avoid needless battery/data drain on drivers' phones.
+    distanceInterval: 0,
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: 'Sharing bus location',
