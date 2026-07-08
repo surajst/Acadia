@@ -2,6 +2,8 @@ package com.schoolos.language;
 
 import com.schoolos.announcement.Announcement;
 import com.schoolos.announcement.AnnouncementRepository;
+import com.schoolos.management.ClassSection;
+import com.schoolos.management.ClassSectionRepository;
 import com.schoolos.management.Conversation;
 import com.schoolos.management.ConversationRepository;
 import com.schoolos.management.MessagingApiController;
@@ -64,6 +66,9 @@ public class LanguageFeatureTenantTest {
 
     @Autowired
     private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ClassSectionRepository classSectionRepository;
 
     @Autowired
     private ParentRepository parentRepository;
@@ -146,6 +151,8 @@ public class LanguageFeatureTenantTest {
         academicYearIdA = makeAcademicYear(tenantA);
         academicYearIdB = makeAcademicYear(tenantB);
 
+        User adminUserA = makeUser(tenantA, academicYearIdA, UserRole.ADMIN);
+
         announcementA = new Announcement();
         announcementA.setId(UUID.randomUUID());
         announcementA.setTenantId(tenantA);
@@ -153,7 +160,7 @@ public class LanguageFeatureTenantTest {
         announcementA.setTitle("Sports Day");
         announcementA.setContent("School closes early on Friday.");
         announcementA.setTargetGrade("ALL");
-        announcementA.setCreatedBy(UUID.randomUUID());
+        announcementA.setCreatedBy(adminUserA.getId());
         announcementA.setCreatedAt(LocalDateTime.now());
         announcementRepository.saveAndFlush(announcementA);
 
@@ -184,6 +191,8 @@ public class LanguageFeatureTenantTest {
 
     @Test
     public void parentCannotTranslateCrossTenantAnnouncement() {
+        User adminUserB = makeUser(tenantB, academicYearIdB, UserRole.ADMIN);
+
         Announcement announcementB = new Announcement();
         announcementB.setId(UUID.randomUUID());
         announcementB.setTenantId(tenantB);
@@ -191,7 +200,7 @@ public class LanguageFeatureTenantTest {
         announcementB.setTitle("Other school's news");
         announcementB.setContent("Not for tenant A.");
         announcementB.setTargetGrade("ALL");
-        announcementB.setCreatedBy(UUID.randomUUID());
+        announcementB.setCreatedBy(adminUserB.getId());
         announcementB.setCreatedAt(LocalDateTime.now());
         announcementRepository.saveAndFlush(announcementB);
 
@@ -241,12 +250,21 @@ public class LanguageFeatureTenantTest {
 
     @Test
     public void voiceReply_transcribesAndTranslatesForParticipant() {
+        ClassSection section = new ClassSection();
+        section.setId(UUID.randomUUID());
+        section.setTenantId(tenantA);
+        section.setAcademicYearId(academicYearIdA);
+        section.setGradeName("Grade 1");
+        section.setSectionName("A");
+        classSectionRepository.saveAndFlush(section);
+
         Student student = new Student();
         student.setId(UUID.randomUUID());
         student.setTenantId(tenantA);
         student.setAcademicYearId(academicYearIdA);
         student.setFirstName("Kid");
         student.setLastName("A");
+        student.setClassSection(section);
         student.getParents().add(parentA);
         studentRepository.saveAndFlush(student);
 
