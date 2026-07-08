@@ -2,6 +2,11 @@ package com.schoolos.management;
 
 import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
+import com.schoolos.announcement.Announcement;
+import com.schoolos.announcement.AnnouncementRepository;
+import com.schoolos.language.SpeechService;
+import com.schoolos.language.SupportedLanguages;
+import com.schoolos.language.TranslationService;
 import com.schoolos.parentapp.AttendanceRecord;
 import com.schoolos.parentapp.DateRange;
 import com.schoolos.parentapp.SisDataProvider;
@@ -13,11 +18,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -50,6 +60,18 @@ public class MobileParentRestController {
 
     @Autowired
     private BusRouteRepository busRouteRepository;
+
+    @Autowired
+    private AnnouncementRepository announcementRepository;
+
+    @Autowired
+    private ParentRepository parentRepository;
+
+    @Autowired
+    private TranslationService translationService;
+
+    @Autowired
+    private SpeechService speechService;
 
     /**
      * Resolves the student a parent-scoped request should act on. If a
@@ -116,6 +138,7 @@ public class MobileParentRestController {
         parentInfo.put("id", parent.getId());
         parentInfo.put("firstName", parent.getFirstName());
         parentInfo.put("lastName", parent.getLastName());
+        parentInfo.put("preferredLanguage", parent.getPreferredLanguage());
         response.put("parent", parentInfo);
 
         // Student Info — via SisDataProvider
@@ -236,5 +259,95 @@ public class MobileParentRestController {
         response.put("longitude", route.getCurrentLongitude());
         response.put("lastPingAt", route.getLastPingAt());
         return ResponseEntity.ok(response);
+    }
+
+    // ─── Announcements + translation/TTS ───────────────────────────────────────
+
+    @GetMapping("/announcements")
+    public ResponseEntity<?> getAnnouncements(Authentication authentication) {
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
+        if (parent == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        List<Student> children = studentRepository.findByParentsContaining(parent);
+        String targetGrade = children.stream()
+                .map(Student::getClassSection)
+                .filter(cs -> cs != null)
+                .map(ClassSection::getGradeName)
+                .findFirst()
+                .orElse("ALL");
+
+        List<Announcement> announcements = announcementRepository.findByTenantIdAndAcademicYearIdAndTargetGradeIn(
+                parent.getTenantId(), parent.getAcademicYearId(), List.of(targetGrade, "ALL"));
+        announcements.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+
+        List<Map<String, Object>> result = announcements.stream().map(a -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", a.getId());
+            row.put("title", a.getTitle());
+            row.put("content", a.getContent());
+            row.put("createdAt", a.getCreatedAt());
+            return row;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/announcements/{id}/localized")
+    public ResponseEntity<?> getAnnouncementLocalized(
+            @PathVariable UUID id, @RequestParam String lang, Authentication authentication) {
+        Announcement announcement = resolveOwnAnnouncement(id, authentication);
+        if (announcement == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Announcement not found"));
+        }
+        if (!SupportedLanguages.isSupported(lang)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Unsupported language"));
+        }
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("title", translationService.translate(announcement.getTitle(), lang));
+        row.put("content", translationService.translate(announcement.getContent(), lang));
+        return ResponseEntity.ok(row);
+    }
+
+    @GetMapping("/announcements/{id}/speech")
+    public ResponseEntity<?> getAnnouncementSpeech(
+            @PathVariable UUID id, @RequestParam String lang, Authentication authentication) {
+        Announcement announcement = resolveOwnAnnouncement(id, authentication);
+        if (announcement == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Announcement not found"));
+        }
+        if (!SupportedLanguages.isSupported(lang)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Unsupported language"));
+        }
+        String localizedText = translationService.translate(announcement.getTitle() + ". " + announcement.getContent(), lang);
+        byte[] audio = speechService.synthesizeSpeech(localizedText, lang);
+        return ResponseEntity.ok(Map.of(
+                "audioBase64", Base64.getEncoder().encodeToString(audio),
+                "contentType", "audio/mpeg"
+        ));
+    }
+
+    @PutMapping("/language")
+    public ResponseEntity<?> setPreferredLanguage(@RequestBody Map<String, String> body, Authentication authentication) {
+        String language = body.get("language");
+        if (!SupportedLanguages.isSupported(language)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Unsupported language"));
+        }
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
+        if (parent == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "No parent profile found"));
+        }
+        parent.setPreferredLanguage(language);
+        parentRepository.save(parent);
+        return ResponseEntity.ok(Map.of("language", language));
+    }
+
+    /** An announcement is only visible to a parent if it belongs to their own tenant. */
+    private Announcement resolveOwnAnnouncement(UUID id, Authentication authentication) {
+        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
+        if (parent == null) return null;
+        Announcement announcement = announcementRepository.findById(id).orElse(null);
+        if (announcement == null || !announcement.getTenantId().equals(parent.getTenantId())) return null;
+        return announcement;
     }
 }

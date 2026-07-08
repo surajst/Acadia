@@ -1,5 +1,8 @@
 package com.schoolos.management;
 
+import com.schoolos.language.SpeechService;
+import com.schoolos.language.SupportedLanguages;
+import com.schoolos.language.TranslationService;
 import com.schoolos.user.CurrentUserService;
 import com.schoolos.user.User;
 import com.schoolos.user.UserRepository;
@@ -9,8 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +36,8 @@ public class MessagingApiController {
     @Autowired private UserRepository userRepository;
     @Autowired private NotificationRepository notificationRepository;
     @Autowired private CurrentUserService currentUserService;
+    @Autowired private TranslationService translationService;
+    @Autowired private SpeechService speechService;
 
     // ─── Conversations ────────────────────────────────────────────────────────
 
@@ -193,6 +201,83 @@ public class MessagingApiController {
         row.put("body", message.getBody());
         row.put("createdAt", message.getCreatedAt());
         return ResponseEntity.ok(row);
+    }
+
+    @PostMapping("/api/messages/conversations/{id}/voice-reply")
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<?> voiceReply(@PathVariable UUID id, @RequestParam("audio") MultipartFile audio,
+                                         @RequestParam String lang, Authentication authentication) {
+        if (!SupportedLanguages.isSupported(lang)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Unsupported language"));
+        }
+        User me = userRepository.findByEmail(authentication.getName()).orElseThrow();
+        Conversation conversation = conversationRepository.findById(id).orElse(null);
+        if (conversation == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Conversation not found"));
+        }
+        if (!canAccess(conversation, me)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Not authorized for this conversation"));
+        }
+
+        String transcript;
+        try {
+            transcript = speechService.transcribe(audio.getBytes(), lang);
+        } catch (IOException e) {
+            return ResponseEntity.status(502).body(Map.of("error", "Could not read uploaded audio"));
+        }
+        String body = "en".equals(lang) ? transcript : translationService.translate(transcript, "en");
+
+        Student student = studentRepository.findById(conversation.getStudentId()).orElse(null);
+        Message message = postMessage(conversation, me, student, body);
+
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", message.getId());
+        row.put("body", message.getBody());
+        row.put("createdAt", message.getCreatedAt());
+        return ResponseEntity.ok(row);
+    }
+
+    @GetMapping("/api/messages/conversations/{id}/messages/{messageId}/localized")
+    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT', 'ADMIN')")
+    public ResponseEntity<?> getMessageLocalized(@PathVariable UUID id, @PathVariable UUID messageId,
+                                                  @RequestParam String lang, Authentication authentication) {
+        Message message = resolveOwnMessage(id, messageId, authentication);
+        if (message == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Message not found"));
+        }
+        if (!SupportedLanguages.isSupported(lang)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Unsupported language"));
+        }
+        return ResponseEntity.ok(Map.of("body", translationService.translate(message.getBody(), lang)));
+    }
+
+    @GetMapping("/api/messages/conversations/{id}/messages/{messageId}/speech")
+    @PreAuthorize("hasAnyRole('TEACHER', 'PARENT', 'ADMIN')")
+    public ResponseEntity<?> getMessageSpeech(@PathVariable UUID id, @PathVariable UUID messageId,
+                                               @RequestParam String lang, Authentication authentication) {
+        Message message = resolveOwnMessage(id, messageId, authentication);
+        if (message == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Message not found"));
+        }
+        if (!SupportedLanguages.isSupported(lang)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Unsupported language"));
+        }
+        String localizedText = translationService.translate(message.getBody(), lang);
+        byte[] audio = speechService.synthesizeSpeech(localizedText, lang);
+        return ResponseEntity.ok(Map.of(
+                "audioBase64", Base64.getEncoder().encodeToString(audio),
+                "contentType", "audio/mpeg"
+        ));
+    }
+
+    /** A message is only reachable through a conversation the requester can already access. */
+    private Message resolveOwnMessage(UUID conversationId, UUID messageId, Authentication authentication) {
+        User me = userRepository.findByEmail(authentication.getName()).orElseThrow();
+        Conversation conversation = conversationRepository.findById(conversationId).orElse(null);
+        if (conversation == null || !canAccess(conversation, me)) return null;
+        Message message = messageRepository.findById(messageId).orElse(null);
+        if (message == null || !message.getConversationId().equals(conversationId)) return null;
+        return message;
     }
 
     // ─── Rosters ──────────────────────────────────────────────────────────────

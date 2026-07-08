@@ -30,6 +30,9 @@ public class Parent extends BaseTenantEntity {
     @Column(name = "user_id")
     private UUID userId;
 
+    @Column(name = "preferred_language")
+    private String preferredLanguage = "en";
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -47,4 +50,7 @@ public class Parent extends BaseTenantEntity {
 
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
+
+    public String getPreferredLanguage() { return preferredLanguage; }
+    public void setPreferredLanguage(String preferredLanguage) { this.preferredLanguage = preferredLanguage; }
 }

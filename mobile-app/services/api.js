@@ -323,4 +323,82 @@ export const getParentBusLocation = async (studentId) => {
   return response.data;
 };
 
+// ─── Language: translate + text-to-speech / speech-to-text ─────────────────
+
+export const getSupportedLanguages = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/languages`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const setPreferredLanguage = async (language) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.put(`${BASE_HOST}/api/mobile/parent/language`, { language }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const getParentAnnouncements = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/parent/announcements`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getAnnouncementLocalized = async (id, lang) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/parent/announcements/${id}/localized`, {
+    params: { lang },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const getAnnouncementSpeech = async (id, lang) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/parent/announcements/${id}/speech`, {
+    params: { lang },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data; // { audioBase64, contentType }
+};
+
+export const getMessageLocalized = async (conversationId, messageId, lang) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(
+    `${BASE_HOST}/api/messages/conversations/${conversationId}/messages/${messageId}/localized`,
+    { params: { lang }, headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+export const getMessageSpeech = async (conversationId, messageId, lang) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(
+    `${BASE_HOST}/api/messages/conversations/${conversationId}/messages/${messageId}/speech`,
+    { params: { lang }, headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data; // { audioBase64, contentType }
+};
+
+export const sendVoiceReply = async (conversationId, audioUri, lang) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const formData = new FormData();
+  formData.append('audio', {
+    uri: audioUri,
+    name: 'voice.wav',
+    type: 'audio/wav',
+  });
+  const response = await axios.post(
+    `${BASE_HOST}/api/messages/conversations/${conversationId}/voice-reply?lang=${lang}`,
+    formData,
+    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+  );
+  return response.data;
+};
+
 export default api;

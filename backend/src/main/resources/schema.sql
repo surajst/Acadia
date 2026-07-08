@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS parents (
     phone_number VARCHAR(255),
     email VARCHAR(255),
     user_id UUID,
+    preferred_language VARCHAR(10) DEFAULT 'en',
     CONSTRAINT fk_parent_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
     CONSTRAINT fk_parent_academic_year FOREIGN KEY (academic_year_id) REFERENCES academic_years(id)
 );

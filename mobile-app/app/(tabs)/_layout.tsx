@@ -208,6 +208,17 @@ export default function TabLayout() {
           }}
         />
 
+        <Tabs.Screen
+          name="announcements"
+          options={{
+            title: 'News',
+            href: isParent ? undefined : null,
+            tabBarIcon: ({ color }) => (
+              <SymbolView name={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }} tintColor={color} size={28} />
+            ),
+          }}
+        />
+
         {/* My Classes, Tasks, Gradebook, and Timetable are no longer tabs —
             they live at the root stack (app/teacher.tsx, tasks.tsx,
             gradebook.tsx, timetable.tsx) and are reachable via the
