@@ -1,6 +1,6 @@
 import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
-import { View, ActivityIndicator, Platform } from 'react-native';
+import { View, ActivityIndicator, Platform, Text, TouchableOpacity } from 'react-native';
 import { useCallback, useState, useEffect, createContext } from 'react';
 import { getStudentDashboard, getParentDashboard, getApiHost } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,10 +10,37 @@ import { useAuth } from '@/context/AuthContext';
 
 export const DataContext = createContext<any>({ role: null, data: {}, refreshData: async () => {}, selectedChildId: null, selectChild: (_id: string) => {} });
 
-const ROLE_STUDENT = 'STUDENT';
-const ROLE_PARENT  = 'PARENT';
-const ROLE_TEACHER = 'TEACHER';
-const ROLE_DRIVER  = 'DRIVER';
+const ROLE_STUDENT   = 'STUDENT';
+const ROLE_PARENT    = 'PARENT';
+const ROLE_TEACHER   = 'TEACHER';
+const ROLE_DRIVER    = 'DRIVER';
+const ROLE_ADMIN     = 'ADMIN';
+const ROLE_PRINCIPAL = 'PRINCIPAL';
+
+// Admin/Principal accounts manage the school from the web dashboard — heavier
+// data-entry tasks (staff, fees, bus routes, audit log) suit a bigger screen
+// better than a phone. This screen redirects those roles there instead of
+// falling through to a broken student-shaped dashboard fetch.
+function WebOnlyRoleScreen({ role }: { role: string }) {
+  const { logout } = useAuth();
+  const host = getApiHost();
+  return (
+    <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+      <Text style={{ color: '#f1f5f9', fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
+        {role === ROLE_ADMIN ? 'Admin' : 'Principal'} accounts use the web dashboard
+      </Text>
+      <Text style={{ color: '#94a3b8', fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
+        Open {host}/login in a browser on your computer or phone to manage your school.
+      </Text>
+      <TouchableOpacity
+        onPress={() => logout()}
+        style={{ backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 }}
+      >
+        <Text style={{ color: '#94a3b8', fontWeight: '600' }}>Log Out</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 export default function TabLayout() {
   const [data, setData] = useState<any>(null);
@@ -23,6 +50,11 @@ export default function TabLayout() {
   const headerShown = useClientOnlyValue(false, true);
 
   const fetchDashboardData = useCallback(async (childId?: string | null) => {
+    if (role === ROLE_ADMIN || role === ROLE_PRINCIPAL) {
+      setData({});
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       if (role === ROLE_PARENT) {
@@ -90,6 +122,10 @@ export default function TabLayout() {
   const isParent  = role === ROLE_PARENT;
   const isTeacher = role === ROLE_TEACHER;
   const isDriver  = role === ROLE_DRIVER;
+
+  if (role === ROLE_ADMIN || role === ROLE_PRINCIPAL) {
+    return <WebOnlyRoleScreen role={role} />;
+  }
 
   if (loading) {
     return (
