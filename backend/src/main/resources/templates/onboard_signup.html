@@ -13,7 +13,7 @@
             margin: 0; padding: 0; height: 100vh; overflow: hidden;
             display: flex; flex-direction: column;
         }
-        main { flex: 1; overflow-y: auto; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        main { flex: 1; overflow-y: auto; display: flex; justify-content: center; align-items: flex-start; padding: 40px 20px; }
         .card {
             width: 100%; max-width: 460px;
             background: rgba(255, 255, 255, 0.04);
@@ -23,7 +23,7 @@
             padding: 32px 40px;
             box-sizing: border-box;
         }
-        .logo-img { width: 200px; display: block; margin: 0 auto 4px; }
+        .logo-img { width: 280px; display: block; margin: 8px auto 8px; }
         .divider { border-top: 1px solid rgba(255, 255, 255, 0.08); margin: 24px 0; }
         .title { color: #fff; font-size: 22px; font-weight: 600; text-align: center; margin: 16px 0 8px 0; }
         .subtitle { color: rgba(255,255,255,0.5); font-size: 14px; text-align: center; margin: 0 0 28px 0; }
@@ -65,15 +65,15 @@
             <form id="signupForm">
                 <div class="form-group">
                     <label class="form-label">School Name</label>
-                    <input type="text" id="schoolName" class="form-input" placeholder="Greenwood High" required>
+                    <input type="text" id="schoolName" class="form-input" placeholder="Enter your school's name" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Subdomain</label>
-                    <input type="text" id="subdomain" class="form-input" placeholder="greenwood" required>
+                    <input type="text" id="subdomain" class="form-input" placeholder="e.g. your-school-name" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Your Full Name</label>
-                    <input type="text" id="adminFullName" class="form-input" placeholder="Jane Smith" required>
+                    <input type="text" id="adminFullName" class="form-input" placeholder="Enter your full name" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Your Email</label>
