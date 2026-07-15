@@ -22,14 +22,10 @@
             box-sizing: border-box;
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.06);
         }
-        .logo-badge {
-            background: #0B1220;
-            border-radius: 18px;
-            padding: 14px 0 10px;
-            display: flex; justify-content: center;
-            margin: 0 auto 4px;
-        }
-        .logo-img { width: 200px; display: block; }
+        .logo-crop { width: 150px; height: 96px; overflow: hidden; margin: 0 auto; }
+        .logo-crop img { width: 150px; height: auto; display: block; margin-top: -4px; }
+        .brand-word { text-align: center; font-size: 19px; font-weight: 700; letter-spacing: 5px; color: #0F172A; margin-top: 4px; }
+        .brand-tagline { text-align: center; font-size: 10px; letter-spacing: 2.5px; color: #3B5BDB; margin-top: 3px; text-transform: uppercase; font-weight: 600; }
         .divider { border-top: 1px solid #E2E8F0; margin: 24px 0; }
         .title { color: #0F172A; font-size: 22px; font-weight: 600; text-align: center; margin: 16px 0 8px 0; }
         .subtitle { color: #64748B; font-size: 14px; text-align: center; margin: 0 0 28px 0; }
@@ -64,9 +60,11 @@
 <body>
     <main>
         <div class="card">
-            <div class="logo-badge">
-                <img src="/images/acadia-logo.png" alt="ACADIA" class="logo-img">
+            <div class="logo-crop">
+                <img src="/images/acadia-logo.png" alt="">
             </div>
+            <div class="brand-word">ACADIA</div>
+            <div class="brand-tagline">Connect &middot; Manage &middot; Empower</div>
             <div class="divider"></div>
             <h1 class="title">Create your school</h1>
             <p class="subtitle">Set up a new ACADIA workspace in a minute</p>
