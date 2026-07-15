@@ -30,6 +30,7 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     Page<Student> findBySchoolClassId(UUID schoolClassId, Pageable pageable);
     Optional<Student> findByFirstNameIgnoreCase(String firstName);
     Optional<Student> findByUserId(UUID userId);
+    Optional<Student> findByTenantIdAndRollNumber(UUID tenantId, String rollNumber);
     List<Student> findByParentsContaining(Parent parent);
 
     // Dynamic search: filter by name substring (first or last), scoped to one tenant

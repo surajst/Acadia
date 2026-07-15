@@ -1,22 +1,23 @@
 package com.schoolos.management;
 
+import com.schoolos.common.AuditLogService;
 import com.schoolos.user.User;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import com.schoolos.management.ClassSection;
-import com.schoolos.management.ClassSectionRepository;
-import com.schoolos.management.Student;
-import com.schoolos.management.StudentRepository;
-import com.schoolos.management.Parent;
-import com.schoolos.management.ParentRepository;
 
 @Controller
 @RequestMapping("/web/management/upload")
@@ -26,8 +27,11 @@ public class UploadWebController {
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
 
-    public UploadWebController(ClassSectionRepository classSectionRepository, 
-                               StudentRepository studentRepository, 
+    @Autowired
+    private AuditLogService auditLogService;
+
+    public UploadWebController(ClassSectionRepository classSectionRepository,
+                               StudentRepository studentRepository,
                                ParentRepository parentRepository) {
         this.classSectionRepository = classSectionRepository;
         this.studentRepository = studentRepository;
@@ -43,9 +47,9 @@ public class UploadWebController {
     }
 
     @PostMapping("/process")
-    @Transactional(rollbackFor = Exception.class)
-    public String processUpload(@RequestParam("file") MultipartFile file, 
-                                HttpSession session, 
+    public String processUpload(@RequestParam("file") MultipartFile file,
+                                HttpSession session,
+                                Authentication authentication,
                                 Model model) {
         User currentUser = (User) session.getAttribute("currentUser");
         if (currentUser == null) return "redirect:/web/login";
@@ -55,75 +59,162 @@ public class UploadWebController {
             return "upload";
         }
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+        List<Map<String, String>> rowResults = new ArrayList<>();
+        int created = 0;
+        int skipped = 0;
+        int failed = 0;
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
             boolean firstLine = true;
-            
+            int rowNumber = 1; // header is row 1
+
             while ((line = br.readLine()) != null) {
                 if (firstLine) {
                     firstLine = false;
                     continue; // Skip header
                 }
-                
-                String[] cols = line.split(",", -1);
-                if (cols.length < 7) continue;
+                rowNumber++;
+                if (line.isBlank()) continue;
 
-                String firstName = cols[0].trim();
-                String lastName = cols[1].trim();
-                String rollNumber = cols[2].trim();
-                String grade = cols[3].trim();
-                String section = cols[4].trim();
-                String parentName = cols[5].trim();
-                String parentPhone = cols[6].trim();
-
-                if (firstName.isEmpty() || lastName.isEmpty()) continue;
-
-                if (parentPhone.isEmpty() || !parentPhone.matches("^\\+?[0-9\\s\\-()]{7,}$")) {
-                    throw new RuntimeException("Validation Error: Invalid phone number format for parent of " + firstName + " " + lastName);
+                List<String> cols = parseCsvLine(line);
+                if (cols.size() < 7) {
+                    failed++;
+                    rowResults.add(rowOutcome(rowNumber, "—", "Error", "Expected 7 columns, found " + cols.size()));
+                    continue;
                 }
 
-                // Get or create ClassSection
-                ClassSection classSection = classSectionRepository.findByGradeNameAndSectionName(grade, section).orElseGet(() -> {
-                    ClassSection newSection = new ClassSection();
-                    newSection.setId(UUID.randomUUID());
-                    newSection.setTenantId(currentUser.getTenantId());
-                    newSection.setAcademicYearId(currentUser.getAcademicYearId());
-                    newSection.setGradeName(grade);
-                    newSection.setSectionName(section);
-                    return classSectionRepository.save(newSection);
-                });
+                String firstName = cols.get(0).trim();
+                String lastName = cols.get(1).trim();
+                String rollNumber = cols.get(2).trim();
+                String grade = cols.get(3).trim();
+                String section = cols.get(4).trim();
+                String parentName = cols.get(5).trim();
+                String parentPhone = cols.get(6).trim();
+                String label = (firstName + " " + lastName).trim();
+                if (label.isEmpty()) label = "(row " + rowNumber + ")";
 
-                // Parent
-                String pFirstName = parentName.contains(" ") ? parentName.substring(0, parentName.indexOf(" ")) : parentName;
-                String pLastName = parentName.contains(" ") ? parentName.substring(parentName.indexOf(" ") + 1) : "";
+                try {
+                    if (firstName.isEmpty() || lastName.isEmpty()) {
+                        throw new IllegalArgumentException("First and last name are required");
+                    }
+                    if (parentPhone.isEmpty() || !parentPhone.matches("^\\+?[0-9\\s\\-()]{7,}$")) {
+                        throw new IllegalArgumentException("Invalid phone number format for parent");
+                    }
+                    if (grade.isEmpty() || section.isEmpty()) {
+                        throw new IllegalArgumentException("Grade and section are required");
+                    }
 
-                Parent parent = new Parent();
-                parent.setId(UUID.randomUUID());
-                parent.setTenantId(currentUser.getTenantId());
-                parent.setAcademicYearId(currentUser.getAcademicYearId());
-                parent.setFirstName(pFirstName);
-                parent.setLastName(pLastName);
-                parent.setPhoneNumber(parentPhone);
-                parentRepository.save(parent);
+                    // Duplicate roll number check — scoped to this tenant only.
+                    if (!rollNumber.isEmpty()
+                            && studentRepository.findByTenantIdAndRollNumber(currentUser.getTenantId(), rollNumber).isPresent()) {
+                        skipped++;
+                        rowResults.add(rowOutcome(rowNumber, label, "Skipped", "Roll number " + rollNumber + " already exists"));
+                        continue;
+                    }
 
-                // Student
-                Student student = new Student();
-                student.setId(UUID.randomUUID());
-                student.setTenantId(currentUser.getTenantId());
-                student.setAcademicYearId(currentUser.getAcademicYearId());
-                student.setFirstName(firstName);
-                student.setLastName(lastName);
-                student.setRollNumber(rollNumber);
-                student.setClassSection(classSection);
-                student.getParents().add(parent);
-                studentRepository.save(student);
+                    // Class section — tenant-scoped lookup, auto-created if missing.
+                    ClassSection classSection = classSectionRepository
+                            .findByTenantIdAndGradeNameAndSectionName(currentUser.getTenantId(), grade, section)
+                            .orElseGet(() -> {
+                                ClassSection newSection = new ClassSection();
+                                newSection.setId(UUID.randomUUID());
+                                newSection.setTenantId(currentUser.getTenantId());
+                                newSection.setAcademicYearId(currentUser.getAcademicYearId());
+                                newSection.setGradeName(grade);
+                                newSection.setSectionName(section);
+                                return classSectionRepository.save(newSection);
+                            });
+
+                    // Parent — reuse an existing one for this tenant with the same phone number
+                    // instead of creating a duplicate on every row/upload.
+                    Parent parent = parentRepository
+                            .findByTenantIdAndPhoneNumber(currentUser.getTenantId(), parentPhone)
+                            .orElseGet(() -> {
+                                String pFirstName = parentName.contains(" ") ? parentName.substring(0, parentName.indexOf(" ")) : parentName;
+                                String pLastName = parentName.contains(" ") ? parentName.substring(parentName.indexOf(" ") + 1) : "";
+                                Parent p = new Parent();
+                                p.setId(UUID.randomUUID());
+                                p.setTenantId(currentUser.getTenantId());
+                                p.setAcademicYearId(currentUser.getAcademicYearId());
+                                p.setFirstName(pFirstName.isEmpty() ? "Parent" : pFirstName);
+                                p.setLastName(pLastName);
+                                p.setPhoneNumber(parentPhone);
+                                return parentRepository.save(p);
+                            });
+
+                    Student student = new Student();
+                    student.setId(UUID.randomUUID());
+                    student.setTenantId(currentUser.getTenantId());
+                    student.setAcademicYearId(currentUser.getAcademicYearId());
+                    student.setFirstName(firstName);
+                    student.setLastName(lastName);
+                    student.setRollNumber(rollNumber);
+                    student.setClassSection(classSection);
+                    student.getParents().add(parent);
+                    studentRepository.save(student);
+
+                    created++;
+                    rowResults.add(rowOutcome(rowNumber, label, "Created", ""));
+                } catch (Exception rowError) {
+                    failed++;
+                    rowResults.add(rowOutcome(rowNumber, label, "Error", rowError.getMessage()));
+                }
             }
         } catch (Exception e) {
-            model.addAttribute("error", "Data Processing Failed: " + e.getMessage());
+            model.addAttribute("error", "Could not read the uploaded file: " + e.getMessage());
             return "upload";
         }
 
-        model.addAttribute("success", "Roster successfully imported!");
+        auditLogService.log(authentication, "ROSTER_BULK_IMPORT", "Student", null,
+                "Bulk import: " + created + " created, " + skipped + " skipped, " + failed + " failed");
+
+        model.addAttribute("success", created + " student" + (created == 1 ? "" : "s") + " imported"
+                + (skipped > 0 ? ", " + skipped + " skipped as duplicates" : "")
+                + (failed > 0 ? ", " + failed + " row(s) failed" : "") + ".");
+        model.addAttribute("rowResults", rowResults);
         return "upload";
+    }
+
+    private Map<String, String> rowOutcome(int rowNumber, String label, String status, String detail) {
+        Map<String, String> row = new LinkedHashMap<>();
+        row.put("rowNumber", String.valueOf(rowNumber));
+        row.put("label", label);
+        row.put("status", status);
+        row.put("detail", detail);
+        return row;
+    }
+
+    /** Minimal RFC4180-style CSV line parser — handles quoted fields with embedded commas/quotes. */
+    private static List<String> parseCsvLine(String line) {
+        List<String> result = new ArrayList<>();
+        StringBuilder field = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (inQuotes) {
+                if (c == '"') {
+                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                        field.append('"');
+                        i++;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    field.append(c);
+                }
+            } else {
+                if (c == '"') {
+                    inQuotes = true;
+                } else if (c == ',') {
+                    result.add(field.toString());
+                    field.setLength(0);
+                } else {
+                    field.append(c);
+                }
+            }
+        }
+        result.add(field.toString());
+        return result;
     }
 }
