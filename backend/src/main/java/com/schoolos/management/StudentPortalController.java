@@ -703,11 +703,17 @@ public class StudentPortalController {
     }
 
     @Transactional
-    @GetMapping("/web/student/quest/{id}/claim")
+    @PostMapping("/web/student/quest/{id}/claim")
     public String claimQuest(@PathVariable("id") UUID id, Authentication authentication) {
         try {
             ParentQuest quest = parentQuestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid parent quest ID: " + id));
+
+            Student caller = resolveStudent(authentication);
+            if (caller == null || quest.getStudent() == null || !quest.getStudent().getId().equals(caller.getId())) {
+                throw new IllegalArgumentException("Not authorized for this quest");
+            }
+
             quest.setStatus("COMPLETED_AWAITING_APPROVAL");
             parentQuestRepository.saveAndFlush(quest);
         } catch (Exception e) {
@@ -717,7 +723,7 @@ public class StudentPortalController {
     }
 
     @Transactional
-    @GetMapping("/web/student/reward/{id}/redeem")
+    @PostMapping("/web/student/reward/{id}/redeem")
     public String redeemParentReward(@PathVariable("id") UUID id, Authentication authentication) {
         try {
             ParentReward reward = parentRewardRepository.findById(id)
@@ -726,6 +732,9 @@ public class StudentPortalController {
             Student student = resolveStudent(authentication);
             if (student == null) {
                 throw new IllegalArgumentException("No student found");
+            }
+            if (reward.getStudent() == null || !reward.getStudent().getId().equals(student.getId())) {
+                throw new IllegalArgumentException("Not authorized for this reward");
             }
 
             StudentMetric metric = studentMetricRepository.findByStudentId(student.getId()).orElse(null);

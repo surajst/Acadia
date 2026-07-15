@@ -75,11 +75,19 @@
         const rosterUrl = currentUserRole === 'ADMIN' ? '/api/admin/messages/roster' : '/api/teacher/messages/roster';
         let activeConversationId = null;
 
+        // Every value below comes from another user (student name, message body, etc.) —
+        // always escape before inserting into innerHTML to prevent stored XSS.
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value == null ? '' : String(value);
+            return div.innerHTML;
+        }
+
         async function loadRoster() {
             const res = await fetch(rosterUrl);
             const students = await res.json();
             document.getElementById('newMessageStudent').innerHTML = students.map(s =>
-                `<option value="${s.studentId}">${s.studentName} (${s.className})</option>`
+                `<option value="${escapeHtml(s.studentId)}">${escapeHtml(s.studentName)} (${escapeHtml(s.className)})</option>`
             ).join('') || '<option value="">No students assigned</option>';
         }
 
@@ -89,12 +97,12 @@
             const list = document.getElementById('conversationList');
             list.innerHTML = conversations.map(c => `
                 <div class="conv-item ${c.id === activeConversationId ? 'active' : ''} cursor-pointer border border-slate-800/60 rounded-xl p-3 mb-2 hover:border-indigo-500/30 transition-colors"
-                     data-id="${c.id}" onclick="openConversation('${c.id}')">
+                     data-id="${escapeHtml(c.id)}" onclick="openConversation('${escapeHtml(c.id)}')">
                     <div class="flex items-center justify-between">
-                        <span class="text-sm font-semibold text-white">${c.studentName}</span>
+                        <span class="text-sm font-semibold text-white">${escapeHtml(c.studentName)}</span>
                         ${c.unread ? '<span class="h-2 w-2 rounded-full bg-indigo-400"></span>' : ''}
                     </div>
-                    <p class="text-xs text-slate-400 truncate mt-1">${c.lastMessagePreview || ''}</p>
+                    <p class="text-xs text-slate-400 truncate mt-1">${escapeHtml(c.lastMessagePreview || '')}</p>
                 </div>
             `).join('') || '<p class="text-slate-500 text-sm">No conversations yet.</p>';
             return conversations;
@@ -111,7 +119,7 @@
             const messages = await res.json();
             document.getElementById('threadMessages').innerHTML = messages.map(m => `
                 <div class="max-w-[80%] rounded-xl px-3 py-2 text-sm ${m.mine ? 'bubble-mine' : 'bubble-theirs'}">
-                    ${m.body}
+                    ${escapeHtml(m.body)}
                 </div>
             `).join('');
         }

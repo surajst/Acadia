@@ -537,10 +537,12 @@
                                     <p class="text-[10px] text-slate-500 mt-0.5" th:text="${reward.student.firstName}">Arnav</p>
                                 </div>
                                 <div class="flex flex-col items-end gap-1.5 shrink-0">
-                                    <a th:href="@{/web/parent/reward/{id}/release(id=${reward.id})}"
-                                       class="text-[10px] font-bold px-3 py-1 rounded-full bg-pink-600 hover:bg-pink-500 text-white transition-colors shadow-md cursor-pointer">
-                                        Release & Mark Delivered
-                                    </a>
+                                    <form th:action="@{/web/parent/reward/{id}/release(id=${reward.id})}" method="post" style="display:inline;">
+                                        <button type="submit"
+                                                class="text-[10px] font-bold px-3 py-1 rounded-full bg-pink-600 hover:bg-pink-500 text-white transition-colors shadow-md cursor-pointer">
+                                            Release & Mark Delivered
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>

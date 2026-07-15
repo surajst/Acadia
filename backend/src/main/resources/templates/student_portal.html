@@ -512,11 +512,14 @@
                                 </div>
                             </div>
                             <div class="mt-5">
-                                <a th:if="${quest.status == 'PENDING' or quest.status == 'IN_PROGRESS'}"
-                                   th:href="@{/web/student/quest/{id}/claim(id=${quest.id})}"
-                                   class="block w-full py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-indigo-600/20">
-                                    ✓ Mark Done
-                                </a>
+                                <form th:if="${quest.status == 'PENDING' or quest.status == 'IN_PROGRESS'}"
+                                      th:action="@{/web/student/quest/{id}/claim(id=${quest.id})}" method="post">
+                                    <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
+                                    <button type="submit"
+                                            class="block w-full py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-indigo-600/20">
+                                        ✓ Mark Done
+                                    </button>
+                                </form>
                                 <span th:if="${quest.status == 'COMPLETED_AWAITING_APPROVAL'}"
                                       class="block w-full py-2.5 bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded-xl text-center text-xs font-bold tracking-wider uppercase animate-pulse">
                                     ⏳ Awaiting Parent Approval
@@ -673,11 +676,14 @@
                                 </div>
                             </div>
                             <div class="mt-5">
-                                <a th:if="${((studentMetrics.schoolXp != null ? studentMetrics.schoolXp : 0) + (studentMetrics.parentXp != null ? studentMetrics.parentXp : 0)) >= preward.xpCost}"
-                                   th:href="@{/web/student/reward/{id}/redeem(id=${preward.id})}"
-                                   class="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 cursor-pointer">
-                                    ✓ Redeem Reward
-                                </a>
+                                <form th:if="${((studentMetrics.schoolXp != null ? studentMetrics.schoolXp : 0) + (studentMetrics.parentXp != null ? studentMetrics.parentXp : 0)) >= preward.xpCost}"
+                                      th:action="@{/web/student/reward/{id}/redeem(id=${preward.id})}" method="post">
+                                    <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
+                                    <button type="submit"
+                                            class="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 cursor-pointer">
+                                        ✓ Redeem Reward
+                                    </button>
+                                </form>
                                 <span th:if="${((studentMetrics.schoolXp != null ? studentMetrics.schoolXp : 0) + (studentMetrics.parentXp != null ? studentMetrics.parentXp : 0)) < preward.xpCost}"
                                       class="block w-full py-2.5 bg-slate-800/40 text-slate-500 border border-slate-700/30 rounded-xl text-center text-xs font-bold tracking-wider uppercase cursor-not-allowed">
                                     Insufficient XP (Locked)

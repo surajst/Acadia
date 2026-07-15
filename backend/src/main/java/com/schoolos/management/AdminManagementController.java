@@ -86,7 +86,7 @@ public class AdminManagementController {
 
         List<RewardItem> rewardInventoryList = Collections.emptyList();
         try {
-            rewardInventoryList = rewardItemRepository.findAll();
+            rewardInventoryList = tenantId != null ? rewardItemRepository.findByTenantId(tenantId) : Collections.emptyList();
         } catch (Exception e) {
             // gracefully catch
         }

@@ -292,45 +292,6 @@
     </div>
 
     <script>
-        function evaluateTask(submissionId, actionState) {
-            if(!confirm(`Are you sure you want to resolve this task execution state to ${actionState}?`)) return;
-
-            // Generate asynchronous multi-part fetch URL payload configurations
-            const endpointUrl = `/api/academic/verify-task?submissionId=${submissionId}&status=${actionState}`;
-            const csrfToken = document.querySelector('input[name="_csrf"]').value;
-
-            fetch(endpointUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                }
-            })
-            .then(async response => {
-                if (response.ok) {
-                    // Smoothly animate row departure directly inside DOM view matrix
-                    const elementTarget = document.getElementById(`task-row-${submissionId}`);
-                    if(elementTarget) {
-                        elementTarget.style.opacity = '0';
-                        elementTarget.style.transform = 'scale(0.95)';
-                        setTimeout(() => {
-                            elementTarget.remove();
-                            // Reload frame dynamically if all nodes are processed to reveal empty layout states
-                            if(document.querySelectorAll('[id^="task-row-"]').length === 0) {
-                                window.location.reload();
-                            }
-                        }, 300);
-                    }
-                } else {
-                    const fallbackErrorMessage = await response.text();
-                    alert(`Verification Processing Fault: ${fallbackErrorMessage}`);
-                }
-            })
-            .catch(error => {
-                console.error('Network Engine Exception:', error);
-                alert('Failed to securely contact processing micro-service ledger nodes.');
-            });
-        }
         function evaluateSyllabus(progressId, actionState) {
             let formData = new URLSearchParams();
             formData.append('studentProgressId', progressId);

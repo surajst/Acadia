@@ -231,7 +231,7 @@ public class ParentPortalController {
     }
 
     @Transactional
-    @GetMapping("/web/parent/reward/{id}/approve")
+    @PostMapping("/web/parent/reward/{id}/approve")
     public String approveReward(@PathVariable("id") UUID id, Authentication authentication) {
         try {
             ParentReward reward = parentRewardRepository.findById(id)
@@ -248,7 +248,7 @@ public class ParentPortalController {
     }
 
     @Transactional
-    @GetMapping("/web/parent/reward/{id}/hold")
+    @PostMapping("/web/parent/reward/{id}/hold")
     public String holdReward(@PathVariable("id") UUID id, Authentication authentication) {
         try {
             ParentReward reward = parentRewardRepository.findById(id)
@@ -337,7 +337,7 @@ public class ParentPortalController {
     }
 
     @Transactional
-    @GetMapping("/web/parent/quest/{id}/approve")
+    @PostMapping("/web/parent/quest/{id}/approve")
     public String approveQuest(@PathVariable("id") UUID id, Authentication authentication) {
         try {
             ParentQuest quest = parentQuestRepository.findById(id)
@@ -371,7 +371,7 @@ public class ParentPortalController {
     }
 
     @Transactional
-    @GetMapping("/web/parent/reward/{id}/release")
+    @PostMapping("/web/parent/reward/{id}/release")
     public String releaseReward(@PathVariable("id") UUID id, Authentication authentication) {
         try {
             ParentReward reward = parentRewardRepository.findById(id)

@@ -9,6 +9,10 @@ import com.schoolos.academics.StudentMetric;
 import com.schoolos.academics.StudentMetricRepository;
 import com.schoolos.common.NotificationDeliveryService;
 import com.schoolos.user.CurrentUserService;
+import com.schoolos.user.User;
+import com.schoolos.user.UserRepository;
+import java.util.HashSet;
+import java.util.Set;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.data.domain.Page;
@@ -67,6 +71,23 @@ public class UnifiedDashboardWebController {
 
     @Autowired
     private FeeManagementService feeManagementService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private SubjectAssignmentRepository subjectAssignmentRepository;
+
+    /** Students actually taught by this teacher, via real SubjectAssignment records — null if not a teacher or unresolvable. */
+    private Set<UUID> resolveOwnStudentIds(Authentication authentication) {
+        User teacher = userRepository.findByEmail(authentication.getName()).orElse(null);
+        if (teacher == null) return null;
+        List<ClassSection> sections = subjectAssignmentRepository.findByTeacher(teacher).stream()
+                .map(SubjectAssignment::getClassSection).distinct().collect(Collectors.toList());
+        if (sections.isEmpty()) return Collections.emptySet();
+        return studentRepository.findByClassSectionIn(sections).stream()
+                .map(Student::getId).collect(Collectors.toSet());
+    }
 
     /** Redirect bridge: /web/management/attendance → canonical teacher attendance route */
     @GetMapping("/web/management/attendance")
@@ -355,6 +376,16 @@ public class UnifiedDashboardWebController {
             rawSubmissions = tenantId != null
                     ? academicSubmissionRepository.findByStatusAndStudentTenantId("PENDING", tenantId)
                     : Collections.emptyList();
+            // A plain TEACHER (not ADMIN/PRINCIPAL) only sees their own students' submissions —
+            // ADMIN/PRINCIPAL keep the tenant-wide oversight view intentionally.
+            if ("TEACHER".equals(role)) {
+                Set<UUID> ownStudentIds = resolveOwnStudentIds(authentication);
+                if (ownStudentIds != null) {
+                    rawSubmissions = rawSubmissions.stream()
+                            .filter(sub -> ownStudentIds.contains(sub.getStudentId()))
+                            .collect(Collectors.toList());
+                }
+            }
         } catch (Exception e) {
             // gracefully catch
         }
@@ -394,6 +425,14 @@ public class UnifiedDashboardWebController {
             rawProgress = tenantId != null
                     ? studentProgressRepository.findByStudentTenantIdAndStatus(tenantId, "PENDING")
                     : Collections.emptyList();
+            if ("TEACHER".equals(role)) {
+                Set<UUID> ownStudentIds = resolveOwnStudentIds(authentication);
+                if (ownStudentIds != null) {
+                    rawProgress = rawProgress.stream()
+                            .filter(sp -> sp.getStudent() != null && ownStudentIds.contains(sp.getStudent().getId()))
+                            .collect(Collectors.toList());
+                }
+            }
         } catch (Exception e) {
             // gracefully catch
         }
@@ -430,58 +469,6 @@ public class UnifiedDashboardWebController {
 
         model.addAttribute("pendingProgressQueue", pendingProgressQueue);
         return "teacher_dashboard";
-    }
-
-    @org.springframework.transaction.annotation.Transactional
-    @GetMapping("/web/teacher/milestone/{id}/approve")
-    public String approveMilestone(@PathVariable("id") UUID id) {
-        try {
-            AcademicSubmission submission = academicSubmissionRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid submission Id:" + id));
-
-            submission.setStatus("APPROVED");
-            academicSubmissionRepository.saveAndFlush(submission);
-
-            Student student = studentRepository.findById(submission.getStudentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid student Id:" + submission.getStudentId()));
-
-            StudentMetric metric = studentMetricRepository.findByStudentId(submission.getStudentId())
-                    .orElseGet(() -> {
-                        StudentMetric newMetric = new StudentMetric();
-                        newMetric.setId(UUID.randomUUID());
-                        newMetric.setStudent(student);
-                        newMetric.setTenantId(student.getTenantId());
-                        newMetric.setAcademicYearId(student.getAcademicYearId());
-                        newMetric.setSchoolXp(0);
-                        newMetric.setParentXp(0);
-                        newMetric.setActiveStreak(0);
-                        return newMetric;
-                    });
-
-            metric.setSchoolXp((metric.getSchoolXp() == null ? 0 : metric.getSchoolXp()) + submission.getXpBounty());
-            studentMetricRepository.saveAndFlush(metric);
-        } catch (Exception e) {
-            // let exception handler catch and display gracefully
-            throw new RuntimeException("Milestone approval failed: " + e.getMessage(), e);
-        }
-
-        return "redirect:/web/teacher/dashboard";
-    }
-
-    @org.springframework.transaction.annotation.Transactional
-    @GetMapping("/web/teacher/milestone/{id}/reject")
-    public String rejectMilestone(@PathVariable("id") UUID id) {
-        try {
-            AcademicSubmission submission = academicSubmissionRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid submission Id:" + id));
-
-            submission.setStatus("REJECTED");
-            academicSubmissionRepository.saveAndFlush(submission);
-        } catch (Exception e) {
-            throw new RuntimeException("Milestone rejection failed: " + e.getMessage(), e);
-        }
-
-        return "redirect:/web/teacher/dashboard";
     }
 
     @GetMapping("/web/teacher/attendance")

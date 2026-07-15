@@ -360,10 +360,12 @@
 
                         <!-- Stylized Actions -->
                         <div class="mt-6">
-                            <a th:href="@{/web/parent/quest/{id}/approve(id=${quest.id})}"
-                               class="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35 cursor-pointer">
-                                ✓ Approve & Grant XP
-                            </a>
+                            <form th:action="@{/web/parent/quest/{id}/approve(id=${quest.id})}" method="post">
+                                <button type="submit"
+                                        class="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35 cursor-pointer">
+                                    ✓ Approve & Grant XP
+                                </button>
+                            </form>
                         </div>
                     </div>
 
@@ -406,10 +408,12 @@
 
                         <!-- Stylized Actions -->
                         <div class="mt-6">
-                            <a th:href="@{/web/parent/reward/{id}/release(id=${reward.id})}"
-                               class="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35 cursor-pointer">
-                                ✓ Release & Mark Delivered
-                            </a>
+                            <form th:action="@{/web/parent/reward/{id}/release(id=${reward.id})}" method="post">
+                                <button type="submit"
+                                        class="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35 cursor-pointer">
+                                    ✓ Release & Mark Delivered
+                                </button>
+                            </form>
                         </div>
                     </div>
 
@@ -451,14 +455,19 @@
 
                         <!-- Stylized Actions -->
                         <div class="grid grid-cols-2 gap-3 mt-6">
-                            <a th:href="@{/web/parent/reward/{id}/approve(id=${reward.id})}"
-                               class="py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35">
-                                ✓ Approve & Unlock
-                            </a>
-                            <a th:href="@{/web/parent/reward/{id}/hold(id=${reward.id})}"
-                               class="py-2.5 px-4 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/40 font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 hover:text-white">
-                                ✕ Hold Reward
-                            </a>
+                            <form th:action="@{/web/parent/reward/{id}/approve(id=${reward.id})}" method="post">
+                                <button type="submit"
+                                        class="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/35">
+                                    ✓ Approve & Unlock
+                                </button>
+                            </form>
+                            <form th:action="@{/web/parent/reward/{id}/hold(id=${reward.id})}" method="post"
+                                  onsubmit="return confirm('Hold this reward? The student\'s XP has already been spent — there is currently no way to release it back if you hold it.');">
+                                <button type="submit"
+                                        class="w-full py-2.5 px-4 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/40 font-bold rounded-xl text-center text-xs tracking-wider uppercase transition-all duration-300 hover:text-white">
+                                    ✕ Hold Reward
+                                </button>
+                            </form>
                         </div>
                     </div>
 
