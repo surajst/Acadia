@@ -82,6 +82,7 @@ public class TenantOnboardingService {
         tenant.setActive(true);
         tenant.setTier(TenantTier.FULL_SMS);
         tenant.setCreatedAt(Instant.now());
+        tenant.setOnboardingCompleted(false);
         tenantRepository.save(tenant);
 
         int currentYear = Year.now().getValue();

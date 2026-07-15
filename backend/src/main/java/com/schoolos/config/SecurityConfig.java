@@ -73,12 +73,14 @@ public class SecurityConfig {
     // ─── Chain 3: Web UI — session-based, form login, catch-all ─────────────
     @Bean
     @Order(3)
-    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                        com.schoolos.user.UserRepository userRepository,
+                                                        com.schoolos.tenant.TenantRepository tenantRepository) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/web/onboard/signup").permitAll() // public "create your school" form
-                        .requestMatchers("/web/onboard/setup").hasRole("ADMIN")
+                        .requestMatchers("/web/onboard/setup", "/web/onboard/complete").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers("/web/admin/dashboard").hasAnyRole("ADMIN", "TEACHER", "PRINCIPAL")
                         .requestMatchers("/web/admin/audit-log", "/web/admin/audit-log/**").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers("/web/admin/**").hasRole("ADMIN")
@@ -96,10 +98,17 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             String redirectUrl = "/";
                             var authorities = authentication.getAuthorities();
-                            if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                            if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))
+                                    || authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_PRINCIPAL"))) {
                                 redirectUrl = "/web/admin/dashboard";
-                            } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_PRINCIPAL"))) {
-                                redirectUrl = "/web/admin/dashboard";
+                                boolean onboarded = userRepository.findByEmail(authentication.getName())
+                                        .map(u -> tenantRepository.findById(u.getTenantId())
+                                                .map(com.schoolos.tenant.Tenant::getEffectiveOnboardingCompleted)
+                                                .orElse(true))
+                                        .orElse(true);
+                                if (!onboarded) {
+                                    redirectUrl = "/web/onboard/setup";
+                                }
                             } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"))) {
                                 redirectUrl = "/web/teacher/dashboard";
                             } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_PARENT"))) {

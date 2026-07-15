@@ -34,6 +34,13 @@ public class Tenant {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    // Nullable so existing tenants (pre-dating this flag) aren't unexpectedly
+    // routed into the setup wizard — null is treated as "already onboarded"
+    // (see getEffectiveOnboardingCompleted()). New tenants set this false
+    // explicitly at creation.
+    @Column(name = "onboarding_completed")
+    private Boolean onboardingCompleted;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -53,4 +60,11 @@ public class Tenant {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Boolean getOnboardingCompleted() { return onboardingCompleted; }
+    public void setOnboardingCompleted(Boolean onboardingCompleted) { this.onboardingCompleted = onboardingCompleted; }
+
+    public boolean getEffectiveOnboardingCompleted() {
+        return onboardingCompleted == null || onboardingCompleted;
+    }
 }

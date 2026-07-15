@@ -7,34 +7,42 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #F4F7FB; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
         .glass-panel {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(30, 41, 59, 0.8);
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.05);
         }
         .step-panel { display: none; }
         .step-panel.active { display: block; }
+        .form-field {
+            background: #F8FAFC; border: 1px solid #CBD5E1; color: #0F172A;
+        }
+        .form-field::placeholder { color: #94A3B8; }
+        .form-field:focus { background: #FFFFFF; border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); outline: none; }
+        .btn-primary {
+            background: linear-gradient(to right, #3B82F6, #6366F1); color: #fff;
+        }
+        .btn-primary:hover { filter: brightness(1.05); }
     </style>
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-[#0b0f19] text-slate-200 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="bg-[#F4F7FB] text-slate-800 font-sans overflow-hidden flex flex-col selection:bg-blue-200" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
 
-    <header class="bg-[#0f172a] border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shrink-0">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <img src="/images/acadia-logo.png" alt="ACADIA" style="height:32px; mix-blend-mode:screen;">
-                <span style="font-size:16px; font-weight:600; color:white; letter-spacing:2px;">ACADIA</span>
+            <div style="display:flex; align-items:center; gap:10px; background:#0B1220; padding:8px 14px; border-radius:12px;">
+                <img src="/images/acadia-logo.png" alt="ACADIA" style="height:28px;">
             </div>
             <div>
-                <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">
                     Set Up Your School
                 </h1>
-                <p class="text-xs text-slate-400 mt-0.5 font-medium">A quick walkthrough to get your workspace ready</p>
+                <p class="text-xs text-slate-500 mt-0.5 font-medium">A quick walkthrough to get your workspace ready</p>
             </div>
-            <a href="/web/admin/dashboard" class="text-xs text-slate-400 hover:text-white transition-colors">Skip to Dashboard &rarr;</a>
+            <a href="/web/onboard/complete" class="text-xs text-slate-500 hover:text-slate-900 transition-colors font-medium">Skip to Dashboard &rarr;</a>
         </div>
     </header>
 
@@ -51,12 +59,12 @@
 
             <!-- Step 1: Grades & Sections -->
             <section class="step-panel active glass-panel rounded-2xl p-6" data-step-panel="1">
-                <h2 class="text-lg font-semibold text-white mb-1">Step 1 &middot; Grades &amp; Sections</h2>
-                <p class="text-sm text-slate-400 mb-4">Set up the grade levels and sections your school uses.</p>
+                <h2 class="text-lg font-semibold text-slate-900 mb-1">Step 1 &middot; Grades &amp; Sections</h2>
+                <p class="text-sm text-slate-500 mb-4">Set up the grade levels and sections your school uses.</p>
 
                 <table class="w-full text-sm mb-6">
                     <thead>
-                        <tr class="text-left text-slate-400 border-b border-slate-800">
+                        <tr class="text-left text-slate-500 border-b border-slate-200">
                             <th class="py-2 pr-4">Grade</th>
                             <th class="py-2 pr-4">Section</th>
                             <th class="py-2 pr-4">Room</th>
@@ -67,49 +75,54 @@
 
                 <form id="classSectionForm" class="flex flex-wrap gap-3 items-end">
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Grade</label>
-                        <input id="gradeName" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="Grade 6">
+                        <label class="block text-xs text-slate-500 mb-1">Grade</label>
+                        <input id="gradeName" required class="form-field rounded-xl text-sm px-3 py-2" placeholder="Grade 6">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Section</label>
-                        <input id="sectionName" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="A">
+                        <label class="block text-xs text-slate-500 mb-1">Section</label>
+                        <input id="sectionName" required class="form-field rounded-xl text-sm px-3 py-2" placeholder="A">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Room (optional)</label>
-                        <input id="roomNumber" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="Room 101">
+                        <label class="block text-xs text-slate-500 mb-1">Room (optional)</label>
+                        <input id="roomNumber" class="form-field rounded-xl text-sm px-3 py-2" placeholder="Room 101">
                     </div>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Add</button>
+                    <button type="submit" class="btn-primary text-sm font-medium px-4 py-2 rounded-xl transition-colors">Add</button>
                 </form>
 
                 <div class="flex justify-end mt-6">
-                    <button onclick="goToStep(2)" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
+                    <button onclick="goToStep(2)" class="btn-primary text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
                 </div>
             </section>
 
             <!-- Step 2: Subjects -->
             <section class="step-panel glass-panel rounded-2xl p-6" data-step-panel="2">
-                <h2 class="text-lg font-semibold text-white mb-1">Step 2 &middot; Subjects</h2>
-                <p class="text-sm text-slate-400 mb-4">
-                    Every ACADIA school starts with 5 default subjects (Math, Science, Social Science, English, Language).
-                    Add, rename, or deactivate subjects, and assign them per grade, on the Subjects page.
+                <h2 class="text-lg font-semibold text-slate-900 mb-1">Step 2 &middot; Subjects</h2>
+                <p class="text-sm text-slate-500 mb-4">
+                    Every ACADIA school starts with 5 default subjects (Math, Science, Social Science, English, Language)
+                    already active — this step is optional. Add, rename, or deactivate subjects, and assign them per grade,
+                    on the Subjects page.
                 </p>
-                <a href="/web/admin/subjects" target="_blank" class="inline-block bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors border border-slate-700">
+                <a href="/web/admin/subjects" target="_blank" class="inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors border border-slate-300">
                     Open Subjects Manager &#8599;
                 </a>
+                <p class="text-xs text-slate-400 mt-2">Opens in a new tab — come back here and continue when you're done, or just skip ahead.</p>
                 <div class="flex justify-between mt-6">
-                    <button onclick="goToStep(1)" class="text-slate-400 hover:text-white text-sm px-4 py-2">&larr; Back</button>
-                    <button onclick="goToStep(3)" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
+                    <button onclick="goToStep(1)" class="text-slate-500 hover:text-slate-900 text-sm px-4 py-2">&larr; Back</button>
+                    <button onclick="goToStep(3)" class="btn-primary text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
                 </div>
             </section>
 
             <!-- Step 3: Invite Staff -->
             <section class="step-panel glass-panel rounded-2xl p-6" data-step-panel="3">
-                <h2 class="text-lg font-semibold text-white mb-1">Step 3 &middot; Invite Staff</h2>
-                <p class="text-sm text-slate-400 mb-4">Add teachers and additional admins to your school.</p>
+                <h2 class="text-lg font-semibold text-slate-900 mb-1">Step 3 &middot; Invite Staff</h2>
+                <p class="text-sm text-slate-500 mb-4">
+                    Add teachers and additional admins to your school. Invited staff need a PRINCIPAL or ADMIN to approve
+                    them before they can log in — you can do that later from the Staff page.
+                </p>
 
                 <table class="w-full text-sm mb-6">
                     <thead>
-                        <tr class="text-left text-slate-400 border-b border-slate-800">
+                        <tr class="text-left text-slate-500 border-b border-slate-200">
                             <th class="py-2 pr-4">Name</th>
                             <th class="py-2 pr-4">Email</th>
                             <th class="py-2 pr-4">Role</th>
@@ -118,52 +131,52 @@
                     <tbody id="staffRows"></tbody>
                 </table>
 
-                <div id="staffError" class="text-red-400 text-xs mb-3" style="display:none"></div>
+                <div id="staffError" class="text-red-600 text-xs mb-3" style="display:none"></div>
 
                 <form id="staffForm" class="flex flex-wrap gap-3 items-end">
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Full Name</label>
-                        <input id="staffFullName" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="Jane Doe">
+                        <label class="block text-xs text-slate-500 mb-1">Full Name</label>
+                        <input id="staffFullName" required class="form-field rounded-xl text-sm px-3 py-2" placeholder="Enter full name">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Email</label>
-                        <input id="staffEmail" type="email" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="teacher@school.edu">
+                        <label class="block text-xs text-slate-500 mb-1">Email</label>
+                        <input id="staffEmail" type="email" required class="form-field rounded-xl text-sm px-3 py-2" placeholder="teacher@school.edu">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Temporary Password</label>
-                        <input id="staffPassword" type="password" required minlength="8" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                        <label class="block text-xs text-slate-500 mb-1">Temporary Password</label>
+                        <input id="staffPassword" type="password" required minlength="8" class="form-field rounded-xl text-sm px-3 py-2">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Role</label>
-                        <select id="staffRole" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                        <label class="block text-xs text-slate-500 mb-1">Role</label>
+                        <select id="staffRole" class="form-field rounded-xl text-sm px-3 py-2">
                             <option value="TEACHER">Teacher</option>
                             <option value="PRINCIPAL">Principal</option>
                             <option value="ADMIN">Admin</option>
                         </select>
                     </div>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Invite</button>
+                    <button type="submit" class="btn-primary text-sm font-medium px-4 py-2 rounded-xl transition-colors">Invite</button>
                 </form>
 
                 <div class="flex justify-between mt-6">
-                    <button onclick="goToStep(2)" class="text-slate-400 hover:text-white text-sm px-4 py-2">&larr; Back</button>
-                    <button onclick="goToStep(4)" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
+                    <button onclick="goToStep(2)" class="text-slate-500 hover:text-slate-900 text-sm px-4 py-2">&larr; Back</button>
+                    <button onclick="goToStep(4)" class="btn-primary text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
                 </div>
             </section>
 
             <!-- Step 4: Done -->
             <section class="step-panel glass-panel rounded-2xl p-6 text-center" data-step-panel="4">
-                <h2 class="text-2xl font-bold text-white mb-2">You're all set! 🎉</h2>
-                <p class="text-sm text-slate-400 mb-6">Your school is ready. You can add students and parents from the Admin Dashboard.</p>
-                <a href="/web/admin/dashboard" class="inline-block bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-colors">Go to Dashboard</a>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">You're all set!</h2>
+                <p class="text-sm text-slate-500 mb-6">Your school is ready. You can add students and parents from the Admin Dashboard.</p>
+                <a href="/web/onboard/complete" class="inline-block btn-primary text-sm font-semibold px-6 py-3 rounded-xl transition-colors">Go to Dashboard</a>
             </section>
         </main>
     </div>
 
     <style>
         .step-dot {
-            width: 32px; height: 4px; border-radius: 2px; background: #1e293b;
+            width: 32px; height: 4px; border-radius: 2px; background: #E2E8F0;
         }
-        .step-dot.active, .step-dot.done { background: #6366f1; }
+        .step-dot.active, .step-dot.done { background: #3B5BDB; }
     </style>
 
     <script>
@@ -186,12 +199,12 @@
             const res = await fetch('/web/admin/class-sections');
             const sections = await res.json();
             document.getElementById('classSectionRows').innerHTML = sections.map(cs => `
-                <tr class="border-b border-slate-800/60">
+                <tr class="border-b border-slate-100">
                     <td class="py-2 pr-4">${cs.gradeName}</td>
                     <td class="py-2 pr-4">${cs.sectionName}</td>
                     <td class="py-2 pr-4 text-slate-400">${cs.roomNumber || '—'}</td>
                 </tr>
-            `).join('') || '<tr><td colspan="3" class="py-3 text-slate-500">No sections yet.</td></tr>';
+            `).join('') || '<tr><td colspan="3" class="py-3 text-slate-400">No sections yet.</td></tr>';
         }
 
         document.getElementById('classSectionForm').addEventListener('submit', async (e) => {
@@ -214,12 +227,12 @@
             const res = await fetch('/web/admin/staff');
             const staff = await res.json();
             document.getElementById('staffRows').innerHTML = staff.map(s => `
-                <tr class="border-b border-slate-800/60">
+                <tr class="border-b border-slate-100">
                     <td class="py-2 pr-4">${s.fullName}</td>
                     <td class="py-2 pr-4 text-slate-400">${s.email}</td>
                     <td class="py-2 pr-4">${s.role}</td>
                 </tr>
-            `).join('') || '<tr><td colspan="3" class="py-3 text-slate-500">No staff invited yet.</td></tr>';
+            `).join('') || '<tr><td colspan="3" class="py-3 text-slate-400">No staff invited yet.</td></tr>';
         }
 
         document.getElementById('staffForm').addEventListener('submit', async (e) => {
