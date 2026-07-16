@@ -351,6 +351,53 @@
                     </div>
                 </div>
 
+                <!-- Staff Registry -->
+                <div id="staff-registry" class="glass-panel rounded-3xl shadow-2xl overflow-hidden space-y-6 p-6">
+                    <div class="border-b border-slate-800/60 pb-5">
+                        <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                            <span>&#128188;</span> Staff Registry
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Invite teachers, principals, admins, and drivers. Invited staff must be approved before they can sign in.</p>
+                    </div>
+
+                    <div id="staffAddError" class="hidden text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"></div>
+                    <div id="staffAddSuccess" class="hidden text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2"></div>
+
+                    <form id="addStaffForm" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input id="staffFullName" required placeholder="Full name"
+                               class="px-4 py-2.5 bg-slate-950/60 border border-slate-800/80 rounded-xl text-slate-200 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        <input id="staffEmail" type="email" required placeholder="name@school.edu"
+                               class="px-4 py-2.5 bg-slate-950/60 border border-slate-800/80 rounded-xl text-slate-200 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        <select id="staffRole"
+                                class="px-4 py-2.5 bg-slate-950/60 border border-slate-800/80 rounded-xl text-slate-200 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                            <option value="TEACHER">Teacher</option>
+                            <option value="PRINCIPAL">Principal</option>
+                            <option value="ADMIN">Admin</option>
+                            <option value="DRIVER">Driver</option>
+                        </select>
+                        <button type="submit"
+                                class="py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all text-xs uppercase tracking-widest cursor-pointer">
+                            Invite Staff
+                        </button>
+                    </form>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-800/60">
+                                    <th class="py-2 pr-4">Name</th>
+                                    <th class="py-2 pr-4">Email</th>
+                                    <th class="py-2 pr-4">Role</th>
+                                    <th class="py-2 pr-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody">
+                                <tr><td colspan="4" class="py-3 text-slate-500 text-xs">Loading staff…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Bus Routes Management -->
                 <div id="bus-routes-section" class="glass-panel rounded-3xl shadow-2xl overflow-hidden space-y-6 p-6">
                     <div class="border-b border-slate-800/60 pb-5 flex justify-between items-center">
@@ -647,6 +694,86 @@
         });
 
         loadBusRoutes();
+
+        // ── Staff Registry ──────────────────────────────────────────────
+        function staffEscape(v) {
+            const d = document.createElement('div');
+            d.textContent = v == null ? '' : String(v);
+            return d.innerHTML;
+        }
+
+        async function loadStaff() {
+            const body = document.getElementById('staffTableBody');
+            try {
+                const res = await fetch('/web/admin/staff');
+                const staff = await res.json();
+                if (!Array.isArray(staff) || staff.length === 0) {
+                    body.innerHTML = '<tr><td colspan="4" class="py-3 text-slate-500 text-xs">No staff yet. Invite your first teacher above.</td></tr>';
+                    return;
+                }
+                body.innerHTML = staff.map(function (s) {
+                    const active = s.active
+                        ? '<span class="text-emerald-400">Active</span>'
+                        : '<span class="text-amber-400">Pending approval</span>';
+                    return '<tr class="border-b border-slate-800/40">' +
+                        '<td class="py-2 pr-4 text-slate-200">' + staffEscape(s.fullName) + '</td>' +
+                        '<td class="py-2 pr-4 text-slate-400">' + staffEscape(s.email) + '</td>' +
+                        '<td class="py-2 pr-4 text-slate-300">' + staffEscape(s.role) + '</td>' +
+                        '<td class="py-2 pr-4 text-xs font-semibold">' + active + '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (e) {
+                body.innerHTML = '<tr><td colspan="4" class="py-3 text-red-400 text-xs">Could not load staff.</td></tr>';
+            }
+        }
+
+        function generateTempPassword() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+            let p = '';
+            const rand = new Uint32Array(10);
+            crypto.getRandomValues(rand);
+            for (let i = 0; i < 10; i++) p += chars[rand[i] % chars.length];
+            return p + '!9';
+        }
+
+        document.getElementById('addStaffForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const errBox = document.getElementById('staffAddError');
+            const okBox = document.getElementById('staffAddSuccess');
+            errBox.classList.add('hidden');
+            okBox.classList.add('hidden');
+
+            const fullName = document.getElementById('staffFullName').value.trim();
+            const email = document.getElementById('staffEmail').value.trim();
+            const role = document.getElementById('staffRole').value;
+            const tempPassword = generateTempPassword();
+
+            const params = new URLSearchParams({ fullName: fullName, email: email, password: tempPassword, role: role });
+            try {
+                const res = await fetch('/web/admin/staff/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString(),
+                });
+                const data = await res.json();
+                if (data.error) {
+                    errBox.textContent = data.error;
+                    errBox.classList.remove('hidden');
+                    return;
+                }
+                okBox.innerHTML = 'Invited <strong>' + staffEscape(fullName) + '</strong> as ' + staffEscape(role) +
+                    '. Share these sign-in details — they can log in once approved:<br>' +
+                    'Email: <strong>' + staffEscape(email) + '</strong> &nbsp; Temporary password: <strong>' + staffEscape(tempPassword) + '</strong>';
+                okBox.classList.remove('hidden');
+                document.getElementById('addStaffForm').reset();
+                await loadStaff();
+            } catch (err) {
+                errBox.textContent = 'Could not invite staff. Please try again.';
+                errBox.classList.remove('hidden');
+            }
+        });
+
+        loadStaff();
     </script>
 
 </div>
