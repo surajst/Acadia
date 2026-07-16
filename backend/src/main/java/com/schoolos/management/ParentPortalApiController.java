@@ -69,7 +69,7 @@ public class ParentPortalApiController {
             return ResponseEntity.status(403).body(Map.of("error", "Not authorized for this quest"));
         }
 
-        quest.setStatus("VERIFIED");
+        quest.setStatus("APPROVED");
         parentQuestRepository.save(quest);
 
         StudentMetric metric = studentMetricRepository.findByStudentId(quest.getStudent().getId()).orElseThrow();
@@ -120,7 +120,7 @@ public class ParentPortalApiController {
         }
         quest.setTaskDescription(taskDesc);
         quest.setXpBounty(dto.getXpReward());
-        quest.setStatus("IN_PROGRESS");
+        quest.setStatus("PENDING");
         quest.setStudent(student);
         quest.setParent(parent);
         quest.setTenantId(student.getTenantId());

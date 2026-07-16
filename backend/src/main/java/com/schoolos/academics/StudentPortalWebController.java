@@ -47,24 +47,7 @@ public class StudentPortalWebController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model, HttpSession session, Authentication authentication) {
-        Student student = currentUserService.getCurrentStudent(authentication).orElse(null);
-
-        if (student == null) {
-            return "redirect:/web/feed";
-        }
-
-        StudentMetric metric = studentMetricRepository.findByStudentId(student.getId()).orElse(new StudentMetric());
-        List<MathSkill> mathSkills = mathSkillRepository.findByChapterSequenceNumber(1);
-        List<ParentQuest> parentQuests = parentQuestRepository.findByStudentId(student.getId());
-        List<ParentReward> awaitingDeliveryRewards = parentRewardRepository.findByStudentIdAndStatus(student.getId(), "CLAIMED_AWAITING_DELIVERY");
-
-        model.addAttribute("student", student);
-        model.addAttribute("metric", metric);
-        model.addAttribute("mathSkills", mathSkills);
-        model.addAttribute("parentQuests", parentQuests);
-        model.addAttribute("awaitingDeliveryRewards", awaitingDeliveryRewards);
-
-        return "student_dashboard";
+    public String dashboard() {
+        return "redirect:/web/student/portal";
     }
 }

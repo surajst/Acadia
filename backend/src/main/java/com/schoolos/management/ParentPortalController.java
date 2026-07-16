@@ -81,153 +81,8 @@ public class ParentPortalController {
     }
 
     @GetMapping("/web/parent/portal")
-    public String getParentPortal(Model model, Authentication authentication) {
-        String role = "PARENT";
-        if (authentication != null) {
-            for (GrantedAuthority auth : authentication.getAuthorities()) {
-                String authority = auth.getAuthority();
-                if (authority.startsWith("ROLE_")) {
-                    role = authority.substring(5);
-                }
-            }
-        }
-        model.addAttribute("currentUserRole", role);
-
-        Parent parent = resolveParent(authentication);
-
-        Student student = null;
-        if (parent != null) {
-            try {
-                List<Student> students = studentRepository.findByParentsContaining(parent);
-                if (!students.isEmpty()) {
-                    student = students.get(0);
-                }
-            } catch (Exception e) {
-                // gracefully catch
-            }
-        }
-
-        if (student == null) {
-            // No child linked to this parent account — show an honest empty
-            // state rather than falling back to another tenant's real data.
-            model.addAttribute("student", null);
-            model.addAttribute("studentMetrics", null);
-            model.addAttribute("totalXp", 0);
-            model.addAttribute("scholarLevel", 1);
-            model.addAttribute("levelProgress", 0);
-            model.addAttribute("xpToNextLevel", 500);
-            model.addAttribute("submissions", Collections.emptyList());
-            model.addAttribute("pendingRewards", Collections.emptyList());
-            model.addAttribute("attendanceStatus", "NOT MARKED");
-            model.addAttribute("parentQuests", Collections.emptyList());
-            model.addAttribute("parentRewards", Collections.emptyList());
-            model.addAttribute("currentDate", LocalDate.now());
-            model.addAttribute("systemScope", "PARENT_PORTAL");
-            return "parent_portal";
-        }
-
-        UUID studentId = student.getId();
-
-        StudentMetric studentMetrics = null;
-        try {
-            studentMetrics = studentMetricRepository.findByStudentId(studentId).orElse(null);
-        } catch (Exception e) {
-            // gracefully catch any repository issues
-        }
-
-        if (studentMetrics == null) {
-            studentMetrics = new StudentMetric();
-            studentMetrics.setId(UUID.randomUUID());
-            studentMetrics.setStudent(student);
-            studentMetrics.setTenantId(student.getTenantId());
-            studentMetrics.setAcademicYearId(student.getAcademicYearId());
-            studentMetrics.setSchoolXp(0);
-            studentMetrics.setParentXp(0);
-            studentMetrics.setActiveStreak(0);
-        }
-
-        int totalXp = studentMetrics.getSchoolXp() != null ? studentMetrics.getSchoolXp() : 0;
-        int scholarLevel = (totalXp / 500) + 1;
-        int levelProgress = (totalXp % 500) * 100 / 500;
-        int xpToNextLevel = 500 - (totalXp % 500);
-
-        List<AcademicSubmission> submissions = null;
-        try {
-            submissions = academicSubmissionRepository.findByStudentId(studentId);
-        } catch (Exception e) {
-            // gracefully catch any repository issues
-        }
-        if (submissions == null) {
-            submissions = Collections.emptyList();
-        }
-
-        List<ParentReward> pendingRewards = null;
-        try {
-            pendingRewards = parentRewardRepository.findByStudentIdAndStatus(studentId, "PENDING");
-        } catch (Exception e) {
-            // gracefully catch any repository issues
-        }
-        if (pendingRewards == null) {
-            pendingRewards = Collections.emptyList();
-        }
-
-        // Live Attendance Status resolution
-        String attendanceStatus = "NOT MARKED";
-        try {
-            List<Attendance> attendances = attendanceRepository.findByStudentId(studentId);
-
-            LocalDate today = LocalDate.now();
-            Attendance todayAttendance = attendances.stream()
-                .filter(a -> today.equals(a.getAttendanceDate()))
-                .findFirst()
-                .orElse(null);
-
-            if (todayAttendance != null) {
-                attendanceStatus = todayAttendance.getStatus().name();
-            } else if (!attendances.isEmpty()) {
-                // sort by date descending
-                attendances.sort((a, b) -> b.getAttendanceDate().compareTo(a.getAttendanceDate()));
-                attendanceStatus = attendances.get(0).getStatus().name();
-            }
-        } catch (Exception e) {
-            // gracefully catch any repository issues
-        }
-
-        List<ParentQuest> parentQuests = null;
-        try {
-            parentQuests = parentQuestRepository.findByStudentId(studentId);
-        } catch (Exception e) {
-            // gracefully catch
-        }
-        if (parentQuests == null) {
-            parentQuests = Collections.emptyList();
-        }
-
-        List<ParentReward> parentRewards = null;
-        try {
-            parentRewards = parentRewardRepository.findByStudentId(studentId);
-        } catch (Exception e) {
-            // gracefully catch
-        }
-        if (parentRewards == null) {
-            parentRewards = Collections.emptyList();
-        }
-
-        model.addAttribute("parentQuests", parentQuests);
-        model.addAttribute("parentRewards", parentRewards);
-        model.addAttribute("student", student);
-        model.addAttribute("studentMetrics", studentMetrics);
-        model.addAttribute("totalXp", totalXp);
-        model.addAttribute("scholarLevel", scholarLevel);
-        model.addAttribute("levelProgress", levelProgress);
-        model.addAttribute("xpToNextLevel", xpToNextLevel);
-        model.addAttribute("submissions", submissions);
-        model.addAttribute("pendingRewards", pendingRewards);
-        model.addAttribute("attendanceStatus", attendanceStatus);
-        model.addAttribute("currentDate", LocalDate.now());
-        model.addAttribute("systemScope", "PARENT_PORTAL");
-
-        return "parent_portal";
+    public String getParentPortal() {
+        return "redirect:/web/parent/dashboard";
     }
 
     @Transactional
@@ -244,7 +99,7 @@ public class ParentPortalController {
             throw new RuntimeException("Parent reward approval failed: " + e.getMessage(), e);
         }
 
-        return "redirect:/web/parent/portal?success=approved";
+        return "redirect:/web/parent/dashboard?success=approved";
     }
 
     @Transactional
@@ -261,7 +116,7 @@ public class ParentPortalController {
             throw new RuntimeException("Parent reward hold failed: " + e.getMessage(), e);
         }
 
-        return "redirect:/web/parent/portal?success=held";
+        return "redirect:/web/parent/dashboard?success=held";
     }
 
     @Transactional
@@ -298,7 +153,7 @@ public class ParentPortalController {
         } catch (Exception e) {
             throw new RuntimeException("Assign task failed: " + e.getMessage(), e);
         }
-        return "redirect:/web/parent/portal?success=task_assigned";
+        return "redirect:/web/parent/dashboard?success=task_assigned";
     }
 
     @Transactional
@@ -333,7 +188,7 @@ public class ParentPortalController {
         } catch (Exception e) {
             throw new RuntimeException("Add reward failed: " + e.getMessage(), e);
         }
-        return "redirect:/web/parent/portal?success=reward_added";
+        return "redirect:/web/parent/dashboard?success=reward_added";
     }
 
     @Transactional
@@ -367,7 +222,7 @@ public class ParentPortalController {
         } catch (Exception e) {
             throw new RuntimeException("Parent quest approval failed: " + e.getMessage(), e);
         }
-        return "redirect:/web/parent/portal?success=quest_approved";
+        return "redirect:/web/parent/dashboard?success=quest_approved";
     }
 
     @Transactional
@@ -383,40 +238,13 @@ public class ParentPortalController {
         } catch (Exception e) {
             throw new RuntimeException("Parent reward release failed: " + e.getMessage(), e);
         }
-        return "redirect:/web/parent/portal?success=reward_released";
+        return "redirect:/web/parent/dashboard?success=reward_released";
     }
 
     @ExceptionHandler(Exception.class)
-    public String handleException(Exception ex, Model model) {
-        model.addAttribute("errorMessage", ex.getMessage());
-        model.addAttribute("currentUserRole", "PARENT");
-
-        // Safety attributes for Thymeleaf rendering
-        Student student = new Student();
-        student.setId(UUID.fromString("00000000-0000-0000-0000-000000000091"));
-        student.setFirstName("Arjun");
-        student.setLastName("Sharma");
-        student.setRollNumber("6A-01");
-        ClassSection mockSection = new ClassSection();
-        mockSection.setId(UUID.randomUUID());
-        mockSection.setGradeName("Grade 6");
-        mockSection.setSectionName("A");
-        student.setClassSection(mockSection);
-
-        model.addAttribute("student", student);
-        model.addAttribute("studentMetrics", new StudentMetric());
-        model.addAttribute("totalXp", 0);
-        model.addAttribute("scholarLevel", 1);
-        model.addAttribute("levelProgress", 0);
-        model.addAttribute("xpToNextLevel", 500);
-        model.addAttribute("submissions", Collections.emptyList());
-        model.addAttribute("pendingRewards", Collections.emptyList());
-        model.addAttribute("attendanceStatus", "NOT MARKED");
-        model.addAttribute("parentQuests", Collections.emptyList());
-        model.addAttribute("parentRewards", Collections.emptyList());
-        model.addAttribute("currentDate", LocalDate.now());
-
-        return "parent_portal";
+    public String handleException(Exception ex, org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
+        ra.addFlashAttribute("errorMessage", ex.getMessage());
+        return "redirect:/web/parent/dashboard";
     }
 
     @GetMapping("/api/parent/child-progress")

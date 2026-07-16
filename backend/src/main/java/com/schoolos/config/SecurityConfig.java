@@ -113,7 +113,7 @@ public class SecurityConfig {
                             } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"))) {
                                 redirectUrl = "/web/teacher/dashboard";
                             } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_PARENT"))) {
-                                redirectUrl = "/web/parent/portal";
+                                redirectUrl = "/web/parent/dashboard";
                             } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_STUDENT"))) {
                                 redirectUrl = "/web/student/portal";
                             }
