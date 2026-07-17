@@ -133,7 +133,7 @@ public class SecurityConfig {
                                 "/web/admin/fees/invoice/create", "/web/admin/fees/collect",
                                 "/web/admin/bus-routes/add", "/web/admin/bus-routes/*/assign-driver", "/web/admin/class-sections/*/assign-bus-route",
                                 "/web/student/**", "/web/parent/**", "/web/teacher/**",
-                                "/web/management/upload/process",
+                                "/web/management/upload/process", "/web/management/upload/staff/process",
                                 "/api/parent/**"
                         )
                 );

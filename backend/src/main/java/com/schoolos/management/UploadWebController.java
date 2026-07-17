@@ -2,9 +2,12 @@ package com.schoolos.management;
 
 import com.schoolos.common.AuditLogService;
 import com.schoolos.user.User;
+import com.schoolos.user.UserRepository;
+import com.schoolos.user.UserRole;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,6 +33,17 @@ public class UploadWebController {
 
     @Autowired
     private AuditLogService auditLogService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private com.schoolos.user.CurrentUserService currentUserService;
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     public UploadWebController(ClassSectionRepository classSectionRepository,
                                StudentRepository studentRepository,
@@ -174,6 +189,109 @@ public class UploadWebController {
                 + (failed > 0 ? ", " + failed + " row(s) failed" : "") + ".");
         model.addAttribute("rowResults", rowResults);
         return "upload";
+    }
+
+    @PostMapping("/staff/process")
+    public String processStaffUpload(@RequestParam("file") MultipartFile file,
+                                     HttpSession session,
+                                     Authentication authentication,
+                                     Model model) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null) return "redirect:/web/login";
+
+        if (file.isEmpty()) {
+            model.addAttribute("staffError", "Please select a valid CSV file.");
+            return "upload";
+        }
+
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(currentUser.getTenantId());
+        UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(currentUser.getAcademicYearId());
+
+        List<Map<String, String>> rowResults = new ArrayList<>();
+        int created = 0, skipped = 0, failed = 0;
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            boolean firstLine = true;
+            int rowNumber = 1;
+
+            while ((line = br.readLine()) != null) {
+                if (firstLine) { firstLine = false; continue; }
+                rowNumber++;
+                if (line.isBlank()) continue;
+
+                List<String> cols = parseCsvLine(line);
+                if (cols.size() < 3) {
+                    failed++;
+                    rowResults.add(rowOutcome(rowNumber, "—", "Error", "Expected 3 columns (FullName, Email, Role), found " + cols.size()));
+                    continue;
+                }
+
+                String fullName = cols.get(0).trim();
+                String email = cols.get(1).trim();
+                String roleText = cols.get(2).trim().toUpperCase();
+                String label = fullName.isEmpty() ? "(row " + rowNumber + ")" : fullName;
+
+                try {
+                    if (fullName.isEmpty() || email.isEmpty()) {
+                        throw new IllegalArgumentException("Full name and email are required");
+                    }
+                    UserRole role;
+                    try {
+                        role = UserRole.valueOf(roleText);
+                    } catch (IllegalArgumentException ex) {
+                        throw new IllegalArgumentException("Invalid role '" + roleText + "' (use TEACHER, PRINCIPAL, ADMIN, or DRIVER)");
+                    }
+                    if (role != UserRole.ADMIN && role != UserRole.PRINCIPAL && role != UserRole.TEACHER && role != UserRole.DRIVER) {
+                        throw new IllegalArgumentException("Role must be TEACHER, PRINCIPAL, ADMIN, or DRIVER");
+                    }
+                    if (userRepository.existsByEmail(email)) {
+                        skipped++;
+                        rowResults.add(rowOutcome(rowNumber, label, "Skipped", "Email already in use: " + email));
+                        continue;
+                    }
+
+                    String tempPassword = generateTempPassword();
+                    User staff = new User();
+                    staff.setId(UUID.randomUUID());
+                    staff.setTenantId(tenantId);
+                    staff.setAcademicYearId(academicYearId);
+                    staff.setEmail(email);
+                    staff.setPasswordHash(passwordEncoder.encode(tempPassword));
+                    staff.setFullName(fullName);
+                    staff.setRole(role);
+                    staff.setActive(true);
+                    staff.setApprovalStatus(User.ApprovalStatus.PENDING);
+                    userRepository.save(staff);
+
+                    created++;
+                    // Surface the generated temp password so the admin can relay it (no email yet).
+                    rowResults.add(rowOutcome(rowNumber, label, "Created", role.name() + " · temp password: " + tempPassword));
+                } catch (Exception rowError) {
+                    failed++;
+                    rowResults.add(rowOutcome(rowNumber, label, "Error", rowError.getMessage()));
+                }
+            }
+        } catch (Exception e) {
+            model.addAttribute("staffError", "Could not read the uploaded file: " + e.getMessage());
+            return "upload";
+        }
+
+        auditLogService.log(authentication, "STAFF_BULK_IMPORT", "User", null,
+                "Bulk staff import: " + created + " created, " + skipped + " skipped, " + failed + " failed");
+
+        model.addAttribute("staffSuccess", created + " staff member" + (created == 1 ? "" : "s") + " invited"
+                + (skipped > 0 ? ", " + skipped + " skipped as duplicates" : "")
+                + (failed > 0 ? ", " + failed + " row(s) failed" : "") + ". All are pending approval before they can sign in.");
+        model.addAttribute("staffRowResults", rowResults);
+        return "upload";
+    }
+
+    private String generateTempPassword() {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+        StringBuilder p = new StringBuilder();
+        for (int i = 0; i < 10; i++) p.append(chars.charAt(RANDOM.nextInt(chars.length())));
+        return p.append("!9").toString();
     }
 
     private Map<String, String> rowOutcome(int rowNumber, String label, String status, String detail) {
