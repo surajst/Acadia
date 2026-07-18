@@ -76,6 +76,12 @@
 			<artifactId>flying-saucer-pdf-openpdf</artifactId>
 			<version>9.4.0</version>
 		</dependency>
+		<!-- Excel (.xlsx) parsing for bulk import -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.5</version>
+		</dependency>
 	</dependencies>
 
 	<build>

@@ -70,7 +70,15 @@ public class UploadWebController {
         if (currentUser == null) return "redirect:/web/login";
 
         if (file.isEmpty()) {
-            model.addAttribute("error", "Please select a valid CSV file.");
+            model.addAttribute("error", "Please select a valid CSV or Excel file.");
+            return "upload";
+        }
+
+        List<List<String>> allRows;
+        try {
+            allRows = parseRows(file);
+        } catch (Exception e) {
+            model.addAttribute("error", "Could not read the uploaded file: " + e.getMessage());
             return "upload";
         }
 
@@ -79,20 +87,11 @@ public class UploadWebController {
         int skipped = 0;
         int failed = 0;
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-            String line;
-            boolean firstLine = true;
-            int rowNumber = 1; // header is row 1
+        for (int i = 1; i < allRows.size(); i++) { // row 0 is the header
+                int rowNumber = i + 1;
+                List<String> cols = allRows.get(i);
+                if (cols.stream().allMatch(c -> c == null || c.isBlank())) continue;
 
-            while ((line = br.readLine()) != null) {
-                if (firstLine) {
-                    firstLine = false;
-                    continue; // Skip header
-                }
-                rowNumber++;
-                if (line.isBlank()) continue;
-
-                List<String> cols = parseCsvLine(line);
                 if (cols.size() < 7) {
                     failed++;
                     rowResults.add(rowOutcome(rowNumber, "—", "Error", "Expected 7 columns, found " + cols.size()));
@@ -175,10 +174,6 @@ public class UploadWebController {
                     failed++;
                     rowResults.add(rowOutcome(rowNumber, label, "Error", rowError.getMessage()));
                 }
-            }
-        } catch (Exception e) {
-            model.addAttribute("error", "Could not read the uploaded file: " + e.getMessage());
-            return "upload";
         }
 
         auditLogService.log(authentication, "ROSTER_BULK_IMPORT", "Student", null,
@@ -200,27 +195,29 @@ public class UploadWebController {
         if (currentUser == null) return "redirect:/web/login";
 
         if (file.isEmpty()) {
-            model.addAttribute("staffError", "Please select a valid CSV file.");
+            model.addAttribute("staffError", "Please select a valid CSV or Excel file.");
             return "upload";
         }
 
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(currentUser.getTenantId());
         UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(currentUser.getAcademicYearId());
 
+        List<List<String>> allRows;
+        try {
+            allRows = parseRows(file);
+        } catch (Exception e) {
+            model.addAttribute("staffError", "Could not read the uploaded file: " + e.getMessage());
+            return "upload";
+        }
+
         List<Map<String, String>> rowResults = new ArrayList<>();
         int created = 0, skipped = 0, failed = 0;
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-            String line;
-            boolean firstLine = true;
-            int rowNumber = 1;
+        for (int i = 1; i < allRows.size(); i++) { // row 0 is the header
+                int rowNumber = i + 1;
+                List<String> cols = allRows.get(i);
+                if (cols.stream().allMatch(c -> c == null || c.isBlank())) continue;
 
-            while ((line = br.readLine()) != null) {
-                if (firstLine) { firstLine = false; continue; }
-                rowNumber++;
-                if (line.isBlank()) continue;
-
-                List<String> cols = parseCsvLine(line);
                 if (cols.size() < 3) {
                     failed++;
                     rowResults.add(rowOutcome(rowNumber, "—", "Error", "Expected 3 columns (FullName, Email, Role), found " + cols.size()));
@@ -271,10 +268,6 @@ public class UploadWebController {
                     failed++;
                     rowResults.add(rowOutcome(rowNumber, label, "Error", rowError.getMessage()));
                 }
-            }
-        } catch (Exception e) {
-            model.addAttribute("staffError", "Could not read the uploaded file: " + e.getMessage());
-            return "upload";
         }
 
         auditLogService.log(authentication, "STAFF_BULK_IMPORT", "User", null,
@@ -301,6 +294,44 @@ public class UploadWebController {
         row.put("status", status);
         row.put("detail", detail);
         return row;
+    }
+
+    /**
+     * Reads every row of an uploaded CSV or .xlsx into a list of string
+     * columns (row 0 is the header). Format is chosen by filename extension;
+     * Excel cells are read as their displayed text so numeric roll numbers /
+     * phone numbers come through as written.
+     */
+    private static List<List<String>> parseRows(MultipartFile file) throws java.io.IOException {
+        String name = file.getOriginalFilename();
+        boolean excel = name != null && (name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".xls"));
+        List<List<String>> rows = new ArrayList<>();
+
+        if (excel) {
+            try (org.apache.poi.ss.usermodel.Workbook wb = org.apache.poi.ss.usermodel.WorkbookFactory.create(file.getInputStream())) {
+                org.apache.poi.ss.usermodel.Sheet sheet = wb.getSheetAt(0);
+                org.apache.poi.ss.usermodel.DataFormatter fmt = new org.apache.poi.ss.usermodel.DataFormatter();
+                int lastCol = 0;
+                for (org.apache.poi.ss.usermodel.Row r : sheet) lastCol = Math.max(lastCol, r.getLastCellNum());
+                for (org.apache.poi.ss.usermodel.Row r : sheet) {
+                    List<String> cols = new ArrayList<>();
+                    for (int c = 0; c < lastCol; c++) {
+                        org.apache.poi.ss.usermodel.Cell cell = r.getCell(c,
+                                org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                        cols.add(cell == null ? "" : fmt.formatCellValue(cell));
+                    }
+                    rows.add(cols);
+                }
+            }
+        } else {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    rows.add(parseCsvLine(line));
+                }
+            }
+        }
+        return rows;
     }
 
     /** Minimal RFC4180-style CSV line parser — handles quoted fields with embedded commas/quotes. */
