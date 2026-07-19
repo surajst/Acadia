@@ -166,10 +166,53 @@ public class UploadWebController {
                     student.setRollNumber(rollNumber);
                     student.setClassSection(classSection);
                     student.getParents().add(parent);
+
+                    // Provision logins so imported students/parents can actually sign in.
+                    // Student logs in with their roll number, parent with their phone —
+                    // both already in the import, each with an auto-generated temp password.
+                    StringBuilder creds = new StringBuilder();
+
+                    if (!rollNumber.isEmpty() && !userRepository.existsByEmail(rollNumber)) {
+                        String studentPassword = generateTempPassword();
+                        User studentUser = new User();
+                        studentUser.setId(UUID.randomUUID());
+                        studentUser.setTenantId(currentUser.getTenantId());
+                        studentUser.setAcademicYearId(currentUser.getAcademicYearId());
+                        studentUser.setEmail(rollNumber);
+                        studentUser.setPasswordHash(passwordEncoder.encode(studentPassword));
+                        studentUser.setFullName(firstName + " " + lastName);
+                        studentUser.setRole(UserRole.STUDENT);
+                        studentUser.setActive(true);
+                        userRepository.save(studentUser);
+                        student.setUserId(studentUser.getId());
+                        creds.append("student login ").append(rollNumber).append(" / ").append(studentPassword);
+                    }
+
+                    // Only create a parent login if this parent doesn't already have one
+                    // (a reused parent from a prior row/upload keeps their existing login).
+                    if (parent.getUserId() == null && !parentPhone.isEmpty() && !userRepository.existsByEmail(parentPhone)) {
+                        String parentPassword = generateTempPassword();
+                        User parentUser = new User();
+                        parentUser.setId(UUID.randomUUID());
+                        parentUser.setTenantId(currentUser.getTenantId());
+                        parentUser.setAcademicYearId(currentUser.getAcademicYearId());
+                        parentUser.setEmail(parentPhone);
+                        parentUser.setPasswordHash(passwordEncoder.encode(parentPassword));
+                        parentUser.setFullName(parent.getFirstName() + " " + parent.getLastName());
+                        parentUser.setRole(UserRole.PARENT);
+                        parentUser.setActive(true);
+                        userRepository.save(parentUser);
+                        parent.setUserId(parentUser.getId());
+                        parent.setEmail(parentPhone);
+                        parentRepository.save(parent);
+                        if (creds.length() > 0) creds.append(" · ");
+                        creds.append("parent login ").append(parentPhone).append(" / ").append(parentPassword);
+                    }
+
                     studentRepository.save(student);
 
                     created++;
-                    rowResults.add(rowOutcome(rowNumber, label, "Created", ""));
+                    rowResults.add(rowOutcome(rowNumber, label, "Created", creds.toString()));
                 } catch (Exception rowError) {
                     failed++;
                     rowResults.add(rowOutcome(rowNumber, label, "Error", rowError.getMessage()));
