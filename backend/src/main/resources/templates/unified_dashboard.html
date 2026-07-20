@@ -11,14 +11,14 @@
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #0f172a;
+            background: #F7F9FC;
         }
         ::-webkit-scrollbar-thumb {
-            background: #1e293b;
+            background: #FFFFFF;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
+            background: #E2E8F0;
         }
     </style>
     
@@ -27,30 +27,30 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-[#0b0f19] text-slate-200 font-sans  max- overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="bg-[#F7F9FC] text-slate-800 font-sans  max- overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
 
-    <header class="bg-[#0f172a] border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95">
+    <header class="bg-[#F7F9FC] border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div style="display:flex; align-items:center; gap:10px;">
   <img src="/images/acadia-logo.png" alt="ACADIA"
-       style="height:32px; mix-blend-mode:screen;">
-  <span style="font-size:16px; font-weight:600; color:white;
+       style="height:32px; ">
+  <span style="font-size:16px; font-weight:600; color:#0F172A;
                letter-spacing:2px;">ACADIA</span>
 </div>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-800 via-slate-700 to-indigo-600 bg-clip-text text-transparent">
                     Admin Dashboard
                 </h1>
-                <p class="text-xs text-slate-400 mt-0.5 font-medium">Welcome back, Admin User</p>
+                <p class="text-xs text-slate-500 mt-0.5 font-medium">Welcome back, Admin User</p>
             </div>
             <div class="flex items-center gap-3">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wider uppercase">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 tracking-wider uppercase">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     Operational
                 </span>
                 <form th:action="@{/logout}" method="post">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors tracking-wider uppercase">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-600 border border-red-500/20 hover:bg-red-500/20 transition-colors tracking-wider uppercase">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                         Logout
                     </button>
@@ -64,77 +64,77 @@
     <!-- Announcement Success Banner (shrink-0: never pushes layout) -->
     <div th:if="${param.success != null and param.success[0] == 'announcement_posted'}"
          class="shrink-0 bg-emerald-500/10 border-b border-emerald-500/20 px-6 py-2 flex items-center justify-center gap-3">
-        <span class="text-emerald-400 text-sm">📢</span>
-        <p class="text-sm font-semibold text-emerald-400">Announcement broadcast successfully! It has been saved and dispatched.</p>
+        <span class="text-emerald-600 text-sm">📢</span>
+        <p class="text-sm font-semibold text-emerald-600">Announcement broadcast successfully! It has been saved and dispatched.</p>
     </div>
 
     <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 min-h-0 flex flex-col overflow-hidden" >
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 shrink-0">
-            <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-black/20">
+            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-slate-300/40">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Daily Attendance Rate</p>
-                    <h3 class="text-2xl font-bold text-white mt-1" th:text="|${attendancePercentage}%|">100%</h3>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Daily Attendance Rate</p>
+                    <h3 class="text-2xl font-bold text-slate-900 mt-1" th:text="|${attendancePercentage}%|">100%</h3>
                 </div>
-                <div class="p-3 rounded-xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/10">
+                <div class="p-3 rounded-xl bg-indigo-600/10 text-indigo-600 border border-indigo-500/10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 </div>
             </div>
 
-            <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-black/20">
+            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-slate-300/40">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Absences</p>
-                    <h3 class="text-2xl font-bold text-white mt-1" th:text="|${activeAbsences} / ${totalStudents}|">0 / 5</h3>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Absences</p>
+                    <h3 class="text-2xl font-bold text-slate-900 mt-1" th:text="|${activeAbsences} / ${totalStudents}|">0 / 5</h3>
                 </div>
-                <div class="p-3 rounded-xl bg-amber-600/10 text-amber-400 border border-amber-500/10">
+                <div class="p-3 rounded-xl bg-amber-600/10 text-amber-600 border border-amber-500/10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 </div>
             </div>
 
-            <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-black/20">
+            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-slate-300/40">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">System Security</p>
-                    <h3 class="text-xl font-bold text-emerald-400 mt-2 flex items-center gap-2">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">System Security</p>
+                    <h3 class="text-xl font-bold text-emerald-600 mt-2 flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
                         System Locked
                     </h3>
                 </div>
-                <div class="p-3 rounded-xl bg-emerald-600/10 text-emerald-400 border border-emerald-500/10">
+                <div class="p-3 rounded-xl bg-emerald-600/10 text-emerald-600 border border-emerald-500/10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 </div>
             </div>
 
             <!-- PRINCIPAL: read-only school-wide oversight KPIs (no edit actions) -->
-            <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#0f172a] border border-slate-800/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-black/20">
+            <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-slate-300/40">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Curriculum Completion</p>
-                    <h3 class="text-2xl font-bold text-white mt-1" th:text="|${schoolProgress != null ? schoolProgress.get('overallCompletionPercent') : 0}%|">0%</h3>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Curriculum Completion</p>
+                    <h3 class="text-2xl font-bold text-slate-900 mt-1" th:text="|${schoolProgress != null ? schoolProgress.get('overallCompletionPercent') : 0}%|">0%</h3>
                 </div>
                 <div class="p-3 rounded-xl bg-sky-600/10 text-sky-400 border border-sky-500/10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 </div>
             </div>
 
-            <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#0f172a] border border-slate-800/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-black/20">
+            <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-4 flex items-center justify-between shadow-xl shadow-slate-300/40">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Fee Collection</p>
-                    <h3 class="text-2xl font-bold text-white mt-1" th:text="|${feeSummary != null ? feeSummary.get('collectionPercent') : 0}%|">0%</h3>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Fee Collection</p>
+                    <h3 class="text-2xl font-bold text-slate-900 mt-1" th:text="|${feeSummary != null ? feeSummary.get('collectionPercent') : 0}%|">0%</h3>
                 </div>
-                <div class="p-3 rounded-xl bg-emerald-600/10 text-emerald-400 border border-emerald-500/10">
+                <div class="p-3 rounded-xl bg-emerald-600/10 text-emerald-600 border border-emerald-500/10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
             </div>
         </div>
 
-        <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-5 mb-6">
-            <h3 class="text-sm font-bold text-white tracking-tight mb-3">Pending Staff Approvals</h3>
+        <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-5 mb-6">
+            <h3 class="text-sm font-bold text-slate-900 tracking-tight mb-3">Pending Staff Approvals</h3>
             <div id="pendingStaffList" class="space-y-2">
                 <p class="text-xs text-slate-500">Loading…</p>
             </div>
         </div>
 
-        <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-5 mb-6">
-            <h3 class="text-sm font-bold text-white tracking-tight mb-3">Pending Fee Waivers</h3>
+        <div th:if="${currentUserRole == 'PRINCIPAL'}" class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-5 mb-6">
+            <h3 class="text-sm font-bold text-slate-900 tracking-tight mb-3">Pending Fee Waivers</h3>
             <div id="pendingWaiversList" class="space-y-2">
                 <p class="text-xs text-slate-500">Loading…</p>
             </div>
@@ -143,12 +143,12 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch flex-1 min-h-0">
             
             <div class="lg:col-span-2 flex flex-col min-h-0">
-                <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl overflow-hidden flex flex-col flex-1 min-h-0">
-                    <div class="p-4 border-b border-slate-800/60 bg-[#131c32] shrink-0">
+                <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl overflow-hidden flex flex-col flex-1 min-h-0">
+                    <div class="p-4 border-b border-slate-200/60 bg-[#F1F5F9] shrink-0">
                         <div class="flex flex-wrap items-center justify-between gap-4">
                             <div>
-                                <h2 class="text-lg font-bold text-white tracking-tight">Student Roster Core Logs</h2>
-                                <p class="text-xs text-slate-400 mt-0.5">Active operational directory data validation engine</p>
+                                <h2 class="text-lg font-bold text-slate-900 tracking-tight">Student Roster Core Logs</h2>
+                                <p class="text-xs text-slate-500 mt-0.5">Active operational directory data validation engine</p>
                             </div>
                         </div>
 
@@ -164,7 +164,7 @@
                                     type="text"
                                     placeholder="Search by name... (press Enter)"
                                     th:value="${filterName}"
-                                    class="w-full pl-9 pr-4 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                                    class="w-full pl-9 pr-4 py-2 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all"
                                     onkeydown="if(event.key==='Enter'){ navigateRoster(); }"
                                 />
                             </div>
@@ -173,7 +173,7 @@
                             <div class="min-w-[180px]">
                                 <select
                                     id="rosterGradeFilter"
-                                    class="w-full px-3 py-2 bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                                    class="w-full px-3 py-2 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all"
                                     onchange="navigateRoster()"
                                 >
                                     <option value="">All Grades</option>
@@ -185,7 +185,7 @@
                             </div>
 
                             <!-- Result counter badge -->
-                            <span id="rosterResultCount" class="text-xs font-mono font-bold text-indigo-400/80 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full whitespace-nowrap"
+                            <span id="rosterResultCount" class="text-xs font-mono font-bold text-indigo-600/80 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full whitespace-nowrap"
                                   th:text="${totalRosterItems} + ' student' + (${totalRosterItems} != 1 ? 's' : '')">0 students</span>
                         </div>
                     </div>
@@ -193,7 +193,7 @@
                     <div class="overflow-x-auto overflow-y-auto flex-1 min-h-0">
                         <table class="w-full text-left border-collapse">
                             <thead class="sticky top-0 z-10">
-                                <tr class="bg-slate-900/40 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800/40">
+                                <tr class="bg-[#F7F9FC]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
                                     <th class="py-2.5 px-5">Roll Number</th>
                                     <th class="py-2.5 px-5">Full Name</th>
                                     <th class="py-2.5 px-5">Class Assignment</th>
@@ -204,23 +204,23 @@
                             <!-- Hidden data rows rendered by Thymeleaf; JS pagination will read these and show visible slices -->
                             <tbody id="rosterTableBody" class="divide-y divide-slate-800/40 text-sm">
                                 <tr th:each="student : ${students}"
-                                    class="roster-row hover:bg-slate-900/30 transition-colors group"
+                                    class="roster-row hover:bg-[#F7F9FC]/30 transition-colors group"
                                     th:data-name="|${student.firstName} ${student.lastName}|"
                                     th:data-grade="${student.classSection != null ? student.classSection.gradeName : ''}"
                                 >
-                                    <td class="py-2.5 px-5 font-mono text-xs text-indigo-400 font-semibold" 
+                                    <td class="py-2.5 px-5 font-mono text-xs text-indigo-600 font-semibold" 
                                         th:text="${student.rollNumber != null ? student.rollNumber : '--'}">6A01</td>
-                                    <td class="py-2.5 px-5 font-semibold text-white group-hover:text-indigo-300 transition-colors" 
+                                    <td class="py-2.5 px-5 font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors" 
                                         th:text="|${student.firstName} ${student.lastName}|">Aarav Sharma</td>
                                     <td class="py-2.5 px-5">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700/50"
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-white text-slate-600 border border-slate-200/50"
                                               th:text="|${student.classSection.gradeName} - ${student.classSection.sectionName}|">
                                             6 - Section A
                                         </span>
                                     </td>
                                     <td class="py-2.5 px-5 text-right">
                                         <a th:href="@{/web/teacher/student/{id}(id=${student.id})}"
-                                           class="inline-block px-3 py-1 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg border border-indigo-500/20 text-xs font-semibold transition-all cursor-pointer">
+                                           class="inline-block px-3 py-1 bg-indigo-600/10 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg border border-indigo-500/20 text-xs font-semibold transition-all cursor-pointer">
                                             View Profile Data
                                         </a>
                                     </td>
@@ -228,7 +228,7 @@
                                         <button th:data-id="${student.id}"
                                                 th:data-name="|${student.firstName} ${student.lastName}|"
                                                 onclick="confirmDelete(this.getAttribute('data-id'), this.getAttribute('data-name'))"
-                                                class="text-red-400 hover:text-red-300 p-1.5 hover:bg-red-500/15 rounded-lg border border-red-500/20 transition-all cursor-pointer">
+                                                class="text-red-600 hover:text-red-300 p-1.5 hover:bg-red-500/15 rounded-lg border border-red-500/20 transition-all cursor-pointer">
                                             🗑️
                                         </button>
                                     </td>
@@ -242,19 +242,19 @@
                         </div>
 
                         <!-- Pagination Controls (server-driven) -->
-                        <div id="rosterPagination" class="flex items-center justify-between px-5 py-3 border-t border-slate-800/40 bg-[#0f172a]/90 shrink-0">
-                            <span id="rosterPageInfo" class="text-xs text-slate-400"
+                        <div id="rosterPagination" class="flex items-center justify-between px-5 py-3 border-t border-slate-200/40 bg-[#F7F9FC]/90 shrink-0">
+                            <span id="rosterPageInfo" class="text-xs text-slate-500"
                                   th:text="${totalRosterItems == 0} ? '' : |Page ${currentPage + 1} of ${totalPages} (${totalRosterItems} students)|">Page 1 of 1</span>
                             <div class="flex items-center gap-2" id="rosterPageButtons">
                                 <a th:href="@{/web/admin/dashboard(page=${currentPage - 1}, size=${pageSize}, name=${filterName}, gradeLevel=${filterGrade})}"
-                                   th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40' : 'hover:bg-slate-700 hover:text-white'"
-                                   class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-700/60 bg-slate-800 text-slate-300 transition-all cursor-pointer">
+                                   th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40' : 'hover:bg-slate-700 hover:text-slate-900'"
+                                   class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200/60 bg-white text-slate-600 transition-all cursor-pointer">
                                     ← Prev
                                 </a>
                                 <span class="px-2 py-1.5 text-xs text-slate-500" th:text="${currentPage + 1} + ' / ' + (${totalPages} == 0 ? 1 : ${totalPages})">1 / 1</span>
                                 <a th:href="@{/web/admin/dashboard(page=${currentPage + 1}, size=${pageSize}, name=${filterName}, gradeLevel=${filterGrade})}"
-                                   th:classappend="${currentPage + 1 >= totalPages} ? 'pointer-events-none opacity-40' : 'hover:bg-slate-700 hover:text-white'"
-                                   class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-700/60 bg-slate-800 text-slate-300 transition-all cursor-pointer">
+                                   th:classappend="${currentPage + 1 >= totalPages} ? 'pointer-events-none opacity-40' : 'hover:bg-slate-700 hover:text-slate-900'"
+                                   class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200/60 bg-white text-slate-600 transition-all cursor-pointer">
                                     Next →
                                 </a>
                             </div>
@@ -264,127 +264,127 @@
             </div>
 
             <div class="flex flex-col min-h-0 overflow-y-auto">
-                <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl p-5 shadow-xl shadow-black/20">
-                    <h3 class="text-base font-bold text-white mb-3 tracking-tight">Quick Action Hub</h3>
+                <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-5 shadow-xl shadow-slate-300/40">
+                    <h3 class="text-base font-bold text-slate-900 mb-3 tracking-tight">Quick Action Hub</h3>
                     <div class="space-y-2">
-                        <a th:if="${currentUserRole == 'PARENT'}" href="/web/parent/portal" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'PARENT'}" href="/web/parent/portal" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                                 <span class="text-lg">🛡️</span>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">Parent Portal Gateway</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Access Arjun's gateway and co-sign reward redemptions</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors">Parent Portal Gateway</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Access Arjun's gateway and co-sign reward redemptions</p>
                             </div>
                         </a>
 
-                        <a th:if="${currentUserRole == 'STUDENT'}" href="/web/student/portal" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'STUDENT'}" href="/web/student/portal" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                 <span class="text-lg">🛡️</span>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">Student Portal Gateway</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Access Arjun Sharma portal and submit milestone evidence</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">Student Portal Gateway</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Access Arjun Sharma portal and submit milestone evidence</p>
                             </div>
                         </a>
 
-                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/attendance" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/attendance" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">Take Roll Call</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Record and view real-time data entries</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">Take Roll Call</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Record and view real-time data entries</p>
                             </div>
                         </a>
 
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">School Configuration</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Manage branches and active classes roster structure</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">School Configuration</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Manage branches and active classes roster structure</p>
                             </div>
                         </a>
 
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">Fee Ledger & Billing</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Track expected revenue, collected invoices, and record student payments</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors">Fee Ledger & Billing</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Track expected revenue, collected invoices, and record student payments</p>
                             </div>
                         </a>
 
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/curriculum" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/curriculum" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">Curriculum Intelligence</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">School-wide academic progress and completion analytics</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">Curriculum Intelligence</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">School-wide academic progress and completion analytics</p>
                             </div>
                         </a>
                         
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/subjects" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-amber-600/10 text-amber-400 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/subjects" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-amber-600/10 text-amber-600 group-hover:bg-amber-600 group-hover:text-slate-900 transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-amber-400 transition-colors">Subjects</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Manage the subject catalog and per-grade assignment</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-amber-600 transition-colors">Subjects</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Manage the subject catalog and per-grade assignment</p>
                             </div>
                         </a>
 
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/timetable" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/timetable" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">Timetable</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Manage class periods and teacher schedules</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors">Timetable</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Manage class periods and teacher schedules</p>
                             </div>
                         </a>
 
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/onboard/setup" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-sky-600/10 text-sky-400 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/onboard/setup" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-sky-600/10 text-sky-400 group-hover:bg-sky-600 group-hover:text-slate-900 transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-sky-400 transition-colors">Setup Wizard</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Grades &amp; sections, subjects, staff invites</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-sky-400 transition-colors">Setup Wizard</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Grades &amp; sections, subjects, staff invites</p>
                             </div>
                         </a>
 
-                        <a th:if="${currentUserRole == 'PRINCIPAL'}" href="/web/teacher/dashboard" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'PRINCIPAL'}" href="/web/teacher/dashboard" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">Verification Queue</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Approve milestone &amp; syllabus submissions</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">Verification Queue</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Approve milestone &amp; syllabus submissions</p>
                             </div>
                         </a>
 
-                        <a th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}" href="/web/admin/audit-log" class="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-rose-600/10 text-rose-400 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                        <a th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}" href="/web/admin/audit-log" class="flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-rose-600/10 text-rose-400 group-hover:bg-rose-600 group-hover:text-slate-900 transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-rose-400 transition-colors">Audit Log</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Who changed what, when</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-rose-400 transition-colors">Audit Log</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Who changed what, when</p>
                             </div>
                         </a>
 
                         <button th:if="${currentUserRole == 'ADMIN'}" onclick="openAnnouncementModal()"
-                                class="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group cursor-pointer text-left">
-                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                class="w-full flex items-center gap-3 p-3 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group cursor-pointer text-left">
+                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">Post Announcement</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Broadcast custom notes &amp; updates to all grades</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">Post Announcement</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Broadcast custom notes &amp; updates to all grades</p>
                             </div>
                         </button>
                     </div>
@@ -395,48 +395,48 @@
     </main>
 
     <div id="profileModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#0f172a] border border-slate-800 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all">
+        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all">
             
-            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-800/80 flex items-center justify-between">
+            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-ping absolute"></div>
                     <div class="w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
-                    <h3 class="text-sm font-bold text-slate-200 tracking-wider uppercase ml-1">Student Profile Sync</h3>
+                    <h3 class="text-sm font-bold text-slate-800 tracking-wider uppercase ml-1">Student Profile Sync</h3>
                 </div>
-                <button onclick="closeProfileModal()" class="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800/50">
+                <button onclick="closeProfileModal()" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/50">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
                 </button>
             </div>
 
             <div class="p-6 space-y-5">
-                <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/40 space-y-3.5">
+                <div class="bg-[#F7F9FC]/40 p-4 rounded-xl border border-slate-200/40 space-y-3.5">
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-indigo-400/80 tracking-widest block">Full Name</span>
-                        <p id="profileModalName" class="text-base font-bold text-white mt-0.5">--</p>
+                        <span class="text-[10px] uppercase font-bold text-indigo-600/80 tracking-widest block">Full Name</span>
+                        <p id="profileModalName" class="text-base font-bold text-slate-900 mt-0.5">--</p>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4 pt-1">
                         <div>
-                            <span class="text-[10px] uppercase font-bold text-indigo-400/80 tracking-widest block">Roll Number</span>
-                            <p id="profileModalRoll" class="text-sm font-mono font-bold text-slate-200 mt-0.5">--</p>
+                            <span class="text-[10px] uppercase font-bold text-indigo-600/80 tracking-widest block">Roll Number</span>
+                            <p id="profileModalRoll" class="text-sm font-mono font-bold text-slate-800 mt-0.5">--</p>
                         </div>
                         <div>
-                            <span class="text-[10px] uppercase font-bold text-indigo-400/80 tracking-widest block">Assignment</span>
-                            <p id="profileModalClass" class="text-sm font-semibold text-slate-200 mt-0.5">--</p>
+                            <span class="text-[10px] uppercase font-bold text-indigo-600/80 tracking-widest block">Assignment</span>
+                            <p id="profileModalClass" class="text-sm font-semibold text-slate-800 mt-0.5">--</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-indigo-600/5 border border-indigo-500/10 rounded-xl p-3.5 flex items-start gap-3">
-                    <svg class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p class="text-xs text-slate-400 leading-relaxed">
+                    <svg class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-xs text-slate-500 leading-relaxed">
                         Operational records and framework ledger parameters sync tracking scopes automatically inside core student records.
                     </p>
                 </div>
             </div>
 
-            <div class="bg-slate-900/30 px-6 py-4 border-t border-slate-800/50 flex justify-end">
-                <button onclick="closeProfileModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer">
+            <div class="bg-[#F7F9FC]/30 px-6 py-4 border-t border-slate-200/50 flex justify-end">
+                <button onclick="closeProfileModal()" class="px-4 py-2 bg-white hover:bg-slate-700 text-slate-600 hover:text-slate-900 rounded-xl text-xs font-semibold transition-all cursor-pointer">
                     Dismiss View Panel
                 </button>
             </div>
@@ -446,29 +446,29 @@
 
     <!-- Deletion Confirmation Modal -->
     <div id="deleteModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#0f172a] border border-slate-800 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all">
-            <div class="bg-gradient-to-r from-red-950 via-slate-900 to-red-950 px-6 py-5 border-b border-slate-800/80 flex items-center justify-between">
+        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all">
+            <div class="bg-gradient-to-r from-red-950 via-slate-900 to-red-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></div>
-                    <h3 class="text-sm font-bold text-slate-200 tracking-wider uppercase ml-1">Confirm Student Removal</h3>
+                    <h3 class="text-sm font-bold text-slate-800 tracking-wider uppercase ml-1">Confirm Student Removal</h3>
                 </div>
-                <button onclick="closeDeleteModal()" class="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800/50">
+                <button onclick="closeDeleteModal()" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/50">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
                 </button>
             </div>
             <div class="p-6 space-y-4">
-                <p class="text-sm text-slate-300">
-                    Are you sure you want to permanently remove <span id="deleteStudentName" class="font-bold text-white">--</span> from the database? This action will clean up all metrics and records linked to this student.
+                <p class="text-sm text-slate-600">
+                    Are you sure you want to permanently remove <span id="deleteStudentName" class="font-bold text-slate-900">--</span> from the database? This action will clean up all metrics and records linked to this student.
                 </p>
                 <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3.5 flex items-start gap-3">
-                    <span class="text-red-400 text-lg">⚠️</span>
-                    <p class="text-xs text-red-400/90 leading-relaxed">
+                    <span class="text-red-600 text-lg">⚠️</span>
+                    <p class="text-xs text-red-600/90 leading-relaxed">
                         Warning: This action is irreversible. All attendance logs, quests, and XP records for this student will be permanently deleted.
                     </p>
                 </div>
             </div>
-            <div class="bg-slate-900/30 px-6 py-4 border-t border-slate-800/50 flex justify-end gap-3">
-                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer">
+            <div class="bg-[#F7F9FC]/30 px-6 py-4 border-t border-slate-200/50 flex justify-end gap-3">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-white hover:bg-slate-700 text-slate-600 hover:text-slate-900 rounded-xl text-xs font-semibold transition-all cursor-pointer">
                     Cancel
                 </button>
                 <form id="deleteForm" method="POST" style="display: inline-block; margin: 0;">
@@ -483,16 +483,16 @@
 
     <!-- Announcement Modal -->
     <div id="announcementModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#0f172a] border border-slate-800 max-w-lg w-full rounded-2xl overflow-hidden shadow-2xl">
+        <div class="bg-[#F7F9FC] border border-slate-200 max-w-lg w-full rounded-2xl overflow-hidden shadow-2xl">
 
             <!-- Modal Header -->
-            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-800/80 flex items-center justify-between">
+            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-ping absolute"></div>
                     <div class="w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
-                    <h3 class="text-sm font-bold text-slate-200 tracking-wider uppercase ml-1">📢 Broadcast Announcement</h3>
+                    <h3 class="text-sm font-bold text-slate-800 tracking-wider uppercase ml-1">📢 Broadcast Announcement</h3>
                 </div>
-                <button onclick="closeAnnouncementModal()" class="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800/50">
+                <button onclick="closeAnnouncementModal()" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/50">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -504,17 +504,17 @@
 
                 <!-- Title -->
                 <div>
-                    <label for="announcementTitle" class="block text-[10px] font-bold uppercase tracking-widest text-indigo-400/80 mb-2">Announcement Title</label>
+                    <label for="announcementTitle" class="block text-[10px] font-bold uppercase tracking-widest text-indigo-600/80 mb-2">Announcement Title</label>
                     <input type="text" id="announcementTitle" name="title" required
                            placeholder="e.g. Holiday Notice — Diwali Break 2026"
-                           class="w-full bg-slate-900/70 border border-slate-700/60 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all" />
+                           class="w-full bg-[#F7F9FC]/70 border border-slate-200/60 text-slate-900 placeholder-slate-500 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all" />
                 </div>
 
                 <!-- Target Grade -->
                 <div>
-                    <label for="announcementGrade" class="block text-[10px] font-bold uppercase tracking-widest text-indigo-400/80 mb-2">Target Grade</label>
+                    <label for="announcementGrade" class="block text-[10px] font-bold uppercase tracking-widest text-indigo-600/80 mb-2">Target Grade</label>
                     <select id="announcementGrade" name="targetGrade" required
-                            class="w-full bg-slate-900/70 border border-slate-700/60 text-white rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all">
+                            class="w-full bg-[#F7F9FC]/70 border border-slate-200/60 text-slate-900 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all">
                         <option value="ALL">All Grades (School-Wide)</option>
                         <option value="Grade 6">Grade 6</option>
                         <option value="Grade 7">Grade 7</option>
@@ -526,22 +526,22 @@
 
                 <!-- Message Body -->
                 <div>
-                    <label for="announcementContent" class="block text-[10px] font-bold uppercase tracking-widest text-indigo-400/80 mb-2">Message Body</label>
+                    <label for="announcementContent" class="block text-[10px] font-bold uppercase tracking-widest text-indigo-600/80 mb-2">Message Body</label>
                     <textarea id="announcementContent" name="content" required rows="4"
                               placeholder="Type your announcement message here..."
-                              class="w-full bg-slate-900/70 border border-slate-700/60 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all resize-none"></textarea>
+                              class="w-full bg-[#F7F9FC]/70 border border-slate-200/60 text-slate-900 placeholder-slate-500 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all resize-none"></textarea>
                 </div>
 
                 <!-- Info Note -->
                 <div class="bg-indigo-600/5 border border-indigo-500/10 rounded-xl p-3.5 flex items-start gap-3">
-                    <svg class="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p class="text-xs text-slate-400 leading-relaxed">This announcement will be saved and dispatched via the WhatsApp notification pipeline to all enrolled parents in the selected grade.</p>
+                    <svg class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-xs text-slate-500 leading-relaxed">This announcement will be saved and dispatched via the WhatsApp notification pipeline to all enrolled parents in the selected grade.</p>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="flex justify-end gap-3 pt-1">
                     <button type="button" onclick="closeAnnouncementModal()"
-                            class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer">
+                            class="px-4 py-2 bg-white hover:bg-slate-700 text-slate-600 hover:text-slate-900 rounded-xl text-xs font-semibold transition-all cursor-pointer">
                         Cancel
                     </button>
                     <button type="submit"
@@ -643,13 +643,13 @@
                 return;
             }
             list.innerHTML = waivers.map(w => `
-                <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/60 rounded-xl px-4 py-3">
+                <div class="flex items-center justify-between bg-[#F7F9FC]/60 border border-slate-200/60 rounded-xl px-4 py-3">
                     <div>
-                        <span class="text-sm font-semibold text-white">${w.studentName}</span>
-                        <span class="text-xs text-slate-400 ml-2">₹${w.waiverAmount} — ${w.waiverReason || ''}</span>
+                        <span class="text-sm font-semibold text-slate-900">${w.studentName}</span>
+                        <span class="text-xs text-slate-500 ml-2">₹${w.waiverAmount} — ${w.waiverReason || ''}</span>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="decideWaiver('${w.invoiceId}', 'reject')" class="px-3 py-1.5 bg-slate-800 text-slate-300 hover:bg-rose-900/40 hover:text-rose-400 rounded-lg text-xs font-bold transition-colors">Reject</button>
+                        <button onclick="decideWaiver('${w.invoiceId}', 'reject')" class="px-3 py-1.5 bg-white text-slate-600 hover:bg-rose-900/40 hover:text-rose-400 rounded-lg text-xs font-bold transition-colors">Reject</button>
                         <button onclick="decideWaiver('${w.invoiceId}', 'approve')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors">Approve</button>
                     </div>
                 </div>
@@ -677,13 +677,13 @@
                 return;
             }
             list.innerHTML = staff.map(s => `
-                <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/60 rounded-xl px-4 py-3">
+                <div class="flex items-center justify-between bg-[#F7F9FC]/60 border border-slate-200/60 rounded-xl px-4 py-3">
                     <div>
-                        <span class="text-sm font-semibold text-white">${s.fullName}</span>
-                        <span class="text-xs text-slate-400 ml-2">${s.role} — ${s.email}</span>
+                        <span class="text-sm font-semibold text-slate-900">${s.fullName}</span>
+                        <span class="text-xs text-slate-500 ml-2">${s.role} — ${s.email}</span>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="decideStaff('${s.id}', 'reject')" class="px-3 py-1.5 bg-slate-800 text-slate-300 hover:bg-rose-900/40 hover:text-rose-400 rounded-lg text-xs font-bold transition-colors">Reject</button>
+                        <button onclick="decideStaff('${s.id}', 'reject')" class="px-3 py-1.5 bg-white text-slate-600 hover:bg-rose-900/40 hover:text-rose-400 rounded-lg text-xs font-bold transition-colors">Reject</button>
                         <button onclick="decideStaff('${s.id}', 'approve')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors">Approve</button>
                     </div>
                 </div>

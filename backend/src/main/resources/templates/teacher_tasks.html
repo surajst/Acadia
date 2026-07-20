@@ -6,7 +6,7 @@
     <title>My Tasks &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glass-panel { background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass-panel { background: #FFFFFF; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .expand-collapse { transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out, padding 0.4s ease-in-out; overflow: hidden; max-height: 0; opacity: 0; }
         .expand-collapse.show { max-height: 800px; opacity: 1; padding-top: 1rem; padding-bottom: 1rem; overflow: visible; }
     </style>
@@ -16,26 +16,26 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body style="height:100vh; overflow:hidden; display:flex; flex-direction:column" class="bg-[#0b0f19] text-[#e2e8f0] font-sans selection:bg-indigo-500/30">
+<body style="height:100vh; overflow:hidden; display:flex; flex-direction:column" class="bg-[#F7F9FC] text-[#0F172A] font-sans selection:bg-indigo-500/30">
     <input type="hidden" id="csrfToken" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
     
-    <header class="bg-[#0f172a] border-b border-slate-800/50 shrink-0 z-40 backdrop-blur-md bg-opacity-95" style="height: 64px;">
+    <header class="bg-[#F7F9FC] border-b border-slate-200/50 shrink-0 z-40 backdrop-blur-md bg-opacity-95" style="height: 64px;">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
             <div style="display:flex; align-items:center; gap:10px;">
   <img src="/images/acadia-logo.png" alt="ACADIA"
-       style="height:32px; mix-blend-mode:screen;">
-  <span style="font-size:16px; font-weight:600; color:white;
+       style="height:32px; ">
+  <span style="font-size:16px; font-weight:600; color:#0F172A;
                letter-spacing:2px;">ACADIA</span>
 </div>
             <div class="flex items-center gap-4">
-                <div class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-300 font-black text-lg">Ω</div>
+                <div class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-700 font-black text-lg">Ω</div>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-white">Teacher Task Creation</h1>
-                    <p class="text-slate-400 mt-0.5 text-xs font-medium">Assign customized academic tasks to students.</p>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Teacher Task Creation</h1>
+                    <p class="text-slate-500 mt-0.5 text-xs font-medium">Assign customized academic tasks to students.</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <a href="/web/teacher/dashboard" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold tracking-wider bg-slate-800/80 text-slate-300 hover:bg-slate-700/80 transition-colors border border-slate-700/50">
+                <a href="/web/teacher/dashboard" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold tracking-wider bg-white/80 text-slate-600 hover:bg-slate-700/80 transition-colors border border-slate-200/50">
                     ← Back to Dashboard
                 </a>
             </div>
@@ -45,7 +45,7 @@
 
 
     <div id="toast" class="hidden fixed top-6 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-emerald-900/95 rounded-2xl shadow-2xl border border-emerald-500/30">
-        <div class="text-emerald-400 font-bold text-sm" id="toast-msg">Task created successfully!</div>
+        <div class="text-emerald-600 font-bold text-sm" id="toast-msg">Task created successfully!</div>
     </div>
 
     <main >
@@ -53,30 +53,30 @@
         
         <!-- Create Task Form -->
         <section class="glass-panel rounded-3xl p-4 shadow-xl shadow-black/30">
-            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2"><span>📋</span> Create New Task</h2>
+            <h2 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><span>📋</span> Create New Task</h2>
             <form id="createTaskForm" class="space-y-4">
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="space-y-1 col-span-1 md:col-span-2">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Task Title</label>
-                        <input type="text" id="taskTitle" required class="w-full px-4 py-2 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-200 outline-none">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Task Title</label>
+                        <input type="text" id="taskTitle" required class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 outline-none">
                     </div>
 
                     <div class="space-y-1 col-span-1 md:col-span-2">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Description (Optional)</label>
-                        <textarea id="taskDescription" maxlength="300" rows="1" class="w-full px-4 py-2 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-200 outline-none resize-none"></textarea>
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Description (Optional)</label>
+                        <textarea id="taskDescription" maxlength="300" rows="1" class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 outline-none resize-none"></textarea>
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Subject</label>
-                        <select id="subjectType" required class="w-full px-4 py-2 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Subject</label>
+                        <select id="subjectType" required class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                             <option value="">Loading subjects...</option>
                         </select>
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Task Type</label>
-                        <select id="taskType" required class="w-full px-4 py-2 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Task Type</label>
+                        <select id="taskType" required class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                             <option value="HOMEWORK">Homework</option>
                             <option value="PRACTICE">Practice</option>
                             <option value="PROJECT">Project</option>
@@ -85,8 +85,8 @@
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Class</label>
-                        <select id="standard" required class="w-full px-4 py-2 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Class</label>
+                        <select id="standard" required class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                             <option value="5">Class 5</option>
                             <option value="6">Class 6</option>
                             <option value="7">Class 7</option>
@@ -97,24 +97,24 @@
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Due Date</label>
-                        <input type="date" id="dueDate" class="w-full px-4 py-2 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none [color-scheme:dark]">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Due Date</label>
+                        <input type="date" id="dueDate" class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none [color-scheme:dark]">
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">XP Reward</label>
-                        <input type="number" id="xpReward" value="50" min="10" max="500" required class="w-full px-4 py-2 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">XP Reward</label>
+                        <input type="number" id="xpReward" value="50" min="10" max="500" required class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Assign To</label>
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Assign To</label>
                         <div class="flex items-center gap-6 h-10">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="assignedToClass" value="true" checked class="w-4 h-4 text-indigo-600 bg-slate-800 border-slate-600">
+                                <input type="radio" name="assignedToClass" value="true" checked class="w-4 h-4 text-indigo-600 bg-white border-slate-300">
                                 <span>🏫 Whole Class</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="assignedToClass" value="false" class="w-4 h-4 text-indigo-600 bg-slate-800 border-slate-600">
+                                <input type="radio" name="assignedToClass" value="false" class="w-4 h-4 text-indigo-600 bg-white border-slate-300">
                                 <span>👤 Individual Student</span>
                             </label>
                         </div>
@@ -122,38 +122,38 @@
                 </div>
 
                 <!-- Individual Student Search -->
-                <div id="studentSearchSection" class="expand-collapse bg-slate-900/40 rounded-xl px-5 border border-slate-700/30 relative z-50">
-                    <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">Student Name</label>
+                <div id="studentSearchSection" class="expand-collapse bg-[#F7F9FC]/40 rounded-xl px-5 border border-slate-200/30 relative z-50">
+                    <label class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Student Name</label>
                     <input type="hidden" id="studentId" name="studentId">
-                    <input type="text" id="studentNameSearch" autocomplete="off" placeholder="Search by name (e.g. arjun)" class="w-full px-4 py-2 bg-slate-950/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none">
+                    <input type="text" id="studentNameSearch" autocomplete="off" placeholder="Search by name (e.g. arjun)" class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                     
-                    <div id="studentSearchResults" class="hidden absolute left-0 right-0 top-[100%] mt-2 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto" style="position: absolute; z-index: 50;">
+                    <div id="studentSearchResults" class="hidden absolute left-0 right-0 top-[100%] mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto" style="position: absolute; z-index: 50;">
                         <ul id="studentSearchList" class="py-2"></ul>
                     </div>
                 </div>
 
                 <!-- Reading Comprehension Questions -->
-                <div id="readingQuestionsSection" class="expand-collapse bg-slate-900/40 rounded-xl px-5 border border-slate-700/30">
-                    <h3 class="font-bold text-indigo-400 flex items-center gap-2 mb-1"><span>📖</span> Reading Comprehension Questions</h3>
-                    <p class="text-xs text-slate-400 italic mb-4">Students must answer these before submitting completion</p>
+                <div id="readingQuestionsSection" class="expand-collapse bg-[#F7F9FC]/40 rounded-xl px-5 border border-slate-200/30">
+                    <h3 class="font-bold text-indigo-600 flex items-center gap-2 mb-1"><span>📖</span> Reading Comprehension Questions</h3>
+                    <p class="text-xs text-slate-500 italic mb-4">Students must answer these before submitting completion</p>
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="text-xs font-bold text-slate-400">Question 1</label>
-                            <input type="text" id="question1" placeholder="e.g. What is the main theme?" class="w-full px-4 py-2 mt-1 bg-slate-950/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none">
+                            <label class="text-xs font-bold text-slate-500">Question 1</label>
+                            <input type="text" id="question1" placeholder="e.g. What is the main theme?" class="w-full px-4 py-2 mt-1 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-slate-400">Question 2 (Optional)</label>
-                            <input type="text" id="question2" placeholder="e.g. Describe the protagonist." class="w-full px-4 py-2 mt-1 bg-slate-950/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none">
+                            <label class="text-xs font-bold text-slate-500">Question 2 (Optional)</label>
+                            <input type="text" id="question2" placeholder="e.g. Describe the protagonist." class="w-full px-4 py-2 mt-1 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-slate-400">Question 3 (Optional)</label>
-                            <input type="text" id="question3" placeholder="e.g. What is the moral of the story?" class="w-full px-4 py-2 mt-1 bg-slate-950/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 outline-none">
+                            <label class="text-xs font-bold text-slate-500">Question 3 (Optional)</label>
+                            <input type="text" id="question3" placeholder="e.g. What is the moral of the story?" class="w-full px-4 py-2 mt-1 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                         </div>
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-800/60">
+                <div class="pt-4 border-t border-slate-200/60">
                     <button type="submit" class="w-full md:w-auto px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all uppercase tracking-wider text-sm">
                         Assign Task
                     </button>
@@ -163,10 +163,10 @@
 
         <!-- Tasks Table -->
         <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/30">
-            <h2 class="text-xl font-bold text-white mb-4">My Created Tasks</h2>
+            <h2 class="text-xl font-bold text-slate-900 mb-4">My Created Tasks</h2>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="text-xs uppercase bg-slate-900/60 text-slate-400 font-semibold tracking-wider">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="text-xs uppercase bg-[#F7F9FC]/60 text-slate-500 font-semibold tracking-wider">
                         <tr>
                             <th class="px-4 py-4 rounded-tl-xl">Title</th>
                             <th class="px-4 py-4">Subject</th>
@@ -255,11 +255,11 @@
                         searchList.innerHTML = '';
                         
                         if (results.length === 0) {
-                            searchList.innerHTML = '<li class="px-4 py-3 text-sm text-slate-400 italic">No students found</li>';
+                            searchList.innerHTML = '<li class="px-4 py-3 text-sm text-slate-500 italic">No students found</li>';
                         } else {
                             results.forEach(student => {
                                 const li = document.createElement('li');
-                                li.className = 'px-4 py-3 text-sm text-slate-200 hover:bg-indigo-600/20 cursor-pointer border-b border-slate-700/50 last:border-0 transition-colors';
+                                li.className = 'px-4 py-3 text-sm text-slate-800 hover:bg-indigo-600/20 cursor-pointer border-b border-slate-200/50 last:border-0 transition-colors';
                                 li.textContent = student.fullName || student.name;
                                 li.dataset.id = student.id;
                                 li.dataset.name = student.fullName || student.name;
@@ -357,15 +357,15 @@
                 }
 
                 tbody.innerHTML = tasks.map(task => {
-                    const statusClass = task.taskStatus === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                    const statusClass = task.taskStatus === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20';
                     return `
-                        <tr class="hover:bg-slate-800/30 transition-colors">
-                            <td class="px-4 py-4 font-semibold text-white">${task.title}</td>
+                        <tr class="hover:bg-white/30 transition-colors">
+                            <td class="px-4 py-4 font-semibold text-slate-900">${task.title}</td>
                             <td class="px-4 py-4">${task.subjectCode}</td>
-                            <td class="px-4 py-4"><span class="px-2 py-1 text-[10px] rounded bg-indigo-500/10 text-indigo-300 font-bold">${task.taskType}</span></td>
+                            <td class="px-4 py-4"><span class="px-2 py-1 text-[10px] rounded bg-indigo-500/10 text-indigo-700 font-bold">${task.taskType}</span></td>
                             <td class="px-4 py-4">Class ${task.standard}</td>
                             <td class="px-4 py-4">${task.assignedToClass ? '🏫 Whole Class' : '👤 Individual'}</td>
-                            <td class="px-4 py-4 text-slate-400">${task.dueDate || 'No Due Date'}</td>
+                            <td class="px-4 py-4 text-slate-500">${task.dueDate || 'No Due Date'}</td>
                             <td class="px-4 py-4">
                                 <span class="px-2 py-1 text-[10px] uppercase font-bold rounded border ${statusClass}">${task.taskStatus}</span>
                             </td>

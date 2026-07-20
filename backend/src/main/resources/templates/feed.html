@@ -10,12 +10,12 @@
         
         body { 
             font-family: 'Outfit', 'Inter', sans-serif; 
-            background-color: #0b0f19; 
-            color: #e2e8f0; 
+            background-color: #F7F9FC; 
+            color: #0F172A; 
         }
 
         .glass-panel {
-            background: rgba(15, 23, 42, 0.65);
+            background: #FFFFFF;
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -26,14 +26,14 @@
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #0f172a;
+            background: #F7F9FC;
         }
         ::-webkit-scrollbar-thumb {
-            background: #1e293b;
+            background: #FFFFFF;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
+            background: #E2E8F0;
         }
     </style>
     
@@ -48,29 +48,29 @@
     <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
     <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-600/10 blur-[120px] pointer-events-none"></div>
 
-    <header class="glass-panel border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+    <header class="glass-panel border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="/web/admin/dashboard" class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-300 font-black text-lg transition-transform hover:scale-105">
+                <a href="/web/admin/dashboard" class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-700 font-black text-lg transition-transform hover:scale-105">
                     Ω
                 </a>
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-800 via-slate-700 to-indigo-600 bg-clip-text text-transparent">
                         Admin Dashboard
                     </h1>
-                    <p class="text-xs text-slate-400 mt-0.5 font-medium">
-                        Welcome back, <span th:text="${userName}" class="text-slate-200 font-semibold">User</span>
+                    <p class="text-xs text-slate-500 mt-0.5 font-medium">
+                        Welcome back, <span th:text="${userName}" class="text-slate-800 font-semibold">User</span>
                     </p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wider uppercase">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 tracking-wider uppercase">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     Operational
                 </span>
                 <form th:action="@{/logout}" method="post">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors tracking-wider uppercase">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-600 border border-red-500/20 hover:bg-red-500/20 transition-colors tracking-wider uppercase">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                         Logout
                     </button>
@@ -85,42 +85,42 @@
         <!-- Metrics Summary Row -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <!-- Daily Attendance Rate Card -->
-            <div class="glass-panel rounded-2xl p-6 flex items-center justify-between shadow-xl shadow-black/20">
+            <div class="glass-panel rounded-2xl p-6 flex items-center justify-between shadow-xl shadow-slate-300/40">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Daily Attendance Rate</p>
-                    <h3 class="text-3xl font-bold text-white mt-1" th:text="${attendanceRate} + '%'">94%</h3>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Daily Attendance Rate</p>
+                    <h3 class="text-3xl font-bold text-slate-900 mt-1" th:text="${attendanceRate} + '%'">94%</h3>
                 </div>
-                <div class="p-3 rounded-xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/10 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]">
-                    <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <div class="p-3 rounded-xl bg-indigo-600/10 text-indigo-600 border border-indigo-500/10 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 </div>
             </div>
 
             <!-- Active Absences Card -->
-            <div class="glass-panel rounded-2xl p-6 flex items-center justify-between shadow-xl shadow-black/20">
+            <div class="glass-panel rounded-2xl p-6 flex items-center justify-between shadow-xl shadow-slate-300/40">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Absences</p>
-                    <h3 class="text-3xl font-bold text-white mt-1" th:text="${absencesCount} + ' / ' + ${totalStudentsCount}">2 / 120</h3>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Absences</p>
+                    <h3 class="text-3xl font-bold text-slate-900 mt-1" th:text="${absencesCount} + ' / ' + ${totalStudentsCount}">2 / 120</h3>
                 </div>
-                <div class="p-3 rounded-xl bg-amber-600/10 text-amber-400 border border-amber-500/10 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                    <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="p-3 rounded-xl bg-amber-600/10 text-amber-600 border border-amber-500/10 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
             </div>
 
             <!-- System Security Status Card -->
-            <div class="glass-panel rounded-2xl p-6 flex items-center justify-between shadow-xl shadow-black/20 relative overflow-hidden">
+            <div class="glass-panel rounded-2xl p-6 flex items-center justify-between shadow-xl shadow-slate-300/40 relative overflow-hidden">
                 <div class="fixed -right-4 -top-4 w-24 h-24 bg-emerald-400 rounded-full blur-2xl opacity-20 pointer-events-none"></div>
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">System Security</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">System Security</p>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="relative flex h-2.5 w-2.5">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                         </span>
-                        <h3 class="text-lg font-bold text-emerald-400">System Locked</h3>
+                        <h3 class="text-lg font-bold text-emerald-600">System Locked</h3>
                     </div>
                 </div>
-                <div class="p-3 rounded-xl bg-emerald-600/10 text-emerald-400 border border-emerald-500/10 flex items-center justify-center text-xl z-10 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                <div class="p-3 rounded-xl bg-emerald-600/10 text-emerald-600 border border-emerald-500/10 flex items-center justify-center text-xl z-10 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                 </div>
             </div>
         </div>
@@ -129,30 +129,30 @@
             <!-- Left Column: Announcements Feed -->
             <div class="lg:col-span-2 space-y-6">
                 <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-xl font-bold text-white tracking-tight">Latest Announcements</h2>
-                    <div class="text-xs bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full font-bold tracking-wide uppercase" th:text="${announcements.size()} + ' Notice(s)'">0 Notices</div>
+                    <h2 class="text-xl font-bold text-slate-900 tracking-tight">Latest Announcements</h2>
+                    <div class="text-xs bg-indigo-600/20 text-indigo-700 border border-indigo-500/30 px-3 py-1 rounded-full font-bold tracking-wide uppercase" th:text="${announcements.size()} + ' Notice(s)'">0 Notices</div>
                 </div>
 
                 <div class="space-y-6">
-                    <div th:if="${#lists.isEmpty(announcements)}" class="glass-panel rounded-2xl p-10 text-center shadow-xl shadow-black/20">
-                        <h3 class="text-lg font-bold text-slate-300">No Announcements</h3>
+                    <div th:if="${#lists.isEmpty(announcements)}" class="glass-panel rounded-2xl p-10 text-center shadow-xl shadow-slate-300/40">
+                        <h3 class="text-lg font-bold text-slate-600">No Announcements</h3>
                         <p class="text-slate-500 mt-1 text-sm">You're all caught up for now.</p>
                     </div>
 
-                    <article th:each="ann : ${announcements}" class="glass-panel rounded-2xl overflow-hidden hover:shadow-2xl hover:border-indigo-500/30 transition-all duration-300 relative group border border-slate-800/50">
+                    <article th:each="ann : ${announcements}" class="glass-panel rounded-2xl overflow-hidden hover:shadow-2xl hover:border-indigo-500/30 transition-all duration-300 relative group border border-slate-200/50">
                         <div class="p-6">
                             <div class="flex items-start justify-between mb-4">
                                 <div>
-                                    <span class="inline-block bg-indigo-600/20 text-indigo-300 border border-indigo-500/20 text-xs px-2.5 py-1 rounded font-bold tracking-wider uppercase mb-2" th:text="${ann.targetGrade}">Grade</span>
-                                    <h3 class="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors" th:text="${ann.title}">Announcement Title</h3>
+                                    <span class="inline-block bg-indigo-600/20 text-indigo-700 border border-indigo-500/20 text-xs px-2.5 py-1 rounded font-bold tracking-wider uppercase mb-2" th:text="${ann.targetGrade}">Grade</span>
+                                    <h3 class="text-xl font-bold text-slate-900 group-hover:text-indigo-700 transition-colors" th:text="${ann.title}">Announcement Title</h3>
                                 </div>
-                                <time class="text-xs text-slate-400 font-semibold" th:text="${#temporals.format(ann.createdAt, 'MMM dd, yyyy')}">Date</time>
+                                <time class="text-xs text-slate-500 font-semibold" th:text="${#temporals.format(ann.createdAt, 'MMM dd, yyyy')}">Date</time>
                             </div>
-                            <div class="text-slate-300 text-sm md:text-base leading-relaxed" th:text="${ann.content}">
+                            <div class="text-slate-600 text-sm md:text-base leading-relaxed" th:text="${ann.content}">
                                 Announcement content goes here.
                             </div>
                         </div>
-                        <div class="bg-slate-950/40 px-6 py-3.5 border-t border-slate-800/40 text-xs text-slate-400 font-medium">
+                        <div class="bg-[#F7F9FC]/40 px-6 py-3.5 border-t border-slate-200/40 text-xs text-slate-500 font-medium">
                             Published securely
                         </div>
                     </article>
@@ -161,34 +161,34 @@
 
             <!-- Right Column: Quick Actions -->
             <div class="lg:col-span-1">
-                <div class="glass-panel rounded-2xl p-6 sticky top-6 shadow-xl shadow-black/20">
-                    <h2 class="text-lg font-bold text-white tracking-tight mb-6">Quick Actions</h2>
+                <div class="glass-panel rounded-2xl p-6 sticky top-6 shadow-xl shadow-slate-300/40">
+                    <h2 class="text-lg font-bold text-slate-900 tracking-tight mb-6">Quick Actions</h2>
                     <nav class="space-y-3">
-                        <a th:href="@{/web/teacher/attendance}" class="flex items-center gap-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-emerald-500/30 hover:bg-emerald-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors border border-emerald-500/10">
+                        <a th:href="@{/web/teacher/attendance}" class="flex items-center gap-4 p-4 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-emerald-500/30 hover:bg-emerald-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-emerald-600/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors border border-emerald-500/10">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">Take Roll Call</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Record daily attendance</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors">Take Roll Call</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Record daily attendance</p>
                             </div>
                         </a>
-                        <a href="/web/admin/management" class="flex items-center gap-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors border border-indigo-500/10">
+                        <a href="/web/admin/management" class="flex items-center gap-4 p-4 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors border border-indigo-500/10">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">School Configuration</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Manage branches & classes</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">School Configuration</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Manage branches & classes</p>
                             </div>
                         </a>
-                        <a th:href="@{/web/teacher/dashboard}" class="flex items-center gap-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
-                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors border border-indigo-500/10">
+                        <a th:href="@{/web/teacher/dashboard}" class="flex items-center gap-4 p-4 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/80 hover:border-indigo-500/30 hover:bg-indigo-600/5 transition-all group">
+                            <div class="p-3 rounded-lg bg-indigo-600/10 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors border border-indigo-500/10">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">Milestone Verification</h4>
-                                <p class="text-xs text-slate-400 mt-0.5">Open teacher verification queue</p>
+                                <h4 class="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">Milestone Verification</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Open teacher verification queue</p>
                             </div>
                         </a>
                     </nav>

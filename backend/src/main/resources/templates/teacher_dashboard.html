@@ -11,31 +11,31 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class=" max- overflow-hidden flex flex-col bg-[#0b0f19] text-slate-200 font-sans" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class=" max- overflow-hidden flex flex-col bg-[#F7F9FC] text-slate-800 font-sans" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
 
-    <header class="bg-[#0f172a] border-b border-slate-800/50 shrink-0 z-40 backdrop-blur-md bg-opacity-95">
+    <header class="bg-[#F7F9FC] border-b border-slate-200/50 shrink-0 z-40 backdrop-blur-md bg-opacity-95">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div style="display:flex; align-items:center; gap:10px;">
   <img src="/images/acadia-logo.png" alt="ACADIA"
-       style="height:32px; mix-blend-mode:screen;">
-  <span style="font-size:16px; font-weight:600; color:white;
+       style="height:32px; ">
+  <span style="font-size:16px; font-weight:600; color:#0F172A;
                letter-spacing:2px;">ACADIA</span>
 </div>
             <div class="flex items-center gap-4">
-                <div class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-300 font-black text-lg">Ω</div>
+                <div class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-700 font-black text-lg">Ω</div>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-white">Teacher Verification Queue</h1>
-                    <p class="text-slate-400 mt-0.5 text-xs font-medium">Unified task management for teacher review workflows.</p>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Teacher Verification Queue</h1>
+                    <p class="text-slate-500 mt-0.5 text-xs font-medium">Unified task management for teacher review workflows.</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-slate-900/80 text-slate-300 border border-slate-700/50">
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#F7F9FC]/80 text-slate-600 border border-slate-200/50">
                     <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     Academic Validation
                 </span>
                 <form th:action="@{/logout}" method="post">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-red-900/30 text-red-400 border border-red-700/40 hover:bg-red-900/50 transition-colors">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-red-900/30 text-red-600 border border-red-700/40 hover:bg-red-900/50 transition-colors">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                         Logout
                     </button>
@@ -48,71 +48,71 @@
 
     <div class="flex flex-row flex-1 min-h-0 w-full max-w-7xl mx-auto px-4 md:px-8 py-6 gap-8">
         <aside class="w-1/4 shrink-0 hidden lg:flex flex-col space-y-6 overflow-y-auto pb-4 pr-2">
-            <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl p-5 shadow-xl shadow-black/20 space-y-5">
+            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-5 shadow-xl shadow-slate-300/40 space-y-5">
                 <div>
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Navigation Hub</h2>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Navigation Hub</h2>
                     <p class="text-sm text-slate-500 mt-2">Quick access to teacher workspace sections.</p>
                 </div>
                 <nav class="space-y-2">
                     <!-- ADMIN items -->
-                    <a th:if="${currentUserRole == 'ADMIN'}" th:href="@{/web/admin/management}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'ADMIN'}" th:href="@{/web/admin/management}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>⚙️</span>
                         <span>School Configuration</span>
                     </a>
-                    <a th:if="${currentUserRole == 'ADMIN'}" href="#staff-registry" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'ADMIN'}" href="#staff-registry" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>💼</span>
                         <span>Staff Registry</span>
                     </a>
 
                     <!-- TEACHER items -->
-                    <a th:if="${currentUserRole == 'TEACHER' or currentUserRole == 'PRINCIPAL'}" th:href="@{/web/admin/dashboard}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'TEACHER' or currentUserRole == 'PRINCIPAL'}" th:href="@{/web/admin/dashboard}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>📊</span>
                         <span>Student Rosters</span>
                     </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/attendance}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/attendance}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>📅</span>
                         <span>Daily Attendance Log</span>
                     </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/dashboard}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition-all bg-indigo-600/10 text-indigo-300 border border-indigo-500/20 shadow-inner">
+                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/dashboard}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition-all bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 shadow-inner">
                         <span>🎯</span>
                         <span>Milestone Verification</span>
                     </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/tasks}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/tasks}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>📋</span>
                         <span>My Tasks</span>
                     </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/assessments}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/assessments}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>🧮</span>
                         <span>Gradebook</span>
                     </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/messages}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/messages}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>✉️</span>
                         <span>Messages</span>
                     </a>
 
                     <!-- STUDENT items -->
-                    <a th:if="${currentUserRole == 'STUDENT'}" href="/web/student/portal" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'STUDENT'}" href="/web/student/portal" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>🛡️</span>
                         <span>My Learning Dashboard</span>
                     </a>
-                    <a th:if="${currentUserRole == 'STUDENT'}" href="#rewards-ledger" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'STUDENT'}" href="#rewards-ledger" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>🏆</span>
                         <span>Rewards Ledger</span>
                     </a>
-                    <a th:if="${currentUserRole == 'STUDENT'}" href="#submission-history" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'STUDENT'}" href="#submission-history" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>📜</span>
                         <span>Submission History</span>
                     </a>
 
-                    <a th:if="${currentUserRole == 'PARENT'}" href="/web/parent/portal" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-slate-900/70 text-slate-200 hover:bg-slate-800 border border-slate-800/60">
+                    <a th:if="${currentUserRole == 'PARENT'}" href="/web/parent/portal" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
                         <span>🛡️</span>
                         <span>Parent Portal Gateway</span>
                     </a>
                 </nav>
             </div>
 
-            <div class="bg-slate-900/90 border border-slate-800/60 rounded-2xl p-5 text-sm text-slate-300 space-y-3 leading-relaxed shadow-xl shadow-black/20">
-                <p class="font-bold uppercase tracking-wider flex items-center gap-2 text-emerald-400">
+            <div class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-2xl p-5 text-sm text-slate-600 space-y-3 leading-relaxed shadow-xl shadow-slate-300/40">
+                <p class="font-bold uppercase tracking-wider flex items-center gap-2 text-emerald-600">
                     <span>⚡</span>
                     System Guidance
                 </p>
@@ -122,33 +122,33 @@
 
         <main class="flex-1 min-h-0 overflow-y-auto space-y-6 pb-6 pr-2" >
             <!-- Today's Schedule (TEACHER only) -->
-            <div th:if="${currentUserRole == 'TEACHER'}" id="todaySchedulePanel" class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-6 space-y-4">
+            <div th:if="${currentUserRole == 'TEACHER'}" id="todaySchedulePanel" class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-6 space-y-4">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-2xl font-bold text-white">Today's Schedule</h2>
-                        <p class="text-slate-400 mt-1 text-sm">Your periods for today, with attendance status per class.</p>
+                        <h2 class="text-2xl font-bold text-slate-900">Today's Schedule</h2>
+                        <p class="text-slate-500 mt-1 text-sm">Your periods for today, with attendance status per class.</p>
                     </div>
-                    <span class="text-xs uppercase tracking-wider text-slate-400" id="todayScheduleDate"></span>
+                    <span class="text-xs uppercase tracking-wider text-slate-500" id="todayScheduleDate"></span>
                 </div>
                 <div id="todayScheduleRows" class="grid gap-3">
                     <p class="text-slate-500 text-sm">Loading schedule…</p>
                 </div>
             </div>
 
-            <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-6 space-y-4">
+            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-6 space-y-4">
                 <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h2 class="text-2xl font-bold text-white">Verification Queue
-                            <span class="text-sm font-semibold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-0.5 align-middle ml-2" th:text="${#lists.size(pendingSubmissions)} + ' pending'">0 pending</span>
+                        <h2 class="text-2xl font-bold text-slate-900">Verification Queue
+                            <span class="text-sm font-semibold text-indigo-700 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-0.5 align-middle ml-2" th:text="${#lists.size(pendingSubmissions)} + ' pending'">0 pending</span>
                         </h2>
-                        <p class="text-slate-400 mt-1 text-sm">Review academic milestone submissions from students and award XP balances.</p>
+                        <p class="text-slate-500 mt-1 text-sm">Review academic milestone submissions from students and award XP balances.</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <button type="button" onclick="bulkApproveMilestones()" th:if="${not #lists.isEmpty(pendingSubmissions)}"
                                 class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors">
                             Approve Selected
                         </button>
-                        <span class="inline-flex items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/70 px-4 py-2 text-xs uppercase tracking-wider text-slate-300">
+                        <span class="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-[#F7F9FC]/70 px-4 py-2 text-xs uppercase tracking-wider text-slate-600">
                             <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                             Real-time review mode
                         </span>
@@ -156,76 +156,76 @@
                 </div>
 
                 <div class="grid gap-6">
-                    <div class="bg-slate-900/90 border border-slate-800/60 rounded-2xl p-6">
-                        <div class="text-sm uppercase tracking-wider text-slate-400 font-semibold mb-2">Active processing queue</div>
+                    <div class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-2xl p-6">
+                        <div class="text-sm uppercase tracking-wider text-slate-500 font-semibold mb-2">Active processing queue</div>
                         <p class="text-slate-500">The teacher verification queue displays student milestone submissions that require approval or rejection.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-6">
+            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-6">
                 <div class="space-y-6">
-                    <div th:if="${#lists.isEmpty(pendingSubmissions)}" class="bg-slate-900/90 border border-slate-800/60 rounded-xl py-6 px-8 flex items-center justify-center gap-5">
+                    <div th:if="${#lists.isEmpty(pendingSubmissions)}" class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-xl py-6 px-8 flex items-center justify-center gap-5">
                         <div class="text-3xl">🎉</div>
                         <div class="text-left">
-                            <h3 class="text-lg font-semibold text-white">Queue completely cleared!</h3>
-                            <p class="text-slate-400 mt-1 text-sm">There are currently no active student proof-of-work submissions awaiting academic validation reviews.</p>
+                            <h3 class="text-lg font-semibold text-slate-900">Queue completely cleared!</h3>
+                            <p class="text-slate-500 mt-1 text-sm">There are currently no active student proof-of-work submissions awaiting academic validation reviews.</p>
                         </div>
                     </div>
 
                     <div th:each="task : ${pendingSubmissions}" th:id="'task-row-' + ${task.id}"
-                         class="bg-slate-900/40 backdrop-blur-md border border-slate-800/60 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-slate-700/60 hover:bg-slate-800/50 shadow-xl shadow-black/10">
+                         class="bg-[#F7F9FC]/40 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-slate-200/60 hover:bg-white/50 shadow-xl shadow-black/10">
                         <div class="space-y-3 flex-1">
                             <div class="flex flex-wrap items-center gap-3">
-                                <input type="checkbox" class="milestone-checkbox h-4 w-4 rounded border-slate-700 bg-slate-900" th:value="${task.id}">
-                                <span class="text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-300 px-2.5 py-1 rounded-md border border-indigo-500/20" th:text="${task.skillName}">Fraction Mastery</span>
+                                <input type="checkbox" class="milestone-checkbox h-4 w-4 rounded border-slate-200 bg-[#F7F9FC]" th:value="${task.id}">
+                                <span class="text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-500/20" th:text="${task.skillName}">Fraction Mastery</span>
                                 <span class="text-xs font-medium text-amber-300 bg-amber-400/10 px-2.5 py-1 rounded-md border border-amber-400/20" th:text="'+' + ${task.xpBounty} + ' Academic XP'">+250 XP</span>
                             </div>
-                            <h2 class="text-xl font-bold tracking-tight text-white" th:text="${task.studentName}">Student Name</h2>
-                            <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                            <h2 class="text-xl font-bold tracking-tight text-slate-900" th:text="${task.studentName}">Student Name</h2>
+                            <p class="text-xs text-slate-500 flex items-center gap-1.5">
                                 ⏱️ Submitted at: <span th:text="${#temporals.format(task.submittedAt, 'yyyy-MM-dd HH:mm')}">2026-05-18 17:00</span>
                             </p>
                             
                             <!-- Proof of Work Notes & Reading Answers -->
-                            <div class="mt-4 p-4 rounded-xl bg-slate-950/50 border border-slate-800/40 backdrop-blur-sm text-slate-300 text-sm max-w-xl">
+                            <div class="mt-4 p-4 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/40 backdrop-blur-sm text-slate-600 text-sm max-w-xl">
                                 
                                 <!-- Reading Answers -->
                                 <div th:if="${task.answer1 != null or task.answer2 != null or task.answer3 != null}" class="space-y-4">
                                     <div class="flex items-center gap-2 mb-2">
-                                        <span class="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-xs font-bold uppercase tracking-wider">📖 Reading Task Answers</span>
+                                        <span class="px-2 py-0.5 bg-indigo-500/20 text-indigo-700 rounded text-xs font-bold uppercase tracking-wider">📖 Reading Task Answers</span>
                                     </div>
                                     <div th:if="${task.answer1 != null}" class="space-y-1">
                                         <p class="text-xs italic text-slate-500">Question 1</p>
-                                        <p class="text-white text-sm font-medium" th:text="${task.answer1}"></p>
+                                        <p class="text-slate-900 text-sm font-medium" th:text="${task.answer1}"></p>
                                     </div>
                                     <div th:if="${task.answer2 != null}" class="space-y-1">
                                         <p class="text-xs italic text-slate-500">Question 2</p>
-                                        <p class="text-white text-sm font-medium" th:text="${task.answer2}"></p>
+                                        <p class="text-slate-900 text-sm font-medium" th:text="${task.answer2}"></p>
                                     </div>
                                     <div th:if="${task.answer3 != null}" class="space-y-1">
                                         <p class="text-xs italic text-slate-500">Question 3</p>
-                                        <p class="text-white text-sm font-medium" th:text="${task.answer3}"></p>
+                                        <p class="text-slate-900 text-sm font-medium" th:text="${task.answer3}"></p>
                                     </div>
                                     
-                                    <div th:if="${task.proofOfWorkNotes != null and !task.proofOfWorkNotes.isEmpty()}" class="pt-3 border-t border-slate-800/60 mt-3">
+                                    <div th:if="${task.proofOfWorkNotes != null and !task.proofOfWorkNotes.isEmpty()}" class="pt-3 border-t border-slate-200/60 mt-3">
                                         <p class="text-xs italic text-slate-500 mb-1">Additional Notes</p>
-                                        <p class="text-slate-300" th:text="${task.proofOfWorkNotes}"></p>
+                                        <p class="text-slate-600" th:text="${task.proofOfWorkNotes}"></p>
                                     </div>
                                 </div>
 
                                 <!-- Standard Proof of Work -->
                                 <div th:unless="${task.answer1 != null or task.answer2 != null or task.answer3 != null}">
-                                    <p class="font-bold text-xs uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
+                                    <p class="font-bold text-xs uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
                                         <span>📝</span> Proof of Work Notes
                                     </p>
-                                    <p class="text-slate-300 italic font-normal" th:text="${task.proofOfWorkNotes != null ? task.proofOfWorkNotes : 'No proof notes supplied.'}">"I completed the fraction exercises on page 42 and double-checked my answers with the visual models."</p>
+                                    <p class="text-slate-600 italic font-normal" th:text="${task.proofOfWorkNotes != null ? task.proofOfWorkNotes : 'No proof notes supplied.'}">"I completed the fraction exercises on page 42 and double-checked my answers with the visual models."</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-3 border-t border-slate-800/60 pt-4 md:pt-0 md:border-0">
+                        <div class="flex flex-wrap items-center gap-3 border-t border-slate-200/60 pt-4 md:pt-0 md:border-0">
                             <button type="button" th:data-id="${task.id}" onclick="evaluateMilestone(this.getAttribute('data-id'), 'reject')"
-                               class="px-5 py-2.5 bg-slate-900/80 hover:bg-rose-950/40 text-slate-300 hover:text-rose-400 font-medium rounded-xl border border-slate-700/60 hover:border-rose-900/50 transition-all text-sm text-center min-w-[100px] cursor-pointer">
+                               class="px-5 py-2.5 bg-[#F7F9FC]/80 hover:bg-rose-950/40 text-slate-600 hover:text-rose-400 font-medium rounded-xl border border-slate-200/60 hover:border-rose-900/50 transition-all text-sm text-center min-w-[100px] cursor-pointer">
                                 Reject
                             </button>
                             <button type="button" th:data-id="${task.id}" onclick="evaluateMilestone(this.getAttribute('data-id'), 'approve')"
@@ -236,13 +236,13 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl shadow-xl shadow-black/20 p-6 space-y-4 mt-8">
+            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-6 space-y-4 mt-8">
                 <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h2 class="text-2xl font-bold text-white">Syllabus Verification Queue
-                            <span class="text-sm font-semibold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-0.5 align-middle ml-2" th:text="${#lists.size(pendingProgressQueue)} + ' pending'">0 pending</span>
+                        <h2 class="text-2xl font-bold text-slate-900">Syllabus Verification Queue
+                            <span class="text-sm font-semibold text-indigo-700 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-0.5 align-middle ml-2" th:text="${#lists.size(pendingProgressQueue)} + ' pending'">0 pending</span>
                         </h2>
-                        <p class="text-slate-400 mt-1 text-sm">Review student syllabus completions and award XP.</p>
+                        <p class="text-slate-500 mt-1 text-sm">Review student syllabus completions and award XP.</p>
                     </div>
                     <button type="button" onclick="bulkApproveSyllabus()" th:if="${not #lists.isEmpty(pendingProgressQueue)}"
                             class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors">
@@ -250,33 +250,33 @@
                     </button>
                 </div>
 
-                <div class="bg-[#0f172a] border border-slate-800/50 rounded-2xl p-6">
+                <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-6">
                     <div class="space-y-6">
-                        <div th:if="${#lists.isEmpty(pendingProgressQueue)}" class="bg-slate-900/90 border border-slate-800/60 rounded-xl py-6 px-8 flex items-center justify-center gap-5">
+                        <div th:if="${#lists.isEmpty(pendingProgressQueue)}" class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-xl py-6 px-8 flex items-center justify-center gap-5">
                             <div class="text-3xl">📖</div>
                             <div class="text-left">
-                                <h3 class="text-lg font-semibold text-white">No pending syllabus verifications.</h3>
-                                <p class="text-slate-400 mt-1 text-sm">All student topic completions have been reviewed.</p>
+                                <h3 class="text-lg font-semibold text-slate-900">No pending syllabus verifications.</h3>
+                                <p class="text-slate-500 mt-1 text-sm">All student topic completions have been reviewed.</p>
                             </div>
                         </div>
 
                         <div th:each="prog : ${pendingProgressQueue}" th:id="'progress-row-' + ${prog.id}"
-                             class="bg-slate-900/40 backdrop-blur-md border border-slate-800/60 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-slate-700/60 hover:bg-slate-800/50 shadow-xl shadow-black/10">
+                             class="bg-[#F7F9FC]/40 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-slate-200/60 hover:bg-white/50 shadow-xl shadow-black/10">
                             <div class="space-y-3 flex-1">
                                 <div class="flex flex-wrap items-center gap-3">
-                                    <input type="checkbox" class="syllabus-checkbox h-4 w-4 rounded border-slate-700 bg-slate-900" th:value="${prog.id}">
-                                    <span class="text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-300 px-2.5 py-1 rounded-md border border-indigo-500/20" th:text="${prog.subjectName}">Subject</span>
-                                    <span class="text-xs font-medium text-emerald-300 bg-emerald-400/10 px-2.5 py-1 rounded-md border border-emerald-400/20" th:text="${prog.topicName}">Topic</span>
+                                    <input type="checkbox" class="syllabus-checkbox h-4 w-4 rounded border-slate-200 bg-[#F7F9FC]" th:value="${prog.id}">
+                                    <span class="text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-500/20" th:text="${prog.subjectName}">Subject</span>
+                                    <span class="text-xs font-medium text-emerald-700 bg-emerald-400/10 px-2.5 py-1 rounded-md border border-emerald-400/20" th:text="${prog.topicName}">Topic</span>
                                 </div>
-                                <h2 class="text-xl font-bold tracking-tight text-white" th:text="${prog.studentName}">Student Name</h2>
-                                <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                                <h2 class="text-xl font-bold tracking-tight text-slate-900" th:text="${prog.studentName}">Student Name</h2>
+                                <p class="text-xs text-slate-500 flex items-center gap-1.5">
                                     ⏱️ Submitted at: <span th:text="${prog.submittedAt != null ? #temporals.format(prog.submittedAt, 'yyyy-MM-dd HH:mm') : 'Recently'}">Time</span>
                                 </p>
                             </div>
 
-                            <div class="flex flex-wrap items-center gap-3 border-t border-slate-800/60 pt-4 md:pt-0 md:border-0">
+                            <div class="flex flex-wrap items-center gap-3 border-t border-slate-200/60 pt-4 md:pt-0 md:border-0">
                                 <button type="button" th:data-id="${prog.id}" onclick="evaluateSyllabus(this.getAttribute('data-id'), 'reject')"
-                                   class="px-5 py-2.5 bg-slate-900/80 hover:bg-rose-950/40 text-slate-300 hover:text-rose-400 font-medium rounded-xl border border-slate-700/60 hover:border-rose-900/50 transition-all text-sm text-center min-w-[100px] cursor-pointer">
+                                   class="px-5 py-2.5 bg-[#F7F9FC]/80 hover:bg-rose-950/40 text-slate-600 hover:text-rose-400 font-medium rounded-xl border border-slate-200/60 hover:border-rose-900/50 transition-all text-sm text-center min-w-[100px] cursor-pointer">
                                     Reject
                                 </button>
                                 <button type="button" th:data-id="${prog.id}" onclick="evaluateSyllabus(this.getAttribute('data-id'), 'approve')"
@@ -431,15 +431,15 @@
                     return;
                 }
                 rows.innerHTML = periods.map(p => `
-                    <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/60 rounded-xl px-4 py-3">
+                    <div class="flex items-center justify-between bg-[#F7F9FC]/60 border border-slate-200/60 rounded-xl px-4 py-3">
                         <div class="flex items-center gap-4">
-                            <span class="text-xs font-mono text-slate-400 w-24">${p.startTime}–${p.endTime}</span>
-                            <span class="text-sm font-semibold text-white">${p.subjectName}</span>
-                            <span class="text-xs text-slate-400">${p.className}</span>
+                            <span class="text-xs font-mono text-slate-500 w-24">${p.startTime}–${p.endTime}</span>
+                            <span class="text-sm font-semibold text-slate-900">${p.subjectName}</span>
+                            <span class="text-xs text-slate-500">${p.className}</span>
                             <span class="text-xs text-slate-500">${p.roomNumber || ''}</span>
                         </div>
                         <span class="text-xs px-2.5 py-1 rounded-md border ${p.attendanceMarked
-                            ? 'text-emerald-300 bg-emerald-400/10 border-emerald-400/20'
+                            ? 'text-emerald-700 bg-emerald-400/10 border-emerald-400/20'
                             : 'text-amber-300 bg-amber-400/10 border-amber-400/20'}">
                             ${p.attendanceMarked ? 'Attendance marked' : 'Attendance pending'}
                         </span>

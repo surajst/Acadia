@@ -7,10 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #F7F9FC; }
+        ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 4px; }
         .glass-panel {
-            background: rgba(15, 23, 42, 0.7);
+            background: #FFFFFF;
             backdrop-filter: blur(12px);
             border: 1px solid rgba(30, 41, 59, 0.8);
         }
@@ -18,19 +18,19 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-[#0b0f19] text-slate-200 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="bg-[#F7F9FC] text-slate-800 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
 
-    <header class="bg-[#0f172a] border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+    <header class="bg-[#F7F9FC] border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div style="display:flex; align-items:center; gap:10px;">
-                <a href="/web/teacher/dashboard" class="text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-800 p-2 rounded-xl bg-slate-900/50 hover:bg-slate-800">
+                <a href="/web/teacher/dashboard" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200 p-2 rounded-xl bg-[#F7F9FC]/50 hover:bg-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 </a>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-800 via-slate-700 to-indigo-600 bg-clip-text text-transparent">
                         Gradebook
                     </h1>
-                    <p class="text-xs text-slate-400 mt-0.5 font-medium">Create assessments and enter scores in bulk</p>
+                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Create assessments and enter scores in bulk</p>
                 </div>
             </div>
             <div></div>
@@ -42,40 +42,40 @@
 
             <!-- Class + Assessment picker -->
             <section class="glass-panel rounded-2xl p-6">
-                <h2 class="text-lg font-semibold text-white mb-4">Select Class &amp; Assessment</h2>
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Select Class &amp; Assessment</h2>
                 <div class="flex flex-wrap gap-3 items-end mb-6">
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Class &amp; Subject</label>
-                        <select id="classSelect" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-4 py-2 min-w-[220px]"></select>
+                        <label class="block text-xs text-slate-500 mb-1">Class &amp; Subject</label>
+                        <select id="classSelect" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-4 py-2 min-w-[220px]"></select>
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Assessment</label>
-                        <select id="assessmentSelect" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-4 py-2 min-w-[220px]"></select>
+                        <label class="block text-xs text-slate-500 mb-1">Assessment</label>
+                        <select id="assessmentSelect" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-4 py-2 min-w-[220px]"></select>
                     </div>
                 </div>
 
-                <div class="border-t border-slate-800 pt-4">
-                    <p class="text-xs text-slate-400 mb-3">Or create a new assessment for the selected class:</p>
+                <div class="border-t border-slate-200 pt-4">
+                    <p class="text-xs text-slate-500 mb-3">Or create a new assessment for the selected class:</p>
                     <form id="createAssessmentForm" class="flex flex-wrap gap-3 items-end">
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Title</label>
-                            <input id="newTitle" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2" placeholder="e.g. Unit 3 Test">
+                            <label class="block text-xs text-slate-500 mb-1">Title</label>
+                            <input id="newTitle" required class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2" placeholder="e.g. Unit 3 Test">
                         </div>
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Term</label>
-                            <select id="newTerm" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                            <label class="block text-xs text-slate-500 mb-1">Term</label>
+                            <select id="newTerm" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
                                 <option value="TERM1">Term 1</option>
                                 <option value="TERM2">Term 2</option>
                                 <option value="FINAL">Final</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Max Score</label>
-                            <input id="newMaxScore" type="number" min="1" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2 w-24" value="100">
+                            <label class="block text-xs text-slate-500 mb-1">Max Score</label>
+                            <input id="newMaxScore" type="number" min="1" required class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 w-24" value="100">
                         </div>
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Date</label>
-                            <input id="newAssessmentDate" type="date" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                            <label class="block text-xs text-slate-500 mb-1">Date</label>
+                            <input id="newAssessmentDate" type="date" required class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
                         </div>
                         <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Create Assessment</button>
                     </form>
@@ -85,12 +85,12 @@
             <!-- Roster + score entry -->
             <section id="rosterSection" class="glass-panel rounded-2xl p-6" style="display:none">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-white" id="rosterTitle">Scores</h2>
+                    <h2 class="text-lg font-semibold text-slate-900" id="rosterTitle">Scores</h2>
                     <button id="saveScoresBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Save All Scores</button>
                 </div>
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="text-left text-slate-400 border-b border-slate-800">
+                        <tr class="text-left text-slate-500 border-b border-slate-200">
                             <th class="py-2 pr-4">Roll No.</th>
                             <th class="py-2 pr-4">Student</th>
                             <th class="py-2 pr-4">Score</th>
@@ -98,7 +98,7 @@
                     </thead>
                     <tbody id="rosterRows"></tbody>
                 </table>
-                <p id="saveStatus" class="text-xs text-emerald-400 mt-3" style="display:none">Scores saved.</p>
+                <p id="saveStatus" class="text-xs text-emerald-600 mt-3" style="display:none">Scores saved.</p>
             </section>
         </main>
     </div>
@@ -145,11 +145,11 @@
             const detail = await res.json();
             document.getElementById('rosterTitle').textContent = `Scores — ${detail.title} (max ${detail.maxScore})`;
             document.getElementById('rosterRows').innerHTML = (detail.roster || []).map(r => `
-                <tr class="border-b border-slate-800/60">
-                    <td class="py-2 pr-4 text-slate-400">${r.rollNumber || ''}</td>
+                <tr class="border-b border-slate-200/60">
+                    <td class="py-2 pr-4 text-slate-500">${r.rollNumber || ''}</td>
                     <td class="py-2 pr-4">${r.studentName}</td>
                     <td class="py-2 pr-4">
-                        <input type="number" min="0" max="${detail.maxScore}" class="score-input bg-slate-900/70 border border-slate-700/60 rounded-lg text-sm text-slate-200 px-2 py-1 w-20"
+                        <input type="number" min="0" max="${detail.maxScore}" class="score-input bg-[#F7F9FC]/70 border border-slate-200/60 rounded-lg text-sm text-slate-800 px-2 py-1 w-20"
                                data-student-id="${r.studentId}" value="${r.score != null ? r.score : ''}">
                     </td>
                 </tr>

@@ -16,15 +16,15 @@
         }
         body {
             font-family: 'Outfit', 'Inter', sans-serif;
-            background-color: #0b0f19;
-            color: #e2e8f0;
+            background-color: #F7F9FC;
+            color: #0F172A;
             display: flex;
             flex-direction: column;
         }
 
         /* ── Glass ── */
         .glass-panel {
-            background: rgba(15, 23, 42, 0.65);
+            background: #FFFFFF;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -83,7 +83,7 @@
         .sidebar-badge {
             margin-left: auto;
             background: #6366F1;
-            color: white;
+            color: #0F172A;
             font-size: 10px;
             font-weight: 700;
             border-radius: 9999px;
@@ -155,7 +155,7 @@
             position: absolute;
             top: 4px; right: 14px;
             background: #6366F1;
-            color: white;
+            color: #0F172A;
             font-size: 9px; font-weight: 700;
             border-radius: 9999px;
             padding: 0 5px; line-height: 14px;
@@ -181,15 +181,15 @@
         @keyframes slideIn { from { transform: translateX(110%); opacity:0; } to { transform: translateX(0); opacity:1; } }
 
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        ::-webkit-scrollbar-track { background: #F7F9FC; }
+        ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #E2E8F0; }
     </style>
 
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-indigo-900 font-sans text-white antialiased" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="bg-indigo-900 font-sans text-slate-900 antialiased" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
     <input type="hidden" id="csrf-token" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
 
     <!-- Ambient blobs -->
@@ -197,34 +197,34 @@
     <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-600/10 blur-[120px] pointer-events-none z-0"></div>
 
     <!-- ══ HEADER ══ -->
-    <header class="glass-panel border-b border-slate-800/60 z-40 flex-shrink-0" style="height:56px;">
+    <header class="glass-panel border-b border-slate-200/60 z-40 flex-shrink-0" style="height:56px;">
         <div class="h-full px-4 sm:px-6 flex items-center justify-between">
             <!-- Left: Hamburger Menu (visible on mobile) -->
             <div class="flex items-center">
-                <button class="md:hidden text-slate-300 hover:text-white transition-colors" onclick="document.getElementById('student-sidebar').classList.toggle('hidden')">
+                <button class="md:hidden text-slate-600 hover:text-slate-900 transition-colors" onclick="document.getElementById('student-sidebar').classList.toggle('hidden')">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
             </div>
             
             <!-- Center: Logo -->
             <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-                <img src="/images/acadia-logo.png" alt="ACADIA" class="h-6 md:h-7" style="mix-blend-mode:screen;">
-                <span class="hidden md:block" style="font-size:15px;font-weight:700;color:white;letter-spacing:2px;">ACADIA</span>
+                <img src="/images/acadia-logo.png" alt="ACADIA" class="h-6 md:h-7" style="">
+                <span class="hidden md:block" style="font-size:15px;font-weight:700;color:#0F172A;letter-spacing:2px;">ACADIA</span>
             </div>
 
             <!-- Right: Action Icons -->
-            <div class="flex items-center gap-3 md:gap-4 flex-shrink-0 text-slate-300">
-                <button class="hover:text-white transition-colors hidden sm:block">
+            <div class="flex items-center gap-3 md:gap-4 flex-shrink-0 text-slate-600">
+                <button class="hover:text-slate-900 transition-colors hidden sm:block">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </button>
-                <button class="hover:text-white transition-colors relative">
+                <button class="hover:text-slate-900 transition-colors relative">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     <span class="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 border border-slate-900 rounded-full"></span>
                 </button>
                 <form th:action="@{/logout}" method="post" class="m-0 p-0 flex">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="hover:text-white transition-colors">
-                        <svg class="w-5 h-5 text-red-400 hover:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <button type="submit" class="hover:text-slate-900 transition-colors">
+                        <svg class="w-5 h-5 text-red-600 hover:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                         <span class="sr-only">Logout</span>
                     </button>
                 </form>
@@ -234,8 +234,8 @@
 
     <!-- ══ SUCCESS TOAST ══ -->
     <div th:if="${param.success}" id="toast"
-         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-slate-900/95 rounded-2xl shadow-2xl border border-emerald-500/30">
-        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-emerald-300 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F7F9FC]/95 rounded-2xl shadow-2xl border border-emerald-500/30">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-emerald-700 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
             <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
             </svg>
@@ -245,7 +245,7 @@
             Milestone submitted successfully!
         </div>
         <button id="toast-close-btn" type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-slate-900 text-slate-400 hover:text-slate-100 rounded-lg p-1.5 hover:bg-slate-800 inline-flex items-center justify-center h-8 w-8 transition-colors">
+                class="ms-auto -mx-1.5 -my-1.5 bg-[#F7F9FC] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
             <span class="sr-only">Close</span>
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
@@ -255,14 +255,14 @@
 
     <!-- ══ ERROR TOAST ══ -->
     <div th:if="${param.error}" id="toast-error"
-         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-slate-900/95 rounded-2xl shadow-2xl border border-rose-500/30">
+         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F7F9FC]/95 rounded-2xl shadow-2xl border border-rose-500/30">
         <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-rose-300 bg-rose-500/10 rounded-lg border border-rose-500/20">✕</div>
         <div class="ms-3 text-sm font-bold text-slate-100"
              th:text="${param.error[0] == 'insufficient_xp' ? 'Insufficient Experience Points!' : 'An error occurred during transaction.'}">
             Error occurred!
         </div>
         <button id="toast-error-close-btn" type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-slate-900 text-slate-400 hover:text-slate-100 rounded-lg p-1.5 hover:bg-slate-800 inline-flex items-center justify-center h-8 w-8 transition-colors">
+                class="ms-auto -mx-1.5 -my-1.5 bg-[#F7F9FC] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
             <span class="sr-only">Close</span>
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
@@ -299,8 +299,8 @@
 
             <div class="flex-1"></div>
 
-            <div class="mx-1 mt-4 px-3 py-3 rounded-xl bg-slate-900/40 border border-slate-800/50 text-xs text-slate-500 leading-relaxed">
-                <p class="font-bold text-indigo-400/60 text-[9px] uppercase tracking-wider mb-1">Scholar Roadmap</p>
+            <div class="mx-1 mt-4 px-3 py-3 rounded-xl bg-[#F7F9FC]/40 border border-slate-200/50 text-xs text-slate-500 leading-relaxed">
+                <p class="font-bold text-indigo-600/60 text-[9px] uppercase tracking-wider mb-1">Scholar Roadmap</p>
                 <p>Submit evidence for milestones your teacher validates to earn XP and level up.</p>
             </div>
         </nav>
@@ -312,51 +312,51 @@
             <div id="tab-home" class="tab-panel active space-y-6">
 
                 <!-- Info Card -->
-                <div class="rounded-xl p-4 bg-gradient-to-r from-orange-500/10 to-rose-500/10 border border-orange-500/20 shadow-lg shadow-black/20 flex justify-between items-center mb-6">
+                <div class="rounded-xl p-4 bg-gradient-to-r from-orange-500/10 to-rose-500/10 border border-orange-500/20 shadow-lg shadow-slate-300/40 flex justify-between items-center mb-6">
                     <div>
                         <h2 class="text-base font-bold text-slate-100" th:text="${student != null ? student.firstName + ' ' + student.lastName : 'Arjun Sharma'}">Arjun Sharma</h2>
-                        <p class="text-xs text-slate-400 mt-1 font-medium" th:text="${student != null ? (student.classSection != null ? student.classSection.gradeName + ' - ' + student.classSection.sectionName : 'N/A') : 'Grade 6 - A'}">Grade 6 - A</p>
+                        <p class="text-xs text-slate-500 mt-1 font-medium" th:text="${student != null ? (student.classSection != null ? student.classSection.gradeName + ' - ' + student.classSection.sectionName : 'N/A') : 'Grade 6 - A'}">Grade 6 - A</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-xs text-slate-300 font-medium" th:text="${#temporals.format(currentDate, 'dd MMM, yyyy')}">25 May, 2026</p>
-                        <p class="text-xs text-slate-400 mt-1" th:text="${#temporals.format(currentDate, 'EEEE')}">Monday</p>
+                        <p class="text-xs text-slate-600 font-medium" th:text="${#temporals.format(currentDate, 'dd MMM, yyyy')}">25 May, 2026</p>
+                        <p class="text-xs text-slate-500 mt-1" th:text="${#temporals.format(currentDate, 'EEEE')}">Monday</p>
                     </div>
                 </div>
 
                 <!-- Active Streak & Level Pill -->
                 <div class="flex gap-2 justify-end mb-6 -mt-2">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 tracking-wide" th:text="${scholarLevel != null ? 'Level ' + scholarLevel + ' Scholar' : 'Level 1 Scholar'}">Level 1 Scholar</span>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 tracking-wide">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-700 border border-indigo-500/30 tracking-wide" th:text="${scholarLevel != null ? 'Level ' + scholarLevel + ' Scholar' : 'Level 1 Scholar'}">Level 1 Scholar</span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-600 border border-amber-500/30 tracking-wide">
                         <span>&#x1F525;</span> <span th:text="${studentMetrics != null && studentMetrics.activeStreak != null ? studentMetrics.activeStreak : 0}">3</span> <span class="sr-only">Active</span> Streak
                     </span>
                 </div>
 
                 <!-- XP Progress Card -->
-                <div class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/20 space-y-5 relative overflow-hidden">
+                <div class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-5 relative overflow-hidden">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Accumulated Experience Points</p>
-                            <h3 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight mt-1 flex items-baseline gap-2">
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Accumulated Experience Points</p>
+                            <h3 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mt-1 flex items-baseline gap-2">
                                 <span id="portal-total-xp" th:text="${totalXp != null ? totalXp : 0}">750</span>
-                                <span class="text-xs font-semibold text-indigo-400 uppercase tracking-widest">Total XP</span>
+                                <span class="text-xs font-semibold text-indigo-600 uppercase tracking-widest">Total XP</span>
                             </h3>
                         </div>
-                        <div class="text-sm font-semibold text-slate-400 bg-slate-900/60 border border-slate-800/60 rounded-xl px-4 py-2.5 shrink-0">
+                        <div class="text-sm font-semibold text-slate-500 bg-[#F7F9FC]/60 border border-slate-200/60 rounded-xl px-4 py-2.5 shrink-0">
                             🎯 Next Level in:
-                            <span class="text-indigo-300 font-bold"
+                            <span class="text-indigo-700 font-bold"
                                   th:text="${(xpToNextLevel != null ? xpToNextLevel : 500) + ' XP'}">250 XP</span>
                         </div>
                     </div>
                     <div class="space-y-2">
-                        <div class="flex justify-between items-center text-xs font-medium text-slate-400 px-1">
+                        <div class="flex justify-between items-center text-xs font-medium text-slate-500 px-1">
                             <span th:text="${scholarLevel != null ? 'Level ' + scholarLevel : 'Level 1'}">Level 1</span>
                             <span th:text="${scholarLevel != null ? 'Level ' + (scholarLevel + 1) : 'Level 2'}">Level 2</span>
                         </div>
-                        <div class="w-full h-4 bg-slate-950/60 rounded-full p-0.5 border border-slate-800/80 overflow-hidden">
+                        <div class="w-full h-4 bg-[#F7F9FC]/60 rounded-full p-0.5 border border-slate-200/80 overflow-hidden">
                             <div class="h-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-400 rounded-full transition-all duration-700 glow-progress"
                                  th:style="'width: ' + (levelProgress != null ? levelProgress : 0) + '%'"></div>
                         </div>
-                        <p class="text-right text-[10px] font-bold text-indigo-300 uppercase tracking-wider px-1"
+                        <p class="text-right text-[10px] font-bold text-indigo-700 uppercase tracking-wider px-1"
                            th:text="${(levelProgress != null ? levelProgress : 0) + '% Completed'}">60% Completed</p>
                     </div>
                 </div>
@@ -365,22 +365,22 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div class="tab-quick-link glass-panel rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="syllabus">
                         <div class="text-2xl mb-2">📚</div>
-                        <p class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">Syllabus</p>
+                        <p class="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Syllabus</p>
                         <p class="text-[10px] text-slate-500 mt-0.5">Track chapters</p>
                     </div>
                     <div class="tab-quick-link glass-panel rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="challenges">
                         <div class="text-2xl mb-2">🎯</div>
-                        <p class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">Challenges</p>
+                        <p class="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Challenges</p>
                         <p class="text-[10px] text-slate-500 mt-0.5">Active quests</p>
                     </div>
                     <div class="tab-quick-link glass-panel rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="rewards">
                         <div class="text-2xl mb-2">🏆</div>
-                        <p class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">Rewards</p>
+                        <p class="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Rewards</p>
                         <p class="text-[10px] text-slate-500 mt-0.5">Redeem XP</p>
                     </div>
                     <div class="tab-quick-link glass-panel rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="profile">
                         <div class="text-2xl mb-2">👤</div>
-                        <p class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">Profile</p>
+                        <p class="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Profile</p>
                         <p class="text-[10px] text-slate-500 mt-0.5">History &amp; log</p>
                     </div>
                 </div>
@@ -390,11 +390,11 @@
             <!-- ████ TAB: ATTENDANCE ████ -->
             <div id="tab-attendance" class="tab-panel space-y-6">
 
-                <div class="glass-panel rounded-3xl p-4 shadow-xl shadow-black/20">
+                <div class="glass-panel rounded-3xl p-4 shadow-xl shadow-slate-300/40">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h2 class="text-base font-bold text-white">📅 Attendance Record</h2>
-                            <p class="text-xs text-slate-400 mt-0.5">Your attendance over the last 60 days</p>
+                            <h2 class="text-base font-bold text-slate-900">📅 Attendance Record</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Your attendance over the last 60 days</p>
                         </div>
                     </div>
                     <div id="attendance-summary" class="mb-2">
@@ -402,8 +402,8 @@
                     </div>
                 </div>
 
-                <div class="glass-panel rounded-3xl p-4 shadow-xl shadow-black/20">
-                    <h3 class="text-sm font-bold text-slate-200 mb-4">Monthly Breakdown</h3>
+                <div class="glass-panel rounded-3xl p-4 shadow-xl shadow-slate-300/40">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4">Monthly Breakdown</h3>
                     <div id="attendance-records-container">
                         <p class="text-slate-500 text-sm italic py-4 px-2">Loading attendance records...</p>
                     </div>
@@ -415,39 +415,39 @@
             <div id="tab-syllabus" class="tab-panel space-y-6">
 
                 <!-- Inline XP toast (syllabus only) -->
-                <div id="xp-toast" class="hidden fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-slate-900/95 rounded-2xl shadow-2xl border border-indigo-500/30 toast-enter">
-                    <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-indigo-300 bg-indigo-500/10 rounded-lg border border-indigo-500/20">⭐</div>
+                <div id="xp-toast" class="hidden fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F7F9FC]/95 rounded-2xl shadow-2xl border border-indigo-500/30 toast-enter">
+                    <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-indigo-700 bg-indigo-500/10 rounded-lg border border-indigo-500/20">⭐</div>
                     <div class="ms-3 text-sm font-bold text-slate-100"><span id="xp-toast-msg">XP awarded!</span></div>
-                    <button id="xp-toast-close" type="button" class="ms-auto -mx-1.5 -my-1.5 text-slate-400 hover:text-white rounded-lg p-1.5 hover:bg-slate-800 inline-flex items-center justify-center h-8 w-8 transition-colors">✕</button>
+                    <button id="xp-toast-close" type="button" class="ms-auto -mx-1.5 -my-1.5 text-slate-500 hover:text-slate-900 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">✕</button>
                 </div>
 
-                <section id="syllabus-progress-section" class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/20 space-y-6">
+                <section id="syllabus-progress-section" class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div>
-                            <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                            <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                                 <span>📚</span> Syllabus Progress
                             </h3>
-                            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Track your CBSE chapter completion across all subjects and earn XP for each topic you master.</p>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Track your CBSE chapter completion across all subjects and earn XP for each topic you master.</p>
                         </div>
-                        <div id="syllabus-xp-badge" class="hidden bg-indigo-600/10 text-indigo-300 border border-indigo-500/20 px-4 py-2 rounded-2xl text-center shrink-0">
-                            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Syllabus XP Earned</span>
+                        <div id="syllabus-xp-badge" class="hidden bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 px-4 py-2 rounded-2xl text-center shrink-0">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 block tracking-wider">Syllabus XP Earned</span>
                             <span id="syllabus-total-xp" class="text-xl font-black">0 XP</span>
                         </div>
                     </div>
 
                     <!-- Loading Skeleton -->
                     <div id="syllabus-skeleton" class="space-y-4">
-                        <div class="bg-slate-900/40 border border-slate-800/40 rounded-2xl p-5 animate-pulse space-y-3">
+                        <div class="bg-[#F7F9FC]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
                             <div class="h-4 bg-slate-700/50 rounded w-1/3"></div>
                             <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
                             <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
                         </div>
-                        <div class="bg-slate-900/40 border border-slate-800/40 rounded-2xl p-5 animate-pulse space-y-3">
+                        <div class="bg-[#F7F9FC]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
                             <div class="h-4 bg-slate-700/50 rounded w-2/5"></div>
                             <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
                             <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
                         </div>
-                        <div class="bg-slate-900/40 border border-slate-800/40 rounded-2xl p-5 animate-pulse space-y-3">
+                        <div class="bg-[#F7F9FC]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
                             <div class="h-4 bg-slate-700/50 rounded w-1/2"></div>
                             <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
                             <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
@@ -455,7 +455,7 @@
                     </div>
 
                     <!-- Empty state -->
-                    <div id="syllabus-empty" class="hidden text-center py-4 px-6 bg-slate-900/10 border border-dashed border-slate-800/60 rounded-2xl" style="max-height:100px;">
+                    <div id="syllabus-empty" class="hidden text-center py-4 px-6 bg-[#F7F9FC]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;">
                         <span class="text-2xl">📖</span>
                         <p class="text-sm text-slate-500 mt-1 font-medium">Curriculum coming soon. No topics assigned yet.</p>
                     </div>
@@ -470,12 +470,12 @@
             <div id="tab-challenges" class="tab-panel space-y-6">
 
                 <!-- Scholastic Challenges -->
-                <section id="scholastic-challenges-section" class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/20 space-y-6">
+                <section id="scholastic-challenges-section" class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
                     <div>
-                        <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>🎯</span> Scholastic Challenges
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">Complete specific tasks assigned by your teacher to earn bonus XP.</p>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Complete specific tasks assigned by your teacher to earn bonus XP.</p>
                     </div>
                     <div id="scholastic-tasks-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="text-slate-500 text-sm italic col-span-1 md:col-span-2">Loading tasks...</div>
@@ -483,31 +483,31 @@
                 </section>
 
                 <!-- Parent Quest Board -->
-                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/20 space-y-6">
+                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
                     <div>
-                        <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>🛡️</span> Home Quest Board (Parent-Assigned Tasks)
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">Complete home tasks assigned by your parents to earn Experience Points specifically verified by them.</p>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Complete home tasks assigned by your parents to earn Experience Points specifically verified by them.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div th:each="quest : ${parentQuests}"
                              th:if="${quest.status == 'PENDING' or quest.status == 'IN_PROGRESS' or quest.status == 'COMPLETED_AWAITING_APPROVAL'}"
-                             class="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all group">
+                             class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all group">
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-3xl">🏠</span>
-                                    <span class="px-2.5 py-1 bg-indigo-600/10 text-indigo-400 border border-indigo-500/10 rounded-lg text-xs font-bold font-mono"
+                                    <span class="px-2.5 py-1 bg-indigo-600/10 text-indigo-600 border border-indigo-500/10 rounded-lg text-xs font-bold font-mono"
                                           th:text="${'+' + quest.xpBounty + ' XP'}">+100 XP</span>
                                 </div>
                                 <div>
-                                    <h4 class="text-base font-bold text-white group-hover:text-indigo-300 transition-colors"
+                                    <h4 class="text-base font-bold text-slate-900 group-hover:text-indigo-700 transition-colors"
                                         th:text="${quest.taskDescription}">Clean your room</h4>
                                     <p class="text-xs text-slate-500 mt-1.5 font-semibold uppercase tracking-wider">
                                         Status:
-                                        <span th:if="${quest.status == 'PENDING' or quest.status == 'IN_PROGRESS'}" class="text-amber-400">PENDING</span>
-                                        <span th:if="${quest.status == 'COMPLETED_AWAITING_APPROVAL'}" class="text-indigo-400 animate-pulse">AWAITING APPROVAL</span>
+                                        <span th:if="${quest.status == 'PENDING' or quest.status == 'IN_PROGRESS'}" class="text-amber-600">PENDING</span>
+                                        <span th:if="${quest.status == 'COMPLETED_AWAITING_APPROVAL'}" class="text-indigo-600 animate-pulse">AWAITING APPROVAL</span>
                                     </p>
                                 </div>
                             </div>
@@ -528,7 +528,7 @@
                         </div>
 
                         <div th:if="${#lists.isEmpty(parentQuests) or (!#lists.contains(parentQuests.![status], 'PENDING') and !#lists.contains(parentQuests.![status], 'IN_PROGRESS') and !#lists.contains(parentQuests.![status], 'COMPLETED_AWAITING_APPROVAL'))}"
-                             class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-slate-900/10 border border-dashed border-slate-800/60 rounded-2xl" style="max-height:100px;">
+                             class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-[#F7F9FC]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;">
                             <span class="text-2xl">🎉</span>
                             <p class="text-sm text-slate-500 mt-1 font-medium">All home quests are completed!</p>
                         </div>
@@ -536,20 +536,20 @@
                 </section>
 
                 <!-- Submit New Milestone -->
-                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/20 space-y-5">
+                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-5">
                     <div>
-                        <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>🚀</span> Submit New Milestone
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">Provide details of your completed milestone. Your teacher will review and award XP.</p>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Provide details of your completed milestone. Your teacher will review and award XP.</p>
                     </div>
 
                     <form action="/web/student/submit-milestone" method="POST" class="space-y-4">
                         <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
                         <div>
-                            <label for="skillName" class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Academic Module / Skill</label>
+                            <label for="skillName" class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">Academic Module / Skill</label>
                             <select id="skillName" name="skillName" required
-                                    class="w-full px-4 py-2.5 bg-slate-950/60 border border-slate-800/80 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 text-sm outline-none cursor-pointer">
+                                    class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none cursor-pointer">
                                 <option value="" disabled selected>-- Select a Module --</option>
                                 <option th:each="skill : ${availableSkills}"
                                         th:value="${skill.skillName}"
@@ -559,10 +559,10 @@
                             </select>
                         </div>
                         <div>
-                            <label for="proofOfWorkNotes" class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Proof-of-Work Documentation / Link</label>
+                            <label for="proofOfWorkNotes" class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">Proof-of-Work Documentation / Link</label>
                             <textarea id="proofOfWorkNotes" name="proofOfWorkNotes" required rows="3"
                                       placeholder="Enter links to your working sheets, Google Docs, or explain your completed exercises..."
-                                      class="w-full px-4 py-2.5 bg-slate-950/60 border border-slate-800/80 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 text-sm outline-none resize-none placeholder-slate-600"></textarea>
+                                      class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none resize-none placeholder-slate-600"></textarea>
                         </div>
                         <button type="submit"
                                 class="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg transition-all text-sm uppercase tracking-wider cursor-pointer">
@@ -574,20 +574,20 @@
                 <!-- Task Submission Modal (opened by JS) -->
                 <div id="taskSubmissionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
                     <div id="task-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
-                    <div class="relative bg-[#0f172a] border border-slate-700/60 rounded-3xl p-5 md:p-8 w-full max-w-lg shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
+                    <div class="relative bg-[#F7F9FC] border border-slate-200/60 rounded-3xl p-5 md:p-8 w-full max-w-lg shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
                         <button id="task-modal-close-btn" type="button"
-                                class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl font-bold px-2 cursor-pointer">✕</button>
-                        <h2 class="text-2xl font-bold text-white mb-2" id="modalTaskTitle">Task Title</h2>
-                        <p class="text-sm text-slate-400 mb-6">Complete the questions below to earn your <span id="modalTaskXp" class="font-bold text-indigo-400">XP</span>.</p>
+                                class="absolute top-4 right-4 text-slate-500 hover:text-slate-900 text-xl font-bold px-2 cursor-pointer">✕</button>
+                        <h2 class="text-2xl font-bold text-slate-900 mb-2" id="modalTaskTitle">Task Title</h2>
+                        <p class="text-sm text-slate-500 mb-6">Complete the questions below to earn your <span id="modalTaskXp" class="font-bold text-indigo-600">XP</span>.</p>
                         <form id="modalTaskForm" action="/web/student/submit-milestone" method="POST" class="space-y-5">
                             <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
                             <input type="hidden" id="modalSkillName" name="skillName" value="">
                             <input type="hidden" id="modalTeacherTaskId" name="teacherTaskId" value="">
                             <div id="modalQuestionsContainer" class="space-y-4"></div>
                             <div class="space-y-2">
-                                <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block px-1">Proof of Work Notes</label>
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-500 block px-1">Proof of Work Notes</label>
                                 <textarea name="proofOfWorkNotes" required rows="3" placeholder="Additional notes or links..."
-                                          class="w-full px-4 py-3 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 text-sm outline-none resize-none"></textarea>
+                                          class="w-full px-4 py-3 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none resize-none"></textarea>
                             </div>
                             <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg transition-all uppercase tracking-wider text-sm cursor-pointer">
                                 Submit Task Evidence
@@ -601,33 +601,33 @@
             <!-- ████ TAB: REWARDS ████ -->
             <div id="tab-rewards" class="tab-panel space-y-6">
 
-                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/20 space-y-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/40 pb-5">
+                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/40 pb-5">
                         <div>
-                            <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                            <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                                 <span>🏆</span> Rewards Ledger &amp; Redemptions
                             </h3>
-                            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Exchange your hard-earned experience points for real-world milestones and awards.</p>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Exchange your hard-earned experience points for real-world milestones and awards.</p>
                         </div>
-                        <div class="bg-indigo-600/10 text-indigo-300 border border-indigo-500/20 px-4 py-2 rounded-2xl text-center shrink-0">
-                            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Available Balance</span>
+                        <div class="bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 px-4 py-2 rounded-2xl text-center shrink-0">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 block tracking-wider">Available Balance</span>
                             <span class="text-xl font-black" th:text="${(totalXp != null ? totalXp : 0) + ' XP'}">750 XP</span>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div th:each="reward : ${rewardInventoryList}"
-                             class="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all group">
+                             class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all group">
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-3xl" th:text="${reward.displayEmoji}">📜</span>
-                                    <span class="px-2.5 py-1 bg-indigo-600/10 text-indigo-400 border border-indigo-500/10 rounded-lg text-xs font-bold font-mono"
+                                    <span class="px-2.5 py-1 bg-indigo-600/10 text-indigo-600 border border-indigo-500/10 rounded-lg text-xs font-bold font-mono"
                                           th:text="${reward.xpCost + ' XP'}">250 XP</span>
                                 </div>
                                 <div>
-                                    <h4 class="text-base font-bold text-white group-hover:text-indigo-300 transition-colors"
+                                    <h4 class="text-base font-bold text-slate-900 group-hover:text-indigo-700 transition-colors"
                                         th:text="${reward.title}">Honor Roll Certificate</h4>
-                                    <p class="text-xs text-slate-400 mt-1 leading-relaxed"
+                                    <p class="text-xs text-slate-500 mt-1 leading-relaxed"
                                        th:text="${reward.description}">A formal certificate of merit.</p>
                                 </div>
                             </div>
@@ -638,7 +638,7 @@
                                     <button type="submit"
                                             th:disabled="${isPending or totalXp < reward.xpCost}"
                                             class="w-full py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-300"
-                                            th:classappend="${isPending} ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 cursor-not-allowed' : (${totalXp >= reward.xpCost} ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white cursor-pointer shadow-lg shadow-emerald-600/20' : 'bg-slate-800/40 text-slate-500 border border-slate-700/30 cursor-not-allowed')">
+                                            th:classappend="${isPending} ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 cursor-not-allowed' : (${totalXp >= reward.xpCost} ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white cursor-pointer shadow-lg shadow-emerald-600/20' : 'bg-white/40 text-slate-500 border border-slate-200/30 cursor-not-allowed')">
                                         <span th:text="${isPending} ? '⏳ AWAITING PARENT CO-SIGN' : (${totalXp >= reward.xpCost} ? 'Redeem Reward' : 'Insufficient XP (Locked)')">Redeem Reward</span>
                                     </button>
                                 </form>
@@ -652,27 +652,27 @@
                     </div>
                 </section>
 
-                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/20 space-y-6">
-                    <div class="border-b border-slate-800/40 pb-5">
-                        <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
+                    <div class="border-b border-slate-200/40 pb-5">
+                        <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>🏠</span> Parent-Defined Custom Rewards
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">Redeem custom rewards created specifically by your parents using your combined Experience Points.</p>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Redeem custom rewards created specifically by your parents using your combined Experience Points.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div th:each="preward : ${parentRewards}"
-                             class="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-500/20 transition-all group">
+                             class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-500/20 transition-all group">
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-3xl">🎁</span>
-                                    <span class="px-2.5 py-1 bg-indigo-600/10 text-indigo-400 border border-indigo-500/10 rounded-lg text-xs font-bold font-mono"
+                                    <span class="px-2.5 py-1 bg-indigo-600/10 text-indigo-600 border border-indigo-500/10 rounded-lg text-xs font-bold font-mono"
                                           th:text="${preward.xpCost + ' XP'}">150 XP</span>
                                 </div>
                                 <div>
-                                    <h4 class="text-base font-bold text-white group-hover:text-emerald-300 transition-colors"
+                                    <h4 class="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors"
                                         th:text="${preward.rewardTitle}">Weekend Movie Night</h4>
-                                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">Parents will verify and deliver this custom reward upon redemption.</p>
+                                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Parents will verify and deliver this custom reward upon redemption.</p>
                                 </div>
                             </div>
                             <div class="mt-5">
@@ -685,13 +685,13 @@
                                     </button>
                                 </form>
                                 <span th:if="${((studentMetrics.schoolXp != null ? studentMetrics.schoolXp : 0) + (studentMetrics.parentXp != null ? studentMetrics.parentXp : 0)) < preward.xpCost}"
-                                      class="block w-full py-2.5 bg-slate-800/40 text-slate-500 border border-slate-700/30 rounded-xl text-center text-xs font-bold tracking-wider uppercase cursor-not-allowed">
+                                      class="block w-full py-2.5 bg-white/40 text-slate-500 border border-slate-200/30 rounded-xl text-center text-xs font-bold tracking-wider uppercase cursor-not-allowed">
                                     Insufficient XP (Locked)
                                 </span>
                             </div>
                         </div>
                         <div th:if="${#lists.isEmpty(parentRewards)}"
-                             class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-slate-900/10 border border-dashed border-slate-800/60 rounded-2xl" style="max-height:100px;">
+                             class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-[#F7F9FC]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;">
                             <span class="text-2xl">📭</span>
                             <p class="text-sm text-slate-500 mt-1 font-medium">No parent-defined rewards available.</p>
                         </div>
@@ -703,29 +703,29 @@
             <!-- ████ TAB: PROFILE ████ -->
             <div id="tab-profile" class="tab-panel space-y-6">
 
-                <section th:if="${currentUserRole == 'STUDENT'}" class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/20 space-y-6">
+                <section th:if="${currentUserRole == 'STUDENT'}" class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
                     <div>
-                        <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>📜</span> Submission History Log
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">Track active states and verification statuses of your logged milestone submissions.</p>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Track active states and verification statuses of your logged milestone submissions.</p>
                     </div>
 
                     <div class="space-y-4 max-h-[600px] overflow-y-auto pr-1">
                         <div th:each="sub : ${submissions}"
-                             class="bg-slate-950/40 border border-slate-800/60 rounded-2xl p-4 space-y-3 hover:border-slate-700/60 transition-all">
+                             class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-4 space-y-3 hover:border-slate-200/60 transition-all">
                             <div class="flex items-start justify-between gap-3 flex-wrap">
                                 <div>
-                                    <h4 class="text-sm font-bold text-white" th:text="${sub.skillName}">6th Grade Fraction Mastery</h4>
+                                    <h4 class="text-sm font-bold text-slate-900" th:text="${sub.skillName}">6th Grade Fraction Mastery</h4>
                                     <p class="text-[10px] text-slate-500 mt-0.5"
                                        th:text="${#temporals.format(sub.submittedAt, 'yyyy-MM-dd HH:mm')}">2026-05-18 17:00</p>
                                 </div>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border"
-                                      th:classappend="${sub.status == 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : (sub.status == 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20')}"
+                                      th:classappend="${sub.status == 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : (sub.status == 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20')}"
                                       th:text="${sub.status}">PENDING</span>
                             </div>
                             <div th:if="${sub.proofOfWorkNotes != null and !#strings.isEmpty(sub.proofOfWorkNotes)}"
-                                 class="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/40 text-xs text-slate-400 leading-relaxed">
+                                 class="p-2.5 rounded-lg bg-[#F7F9FC]/60 border border-slate-200/40 text-xs text-slate-500 leading-relaxed">
                                 <span class="font-bold text-[9px] uppercase tracking-wider text-slate-500 block mb-1">Your notes:</span>
                                 <p class="italic" th:text="${sub.proofOfWorkNotes}">"No proof notes supplied."</p>
                             </div>
@@ -734,9 +734,9 @@
                                 <span class="font-bold text-[9px] uppercase tracking-wider text-rose-500/80 block mb-1">Rejection Reason:</span>
                                 <p class="italic" th:text="${sub.rejectionReason}">"Reason goes here"</p>
                             </div>
-                            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/40">
+                            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-200/40">
                                 <span class="text-slate-500">Reward Bounty</span>
-                                <span class="font-bold text-indigo-400"
+                                <span class="font-bold text-indigo-600"
                                       th:text="${'+' + (sub.xpBounty != null ? sub.xpBounty : 250) + ' XP'}">+250 XP</span>
                             </div>
                         </div>
@@ -932,8 +932,8 @@
             ENGLISH:        { label: 'English',        emoji: '📖', color: 'sky'      }
         };
         var COLOR_MAP = {
-            emerald: { bar:'from-emerald-600 to-emerald-400', text:'text-emerald-400', border:'border-emerald-500/20', bg:'bg-emerald-500/10' },
-            amber:   { bar:'from-amber-500 to-amber-400',     text:'text-amber-400',   border:'border-amber-500/20',   bg:'bg-amber-500/10'   },
+            emerald: { bar:'from-emerald-600 to-emerald-400', text:'text-emerald-600', border:'border-emerald-500/20', bg:'bg-emerald-500/10' },
+            amber:   { bar:'from-amber-500 to-amber-400',     text:'text-amber-600',   border:'border-amber-500/20',   bg:'bg-amber-500/10'   },
             sky:     { bar:'from-sky-500 to-sky-400',         text:'text-sky-400',     border:'border-sky-500/20',     bg:'bg-sky-500/10'     }
         };
         var progressData = {};
@@ -1003,7 +1003,7 @@
                 var xpEarned = subjectData.topics.filter(function(t) { return t.completed; }).reduce(function(s,t) { return s + t.xpReward; }, 0);
 
                 var card = document.createElement('div');
-                card.className = 'bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 space-y-4 hover:border-slate-700/50 transition-all';
+                card.className = 'bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 space-y-4 hover:border-slate-200/50 transition-all';
                 card.id = 'subject-card-' + subjectKey;
 
                 var topicsId = 'topics-' + subjectKey;
@@ -1012,12 +1012,12 @@
                 var topicsRows = '';
                 subjectData.topics.forEach(function(topic) {
                     if (topic.completed) {
-                        topicsRows += `<div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-emerald-500/5 border border-emerald-500/10"><span class="text-emerald-400 text-base flex-shrink-0">✓</span><span class="text-sm text-slate-300 flex-1">${topic.topicName}</span><span class="text-xs font-bold text-emerald-400 shrink-0">+${topic.xpReward} XP</span></div>`;
+                        topicsRows += `<div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-emerald-500/5 border border-emerald-500/10"><span class="text-emerald-600 text-base flex-shrink-0">✓</span><span class="text-sm text-slate-600 flex-1">${topic.topicName}</span><span class="text-xs font-bold text-emerald-600 shrink-0">+${topic.xpReward} XP</span></div>`;
                     } else if (topic.status === 'PENDING') {
-                        topicsRows += `<div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-amber-500/5 border border-amber-500/10"><span class="text-amber-400 text-base flex-shrink-0">⏳</span><span class="text-sm text-slate-300 flex-1">${topic.topicName}</span><span class="text-xs font-bold text-amber-400 shrink-0">Pending</span></div>`;
+                        topicsRows += `<div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-amber-500/5 border border-amber-500/10"><span class="text-amber-600 text-base flex-shrink-0">⏳</span><span class="text-sm text-slate-600 flex-1">${topic.topicName}</span><span class="text-xs font-bold text-amber-600 shrink-0">Pending</span></div>`;
                     } else {
                         var rejHtml = topic.status === 'REJECTED' ? `<span class="text-rose-400 text-base flex-shrink-0">❌</span><span class="text-xs text-rose-400 italic flex-shrink-0 max-w-[200px] truncate" title="${topic.rejectionReason}">Reason: ${topic.rejectionReason}</span>` : '';
-                        topicsRows += `<div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-950/30 border border-slate-800/40 flex-wrap"><span class="text-slate-600 text-base flex-shrink-0">○</span><span class="text-sm text-slate-400 flex-1 min-w-[120px]">${topic.topicName}</span>${rejHtml}<button class="mark-complete-btn text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 hover:text-white border border-indigo-500/20 rounded-lg transition-all cursor-pointer shrink-0 whitespace-nowrap ml-auto" data-curriculum-id="${topic.id}" data-subject-key="${subjectKey}">Mark Complete</button></div>`;
+                        topicsRows += `<div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-[#F7F9FC]/30 border border-slate-200/40 flex-wrap"><span class="text-slate-600 text-base flex-shrink-0">○</span><span class="text-sm text-slate-500 flex-1 min-w-[120px]">${topic.topicName}</span>${rejHtml}<button class="mark-complete-btn text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-700 hover:text-white border border-indigo-500/20 rounded-lg transition-all cursor-pointer shrink-0 whitespace-nowrap ml-auto" data-curriculum-id="${topic.id}" data-subject-key="${subjectKey}">Mark Complete</button></div>`;
                     }
                 });
 
@@ -1026,20 +1026,20 @@
                         <div class="flex items-center gap-2.5">
                             <span class="text-2xl">${meta.emoji}</span>
                             <div>
-                                <h4 class="text-base font-bold text-white">${meta.label}</h4>
+                                <h4 class="text-base font-bold text-slate-900">${meta.label}</h4>
                                 <p class="text-[11px] ${colors.text} font-semibold mt-0.5">${subjectData.completed}/${subjectData.total} chapters &middot; +${xpEarned} XP earned</p>
                             </div>
                         </div>
                         <span class="text-xs font-bold ${colors.text} ${colors.bg} border ${colors.border} px-3 py-1 rounded-full">${pct}% done</span>
                     </div>
                     <div class="space-y-1.5">
-                        <div class="w-full h-2.5 bg-slate-950/60 rounded-full overflow-hidden border border-slate-800/80">
+                        <div class="w-full h-2.5 bg-[#F7F9FC]/60 rounded-full overflow-hidden border border-slate-200/80">
                             <div class="h-full bg-gradient-to-r ${colors.bar} rounded-full transition-all duration-700" style="width:${pct}%"></div>
                         </div>
                         <p class="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">${subjectData.completed} of ${subjectData.total} complete</p>
                     </div>
                     <div>
-                        <button class="accordion-toggle-btn flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-200 uppercase tracking-wider transition-colors mb-3" data-topics-id="${topicsId}" data-subject-key="${subjectKey}">
+                        <button class="accordion-toggle-btn flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800 uppercase tracking-wider transition-colors mb-3" data-topics-id="${topicsId}" data-subject-key="${subjectKey}">
                             <span id="toggle-icon-${subjectKey}">${isExpanded ? '▼' : '▶'}</span> Show / Hide Chapters
                         </button>
                         <div id="${topicsId}" class="${isExpanded ? '' : 'hidden'} space-y-1.5 max-h-64 overflow-y-auto pr-1">
@@ -1133,31 +1133,31 @@
                 var tasks = await resp.json();
 
                 if (tasks.length === 0) {
-                    container.innerHTML = `<div class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-slate-900/10 border border-dashed border-slate-800/60 rounded-2xl" style="max-height:100px;"><p class="text-sm text-slate-500 font-medium">No assigned challenges currently.</p></div>`;
+                    container.innerHTML = `<div class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-[#F7F9FC]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;"><p class="text-sm text-slate-500 font-medium">No assigned challenges currently.</p></div>`;
                     return;
                 }
 
                 container.innerHTML = tasks.map(function(task) {
                     var readingBadge = task.taskType === 'READING' ? `<span class="px-2 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded text-[10px] font-bold uppercase tracking-wider">📖 Reading</span>` : '';
-                    var overdueBadge = task.taskStatus === 'OVERDUE' ? `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[10px] font-bold uppercase tracking-wider">⚠️ OVERDUE</span>` : '';
+                    var overdueBadge = task.taskStatus === 'OVERDUE' ? `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-600 border border-amber-500/20 rounded text-[10px] font-bold uppercase tracking-wider">⚠️ OVERDUE</span>` : '';
                     return `
-                    <div class="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all">
+                    <div class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all">
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <div class="flex gap-2">
-                                    <span class="px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-bold uppercase tracking-wider">${task.subjectCode}</span>
-                                    <span class="px-2 py-0.5 bg-indigo-500/10 text-indigo-300 rounded text-[10px] font-bold uppercase tracking-wider">${task.taskType}</span>
+                                    <span class="px-2 py-0.5 bg-white text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">${task.subjectCode}</span>
+                                    <span class="px-2 py-0.5 bg-indigo-500/10 text-indigo-700 rounded text-[10px] font-bold uppercase tracking-wider">${task.taskType}</span>
                                 </div>
-                                <span class="font-black text-indigo-400 border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 rounded-md text-xs">+${task.xpReward} XP</span>
+                                <span class="font-black text-indigo-600 border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 rounded-md text-xs">+${task.xpReward} XP</span>
                             </div>
                             <div>
-                                <h4 class="text-base font-bold text-white">${task.title}</h4>
+                                <h4 class="text-base font-bold text-slate-900">${task.title}</h4>
                                 <div class="flex gap-2 mt-2">${readingBadge}${overdueBadge}</div>
-                                <p class="text-[11px] text-slate-400 mt-2">Due: ${task.dueDate || 'No Due Date'}</p>
+                                <p class="text-[11px] text-slate-500 mt-2">Due: ${task.dueDate || 'No Due Date'}</p>
                             </div>
                         </div>
                         <div class="mt-4">
-                            <button class="open-task-modal-btn w-full py-2 bg-slate-800 hover:bg-indigo-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-colors"
+                            <button class="open-task-modal-btn w-full py-2 bg-white hover:bg-indigo-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-colors"
                                     data-task-id="${task.id}" data-task-title="${task.title}" data-task-type="${task.taskType}" data-task-xp="${task.xpReward}">
                                 Submit Completion
                             </button>
@@ -1199,10 +1199,10 @@
                 if (summaryEl) {
                     summaryEl.innerHTML =
                         '<div class="flex gap-3 flex-wrap">'
-                        + '<div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20"><span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="text-xs font-bold text-emerald-300">Present</span><span class="text-lg font-black text-emerald-400">' + present + '</span></div>'
-                        + '<div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-red-500/10 border border-red-500/20"><span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-xs font-bold text-red-300">Absent</span><span class="text-lg font-black text-red-400">' + absent + '</span></div>'
-                        + (tardy > 0 ? '<div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/20"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="text-xs font-bold text-amber-300">Tardy</span><span class="text-lg font-black text-amber-400">' + tardy + '</span></div>' : '')
-                        + '<div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-slate-800/60 border border-slate-700/40"><span class="text-xs text-slate-400">Rate</span><span class="text-lg font-black text-white">' + (total > 0 ? Math.round(present/total*100) : 0) + '%</span></div>'
+                        + '<div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20"><span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="text-xs font-bold text-emerald-700">Present</span><span class="text-lg font-black text-emerald-600">' + present + '</span></div>'
+                        + '<div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-red-500/10 border border-red-500/20"><span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-xs font-bold text-red-300">Absent</span><span class="text-lg font-black text-red-600">' + absent + '</span></div>'
+                        + (tardy > 0 ? '<div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/20"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="text-xs font-bold text-amber-300">Tardy</span><span class="text-lg font-black text-amber-600">' + tardy + '</span></div>' : '')
+                        + '<div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white/60 border border-slate-200/40"><span class="text-xs text-slate-500">Rate</span><span class="text-lg font-black text-slate-900">' + (total > 0 ? Math.round(present/total*100) : 0) + '%</span></div>'
                         + '</div>';
                 }
                 if (records.length === 0) {
@@ -1217,7 +1217,7 @@
                 });
                 var mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
                 var statusMeta = {
-                    'PRESENT': { dot: 'bg-emerald-400', text: 'text-emerald-300', badge: 'bg-emerald-500/10 border-emerald-500/20', label: 'Present' },
+                    'PRESENT': { dot: 'bg-emerald-400', text: 'text-emerald-700', badge: 'bg-emerald-500/10 border-emerald-500/20', label: 'Present' },
                     'ABSENT':  { dot: 'bg-red-400',     text: 'text-red-300',     badge: 'bg-red-500/10 border-red-500/20',         label: 'Absent'  },
                     'TARDY':   { dot: 'bg-amber-400',   text: 'text-amber-300',   badge: 'bg-amber-500/10 border-amber-500/20',     label: 'Tardy'   },
                     'EXCUSED': { dot: 'bg-blue-400',    text: 'text-blue-300',    badge: 'bg-blue-500/10 border-blue-500/20',       label: 'Excused' }
@@ -1228,16 +1228,16 @@
                     var rows = byMonth[month];
                     var mPresent = rows.filter(function(r) { return r.status === 'PRESENT'; }).length;
                     return '<div class="mb-6">'
-                        + '<div class="flex items-center justify-between mb-3"><h4 class="text-sm font-bold text-slate-200">' + mLabel + '</h4><span class="text-xs text-slate-500">' + mPresent + '/' + rows.length + ' days present</span></div>'
+                        + '<div class="flex items-center justify-between mb-3"><h4 class="text-sm font-bold text-slate-800">' + mLabel + '</h4><span class="text-xs text-slate-500">' + mPresent + '/' + rows.length + ' days present</span></div>'
                         + '<div class="space-y-2">'
                         + rows.map(function(r) {
                             var meta = statusMeta[r.status] || statusMeta['PRESENT'];
                             var d = new Date(r.date + 'T00:00:00');
                             var dayName = r.dayOfWeek.charAt(0) + r.dayOfWeek.slice(1).toLowerCase().substring(0,2);
                             var dateStr = d.getDate() + ' ' + mNames[d.getMonth()];
-                            return '<div class="flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-900/40 border border-slate-800/50 hover:border-slate-700/60 transition-colors">'
+                            return '<div class="flex items-center gap-3 px-4 py-2 rounded-xl bg-[#F7F9FC]/40 border border-slate-200/50 hover:border-slate-200/60 transition-colors">'
                                 + '<span class="text-xs font-bold text-slate-500 w-8">' + dayName + '</span>'
-                                + '<span class="text-sm text-slate-300 flex-1">' + dateStr + '</span>'
+                                + '<span class="text-sm text-slate-600 flex-1">' + dateStr + '</span>'
                                 + '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ' + meta.badge + ' ' + meta.text + '"><span class="w-1.5 h-1.5 rounded-full ' + meta.dot + '"></span>' + meta.label + '</span>'
                                 + '</div>';
                         }).join('')
@@ -1268,8 +1268,8 @@
                             if (questions[qKey]) {
                                 qContainer.innerHTML += `
                                 <div class="space-y-1.5">
-                                    <label class="text-sm font-semibold text-slate-300 block">${questions[qKey]}</label>
-                                    <input type="text" name="answer${i+1}" required class="w-full px-4 py-2.5 bg-slate-900/60 border border-slate-700/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-200 text-sm outline-none">
+                                    <label class="text-sm font-semibold text-slate-600 block">${questions[qKey]}</label>
+                                    <input type="text" name="answer${i+1}" required class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none">
                                 </div>`;
                             }
                         });

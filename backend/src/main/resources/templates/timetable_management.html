@@ -7,10 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #F7F9FC; }
+        ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 4px; }
         .glass-panel {
-            background: rgba(15, 23, 42, 0.7);
+            background: #FFFFFF;
             backdrop-filter: blur(12px);
             border: 1px solid rgba(30, 41, 59, 0.8);
         }
@@ -18,19 +18,19 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-[#0b0f19] text-slate-200 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="bg-[#F7F9FC] text-slate-800 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
 
-    <header class="bg-[#0f172a] border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+    <header class="bg-[#F7F9FC] border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div style="display:flex; align-items:center; gap:10px;">
-                <a href="/web/admin/dashboard" class="text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-800 p-2 rounded-xl bg-slate-900/50 hover:bg-slate-800">
+                <a href="/web/admin/dashboard" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200 p-2 rounded-xl bg-[#F7F9FC]/50 hover:bg-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 </a>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-800 via-slate-700 to-indigo-600 bg-clip-text text-transparent">
                         Timetable
                     </h1>
-                    <p class="text-xs text-slate-400 mt-0.5 font-medium">Manage class periods and teacher schedules</p>
+                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Manage class periods and teacher schedules</p>
                 </div>
             </div>
             <div></div>
@@ -43,15 +43,15 @@
             <!-- Period list -->
             <section class="glass-panel rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-white">Periods</h2>
-                    <select id="filterSection" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-4 py-2">
+                    <h2 class="text-lg font-semibold text-slate-900">Periods</h2>
+                    <select id="filterSection" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-4 py-2">
                         <option value="">All class sections</option>
                     </select>
                 </div>
 
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="text-left text-slate-400 border-b border-slate-800">
+                        <tr class="text-left text-slate-500 border-b border-slate-200">
                             <th class="py-2 pr-4">Day</th>
                             <th class="py-2 pr-4">Period</th>
                             <th class="py-2 pr-4">Time</th>
@@ -69,20 +69,20 @@
 
             <!-- Add period -->
             <section class="glass-panel rounded-2xl p-6">
-                <h2 class="text-lg font-semibold text-white mb-4">Add Period</h2>
-                <div id="formError" class="text-red-400 text-xs mb-3" style="display:none"></div>
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Add Period</h2>
+                <div id="formError" class="text-red-600 text-xs mb-3" style="display:none"></div>
                 <form id="addPeriodForm" class="flex flex-wrap gap-3 items-end">
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Class Section</label>
-                        <select id="classSectionId" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2"></select>
+                        <label class="block text-xs text-slate-500 mb-1">Class Section</label>
+                        <select id="classSectionId" required class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2"></select>
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Teacher</label>
-                        <select id="teacherId" required class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2"></select>
+                        <label class="block text-xs text-slate-500 mb-1">Teacher</label>
+                        <select id="teacherId" required class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2"></select>
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Day</label>
-                        <select id="dayOfWeek" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                        <label class="block text-xs text-slate-500 mb-1">Day</label>
+                        <select id="dayOfWeek" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
                             <option value="MON">Monday</option>
                             <option value="TUE">Tuesday</option>
                             <option value="WED">Wednesday</option>
@@ -91,24 +91,24 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Period #</label>
-                        <input id="periodNumber" type="number" min="1" max="10" required value="1" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2 w-20">
+                        <label class="block text-xs text-slate-500 mb-1">Period #</label>
+                        <input id="periodNumber" type="number" min="1" max="10" required value="1" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 w-20">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Start</label>
-                        <input id="startTime" type="time" required value="08:00" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                        <label class="block text-xs text-slate-500 mb-1">Start</label>
+                        <input id="startTime" type="time" required value="08:00" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">End</label>
-                        <input id="endTime" type="time" required value="08:45" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2">
+                        <label class="block text-xs text-slate-500 mb-1">End</label>
+                        <input id="endTime" type="time" required value="08:45" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Subject</label>
-                        <select id="subjectName" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2"></select>
+                        <label class="block text-xs text-slate-500 mb-1">Subject</label>
+                        <select id="subjectName" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2"></select>
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Room (optional)</label>
-                        <input id="roomNumber" class="bg-slate-900/70 border border-slate-700/60 rounded-xl text-sm text-slate-200 px-3 py-2 w-28" placeholder="Room 101">
+                        <label class="block text-xs text-slate-500 mb-1">Room (optional)</label>
+                        <input id="roomNumber" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 w-28" placeholder="Room 101">
                     </div>
                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Add Period</button>
                 </form>
@@ -163,16 +163,16 @@
             }
             emptyState.style.display = 'none';
             tbody.innerHTML = entries.map(e => `
-                <tr class="border-b border-slate-800/60">
+                <tr class="border-b border-slate-200/60">
                     <td class="py-2 pr-4 font-semibold">${e.dayOfWeek}</td>
                     <td class="py-2 pr-4">${e.periodNumber}</td>
-                    <td class="py-2 pr-4 text-slate-400 font-mono text-xs">${e.startTime}–${e.endTime}</td>
+                    <td class="py-2 pr-4 text-slate-500 font-mono text-xs">${e.startTime}–${e.endTime}</td>
                     <td class="py-2 pr-4">${e.className}</td>
                     <td class="py-2 pr-4">${e.subjectName}</td>
-                    <td class="py-2 pr-4 text-slate-400">${staffById[e.teacherId] ? staffById[e.teacherId].fullName : '—'}</td>
-                    <td class="py-2 pr-4 text-slate-400">${e.roomNumber || '—'}</td>
+                    <td class="py-2 pr-4 text-slate-500">${staffById[e.teacherId] ? staffById[e.teacherId].fullName : '—'}</td>
+                    <td class="py-2 pr-4 text-slate-500">${e.roomNumber || '—'}</td>
                     <td class="py-2 pr-4">
-                        <button onclick="deletePeriod('${e.id}')" class="text-red-400 hover:text-red-300 text-xs">Delete</button>
+                        <button onclick="deletePeriod('${e.id}')" class="text-red-600 hover:text-red-300 text-xs">Delete</button>
                     </td>
                 </tr>
             `).join('');
