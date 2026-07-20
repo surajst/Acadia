@@ -13,36 +13,13 @@
         }
 
         body {
-            background: radial-gradient(circle at center, rgba(59, 30, 120, 0.3) 0%, #050A1A 60%);
-            background-color: #050A1A;
-            color: #ffffff;
+            background: #F7F9FC;
+            color: #0F172A;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
-        }
-
-        .bg-blur-tl {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(79,70,229,0.15) 0%, transparent 70%);
-            position: fixed;
-            top: -100px;
-            left: -100px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .bg-blur-br {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
-            position: fixed;
-            bottom: -100px;
-            right: -100px;
-            pointer-events: none;
-            z-index: 0;
         }
 
         main {
@@ -62,28 +39,25 @@
             max-width: 380px;
             max-height: 100%;
             overflow: hidden;
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
             border-radius: 20px;
-            padding: 20px 28px;
+            padding: 24px 28px;
             box-sizing: border-box;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.06);
         }
 
-        .logo-img {
-            width: 100px;
-            display: block;
-            margin: 0 auto;
-        }
+        .logo-crop { width: 120px; height: 78px; overflow: hidden; margin: 0 auto; }
+        .logo-crop img { width: 120px; height: auto; display: block; margin-top: -4px; }
+        .brand-word { text-align: center; font-size: 16px; font-weight: 700; letter-spacing: 4px; color: #0F172A; margin-top: 2px; }
 
         .divider {
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            margin: 12px 0;
+            border-top: 1px solid #E2E8F0;
+            margin: 16px 0;
         }
 
         .welcome-title {
-            color: #ffffff;
+            color: #0F172A;
             font-size: 18px;
             font-weight: 600;
             text-align: center;
@@ -91,7 +65,7 @@
         }
 
         .welcome-subtitle {
-            color: rgba(255, 255, 255, 0.5);
+            color: #64748B;
             font-size: 13px;
             text-align: center;
             margin: 0 0 14px 0;
@@ -102,7 +76,7 @@
         }
 
         .form-label {
-            color: #ffffff;
+            color: #334155;
             font-size: 13px;
             font-weight: 500;
             margin-bottom: 6px;
@@ -112,11 +86,11 @@
 
         .form-input {
             width: 100%;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: #F8FAFC;
+            border: 1px solid #CBD5E1;
             border-radius: 10px;
             padding: 10px 16px;
-            color: #ffffff;
+            color: #0F172A;
             font-size: 15px;
             box-sizing: border-box;
             transition: all 0.2s ease;
@@ -124,20 +98,21 @@
         }
 
         .form-input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
+            color: #94A3B8;
         }
 
         .form-input:focus {
-            border-color: #6366F1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            background: #FFFFFF;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
             outline: none;
         }
 
         .btn-submit {
             width: 100%;
-            height: 40px;
+            height: 44px;
             border-radius: 10px;
-            background: linear-gradient(to right, #4F46E5, #7C3AED);
+            background: linear-gradient(to right, #3B82F6, #6366F1);
             color: #ffffff;
             font-weight: 600;
             font-size: 15px;
@@ -149,26 +124,24 @@
         }
 
         .btn-submit:hover {
-            transform: translateY(-1px);
-            filter: brightness(1.1);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            filter: brightness(1.05);
         }
 
         .footer-text {
-            color: rgba(255, 255, 255, 0.25);
+            color: #94A3B8;
             font-size: 11px;
             text-align: center;
             margin-top: 10px;
         }
 
         .error-msg {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 20px;
             text-align: center;
-            color: #fca5a5;
+            color: #B91C1C;
             font-size: 13px;
         }
     </style>
@@ -177,13 +150,11 @@
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
-    <div class="bg-blur-tl"></div>
-    <div class="bg-blur-br"></div>
-    
     <main>
         <div class="login-card">
-            <img src="/images/acadia-logo.png" alt="ACADIA" class="logo-img">
-            
+            <div class="logo-crop"><img src="/images/acadia-logo.png" alt=""></div>
+            <div class="brand-word">ACADIA</div>
+
             <div class="divider"></div>
             
             <h1 class="welcome-title" id="greetingTitle">Welcome back</h1>
