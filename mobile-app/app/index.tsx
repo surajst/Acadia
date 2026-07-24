@@ -54,11 +54,15 @@ export default function LoginScreen() {
 
         {/* Logo block */}
         <View style={styles.logoBlock}>
-          <Image
-            source={require('../assets/images/acadia-logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <View style={styles.logoClip}>
+            <Image
+              source={require('../assets/images/acadia-logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={styles.brandWord}>ACADIA</Text>
+          <Text style={styles.tagline}>Connect · Manage · Empower</Text>
           <Text style={styles.subtitle}>School Management Platform</Text>
           <View style={styles.divider} />
         </View>
@@ -134,17 +138,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
+  logoClip: {
+    width: 140,
+    height: 90,
+    overflow: 'hidden',
+    alignItems: 'center',
+  },
   logo: {
     width: 140,
     height: 140,
-    marginBottom: 8,
+  },
+  brandWord: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 5,
+    color: '#0F172A',
+    marginTop: 4,
+  },
+  tagline: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 2,
+    color: '#64748B',
+    textTransform: 'uppercase',
+    marginTop: 4,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#94A3B8',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
-    marginBottom: 24,
+    marginTop: 14,
+    marginBottom: 20,
   },
   divider: {
     width: 40,
