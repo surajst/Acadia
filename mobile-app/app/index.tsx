@@ -63,7 +63,6 @@ export default function LoginScreen() {
           </View>
           <Text style={styles.brandWord}>ACADIA</Text>
           <Text style={styles.tagline}>Connect · Manage · Empower</Text>
-          <Text style={styles.subtitle}>School Management Platform</Text>
           <View style={styles.divider} />
         </View>
 
@@ -162,13 +161,6 @@ const styles = StyleSheet.create({
     color: '#64748B',
     textTransform: 'uppercase',
     marginTop: 4,
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#94A3B8',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    marginTop: 14,
     marginBottom: 20,
   },
   divider: {
