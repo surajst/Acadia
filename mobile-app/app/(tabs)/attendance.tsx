@@ -53,14 +53,14 @@ const STATUS_COLOR: Record<AttendanceRecord['status'], string> = {
   PRESENT: '#22c55e',
   ABSENT: '#ef4444',
   LATE: '#f59e0b',
-  HOLIDAY: '#475569',
+  HOLIDAY: '#94A3B8',
 };
 
 const STATUS_BG: Record<AttendanceRecord['status'], string> = {
   PRESENT: '#14532d',
   ABSENT: '#7f1d1d',
   LATE: '#78350f',
-  HOLIDAY: '#1e293b',
+  HOLIDAY: '#FFFFFF',
 };
 
 function getMonthLabel(dateStr: string): string {
@@ -190,7 +190,7 @@ export default function AttendanceScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
     >
       {/* Child Selector Header */}
       <View style={styles.section}>
@@ -245,23 +245,23 @@ export default function AttendanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F7F9FC',
     padding: 16,
   },
   restrictedContainer: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F7F9FC',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
   restrictedIcon: { fontSize: 48, marginBottom: 16 },
-  restrictedTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
-  restrictedSub: { color: '#94a3b8', fontSize: 14, textAlign: 'center' },
+  restrictedTitle: { color: '#0F172A', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  restrictedSub: { color: '#64748B', fontSize: 14, textAlign: 'center' },
 
   section: { marginBottom: 24 },
   sectionTitle: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
 
   // Child badge
   childBadge: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
@@ -285,26 +285,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   childAvatarText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  childName: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  childGrade: { color: '#94a3b8', fontSize: 13 },
+  childName: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
+  childGrade: { color: '#64748B', fontSize: 13 },
 
   // Summary boxes
   summaryRow: { flexDirection: 'row', gap: 10 },
   summaryBox: {
     flex: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1.5,
   },
-  summaryNum: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
-  summaryLabel: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
+  summaryNum: { color: '#0F172A', fontSize: 24, fontWeight: 'bold' },
+  summaryLabel: { color: '#64748B', fontSize: 12, marginTop: 2 },
 
   // Month block
   monthBlock: { marginBottom: 20 },
   monthLabel: {
-    color: '#94a3b8',
+    color: '#64748B',
     fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -330,5 +330,5 @@ const styles = StyleSheet.create({
   legendRow: { flexDirection: 'row', gap: 16, paddingHorizontal: 4, marginBottom: 8 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendText: { color: '#94a3b8', fontSize: 13 },
+  legendText: { color: '#64748B', fontSize: 13 },
 });

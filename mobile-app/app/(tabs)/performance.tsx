@@ -143,7 +143,7 @@ export default function PerformanceScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Report Card</Text>
@@ -199,30 +199,30 @@ export default function PerformanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F7F9FC',
     padding: 16,
   },
   restrictedContainer: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F7F9FC',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
   restrictedIcon: { fontSize: 48, marginBottom: 16 },
-  restrictedTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
-  restrictedSub: { color: '#94a3b8', fontSize: 14, textAlign: 'center' },
+  restrictedTitle: { color: '#0F172A', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  restrictedSub: { color: '#64748B', fontSize: 14, textAlign: 'center' },
 
   section: { marginBottom: 24 },
   sectionTitle: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
   },
 
   subjectCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -233,13 +233,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  subjectName: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  subjectName: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
   subjectPct: { fontSize: 18, fontWeight: 'bold' },
 
   progressTrack: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#334155',
+    backgroundColor: '#E2E8F0',
     overflow: 'hidden',
   },
   progressFill: {
@@ -252,12 +252,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
   },
   termChipActive: { backgroundColor: '#6366f1', borderColor: '#6366f1' },
-  termChipText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
+  termChipText: { color: '#64748B', fontSize: 13, fontWeight: '600' },
   termChipTextActive: { color: '#fff' },
 
   downloadButton: {
@@ -271,14 +271,14 @@ const styles = StyleSheet.create({
 
   trendRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10 },
   trendDot: { width: 8, height: 8, borderRadius: 4 },
-  trendLabel: { color: '#94a3b8', fontSize: 12, marginLeft: 6 },
+  trendLabel: { color: '#64748B', fontSize: 12, marginLeft: 6 },
 
   emptyState: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 24,
     alignItems: 'center',
   },
-  emptyText: { color: '#fff', fontSize: 15, fontWeight: '600', marginBottom: 4 },
-  emptySub: { color: '#94a3b8', fontSize: 13, textAlign: 'center' },
+  emptyText: { color: '#0F172A', fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  emptySub: { color: '#64748B', fontSize: 13, textAlign: 'center' },
 });

@@ -110,20 +110,20 @@ export default function BusScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0f172a' },
+  root: { flex: 1, backgroundColor: '#F7F9FC' },
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#1e293b', paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#334155',
+    backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 18,
+    borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
   },
   headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#6366f120', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#f1f5f9' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
   headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
   emptyState: { padding: 24 },
   emptyText: { color: '#64748b', fontSize: 14, textAlign: 'center' },
-  statusCard: { margin: 16, backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
-  statusRoute: { color: '#f1f5f9', fontSize: 16, fontWeight: '700' },
-  statusText: { color: '#94a3b8', fontSize: 14, marginTop: 6 },
+  statusCard: { margin: 16, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+  statusRoute: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
+  statusText: { color: '#64748B', fontSize: 14, marginTop: 6 },
   statusCoords: { color: '#64748b', fontSize: 12, marginTop: 6, fontVariant: ['tabular-nums'] },
   webNotice: { color: '#f59e0b', fontSize: 12, marginTop: 12 },
   map: { flex: 1 },

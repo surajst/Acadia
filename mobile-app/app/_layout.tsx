@@ -72,7 +72,7 @@ function ProtectedStack() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f172a' }, headerStyle: { backgroundColor: '#0f172a' }, headerTintColor: '#fff' }}>
+      <Stack screenOptions={{ contentStyle: { backgroundColor: '#F7F9FC' }, headerStyle: { backgroundColor: '#F7F9FC' }, headerTintColor: '#fff' }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="teacher" options={{ title: 'My Classes' }} />
@@ -89,6 +89,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F7F9FC',
   },
 });

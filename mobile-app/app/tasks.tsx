@@ -130,19 +130,19 @@ export default function TasksScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0f172a' },
+  root: { flex: 1, backgroundColor: '#F7F9FC' },
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#334155',
+    borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
   },
   headerIconWrap: {
     width: 48, height: 48, borderRadius: 14,
     backgroundColor: '#6366f115',
     justifyContent: 'center', alignItems: 'center',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#f1f5f9', letterSpacing: 0.2 },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', letterSpacing: 0.2 },
   headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
   sectionLabelRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -155,20 +155,20 @@ const styles = StyleSheet.create({
   },
   sectionBadgeText: { fontSize: 11, color: '#6366f1', fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#94a3b8' },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#f1f5f9', marginTop: 16 },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#64748B' },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#0F172A', marginTop: 16 },
   emptySubtext: { fontSize: 13, color: '#64748b', marginTop: 6, textAlign: 'center' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
   card: {
-    backgroundColor: '#1e293b', borderRadius: 14, padding: 16,
-    borderWidth: 1, borderColor: '#334155',
+    backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: '#E2E8F0',
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
   cardLeft: { flex: 1, marginRight: 12 },
   typeBadge: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
   typeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
-  cardTitle: { fontSize: 14, fontWeight: '600', color: '#f1f5f9', lineHeight: 20 },
+  cardTitle: { fontSize: 14, fontWeight: '600', color: '#0F172A', lineHeight: 20 },
   cardDate: { fontSize: 11, color: '#64748b', marginTop: 4 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
 });

@@ -66,7 +66,7 @@ export default function ChallengesScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Active Challenges</Text>
@@ -82,8 +82,8 @@ export default function ChallengesScreen() {
             <View key={item.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{item.title}</Text>
-                <View style={[styles.badge, { backgroundColor: TASK_TYPE_BG[item.taskType] || '#334155' }]}>
-                  <Text style={[styles.badgeText, { color: TASK_TYPE_COLOR[item.taskType] || '#94a3b8' }]}>
+                <View style={[styles.badge, { backgroundColor: TASK_TYPE_BG[item.taskType] || '#E2E8F0' }]}>
+                  <Text style={[styles.badgeText, { color: TASK_TYPE_COLOR[item.taskType] || '#64748B' }]}>
                     {item.taskType}
                   </Text>
                 </View>
@@ -107,20 +107,20 @@ export default function ChallengesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F7F9FC',
     padding: 16,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   cardTitle: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 16,
     fontWeight: '700',
     flex: 1,
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   cardDescription: {
-    color: '#94a3b8',
+    color: '#64748B',
     fontSize: 14,
     marginTop: 8,
     lineHeight: 20,
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: '#E2E8F0',
   },
   xpText: {
     color: '#4ade80',
@@ -175,19 +175,19 @@ const styles = StyleSheet.create({
     height: 100,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyTitle: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
   },
   emptySubtext: {
-    color: '#94a3b8',
+    color: '#64748B',
     fontSize: 13,
     marginTop: 4,
     textAlign: 'center',

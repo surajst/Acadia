@@ -86,7 +86,7 @@ export default function StudentAttendanceScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Attendance Summary</Text>
@@ -125,7 +125,7 @@ export default function StudentAttendanceScreen() {
               <Text style={styles.monthLabel}>{monthLabel}</Text>
               <View style={styles.calendarGrid}>
                 {monthRecords.map(r => (
-                  <View key={r.date} style={[styles.dayCell, { backgroundColor: STATUS_BG[r.status] || '#1e293b' }]}>
+                  <View key={r.date} style={[styles.dayCell, { backgroundColor: STATUS_BG[r.status] || '#FFFFFF' }]}>
                     <Text style={[styles.dayNumber, { color: STATUS_COLOR[r.status] || '#fff' }]}>
                       {getDayLabel(r.date)}
                     </Text>
@@ -148,14 +148,14 @@ export default function StudentAttendanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F7F9FC',
     padding: 16,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
@@ -166,19 +166,19 @@ const styles = StyleSheet.create({
   },
   summaryBox: {
     flex: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 10,
     alignItems: 'center',
     borderWidth: 1.5,
   },
   summaryNum: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 20,
     fontWeight: 'bold',
   },
   summaryLabel: {
-    color: '#94a3b8',
+    color: '#64748B',
     fontSize: 11,
     marginTop: 2,
   },
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   monthLabel: {
-    color: '#94a3b8',
+    color: '#64748B',
     fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -217,19 +217,19 @@ const styles = StyleSheet.create({
     height: 100,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyTitle: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
   },
   emptySubtext: {
-    color: '#94a3b8',
+    color: '#64748B',
     fontSize: 13,
     marginTop: 4,
     textAlign: 'center',

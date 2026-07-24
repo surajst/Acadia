@@ -98,7 +98,7 @@ export default function SyllabusScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Curriculum Overview</Text>
@@ -182,15 +182,15 @@ export default function SyllabusScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:          { flex: 1, backgroundColor: '#0f172a', padding: 16 },
+  container:          { flex: 1, backgroundColor: '#F7F9FC', padding: 16 },
   center:             { justifyContent: 'center', alignItems: 'center' },
   section:            { marginBottom: 24 },
-  sectionTitle:       { color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+  sectionTitle:       { color: '#0F172A', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
   chipContainer:      { flexDirection: 'row', gap: 8, paddingBottom: 8 },
   chip:               { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-                        backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155' },
+                        backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
   chipActive:         { backgroundColor: '#6366f1', borderColor: '#6366f1' },
-  chipText:           { color: '#94a3b8', fontWeight: '600' },
+  chipText:           { color: '#64748B', fontWeight: '600' },
   chipTextActive:     { color: '#ffffff' },
   subjectGroup:       { marginBottom: 20 },
   subjectHeader:      { flexDirection: 'row', justifyContent: 'space-between',
@@ -198,24 +198,24 @@ const styles = StyleSheet.create({
                         borderLeftWidth: 3, marginBottom: 10 },
   subjectName:        { color: '#e2e8f0', fontSize: 15, fontWeight: '700' },
   subjectProgress:    { fontSize: 13, fontWeight: '600' },
-  card:               { backgroundColor: '#1e293b', padding: 14, borderRadius: 12,
-                        marginBottom: 8, borderWidth: 1, borderColor: '#334155' },
+  card:               { backgroundColor: '#FFFFFF', padding: 14, borderRadius: 12,
+                        marginBottom: 8, borderWidth: 1, borderColor: '#E2E8F0' },
   topicRow:           { flexDirection: 'row', alignItems: 'center', gap: 12 },
   indicator:          { width: 28, height: 28, borderRadius: 14, borderWidth: 2,
-                        borderColor: '#475569', justifyContent: 'center',
-                        alignItems: 'center', backgroundColor: '#0f172a' },
+                        borderColor: '#94A3B8', justifyContent: 'center',
+                        alignItems: 'center', backgroundColor: '#F7F9FC' },
   indicatorDone:      { borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)' },
-  indicatorText:      { color: '#94a3b8', fontSize: 11, fontWeight: 'bold' },
+  indicatorText:      { color: '#64748B', fontSize: 11, fontWeight: 'bold' },
   indicatorTextDone:  { color: '#22c55e', fontSize: 14 },
   topicTextContainer: { flex: 1 },
-  itemTitle:          { color: '#fff', fontSize: 15, fontWeight: '600', marginBottom: 3 },
-  itemSubtitle:       { color: '#94a3b8', fontSize: 13 },
+  itemTitle:          { color: '#0F172A', fontSize: 15, fontWeight: '600', marginBottom: 3 },
+  itemSubtitle:       { color: '#64748B', fontSize: 13 },
   doneBadge:          { backgroundColor: 'rgba(34,197,94,0.15)', borderRadius: 8,
                         paddingHorizontal: 8, paddingVertical: 3,
                         borderWidth: 1, borderColor: 'rgba(34,197,94,0.3)' },
   doneBadgeText:      { color: '#22c55e', fontSize: 11, fontWeight: '700' },
-  emptyCard:          { backgroundColor: '#1e293b', padding: 16, borderRadius: 12,
-                        borderWidth: 1, borderColor: '#334155',
+  emptyCard:          { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 12,
+                        borderWidth: 1, borderColor: '#E2E8F0',
                         justifyContent: 'center', alignItems: 'center', height: 90 },
-  emptyText:          { color: '#94a3b8', fontSize: 14, textAlign: 'center' },
+  emptyText:          { color: '#64748B', fontSize: 14, textAlign: 'center' },
 });

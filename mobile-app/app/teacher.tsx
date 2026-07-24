@@ -176,22 +176,22 @@ export default function TeacherScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0f172a' },
+  root: { flex: 1, backgroundColor: '#F7F9FC' },
   headerBand: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: '#E2E8F0',
   },
   headerIconWrap: {
     width: 48, height: 48, borderRadius: 14,
     backgroundColor: '#6366f120',
     justifyContent: 'center', alignItems: 'center',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#f1f5f9', letterSpacing: 0.2 },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', letterSpacing: 0.2 },
   headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
   sectionLabelRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -204,15 +204,15 @@ const styles = StyleSheet.create({
   },
   sectionBadgeText: { fontSize: 11, color: '#6366f1', fontWeight: '600' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#94a3b8' },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#64748B' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
-  emptyText: { fontSize: 16, fontWeight: '600', color: '#f1f5f9', marginTop: 12 },
+  emptyText: { fontSize: 16, fontWeight: '600', color: '#0F172A', marginTop: 12 },
   emptySubtext: { fontSize: 13, color: '#64748b', marginTop: 6, textAlign: 'center' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
   card: {
-    backgroundColor: '#1e293b', borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: '#334155',
+    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: '#E2E8F0',
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
   cardIconWrap: {
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#6366f115',
     justifyContent: 'center', alignItems: 'center',
   },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#f1f5f9' },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
   cardSubject: { fontSize: 12, color: '#64748b', marginTop: 2 },
   statusBadge: {
     flexDirection: 'row', alignItems: 'center',
@@ -228,9 +228,9 @@ const styles = StyleSheet.create({
   },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { fontSize: 11, fontWeight: '600' },
-  cardDivider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+  cardDivider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 12 },
   cardFooter: { flexDirection: 'row', alignItems: 'center' },
-  footerText: { fontSize: 13, color: '#94a3b8', flex: 1 },
+  footerText: { fontSize: 13, color: '#64748B', flex: 1 },
   viewBtn: { flexDirection: 'row', alignItems: 'center' },
   viewBtnText: { fontSize: 13, color: '#6366f1', fontWeight: '600' },
 });

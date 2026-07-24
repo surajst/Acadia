@@ -123,7 +123,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#0a0f1e',
+    backgroundColor: '#F7F9FC',
   },
   container: {
     flex: 1,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 13,
-    color: '#475569',
+    color: '#94A3B8',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 24,
@@ -149,20 +149,20 @@ const styles = StyleSheet.create({
   divider: {
     width: 40,
     height: 1,
-    backgroundColor: '#1e3a5f',
+    backgroundColor: '#E2E8F0',
   },
   formBlock: {
-    backgroundColor: '#111827',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E2E8F0',
     marginBottom: 24,
   },
   signInLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#94a3b8',
+    color: '#64748B',
     marginBottom: 20,
   },
   inputWrap: {
@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F7F9FC',
     borderRadius: 10,
     padding: 14,
-    color: '#f1f5f9',
+    color: '#0F172A',
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E2E8F0',
   },
   errorWrap: {
     backgroundColor: '#ef444415',
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   footer: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#334155',
+    color: '#E2E8F0',
     letterSpacing: 0.5,
   },
 });

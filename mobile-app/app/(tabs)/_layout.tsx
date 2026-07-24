@@ -25,18 +25,18 @@ function WebOnlyRoleScreen({ role }: { role: string }) {
   const { logout } = useAuth();
   const host = getApiHost();
   return (
-    <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
-      <Text style={{ color: '#f1f5f9', fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
+    <View style={{ flex: 1, backgroundColor: '#F7F9FC', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+      <Text style={{ color: '#0F172A', fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
         {role === ROLE_ADMIN ? 'Admin' : 'Principal'} accounts use the web dashboard
       </Text>
-      <Text style={{ color: '#94a3b8', fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
+      <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
         Open {host}/login in a browser on your computer or phone to manage your school.
       </Text>
       <TouchableOpacity
         onPress={() => logout()}
-        style={{ backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 }}
+        style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 }}
       >
-        <Text style={{ color: '#94a3b8', fontWeight: '600' }}>Log Out</Text>
+        <Text style={{ color: '#64748B', fontWeight: '600' }}>Log Out</Text>
       </TouchableOpacity>
     </View>
   );
@@ -130,7 +130,7 @@ export default function TabLayout() {
   if (loading) {
     return (
       <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
-        <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ flex: 1, backgroundColor: '#F7F9FC', justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#6366f1" />
         </View>
       </DataContext.Provider>
@@ -140,7 +140,7 @@ export default function TabLayout() {
   if (!data) {
     return (
       <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
-        <View style={{ flex: 1, backgroundColor: '#0f172a' }} />
+        <View style={{ flex: 1, backgroundColor: '#F7F9FC' }} />
       </DataContext.Provider>
     );
   }
@@ -150,9 +150,9 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           tabBarActiveTintColor:   '#6366f1',
-          tabBarInactiveTintColor: '#94a3b8',
-          tabBarStyle: { backgroundColor: '#0f172a', borderTopColor: '#1e293b' },
-          headerStyle: { backgroundColor: '#0f172a' },
+          tabBarInactiveTintColor: '#64748B',
+          tabBarStyle: { backgroundColor: '#F7F9FC', borderTopColor: '#E2E8F0' },
+          headerStyle: { backgroundColor: '#F7F9FC' },
           headerTintColor: '#fff',
           headerShown: headerShown,
         }}>

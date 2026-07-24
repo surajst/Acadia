@@ -27,7 +27,7 @@ export default function QuestsScreen() {
   return (
     <ScrollView 
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Parent Quests</Text>
@@ -119,24 +119,24 @@ export default function QuestsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F7F9FC',
     padding: 16,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 12,
   },
   infoText: {
-    color: '#94a3b8',
+    color: '#64748B',
     fontSize: 14,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
@@ -148,13 +148,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemTitle: {
-    color: '#fff',
+    color: '#0F172A',
     fontSize: 16,
     fontWeight: 'bold',
     flex: 1,
   },
   itemSubtitle: {
-    color: '#94a3b8',
+    color: '#64748B',
     fontSize: 14,
   },
   badgeText: {

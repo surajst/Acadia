@@ -276,23 +276,23 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a', padding: 16 },
+  container: { flex: 1, backgroundColor: '#F7F9FC', padding: 16 },
   header: { alignItems: 'center', marginVertical: 32 },
   avatar: {
     width: 80, height: 80, borderRadius: 40,
     backgroundColor: '#6366f1',
     justifyContent: 'center', alignItems: 'center', marginBottom: 16,
   },
-  avatarText: { color: '#fff', fontSize: 32, fontWeight: 'bold' },
-  name: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
-  roleText: { color: '#94a3b8', fontSize: 16 },
+  avatarText: { color: '#0F172A', fontSize: 32, fontWeight: 'bold' },
+  name: { color: '#0F172A', fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
+  roleText: { color: '#64748B', fontSize: 16 },
   section: { marginBottom: 32 },
   sectionHeaderRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginBottom: 12, marginHorizontal: 4,
   },
   sectionTitle: {
-    color: '#94a3b8', fontSize: 14, fontWeight: 'bold',
+    color: '#64748B', fontSize: 14, fontWeight: 'bold',
     textTransform: 'uppercase',
   },
   editBtn: {
@@ -301,13 +301,13 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#6366f140',
   },
   editBtnText: { color: '#6366f1', fontSize: 13, fontWeight: '600' },
-  card: { backgroundColor: '#1e293b', borderRadius: 16, overflow: 'hidden' },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden' },
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
-  detailLabel: { color: '#94a3b8', fontSize: 16 },
-  detailValue: { color: '#fff', fontSize: 16, fontWeight: '500' },
+  detailLabel: { color: '#64748B', fontSize: 16 },
+  detailValue: { color: '#0F172A', fontSize: 16, fontWeight: '500' },
   editRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
   editInput: {
-    color: '#fff', fontSize: 15, fontWeight: '500',
+    color: '#0F172A', fontSize: 15, fontWeight: '500',
     borderBottomWidth: 1, borderBottomColor: '#6366f1',
     minWidth: 160, textAlign: 'right', paddingBottom: 2,
   },
@@ -317,25 +317,25 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1, padding: 12, borderRadius: 10,
-    backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155',
+    backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0',
     alignItems: 'center',
   },
-  cancelBtnText: { color: '#94a3b8', fontWeight: '600' },
+  cancelBtnText: { color: '#64748B', fontWeight: '600' },
   saveBtn: {
     flex: 1, padding: 12, borderRadius: 10,
     backgroundColor: '#6366f1', alignItems: 'center',
   },
   saveBtnText: { color: '#fff', fontWeight: '600' },
-  divider: { height: 1, backgroundColor: '#334155', marginLeft: 16 },
+  divider: { height: 1, backgroundColor: '#E2E8F0', marginLeft: 16 },
   logoutButton: {
     backgroundColor: '#7f1d1d', padding: 16, borderRadius: 12,
     alignItems: 'center', marginTop: 16,
   },
   logoutText: { color: '#f87171', fontSize: 18, fontWeight: 'bold' },
   modalOverlay: { flex: 1, backgroundColor: '#00000090', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: '#1e293b', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: '#f1f5f9', marginBottom: 12 },
+  modalCard: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 12 },
   langRow: { padding: 12, borderRadius: 10, marginBottom: 4 },
   langRowActive: { backgroundColor: '#6366f122' },
-  langRowText: { color: '#f1f5f9', fontSize: 14 },
+  langRowText: { color: '#0F172A', fontSize: 14 },
 });

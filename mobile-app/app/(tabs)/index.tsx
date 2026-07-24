@@ -102,12 +102,12 @@ export default function DashboardScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
     >
       {role === 'TEACHER' && (
         <View style={styles.notificationHeaderRow}>
           <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.bellButton}>
-            <SymbolView name={{ ios: 'bell', android: 'notifications', web: 'notifications' }} tintColor="#fff" size={24} />
+            <SymbolView name={{ ios: 'bell', android: 'notifications', web: 'notifications' }} tintColor="#334155" size={24} />
             {unreadCount > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -165,7 +165,7 @@ export default function DashboardScreen() {
             </View>
             <View style={styles.metricBox}>
               <Text style={[styles.metricLabel, {
-                color: tasks.length > 0 ? '#f59e0b' : '#94a3b8'
+                color: tasks.length > 0 ? '#f59e0b' : '#64748B'
               }]}>
                 Pending Tasks
               </Text>
@@ -351,51 +351,51 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  container: { flex: 1, backgroundColor: '#0f172a', padding: 16 },
+  center: { flex: 1, backgroundColor: '#F7F9FC', justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: '#F7F9FC', padding: 16 },
   errorText: { color: '#ef4444', fontSize: 16 },
-  infoCard: { backgroundColor: '#1e293b', padding: 20, borderRadius: 16, marginBottom: 16 },
+  infoCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, marginBottom: 16 },
   childSwitcherRow: { marginHorizontal: -16, marginBottom: 16 },
-  childChip: { backgroundColor: '#1e293b', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: '#334155' },
+  childChip: { backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: '#E2E8F0' },
   childChipActive: { backgroundColor: '#6366f1', borderColor: '#6366f1' },
-  childChipText: { color: '#94a3b8', fontSize: 14, fontWeight: '600' },
+  childChipText: { color: '#64748B', fontSize: 14, fontWeight: '600' },
   childChipTextActive: { color: '#fff' },
-  greeting: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
-  subGreeting: { color: '#94a3b8', fontSize: 16, marginTop: 4 },
+  greeting: { color: '#0F172A', fontSize: 24, fontWeight: 'bold' },
+  subGreeting: { color: '#64748B', fontSize: 16, marginTop: 4 },
   metricsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-  metricBox: { backgroundColor: '#1e293b', padding: 16, borderRadius: 16, flex: 1, marginHorizontal: 4, alignItems: 'center' },
-  metricLabel: { color: '#94a3b8', fontSize: 12, marginBottom: 4 },
-  metricValue: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  metricBox: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, flex: 1, marginHorizontal: 4, alignItems: 'center' },
+  metricLabel: { color: '#64748B', fontSize: 12, marginBottom: 4 },
+  metricValue: { color: '#0F172A', fontSize: 20, fontWeight: 'bold' },
   alertCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f59e0b15', borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#f59e0b30', gap: 8 },
   alertDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#f59e0b' },
   alertText: { color: '#f59e0b', fontSize: 13, flex: 1 },
-  levelCard: { backgroundColor: '#1e293b', padding: 20, borderRadius: 16, marginBottom: 24 },
-  levelTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
-  progressBarBg: { height: 8, backgroundColor: '#334155', borderRadius: 4, marginBottom: 8 },
+  levelCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, marginBottom: 24 },
+  levelTitle: { color: '#0F172A', fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
+  progressBarBg: { height: 8, backgroundColor: '#E2E8F0', borderRadius: 4, marginBottom: 8 },
   progressBarFill: { height: '100%', backgroundColor: '#6366f1', borderRadius: 4 },
-  levelHint: { color: '#94a3b8', fontSize: 12, textAlign: 'right' },
+  levelHint: { color: '#64748B', fontSize: 12, textAlign: 'right' },
   section: { marginBottom: 24 },
-  sectionTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
-  infoText: { color: '#94a3b8', fontSize: 14 },
-  listItem: { backgroundColor: '#1e293b', padding: 16, borderRadius: 12, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  itemTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  sectionTitle: { color: '#0F172A', fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
+  infoText: { color: '#64748B', fontSize: 14 },
+  listItem: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 12, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  itemTitle: { color: '#0F172A', fontSize: 16, fontWeight: '600' },
   itemSubtitle: { color: '#64748b', fontSize: 12, marginTop: 4 },
   itemReward: { color: '#4ade80', fontWeight: 'bold' },
   statusBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  periodItem: { backgroundColor: '#1e293b', borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  periodItem: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 },
   periodTimeBadge: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   periodTime: { fontSize: 13, fontWeight: '700' },
   periodInfo: { flex: 1 },
-  periodSubject: { color: '#f1f5f9', fontSize: 14, fontWeight: '600' },
+  periodSubject: { color: '#0F172A', fontSize: 14, fontWeight: '600' },
   periodMeta: { color: '#64748b', fontSize: 12, marginTop: 2 },
   periodStatus: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   dateChip: { alignSelf: 'flex-start', backgroundColor: '#6366f120', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 10, borderWidth: 1, borderColor: '#6366f130' },
   dateChipText: { color: '#818cf8', fontSize: 12, fontWeight: '500' },
   notificationHeaderRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
   cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  navCard: { width: '48%', backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 12 },
+  navCard: { width: '48%', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 12 },
   navCardIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-  navCardTitle: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  navCardTitle: { color: '#0F172A', fontSize: 15, fontWeight: '600' },
   navCardSubtitle: { color: '#64748b', fontSize: 12, marginTop: 2 },
   tripButton: { backgroundColor: '#6366f1', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
   tripButtonActive: { backgroundColor: '#ef4444' },

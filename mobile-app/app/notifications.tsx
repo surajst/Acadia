@@ -88,7 +88,7 @@ export default function NotificationsScreen() {
       ) : (
         <ScrollView
           style={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
         >
           {notifications.length === 0 ? (
             <View style={styles.emptyCard}>
@@ -120,22 +120,22 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 50, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
+  container: { flex: 1, backgroundColor: '#F7F9FC' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 50, borderBottomWidth: 1, borderBottomColor: '#FFFFFF' },
   backButton: { color: '#6366f1', fontSize: 16, fontWeight: '600' },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  headerTitle: { color: '#0F172A', fontSize: 18, fontWeight: 'bold' },
   markAllText: { color: '#6366f1', fontSize: 13, fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { flex: 1, padding: 16 },
-  card: { backgroundColor: '#1e293b', borderRadius: 12, padding: 14, marginBottom: 10 },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14, marginBottom: 10 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#ef4444' },
-  cardTitle: { color: '#fff', fontSize: 15, fontWeight: '700', flex: 1 },
+  cardTitle: { color: '#0F172A', fontSize: 15, fontWeight: '700', flex: 1 },
   typeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   typeBadgeText: { fontSize: 10, fontWeight: '700' },
-  cardBody: { color: '#94a3b8', fontSize: 13, lineHeight: 18 },
+  cardBody: { color: '#64748B', fontSize: 13, lineHeight: 18 },
   cardTime: { color: '#64748b', fontSize: 11, marginTop: 6 },
-  emptyCard: { backgroundColor: '#1e293b', borderRadius: 12, padding: 20, alignItems: 'center', height: 100, justifyContent: 'center' },
-  emptyText: { color: '#94a3b8', fontSize: 14 },
+  emptyCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, alignItems: 'center', height: 100, justifyContent: 'center' },
+  emptyText: { color: '#64748B', fontSize: 14 },
 });
