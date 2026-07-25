@@ -25,41 +25,48 @@
             <a href="/web/admin/management" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition shadow-sm font-semibold">Back to Management</a>
         </div>
     </header>
-<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
+<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0;">
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
+        <!-- Tab switcher -->
+        <div class="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+            <button type="button" data-tab="students" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-white text-slate-800 shadow-sm">Students</button>
+            <button type="button" data-tab="staff" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-colors text-slate-500 hover:text-slate-700">Staff</button>
+        </div>
 
-    <main class="flex-grow flex items-center justify-center p-4" >
-        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-8">
-                <h2 class="text-2xl font-bold text-slate-800 mb-2">Upload Student Roster</h2>
-                <p class="text-slate-500 mb-8">Upload a .csv or .xlsx file to automatically create students, parents, and class sections.</p>
+        <!-- ============ STUDENTS ============ -->
+        <section data-panel="students" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 sm:p-8 space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">Student roster</h2>
+                    <p class="text-slate-500 text-sm mt-1">Upload a CSV or Excel file to create students, parents, and class sections. You'll preview the rows before anything is saved.</p>
+                </div>
 
                 <!-- Alerts -->
-                <div th:if="${error}" class="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 mb-6 font-medium text-sm flex items-start gap-3">
+                <div th:if="${error}" class="bg-red-50 text-red-700 p-3.5 rounded-lg border border-red-200 font-medium text-sm flex items-start gap-3">
                     <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span th:text="${error}"></span>
                 </div>
-                
-                <div th:if="${success}" class="bg-emerald-50 text-emerald-700 p-4 rounded-lg border border-emerald-200 mb-6 font-medium text-sm flex items-start gap-3">
+                <div th:if="${success}" class="bg-emerald-50 text-emerald-700 p-3.5 rounded-lg border border-emerald-200 font-medium text-sm flex items-start gap-3">
                     <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     <span th:text="${success}"></span>
                 </div>
 
                 <!-- Preview (dry run): shown after upload, before commit. Nothing is saved yet. -->
-                <div th:if="${previewRows != null and !previewRows.isEmpty()}" class="mb-6">
-                    <div class="bg-blue-50 text-blue-800 p-4 rounded-lg border border-blue-200 mb-3 text-sm font-medium flex items-start gap-3">
+                <div th:if="${previewRows != null and !previewRows.isEmpty()}" class="space-y-3">
+                    <div class="bg-blue-50 text-blue-800 p-3.5 rounded-lg border border-blue-200 text-sm font-medium flex items-start gap-3">
                         <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span>Preview only — nothing has been saved yet. Review the rows below, then confirm to import. <span class="font-bold" th:text="${previewSummary}"></span></span>
+                        <span>Preview only — nothing has been saved yet. <span class="font-bold" th:text="${previewSummary}"></span></span>
                     </div>
                     <div class="border border-slate-200 rounded-lg overflow-hidden">
                         <div class="max-h-64 overflow-y-auto">
                             <table class="min-w-full text-xs text-left">
                                 <thead class="text-slate-600 bg-slate-100 sticky top-0">
                                     <tr>
-                                        <th class="px-3 py-2">Row</th>
-                                        <th class="px-3 py-2">Student</th>
-                                        <th class="px-3 py-2">Action</th>
-                                        <th class="px-3 py-2">Detail</th>
+                                        <th class="px-3 py-2 font-semibold">Row</th>
+                                        <th class="px-3 py-2 font-semibold">Student</th>
+                                        <th class="px-3 py-2 font-semibold">Action</th>
+                                        <th class="px-3 py-2 font-semibold">Detail</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -67,9 +74,9 @@
                                         <td class="px-3 py-2 text-slate-400" th:text="${row.rowNumber}"></td>
                                         <td class="px-3 py-2 text-slate-700" th:text="${row.label}"></td>
                                         <td class="px-3 py-2">
-                                            <span th:if="${row.status == 'Create'}" class="text-emerald-700 font-semibold">Create</span>
-                                            <span th:if="${row.status == 'Skip'}" class="text-amber-700 font-semibold">Skip</span>
-                                            <span th:if="${row.status == 'Error'}" class="text-red-700 font-semibold">Error</span>
+                                            <span th:if="${row.status == 'Create'}" class="inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Create</span>
+                                            <span th:if="${row.status == 'Skip'}" class="inline-block px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Skip</span>
+                                            <span th:if="${row.status == 'Error'}" class="inline-block px-2 py-0.5 rounded-full bg-red-50 text-red-700 font-semibold">Error</span>
                                         </td>
                                         <td class="px-3 py-2 text-slate-500" th:text="${row.detail}"></td>
                                     </tr>
@@ -77,29 +84,30 @@
                             </table>
                         </div>
                     </div>
-                    <div class="flex justify-end gap-3 mt-4">
+                    <div class="flex justify-end gap-3">
                         <form action="/web/management/upload/cancel" method="POST">
-                            <button type="submit" class="bg-white hover:bg-slate-50 text-slate-600 font-semibold py-3 px-6 rounded-lg border border-slate-300 transition-colors">Cancel</button>
+                            <button type="submit" class="bg-white hover:bg-slate-50 text-slate-600 font-semibold py-2.5 px-5 rounded-lg border border-slate-300 transition-colors">Cancel</button>
                         </form>
                         <form action="/web/management/upload/confirm" method="POST">
                             <button type="submit" th:disabled="${!previewCanCommit}"
-                                    class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                                <span>Confirm Import</span>
+                                    class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                                <span>Confirm import</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <div th:if="${rowResults != null and !rowResults.isEmpty()}" class="mb-6 border border-slate-200 rounded-lg overflow-hidden">
+                <!-- Committed results -->
+                <div th:if="${rowResults != null and !rowResults.isEmpty()}" class="border border-slate-200 rounded-lg overflow-hidden">
                     <div class="max-h-64 overflow-y-auto">
                         <table class="min-w-full text-xs text-left">
                             <thead class="text-slate-600 bg-slate-100 sticky top-0">
                                 <tr>
-                                    <th class="px-3 py-2">Row</th>
-                                    <th class="px-3 py-2">Student</th>
-                                    <th class="px-3 py-2">Status</th>
-                                    <th class="px-3 py-2">Detail</th>
+                                    <th class="px-3 py-2 font-semibold">Row</th>
+                                    <th class="px-3 py-2 font-semibold">Student</th>
+                                    <th class="px-3 py-2 font-semibold">Status</th>
+                                    <th class="px-3 py-2 font-semibold">Detail</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -107,9 +115,9 @@
                                     <td class="px-3 py-2 text-slate-400" th:text="${row.rowNumber}"></td>
                                     <td class="px-3 py-2 text-slate-700" th:text="${row.label}"></td>
                                     <td class="px-3 py-2">
-                                        <span th:if="${row.status == 'Created'}" class="text-emerald-700 font-semibold">Created</span>
-                                        <span th:if="${row.status == 'Skipped'}" class="text-amber-700 font-semibold">Skipped</span>
-                                        <span th:if="${row.status == 'Error'}" class="text-red-700 font-semibold">Error</span>
+                                        <span th:if="${row.status == 'Created'}" class="inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Created</span>
+                                        <span th:if="${row.status == 'Skipped'}" class="inline-block px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Skipped</span>
+                                        <span th:if="${row.status == 'Error'}" class="inline-block px-2 py-0.5 rounded-full bg-red-50 text-red-700 font-semibold">Error</span>
                                     </td>
                                     <td class="px-3 py-2 text-slate-500" th:text="${row.detail}"></td>
                                 </tr>
@@ -118,88 +126,91 @@
                     </div>
                 </div>
 
-                <form action="/web/management/upload/process" method="POST" enctype="multipart/form-data" class="space-y-6">
-                    <div class="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors relative group">
+                <form action="/web/management/upload/process" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 hover:border-blue-300 transition-colors relative group">
                         <input type="file" name="file" accept=".csv,.xlsx,.xls" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                        <div class="p-12 text-center pointer-events-none">
-                            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <div class="p-8 text-center pointer-events-none">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                             </div>
-                            <h3 class="text-lg font-bold text-slate-700 mb-1">Select a CSV or Excel file</h3>
-                            <p class="text-sm text-slate-500">or drag and drop it here</p>
+                            <h3 class="text-base font-semibold text-slate-700">Drop a CSV or Excel file</h3>
+                            <p class="text-sm text-slate-400 mt-0.5">or click to browse</p>
                         </div>
                     </div>
 
-                    <div class="flex justify-end">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                            <span>Preview Import</span>
+                    <div class="flex items-center justify-between">
+                        <details class="text-sm">
+                            <summary class="text-slate-500 hover:text-slate-700 cursor-pointer select-none font-medium">View required columns</summary>
+                            <div class="mt-3 overflow-x-auto">
+                                <table class="min-w-full text-xs text-left text-slate-500 border border-slate-200 rounded-lg overflow-hidden">
+                                    <thead class="text-slate-600 bg-slate-100">
+                                        <tr>
+                                            <th class="px-3 py-2 font-semibold">FirstName</th>
+                                            <th class="px-3 py-2 font-semibold">LastName</th>
+                                            <th class="px-3 py-2 font-semibold">RollNumber</th>
+                                            <th class="px-3 py-2 font-semibold">Grade</th>
+                                            <th class="px-3 py-2 font-semibold">Section</th>
+                                            <th class="px-3 py-2 font-semibold">ParentName</th>
+                                            <th class="px-3 py-2 font-semibold">ParentPhone</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-t border-slate-100">
+                                            <td class="px-3 py-2">Riya</td>
+                                            <td class="px-3 py-2">Singhania</td>
+                                            <td class="px-3 py-2">6A14</td>
+                                            <td class="px-3 py-2">Grade 6</td>
+                                            <td class="px-3 py-2">A</td>
+                                            <td class="px-3 py-2">Anil Singhania</td>
+                                            <td class="px-3 py-2">+91 9876543210</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </details>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2 shrink-0">
+                            <span>Preview import</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </button>
                     </div>
                 </form>
             </div>
-            <div class="bg-slate-50 p-6 border-t border-slate-100">
-                <h4 class="text-sm font-bold text-slate-700 mb-3">Required CSV Format</h4>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-xs text-left text-slate-500">
-                        <thead class="text-slate-700 bg-slate-200">
-                            <tr>
-                                <th class="px-3 py-2 rounded-tl">FirstName</th>
-                                <th class="px-3 py-2">LastName</th>
-                                <th class="px-3 py-2">RollNumber</th>
-                                <th class="px-3 py-2">Grade</th>
-                                <th class="px-3 py-2">Section</th>
-                                <th class="px-3 py-2">ParentName</th>
-                                <th class="px-3 py-2 rounded-tr">ParentPhone</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="bg-white border-b border-slate-100">
-                                <td class="px-3 py-2">Riya</td>
-                                <td class="px-3 py-2">Singhania</td>
-                                <td class="px-3 py-2">6A14</td>
-                                <td class="px-3 py-2">Grade 6</td>
-                                <td class="px-3 py-2">A</td>
-                                <td class="px-3 py-2">Anil Singhania</td>
-                                <td class="px-3 py-2">+91 9876543210</td>
-                            </tr>
-                        </tbody>
-                    </table>
+        </section>
+
+        <!-- ============ STAFF ============ -->
+        <section data-panel="staff" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden">
+            <div class="p-6 sm:p-8 space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">Bulk import staff</h2>
+                    <p class="text-slate-500 text-sm mt-1">Upload a CSV of teachers, principals, admins, or drivers. Each gets a temporary password (shown below to relay) and stays pending approval until they can sign in.</p>
                 </div>
-            </div>
-        </div>
 
-        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-8">
-            <div class="p-8">
-                <h2 class="text-2xl font-bold text-slate-800 mb-2">Bulk Import Staff</h2>
-                <p class="text-slate-500 mb-8">Upload a .csv of teachers, principals, admins, or drivers. A temporary password is generated for each and shown below to relay. New staff are pending approval before they can sign in.</p>
-
-                <div th:if="${staffError}" class="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 mb-6 font-medium text-sm">
+                <div th:if="${staffError}" class="bg-red-50 text-red-700 p-3.5 rounded-lg border border-red-200 font-medium text-sm">
                     <span th:text="${staffError}"></span>
                 </div>
-                <div th:if="${staffSuccess}" class="bg-emerald-50 text-emerald-700 p-4 rounded-lg border border-emerald-200 mb-6 font-medium text-sm">
+                <div th:if="${staffSuccess}" class="bg-emerald-50 text-emerald-700 p-3.5 rounded-lg border border-emerald-200 font-medium text-sm">
                     <span th:text="${staffSuccess}"></span>
                 </div>
 
-                <div th:if="${staffRowResults != null and !staffRowResults.isEmpty()}" class="mb-6 border border-slate-200 rounded-lg overflow-hidden">
+                <div th:if="${staffRowResults != null and !staffRowResults.isEmpty()}" class="border border-slate-200 rounded-lg overflow-hidden">
                     <div class="max-h-64 overflow-y-auto">
                         <table class="min-w-full text-xs text-left">
                             <thead class="text-slate-600 bg-slate-100 sticky top-0">
                                 <tr>
-                                    <th class="px-3 py-2">Row</th>
-                                    <th class="px-3 py-2">Name</th>
-                                    <th class="px-3 py-2">Status</th>
-                                    <th class="px-3 py-2">Detail</th>
+                                    <th class="px-3 py-2 font-semibold">Row</th>
+                                    <th class="px-3 py-2 font-semibold">Name</th>
+                                    <th class="px-3 py-2 font-semibold">Status</th>
+                                    <th class="px-3 py-2 font-semibold">Detail</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:each="row : ${staffRowResults}" class="border-t border-slate-100">
-                                    <td class="px-3 py-2 text-slate-500" th:text="${row.rowNumber}"></td>
+                                    <td class="px-3 py-2 text-slate-400" th:text="${row.rowNumber}"></td>
                                     <td class="px-3 py-2 text-slate-700" th:text="${row.label}"></td>
                                     <td class="px-3 py-2">
-                                        <span th:if="${row.status == 'Created'}" class="text-emerald-700 font-semibold">Created</span>
-                                        <span th:if="${row.status == 'Skipped'}" class="text-amber-700 font-semibold">Skipped</span>
-                                        <span th:if="${row.status == 'Error'}" class="text-red-700 font-semibold">Error</span>
+                                        <span th:if="${row.status == 'Created'}" class="inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Created</span>
+                                        <span th:if="${row.status == 'Skipped'}" class="inline-block px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Skipped</span>
+                                        <span th:if="${row.status == 'Error'}" class="inline-block px-2 py-0.5 rounded-full bg-red-50 text-red-700 font-semibold">Error</span>
                                     </td>
                                     <td class="px-3 py-2 text-slate-500" th:text="${row.detail}"></td>
                                 </tr>
@@ -208,44 +219,66 @@
                     </div>
                 </div>
 
-                <form action="/web/management/upload/staff/process" method="POST" enctype="multipart/form-data" class="space-y-6">
-                    <div class="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors relative group">
+                <form action="/web/management/upload/staff/process" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 hover:border-blue-300 transition-colors relative group">
                         <input type="file" name="file" accept=".csv,.xlsx,.xls" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                        <div class="p-10 text-center pointer-events-none">
-                            <h3 class="text-lg font-bold text-slate-700 mb-1">Select a Staff CSV</h3>
-                            <p class="text-sm text-slate-500">or drag and drop it here</p>
+                        <div class="p-8 text-center pointer-events-none">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            </div>
+                            <h3 class="text-base font-semibold text-slate-700">Drop a staff CSV</h3>
+                            <p class="text-sm text-slate-400 mt-0.5">or click to browse</p>
                         </div>
                     </div>
-                    <div class="flex justify-end">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-sm transition-colors">Invite Staff</button>
+                    <div class="flex items-center justify-between">
+                        <details class="text-sm">
+                            <summary class="text-slate-500 hover:text-slate-700 cursor-pointer select-none font-medium">View required columns</summary>
+                            <div class="mt-3 overflow-x-auto">
+                                <table class="min-w-full text-xs text-left text-slate-500 border border-slate-200 rounded-lg overflow-hidden">
+                                    <thead class="text-slate-600 bg-slate-100">
+                                        <tr>
+                                            <th class="px-3 py-2 font-semibold">FullName</th>
+                                            <th class="px-3 py-2 font-semibold">Email</th>
+                                            <th class="px-3 py-2 font-semibold">Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-t border-slate-100">
+                                            <td class="px-3 py-2">Anita Rao</td>
+                                            <td class="px-3 py-2">anita.rao@school.edu</td>
+                                            <td class="px-3 py-2">TEACHER</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p class="text-xs text-slate-400 mt-2">Role must be one of: TEACHER, PRINCIPAL, ADMIN, DRIVER.</p>
+                            </div>
+                        </details>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow-sm transition-colors shrink-0">Invite staff</button>
                     </div>
                 </form>
             </div>
-            <div class="bg-slate-50 p-6 border-t border-slate-100">
-                <h4 class="text-sm font-bold text-slate-700 mb-3">Required CSV Format</h4>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-xs text-left text-slate-500">
-                        <thead class="text-slate-700 bg-slate-200">
-                            <tr>
-                                <th class="px-3 py-2 rounded-tl">FullName</th>
-                                <th class="px-3 py-2">Email</th>
-                                <th class="px-3 py-2 rounded-tr">Role</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="bg-white border-b border-slate-100">
-                                <td class="px-3 py-2">Anita Rao</td>
-                                <td class="px-3 py-2">anita.rao@school.edu</td>
-                                <td class="px-3 py-2">TEACHER</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p class="text-xs text-slate-400 mt-2">Role must be one of: TEACHER, PRINCIPAL, ADMIN, DRIVER.</p>
-                </div>
-            </div>
-        </div>
+        </section>
     </main>
-
 </div>
+
+<script th:inline="javascript">
+    // Tab switching between the Students and Staff import panels.
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const panels = { students: document.querySelector('[data-panel="students"]'), staff: document.querySelector('[data-panel="staff"]') };
+    function activate(tab) {
+        Object.entries(panels).forEach(([k, el]) => el.classList.toggle('hidden', k !== tab));
+        tabButtons.forEach(b => {
+            const on = b.dataset.tab === tab;
+            b.classList.toggle('bg-white', on);
+            b.classList.toggle('text-slate-800', on);
+            b.classList.toggle('shadow-sm', on);
+            b.classList.toggle('text-slate-500', !on);
+        });
+    }
+    tabButtons.forEach(b => b.addEventListener('click', () => activate(b.dataset.tab)));
+    // If the server rendered a staff result, open the Staff tab so it's visible.
+    const staffHasResult = /*[[${staffSuccess != null or staffError != null or (staffRowResults != null and !staffRowResults.isEmpty())}]]*/ false;
+    if (staffHasResult) activate('staff');
+</script>
 </body>
 </html>
