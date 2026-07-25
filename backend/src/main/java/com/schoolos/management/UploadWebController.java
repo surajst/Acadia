@@ -61,10 +61,17 @@ public class UploadWebController {
         return "upload";
     }
 
+    private static final String PENDING_IMPORT_KEY = "pendingStudentImport";
+
+    /**
+     * Step 1 of the two-step import: parse and validate the uploaded file as a
+     * dry run (no rows are written), classify each row as Create / Skip / Error,
+     * stash the parsed rows in the session, and render a preview the admin must
+     * confirm. Nothing touches the database until {@link #confirmUpload}.
+     */
     @PostMapping("/process")
-    public String processUpload(@RequestParam("file") MultipartFile file,
+    public String previewUpload(@RequestParam("file") MultipartFile file,
                                 HttpSession session,
-                                Authentication authentication,
                                 Model model) {
         User currentUser = (User) session.getAttribute("currentUser");
         if (currentUser == null) return "redirect:/web/login";
@@ -79,6 +86,81 @@ public class UploadWebController {
             allRows = parseRows(file);
         } catch (Exception e) {
             model.addAttribute("error", "Could not read the uploaded file: " + e.getMessage());
+            return "upload";
+        }
+
+        List<Map<String, String>> previewRows = new ArrayList<>();
+        int willCreate = 0, willSkip = 0, willFail = 0;
+        // Track roll numbers seen earlier in THIS file so an intra-file duplicate
+        // is flagged as Skip in the preview rather than silently colliding on commit.
+        java.util.Set<String> seenRolls = new java.util.HashSet<>();
+
+        for (int i = 1; i < allRows.size(); i++) { // row 0 is the header
+            int rowNumber = i + 1;
+            List<String> cols = allRows.get(i);
+            if (cols.stream().allMatch(c -> c == null || c.isBlank())) continue;
+
+            if (cols.size() < 7) {
+                willFail++;
+                previewRows.add(rowOutcome(rowNumber, "—", "Error", "Expected 7 columns, found " + cols.size()));
+                continue;
+            }
+
+            String firstName = cols.get(0).trim();
+            String lastName = cols.get(1).trim();
+            String rollNumber = cols.get(2).trim();
+            String grade = cols.get(3).trim();
+            String section = cols.get(4).trim();
+            String parentPhone = cols.get(6).trim();
+            String label = (firstName + " " + lastName).trim();
+            if (label.isEmpty()) label = "(row " + rowNumber + ")";
+
+            if (firstName.isEmpty() || lastName.isEmpty()) {
+                willFail++;
+                previewRows.add(rowOutcome(rowNumber, label, "Error", "First and last name are required"));
+            } else if (parentPhone.isEmpty() || !parentPhone.matches("^\\+?[0-9\\s\\-()]{7,}$")) {
+                willFail++;
+                previewRows.add(rowOutcome(rowNumber, label, "Error", "Invalid phone number format for parent"));
+            } else if (grade.isEmpty() || section.isEmpty()) {
+                willFail++;
+                previewRows.add(rowOutcome(rowNumber, label, "Error", "Grade and section are required"));
+            } else if (!rollNumber.isEmpty() && !seenRolls.add(rollNumber)) {
+                willSkip++;
+                previewRows.add(rowOutcome(rowNumber, label, "Skip", "Duplicate roll number " + rollNumber + " earlier in this file"));
+            } else if (!rollNumber.isEmpty()
+                    && studentRepository.findByTenantIdAndRollNumber(currentUser.getTenantId(), rollNumber).isPresent()) {
+                willSkip++;
+                previewRows.add(rowOutcome(rowNumber, label, "Skip", "Roll number " + rollNumber + " already exists"));
+            } else {
+                willCreate++;
+                previewRows.add(rowOutcome(rowNumber, label, "Create", "Grade " + grade + " · Section " + section));
+            }
+        }
+
+        session.setAttribute(PENDING_IMPORT_KEY, allRows);
+        model.addAttribute("previewRows", previewRows);
+        model.addAttribute("previewSummary", willCreate + " to create, " + willSkip + " to skip, " + willFail + " with errors.");
+        model.addAttribute("previewCanCommit", willCreate > 0);
+        return "upload";
+    }
+
+    /**
+     * Step 2: commit the rows stashed by {@link #previewUpload}. Re-runs the full
+     * validation on each row (defence in depth — the preview is advisory only)
+     * and creates students, parents, class sections, and logins.
+     */
+    @PostMapping("/confirm")
+    public String confirmUpload(HttpSession session,
+                                Authentication authentication,
+                                Model model) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null) return "redirect:/web/login";
+
+        @SuppressWarnings("unchecked")
+        List<List<String>> allRows = (List<List<String>>) session.getAttribute(PENDING_IMPORT_KEY);
+        session.removeAttribute(PENDING_IMPORT_KEY);
+        if (allRows == null) {
+            model.addAttribute("error", "Your import preview expired. Please upload the file again.");
             return "upload";
         }
 
@@ -227,6 +309,13 @@ public class UploadWebController {
                 + (failed > 0 ? ", " + failed + " row(s) failed" : "") + ".");
         model.addAttribute("rowResults", rowResults);
         return "upload";
+    }
+
+    /** Discard a pending import preview without committing anything. */
+    @PostMapping("/cancel")
+    public String cancelUpload(HttpSession session) {
+        session.removeAttribute(PENDING_IMPORT_KEY);
+        return "redirect:/web/management/upload";
     }
 
     @PostMapping("/staff/process")
