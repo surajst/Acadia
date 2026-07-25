@@ -75,6 +75,40 @@ test.describe('Bulk student import: preview / confirm / cancel', () => {
     await expect(page.locator('section[data-panel="students"]')).toBeVisible();
   });
 
+  test('staff CSV import commits directly and reports per-row outcomes', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+
+    const suffix = Date.now();
+    // 1 valid new teacher, 1 duplicate email (seeded teacher -> skip), 1 invalid role (error).
+    const csv =
+      'FullName,Email,Role\n' +
+      `Anita Rao,anita.rao.${suffix}@school.edu,TEACHER\n` +
+      'Existing Teacher,teacher@greenwood.com,TEACHER\n' +
+      `Bad Role,badrole.${suffix}@school.edu,WIZARD\n`;
+
+    await page.goto('/web/management/upload');
+    // Open the Staff tab so its form (and submit button) are visible.
+    await page.click('button.tab-btn:has-text("Staff")');
+    await page.locator('section[data-panel="staff"] input[type="file"]').setInputFiles({
+      name: 'staff.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(csv),
+    });
+    await page.click('button:has-text("Invite staff")');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Server-rendered staff result auto-opens the Staff tab.
+    const staffPanel = page.locator('section[data-panel="staff"]');
+    await expect(staffPanel).toBeVisible();
+    await expect(page.locator('text=1 staff member invited')).toBeVisible();
+
+    // One of each outcome: created (new), skipped (duplicate email), error (bad role).
+    await expect(staffPanel.getByText('Created', { exact: true })).toHaveCount(1);
+    await expect(staffPanel.getByText('Skipped', { exact: true })).toHaveCount(1);
+    await expect(staffPanel.getByText('Error', { exact: true })).toHaveCount(1);
+  });
+
   test('tab switcher toggles Students and Staff panels', async ({ page }) => {
     await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
     await page.goto('/web/management/upload');
