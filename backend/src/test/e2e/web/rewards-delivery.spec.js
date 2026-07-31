@@ -19,21 +19,27 @@ test.describe('ACADIA Custom Parent Rewards Delivery Flow', () => {
     // 1. Login as Parent (Ramesh)
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
 
-    // 2. Navigate to Parent Portal to add custom reward
-    await page.goto('/web/parent/portal');
+    // 2. Navigate to the Parent Dashboard (the /portal route now redirects here)
+    await page.goto('/web/parent/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // 3. Fill out the "Create Custom Reward" form directly on page
+    // 3. The "Create Custom Reward" form lives in the hidden Profile tab panel.
+    //    Click the Profile tab to reveal it before interacting.
+    await page.locator('[data-tab="profile"]').first().click();
+
+    // 4. Fill out the "Create Custom Reward" form (child selection is now required)
     const uniqueRewardTitle = 'Weekend Campfire Night: ' + Math.random().toString(36).substring(7);
+    const rewardChild = page.locator('#rewardStudentId option', { hasText: 'Arjun' }).first();
+    await page.selectOption('#rewardStudentId', await rewardChild.getAttribute('value'));
     await page.fill('#rewardTitle', uniqueRewardTitle);
     await page.fill('#xpCost', '150');
 
-    // 4. Submit form
+    // 5. Submit form
     await page.click('button:has-text("Create Reward")');
 
-    // 5. Verify success redirect and alert message
+    // 6. Verify success redirect and toast message
     await page.waitForLoadState('networkidle');
-    await page.waitForURL(url => url.pathname.includes('/web/parent/portal'), { timeout: 90000 });
+    await page.waitForURL(url => url.pathname.includes('/web/parent/dashboard'), { timeout: 90000 });
     await expect(page.locator('#toast')).toContainText('Custom reward added successfully!');
 
     // 6. Logout
@@ -51,8 +57,8 @@ test.describe('ACADIA Custom Parent Rewards Delivery Flow', () => {
     const customRewardTitle = page.locator(`h4:has-text("${uniqueRewardTitle}")`).first();
     await expect(customRewardTitle).toBeVisible();
 
-    // Store custom reward redemption URL or locator
-    const redeemBtn = page.locator(`a[href*="/web/student/reward/"][href$="/redeem"]`).first();
+    // The parent-defined reward redeem control is now a POST form button (reskin).
+    const redeemBtn = page.locator(`form[action*="/web/student/reward/"][action$="/redeem"] button`).first();
     await expect(redeemBtn).toBeVisible();
     await redeemBtn.click();
 
@@ -78,18 +84,20 @@ test.describe('ACADIA Custom Parent Rewards Delivery Flow', () => {
     // 12. Login as Parent (Ramesh)
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
 
-    // 13. Navigate to Parent Portal
-    await page.goto('/web/parent/portal');
+    // 13. Navigate to the Parent Dashboard
+    await page.goto('/web/parent/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // 14. Release & Mark Delivered the reward
-    const releaseBtn = page.locator(`a[href*="/web/parent/reward/"][href$="/release"]`).first();
+    // 14. The "Deliveries Pending" queue lives in the hidden Quests tab panel.
+    //     Click the Quests tab to reveal it, then Release & Mark Delivered.
+    await page.locator('[data-tab="quests"]').first().click();
+    const releaseBtn = page.locator('button:has-text("Release & Mark Delivered")').first();
     await expect(releaseBtn).toBeVisible();
     await releaseBtn.click();
 
     // 15. Verify release success toast
     await page.waitForLoadState('networkidle');
-    await page.waitForURL(url => url.pathname.includes('/web/parent/portal'), { timeout: 90000 });
+    await page.waitForURL(url => url.pathname.includes('/web/parent/dashboard'), { timeout: 90000 });
     await expect(page.locator('#toast')).toContainText('Reward successfully delivered/released!');
   });
 

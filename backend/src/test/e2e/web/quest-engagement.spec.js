@@ -17,30 +17,29 @@ test.describe('ACADIA Parent-Kid Quest Engagement Flow', () => {
   });
 
   test('TC-08/09/10/11/12/13/14: Assign task, claim quest, and approve quest loop', async ({ page }) => {
-    // Handle dialog alerts for parent task assignment
-    page.on('dialog', async dialog => {
-      expect(dialog.message()).toContain('Quest successfully assigned!');
-      await dialog.accept();
-    });
-
     // 1. Login as Parent (Ramesh)
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
 
-    // 2. Navigate to Parent Dashboard
-    await page.goto('/web/parent/portal');
+    // 2. Navigate to the Parent Dashboard (the /portal route now redirects here)
+    await page.goto('/web/parent/dashboard');
 
-    // 3. Verify Assign Task Form is visible
+    // 3. The "Assign Home Task" form lives in the hidden Profile tab panel.
+    //    Click the Profile tab to reveal it before interacting.
+    await page.locator('[data-tab="profile"]').first().click();
     await expect(page.locator('form[action="/web/parent/assign-task"]')).toBeVisible();
 
-    // 5. Fill out the Assign Task Form directly on page
+    // 5. Fill out the Assign Task Form (child selection is now required)
     const uniqueTitle = 'Backyard Raking Task: ' + Math.random().toString(36).substring(7);
-    await page.fill('#taskDescription', uniqueTitle);
-    await page.fill('#xpBounty', '200');
+    const taskChild = page.locator('#profile-assignStudentId option', { hasText: 'Arjun' }).first();
+    await page.selectOption('#profile-assignStudentId', await taskChild.getAttribute('value'));
+    await page.fill('#profile-taskTitle', uniqueTitle);
+    await page.fill('#profile-xpBounty', '200');
 
-    // 6. Submit the modal form
-    await page.click('button:has-text("Assign Task")');
-    await page.waitForTimeout(1000);
+    // 6. Submit the form and verify the success toast
+    await page.locator('#assignTaskForm-profile button[type="submit"]').click();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForURL(url => url.pathname.includes('/web/parent/dashboard'), { timeout: 90000 });
+    await expect(page.locator('#toast')).toContainText('Home task assigned successfully!');
 
     // 8. Logout
     await page.context().clearCookies();
@@ -57,23 +56,20 @@ test.describe('ACADIA Parent-Kid Quest Engagement Flow', () => {
       return c && !c.innerHTML.includes('Loading tasks...');
     }, { timeout: 30000 });
 
-    // 11. Assert task is visible and click Mark Done
-    const questCard = page.locator(`div:has-text("${uniqueTitle}")`).first();
+    // 11. Locate OUR specific parent-assigned quest card on the Home Quest Board
+    //     (avoid claiming an unrelated seeded task via a bare .first()) and Mark Done.
+    //     The claim control is now a POST form button (reskin).
+    const questCard = page.locator('div.rounded-2xl', { hasText: uniqueTitle })
+      .filter({ has: page.locator('button:has-text("Mark Done")') });
     await expect(questCard).toBeVisible();
+    await questCard.locator('button:has-text("Mark Done")').click();
 
-    const markDoneBtn = page.locator(`a[href*="/web/student/quest/"][href$="/claim"]`).first();
-    await expect(markDoneBtn).toBeVisible();
-    await markDoneBtn.click();
-
-    // 12. Verify status updates to Awaiting Approval
+    // 12. Verify OUR quest now shows the Awaiting Approval status.
     await page.waitForLoadState('domcontentloaded');
     await page.waitForURL(url => url.pathname.includes('/web/student/portal'), { timeout: 90000 });
     await page.locator('[data-tab="challenges"]').first().click();
-    await page.waitForFunction(() => {
-      const c = document.getElementById('scholastic-tasks-container');
-      return c && !c.innerHTML.includes('Loading tasks...');
-    }, { timeout: 30000 });
-    await expect(page.locator('text=Awaiting Parent Approval').first()).toBeVisible({ timeout: 90000 });
+    const awaitingCard = page.locator('div.rounded-2xl', { hasText: uniqueTitle });
+    await expect(awaitingCard.getByText('AWAITING APPROVAL')).toBeVisible({ timeout: 90000 });
 
     // 13. Logout
     await page.context().clearCookies();
@@ -81,18 +77,31 @@ test.describe('ACADIA Parent-Kid Quest Engagement Flow', () => {
     // 14. Login as Parent (Ramesh)
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
 
-    // 15. Navigate to Parent Dashboard
-    await page.goto('/web/parent/portal');
-
-    // 16. Approve the quest in the Approval Queue
+    // 15. Navigate to the Parent Dashboard
+    await page.goto('/web/parent/dashboard');
     await page.waitForLoadState('domcontentloaded');
-    const approveBtn = page.locator('a:has-text("✓ Approve & Grant XP")').first();
-    await expect(approveBtn).toBeVisible({ timeout: 90000 });
-    await approveBtn.click();
 
-    // 17. Verify status changes to Verified / Approved (via toast or navigation)
+    // 16. The Approval Queue lives in the hidden Quests tab panel.
+    //     Click the Quests tab to reveal it, then approve the awaiting quest.
+    await page.locator('[data-tab="quests"]').first().click();
+    const questsPanel = page.locator('#tab-quests');
+    // Our claimed quest must be sitting in the parent's Approval Queue.
+    await expect(questsPanel.getByText(uniqueTitle).first()).toBeVisible({ timeout: 90000 });
+
+    // Approval is an AJAX POST; wait for it to complete successfully.
+    const approveBtn = page.locator('.approve-quest-btn').first();
+    await expect(approveBtn).toBeVisible();
+    const [approveResp] = await Promise.all([
+      page.waitForResponse(r => r.url().includes('/api/parent/approve-quest/') && r.request().method() === 'POST'),
+      approveBtn.click(),
+    ]);
+    expect(approveResp.ok()).toBeTruthy();
+
+    // 17. Verify the quest left the Approval Queue (status is now APPROVED).
+    await page.goto('/web/parent/dashboard');
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('#toast')).toBeVisible();
+    await page.locator('[data-tab="quests"]').first().click();
+    await expect(page.locator('#tab-quests').getByText(uniqueTitle)).toHaveCount(0);
   });
 
 });
