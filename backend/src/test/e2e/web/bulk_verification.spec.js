@@ -28,7 +28,7 @@ async function createHomeworkTask(page, title) {
 async function submitTask(page, title) {
   await page.goto('/web/student/portal');
   await page.locator('[data-tab="challenges"]').first().click();
-  const card = page.locator('#scholastic-tasks-container .bg-slate-900\\/40', { hasText: title });
+  const card = page.locator('#scholastic-tasks-container > div', { hasText: title });
   await expect(card).toBeVisible({ timeout: 15000 });
   await card.locator('button:has-text("Submit Completion")').click();
   await expect(page.locator('#taskSubmissionModal')).toBeVisible();
