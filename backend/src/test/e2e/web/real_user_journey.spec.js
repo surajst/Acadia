@@ -108,30 +108,28 @@ test.describe.serial('Real User Journey E2E Specs', () => {
   test('TEST 3 — Parent Journey (isolation test)', async ({ page }) => {
     // Login as ramesh@gmail.com, assert redirect to parent dashboard
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
-    await expect(page.url()).toContain('/web/parent/portal');
+    await expect(page.url()).toContain('/web/parent/dashboard');
     
-    // Assert linked child name is visible on dashboard (Arjun Sharma)
-    await expect(page.locator('body')).toContainText('Arjun Sharma');
-    
-    // Handle dialog alerts for parent task assignment
-    page.on('dialog', async dialog => {
-      await dialog.accept();
-    });
+    // Assert the linked child (Arjun) is visible on the dashboard
+    await expect(page.locator('body')).toContainText('Arjun');
 
-    // Assign a quest with title Home Quest Playwright Test and xp bounty 50
-    await page.fill('#taskDescription', 'Home Quest Playwright Test');
-    await page.fill('#xpBounty', '50');
-    
-    await Promise.all([
-      page.waitForNavigation(),
-      page.click('button:has-text("Assign Task")')
-    ]);
-    
+    // The "Assign Home Task" form lives in the hidden Profile tab panel.
+    await page.locator('[data-tab="profile"]').first().click();
+    await expect(page.locator('form[action="/web/parent/assign-task"]')).toBeVisible();
+
+    // Assign a quest to Arjun (child selection is required).
+    const questChild = page.locator('#profile-assignStudentId option', { hasText: 'Arjun' }).first();
+    await page.selectOption('#profile-assignStudentId', await questChild.getAttribute('value'));
+    await page.fill('#profile-taskTitle', 'Home Quest Playwright Test');
+    await page.fill('#profile-xpBounty', '50');
+    await page.locator('#assignTaskForm-profile button[type="submit"]').click();
+    await page.waitForURL(url => url.pathname.includes('/web/parent/dashboard'), { timeout: 90000 });
+
     await page.context().clearCookies();
     
     // Login as ramesh@gmail.com, assert their dashboard loads
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
-    await expect(page.url()).toContain('/web/parent/portal');
+    await expect(page.url()).toContain('/web/parent/dashboard');
     
     // Assert ramesh@gmail.com's dashboard does NOT contain the student created by Admin
     await expect(page.locator('body')).not.toContainText('Test Student Playwright');
@@ -164,9 +162,9 @@ test.describe.serial('Real User Journey E2E Specs', () => {
     // Open Home Quest Board, assert the quest assigned by ramesh@gmail.com is visible
     await expect(page.locator('h4:has-text("Home Quest Playwright Test")').first()).toBeVisible();
     
-    // Click Mark Done on that quest, assert confirmation
-    const claimQuestLink = page.locator('a[href*="/web/student/quest/"][href$="/claim"]').first();
-    await claimQuestLink.click();
+    // Click Mark Done on that quest (now a POST form, not an anchor) and assert confirmation
+    await page.locator('form[action*="/web/student/quest/"] button:has-text("Mark Done")').first().click();
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('#toast')).toContainText('Home quest marked as completed!');
     
     // Open Milestone Submission form (on dashboard), fill dummy data, submit
