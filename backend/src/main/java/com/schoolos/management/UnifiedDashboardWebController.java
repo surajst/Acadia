@@ -78,16 +78,8 @@ public class UnifiedDashboardWebController {
     @Autowired
     private SubjectAssignmentRepository subjectAssignmentRepository;
 
-    /** Students actually taught by this teacher, via real SubjectAssignment records — null if not a teacher or unresolvable. */
-    private Set<UUID> resolveOwnStudentIds(Authentication authentication) {
-        User teacher = userRepository.findByEmail(authentication.getName()).orElse(null);
-        if (teacher == null) return null;
-        List<ClassSection> sections = subjectAssignmentRepository.findByTeacher(teacher).stream()
-                .map(SubjectAssignment::getClassSection).distinct().collect(Collectors.toList());
-        if (sections.isEmpty()) return Collections.emptySet();
-        return studentRepository.findByClassSectionIn(sections).stream()
-                .map(Student::getId).collect(Collectors.toSet());
-    }
+    @Autowired
+    private TeacherDashboardService teacherDashboardService;
 
     /** Redirect bridge: /web/management/attendance → canonical teacher attendance route */
     @GetMapping("/web/management/attendance")
@@ -370,104 +362,12 @@ public class UnifiedDashboardWebController {
         model.addAttribute("currentUserRole", role);
 
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        String email = authentication != null ? authentication.getName() : null;
+        TeacherDashboardService.VerificationQueues queues =
+                teacherDashboardService.buildVerificationQueues(email, role, tenantId);
 
-        List<AcademicSubmission> rawSubmissions = Collections.emptyList();
-        try {
-            rawSubmissions = tenantId != null
-                    ? academicSubmissionRepository.findByStatusAndStudentTenantId("PENDING", tenantId)
-                    : Collections.emptyList();
-            // A plain TEACHER (not ADMIN/PRINCIPAL) only sees their own students' submissions —
-            // ADMIN/PRINCIPAL keep the tenant-wide oversight view intentionally.
-            if ("TEACHER".equals(role)) {
-                Set<UUID> ownStudentIds = resolveOwnStudentIds(authentication);
-                if (ownStudentIds != null) {
-                    rawSubmissions = rawSubmissions.stream()
-                            .filter(sub -> ownStudentIds.contains(sub.getStudentId()))
-                            .collect(Collectors.toList());
-                }
-            }
-        } catch (Exception e) {
-            // gracefully catch
-        }
-
-        List<MilestoneSubmissionDto> enrichedQueue = Collections.emptyList();
-        try {
-            enrichedQueue = rawSubmissions.stream()
-                    .map(sub -> {
-                        Student student = null;
-                        try {
-                            student = studentRepository.findById(sub.getStudentId()).orElse(null);
-                        } catch (Exception e) {
-                            // gracefully catch
-                        }
-                        String studentName = student != null ? student.getFirstName() + " " + student.getLastName() : "Unknown Student";
-                        return new MilestoneSubmissionDto(
-                            sub.getId(),
-                            studentName,
-                            sub.getSkillName(),
-                            sub.getXpBounty(),
-                            sub.getSubmittedAt(),
-                            sub.getProofOfWorkNotes(),
-                            sub.getAnswer1(),
-                            sub.getAnswer2(),
-                            sub.getAnswer3()
-                        );
-                    })
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            // gracefully catch
-        }
-
-        model.addAttribute("pendingSubmissions", enrichedQueue);
-
-        List<StudentProgress> rawProgress = Collections.emptyList();
-        try {
-            rawProgress = tenantId != null
-                    ? studentProgressRepository.findByStudentTenantIdAndStatus(tenantId, "PENDING")
-                    : Collections.emptyList();
-            if ("TEACHER".equals(role)) {
-                Set<UUID> ownStudentIds = resolveOwnStudentIds(authentication);
-                if (ownStudentIds != null) {
-                    rawProgress = rawProgress.stream()
-                            .filter(sp -> sp.getStudent() != null && ownStudentIds.contains(sp.getStudent().getId()))
-                            .collect(Collectors.toList());
-                }
-            }
-        } catch (Exception e) {
-            // gracefully catch
-        }
-
-        List<StudentProgressDto> pendingProgressQueue = new ArrayList<>();
-        try {
-            for (StudentProgress sp : rawProgress) {
-                Student student = sp.getStudent();
-                Curriculum curriculum = sp.getCurriculum();
-                
-                String studentName = student != null ? student.getFirstName() + " " + student.getLastName() : "Unknown Student";
-                String subjectName = curriculum != null && curriculum.getSubjectCode() != null ? curriculum.getSubjectCode() : "Unknown";
-                String topicName = curriculum != null ? curriculum.getTopicName() : "Unknown Topic";
-                
-                pendingProgressQueue.add(new StudentProgressDto(
-                    sp.getId(),
-                    studentName,
-                    subjectName,
-                    topicName,
-                    sp.getCompletedAt()
-                ));
-            }
-        } catch (Exception e) {
-            // gracefully catch
-        }
-        
-        // Sort descending by submittedAt
-        pendingProgressQueue.sort((a, b) -> {
-            if (a.getSubmittedAt() == null && b.getSubmittedAt() == null) return 0;
-            if (a.getSubmittedAt() == null) return 1;
-            if (b.getSubmittedAt() == null) return -1;
-            return b.getSubmittedAt().compareTo(a.getSubmittedAt());
-        });
-
-        model.addAttribute("pendingProgressQueue", pendingProgressQueue);
+        model.addAttribute("pendingSubmissions", queues.pendingSubmissions());
+        model.addAttribute("pendingProgressQueue", queues.pendingProgress());
         return "teacher_dashboard";
     }
 
@@ -605,59 +505,4 @@ public class UnifiedDashboardWebController {
         return "unified_dashboard";
     }
 
-    public static class MilestoneSubmissionDto {
-        private final UUID id;
-        private final String studentName;
-        private final String skillName;
-        private final Integer xpBounty;
-        private final LocalDateTime submittedAt;
-        private final String proofOfWorkNotes;
-        private final String answer1;
-        private final String answer2;
-        private final String answer3;
-
-        public MilestoneSubmissionDto(UUID id, String studentName, String skillName, Integer xpBounty, LocalDateTime submittedAt, String proofOfWorkNotes, String answer1, String answer2, String answer3) {
-            this.id = id;
-            this.studentName = studentName;
-            this.skillName = skillName;
-            this.xpBounty = xpBounty;
-            this.submittedAt = submittedAt;
-            this.proofOfWorkNotes = proofOfWorkNotes;
-            this.answer1 = answer1;
-            this.answer2 = answer2;
-            this.answer3 = answer3;
-        }
-
-        public UUID getId() { return id; }
-        public String getStudentName() { return studentName; }
-        public String getSkillName() { return skillName; }
-        public Integer getXpBounty() { return xpBounty; }
-        public LocalDateTime getSubmittedAt() { return submittedAt; }
-        public String getProofOfWorkNotes() { return proofOfWorkNotes; }
-        public String getAnswer1() { return answer1; }
-        public String getAnswer2() { return answer2; }
-        public String getAnswer3() { return answer3; }
-    }
-
-    public static class StudentProgressDto {
-        private final UUID id;
-        private final String studentName;
-        private final String subjectName;
-        private final String topicName;
-        private final LocalDateTime submittedAt;
-
-        public StudentProgressDto(UUID id, String studentName, String subjectName, String topicName, LocalDateTime submittedAt) {
-            this.id = id;
-            this.studentName = studentName;
-            this.subjectName = subjectName;
-            this.topicName = topicName;
-            this.submittedAt = submittedAt;
-        }
-
-        public UUID getId() { return id; }
-        public String getStudentName() { return studentName; }
-        public String getSubjectName() { return subjectName; }
-        public String getTopicName() { return topicName; }
-        public LocalDateTime getSubmittedAt() { return submittedAt; }
-    }
 }
