@@ -2,56 +2,35 @@ package com.schoolos.management;
 
 import com.schoolos.common.AuditLogService;
 import com.schoolos.user.User;
-import com.schoolos.user.UserRepository;
-import com.schoolos.user.UserRole;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Thin web layer over {@link RosterImportService}: handles auth/session, stashes
+ * the pending preview between the two-step upload, maps results onto the model,
+ * and writes the audit entries. All parsing/validation/persistence lives in the
+ * service.
+ */
 @Controller
 @RequestMapping("/web/management/upload")
 public class UploadWebController {
 
-    private final ClassSectionRepository classSectionRepository;
-    private final StudentRepository studentRepository;
-    private final ParentRepository parentRepository;
+    @Autowired
+    private RosterImportService rosterImportService;
 
     @Autowired
     private AuditLogService auditLogService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
     private com.schoolos.user.CurrentUserService currentUserService;
-
-    private static final SecureRandom RANDOM = new SecureRandom();
-
-    public UploadWebController(ClassSectionRepository classSectionRepository,
-                               StudentRepository studentRepository,
-                               ParentRepository parentRepository) {
-        this.classSectionRepository = classSectionRepository;
-        this.studentRepository = studentRepository;
-        this.parentRepository = parentRepository;
-    }
 
     @GetMapping
     public String showUploadPage(HttpSession session) {
@@ -64,10 +43,9 @@ public class UploadWebController {
     private static final String PENDING_IMPORT_KEY = "pendingStudentImport";
 
     /**
-     * Step 1 of the two-step import: parse and validate the uploaded file as a
-     * dry run (no rows are written), classify each row as Create / Skip / Error,
-     * stash the parsed rows in the session, and render a preview the admin must
-     * confirm. Nothing touches the database until {@link #confirmUpload}.
+     * Step 1 of the two-step import: run a dry-run preview (nothing is written),
+     * stash the parsed rows in the session, and render the preview for the admin
+     * to confirm.
      */
     @PostMapping("/process")
     public String previewUpload(@RequestParam("file") MultipartFile file,
@@ -81,74 +59,22 @@ public class UploadWebController {
             return "upload";
         }
 
-        List<List<String>> allRows;
+        RosterImportService.StudentPreview preview;
         try {
-            allRows = parseRows(file);
+            preview = rosterImportService.previewStudents(file, currentUser);
         } catch (Exception e) {
             model.addAttribute("error", "Could not read the uploaded file: " + e.getMessage());
             return "upload";
         }
 
-        List<Map<String, String>> previewRows = new ArrayList<>();
-        int willCreate = 0, willSkip = 0, willFail = 0;
-        // Track roll numbers seen earlier in THIS file so an intra-file duplicate
-        // is flagged as Skip in the preview rather than silently colliding on commit.
-        java.util.Set<String> seenRolls = new java.util.HashSet<>();
-
-        for (int i = 1; i < allRows.size(); i++) { // row 0 is the header
-            int rowNumber = i + 1;
-            List<String> cols = allRows.get(i);
-            if (cols.stream().allMatch(c -> c == null || c.isBlank())) continue;
-
-            if (cols.size() < 7) {
-                willFail++;
-                previewRows.add(rowOutcome(rowNumber, "—", "Error", "Expected 7 columns, found " + cols.size()));
-                continue;
-            }
-
-            String firstName = cols.get(0).trim();
-            String lastName = cols.get(1).trim();
-            String rollNumber = cols.get(2).trim();
-            String grade = cols.get(3).trim();
-            String section = cols.get(4).trim();
-            String parentPhone = cols.get(6).trim();
-            String label = (firstName + " " + lastName).trim();
-            if (label.isEmpty()) label = "(row " + rowNumber + ")";
-
-            if (firstName.isEmpty() || lastName.isEmpty()) {
-                willFail++;
-                previewRows.add(rowOutcome(rowNumber, label, "Error", "First and last name are required"));
-            } else if (parentPhone.isEmpty() || !parentPhone.matches("^\\+?[0-9\\s\\-()]{7,}$")) {
-                willFail++;
-                previewRows.add(rowOutcome(rowNumber, label, "Error", "Invalid phone number format for parent"));
-            } else if (grade.isEmpty() || section.isEmpty()) {
-                willFail++;
-                previewRows.add(rowOutcome(rowNumber, label, "Error", "Grade and section are required"));
-            } else if (!rollNumber.isEmpty() && !seenRolls.add(rollNumber)) {
-                willSkip++;
-                previewRows.add(rowOutcome(rowNumber, label, "Skip", "Duplicate roll number " + rollNumber + " earlier in this file"));
-            } else if (!rollNumber.isEmpty()
-                    && studentRepository.findByTenantIdAndRollNumber(currentUser.getTenantId(), rollNumber).isPresent()) {
-                willSkip++;
-                previewRows.add(rowOutcome(rowNumber, label, "Skip", "Roll number " + rollNumber + " already exists"));
-            } else {
-                willCreate++;
-                previewRows.add(rowOutcome(rowNumber, label, "Create", "Grade " + grade + " · Section " + section));
-            }
-        }
-
-        session.setAttribute(PENDING_IMPORT_KEY, allRows);
-        model.addAttribute("previewRows", previewRows);
-        model.addAttribute("previewSummary", willCreate + " to create, " + willSkip + " to skip, " + willFail + " with errors.");
-        model.addAttribute("previewCanCommit", willCreate > 0);
+        session.setAttribute(PENDING_IMPORT_KEY, preview.rows());
+        model.addAttribute("previewRows", preview.outcomes());
+        model.addAttribute("previewSummary", preview.summary());
+        model.addAttribute("previewCanCommit", preview.canCommit());
         return "upload";
     }
 
-    /**
-     * Step 2: commit the rows stashed by {@link #previewUpload}. Re-runs the full
-     * validation on each row (defence in depth — the preview is advisory only)
-     * and creates students, parents, class sections, and logins.
-     */
+    /** Step 2: commit the rows stashed by {@link #previewUpload}. */
     @PostMapping("/confirm")
     public String confirmUpload(HttpSession session,
                                 Authentication authentication,
@@ -164,150 +90,15 @@ public class UploadWebController {
             return "upload";
         }
 
-        List<Map<String, String>> rowResults = new ArrayList<>();
-        int created = 0;
-        int skipped = 0;
-        int failed = 0;
-
-        for (int i = 1; i < allRows.size(); i++) { // row 0 is the header
-                int rowNumber = i + 1;
-                List<String> cols = allRows.get(i);
-                if (cols.stream().allMatch(c -> c == null || c.isBlank())) continue;
-
-                if (cols.size() < 7) {
-                    failed++;
-                    rowResults.add(rowOutcome(rowNumber, "—", "Error", "Expected 7 columns, found " + cols.size()));
-                    continue;
-                }
-
-                String firstName = cols.get(0).trim();
-                String lastName = cols.get(1).trim();
-                String rollNumber = cols.get(2).trim();
-                String grade = cols.get(3).trim();
-                String section = cols.get(4).trim();
-                String parentName = cols.get(5).trim();
-                String parentPhone = cols.get(6).trim();
-                String label = (firstName + " " + lastName).trim();
-                if (label.isEmpty()) label = "(row " + rowNumber + ")";
-
-                try {
-                    if (firstName.isEmpty() || lastName.isEmpty()) {
-                        throw new IllegalArgumentException("First and last name are required");
-                    }
-                    if (parentPhone.isEmpty() || !parentPhone.matches("^\\+?[0-9\\s\\-()]{7,}$")) {
-                        throw new IllegalArgumentException("Invalid phone number format for parent");
-                    }
-                    if (grade.isEmpty() || section.isEmpty()) {
-                        throw new IllegalArgumentException("Grade and section are required");
-                    }
-
-                    // Duplicate roll number check — scoped to this tenant only.
-                    if (!rollNumber.isEmpty()
-                            && studentRepository.findByTenantIdAndRollNumber(currentUser.getTenantId(), rollNumber).isPresent()) {
-                        skipped++;
-                        rowResults.add(rowOutcome(rowNumber, label, "Skipped", "Roll number " + rollNumber + " already exists"));
-                        continue;
-                    }
-
-                    // Class section — tenant-scoped lookup, auto-created if missing.
-                    ClassSection classSection = classSectionRepository
-                            .findByTenantIdAndGradeNameAndSectionName(currentUser.getTenantId(), grade, section)
-                            .orElseGet(() -> {
-                                ClassSection newSection = new ClassSection();
-                                newSection.setId(UUID.randomUUID());
-                                newSection.setTenantId(currentUser.getTenantId());
-                                newSection.setAcademicYearId(currentUser.getAcademicYearId());
-                                newSection.setGradeName(grade);
-                                newSection.setSectionName(section);
-                                return classSectionRepository.save(newSection);
-                            });
-
-                    // Parent — reuse an existing one for this tenant with the same phone number
-                    // instead of creating a duplicate on every row/upload.
-                    Parent parent = parentRepository
-                            .findByTenantIdAndPhoneNumber(currentUser.getTenantId(), parentPhone)
-                            .orElseGet(() -> {
-                                String pFirstName = parentName.contains(" ") ? parentName.substring(0, parentName.indexOf(" ")) : parentName;
-                                String pLastName = parentName.contains(" ") ? parentName.substring(parentName.indexOf(" ") + 1) : "";
-                                Parent p = new Parent();
-                                p.setId(UUID.randomUUID());
-                                p.setTenantId(currentUser.getTenantId());
-                                p.setAcademicYearId(currentUser.getAcademicYearId());
-                                p.setFirstName(pFirstName.isEmpty() ? "Parent" : pFirstName);
-                                p.setLastName(pLastName);
-                                p.setPhoneNumber(parentPhone);
-                                return parentRepository.save(p);
-                            });
-
-                    Student student = new Student();
-                    student.setId(UUID.randomUUID());
-                    student.setTenantId(currentUser.getTenantId());
-                    student.setAcademicYearId(currentUser.getAcademicYearId());
-                    student.setFirstName(firstName);
-                    student.setLastName(lastName);
-                    student.setRollNumber(rollNumber);
-                    student.setClassSection(classSection);
-                    student.getParents().add(parent);
-
-                    // Provision logins so imported students/parents can actually sign in.
-                    // Student logs in with their roll number, parent with their phone —
-                    // both already in the import, each with an auto-generated temp password.
-                    StringBuilder creds = new StringBuilder();
-
-                    if (!rollNumber.isEmpty() && !userRepository.existsByEmail(rollNumber)) {
-                        String studentPassword = generateTempPassword();
-                        User studentUser = new User();
-                        studentUser.setId(UUID.randomUUID());
-                        studentUser.setTenantId(currentUser.getTenantId());
-                        studentUser.setAcademicYearId(currentUser.getAcademicYearId());
-                        studentUser.setEmail(rollNumber);
-                        studentUser.setPasswordHash(passwordEncoder.encode(studentPassword));
-                        studentUser.setFullName(firstName + " " + lastName);
-                        studentUser.setRole(UserRole.STUDENT);
-                        studentUser.setActive(true);
-                        userRepository.save(studentUser);
-                        student.setUserId(studentUser.getId());
-                        creds.append("student login ").append(rollNumber).append(" / ").append(studentPassword);
-                    }
-
-                    // Only create a parent login if this parent doesn't already have one
-                    // (a reused parent from a prior row/upload keeps their existing login).
-                    if (parent.getUserId() == null && !parentPhone.isEmpty() && !userRepository.existsByEmail(parentPhone)) {
-                        String parentPassword = generateTempPassword();
-                        User parentUser = new User();
-                        parentUser.setId(UUID.randomUUID());
-                        parentUser.setTenantId(currentUser.getTenantId());
-                        parentUser.setAcademicYearId(currentUser.getAcademicYearId());
-                        parentUser.setEmail(parentPhone);
-                        parentUser.setPasswordHash(passwordEncoder.encode(parentPassword));
-                        parentUser.setFullName(parent.getFirstName() + " " + parent.getLastName());
-                        parentUser.setRole(UserRole.PARENT);
-                        parentUser.setActive(true);
-                        userRepository.save(parentUser);
-                        parent.setUserId(parentUser.getId());
-                        parent.setEmail(parentPhone);
-                        parentRepository.save(parent);
-                        if (creds.length() > 0) creds.append(" · ");
-                        creds.append("parent login ").append(parentPhone).append(" / ").append(parentPassword);
-                    }
-
-                    studentRepository.save(student);
-
-                    created++;
-                    rowResults.add(rowOutcome(rowNumber, label, "Created", creds.toString()));
-                } catch (Exception rowError) {
-                    failed++;
-                    rowResults.add(rowOutcome(rowNumber, label, "Error", rowError.getMessage()));
-                }
-        }
+        RosterImportService.ImportResult result = rosterImportService.commitStudents(allRows, currentUser);
 
         auditLogService.log(authentication, "ROSTER_BULK_IMPORT", "Student", null,
-                "Bulk import: " + created + " created, " + skipped + " skipped, " + failed + " failed");
+                "Bulk import: " + result.created() + " created, " + result.skipped() + " skipped, " + result.failed() + " failed");
 
-        model.addAttribute("success", created + " student" + (created == 1 ? "" : "s") + " imported"
-                + (skipped > 0 ? ", " + skipped + " skipped as duplicates" : "")
-                + (failed > 0 ? ", " + failed + " row(s) failed" : "") + ".");
-        model.addAttribute("rowResults", rowResults);
+        model.addAttribute("success", result.created() + " student" + (result.created() == 1 ? "" : "s") + " imported"
+                + (result.skipped() > 0 ? ", " + result.skipped() + " skipped as duplicates" : "")
+                + (result.failed() > 0 ? ", " + result.failed() + " row(s) failed" : "") + ".");
+        model.addAttribute("rowResults", result.outcomes());
         return "upload";
     }
 
@@ -334,168 +125,21 @@ public class UploadWebController {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(currentUser.getTenantId());
         UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(currentUser.getAcademicYearId());
 
-        List<List<String>> allRows;
+        RosterImportService.ImportResult result;
         try {
-            allRows = parseRows(file);
+            result = rosterImportService.importStaff(file, tenantId, academicYearId);
         } catch (Exception e) {
             model.addAttribute("staffError", "Could not read the uploaded file: " + e.getMessage());
             return "upload";
         }
 
-        List<Map<String, String>> rowResults = new ArrayList<>();
-        int created = 0, skipped = 0, failed = 0;
-
-        for (int i = 1; i < allRows.size(); i++) { // row 0 is the header
-                int rowNumber = i + 1;
-                List<String> cols = allRows.get(i);
-                if (cols.stream().allMatch(c -> c == null || c.isBlank())) continue;
-
-                if (cols.size() < 3) {
-                    failed++;
-                    rowResults.add(rowOutcome(rowNumber, "—", "Error", "Expected 3 columns (FullName, Email, Role), found " + cols.size()));
-                    continue;
-                }
-
-                String fullName = cols.get(0).trim();
-                String email = cols.get(1).trim();
-                String roleText = cols.get(2).trim().toUpperCase();
-                String label = fullName.isEmpty() ? "(row " + rowNumber + ")" : fullName;
-
-                try {
-                    if (fullName.isEmpty() || email.isEmpty()) {
-                        throw new IllegalArgumentException("Full name and email are required");
-                    }
-                    UserRole role;
-                    try {
-                        role = UserRole.valueOf(roleText);
-                    } catch (IllegalArgumentException ex) {
-                        throw new IllegalArgumentException("Invalid role '" + roleText + "' (use TEACHER, PRINCIPAL, ADMIN, or DRIVER)");
-                    }
-                    if (role != UserRole.ADMIN && role != UserRole.PRINCIPAL && role != UserRole.TEACHER && role != UserRole.DRIVER) {
-                        throw new IllegalArgumentException("Role must be TEACHER, PRINCIPAL, ADMIN, or DRIVER");
-                    }
-                    if (userRepository.existsByEmail(email)) {
-                        skipped++;
-                        rowResults.add(rowOutcome(rowNumber, label, "Skipped", "Email already in use: " + email));
-                        continue;
-                    }
-
-                    String tempPassword = generateTempPassword();
-                    User staff = new User();
-                    staff.setId(UUID.randomUUID());
-                    staff.setTenantId(tenantId);
-                    staff.setAcademicYearId(academicYearId);
-                    staff.setEmail(email);
-                    staff.setPasswordHash(passwordEncoder.encode(tempPassword));
-                    staff.setFullName(fullName);
-                    staff.setRole(role);
-                    staff.setActive(true);
-                    staff.setApprovalStatus(User.ApprovalStatus.PENDING);
-                    userRepository.save(staff);
-
-                    created++;
-                    // Surface the generated temp password so the admin can relay it (no email yet).
-                    rowResults.add(rowOutcome(rowNumber, label, "Created", role.name() + " · temp password: " + tempPassword));
-                } catch (Exception rowError) {
-                    failed++;
-                    rowResults.add(rowOutcome(rowNumber, label, "Error", rowError.getMessage()));
-                }
-        }
-
         auditLogService.log(authentication, "STAFF_BULK_IMPORT", "User", null,
-                "Bulk staff import: " + created + " created, " + skipped + " skipped, " + failed + " failed");
+                "Bulk staff import: " + result.created() + " created, " + result.skipped() + " skipped, " + result.failed() + " failed");
 
-        model.addAttribute("staffSuccess", created + " staff member" + (created == 1 ? "" : "s") + " invited"
-                + (skipped > 0 ? ", " + skipped + " skipped as duplicates" : "")
-                + (failed > 0 ? ", " + failed + " row(s) failed" : "") + ". All are pending approval before they can sign in.");
-        model.addAttribute("staffRowResults", rowResults);
+        model.addAttribute("staffSuccess", result.created() + " staff member" + (result.created() == 1 ? "" : "s") + " invited"
+                + (result.skipped() > 0 ? ", " + result.skipped() + " skipped as duplicates" : "")
+                + (result.failed() > 0 ? ", " + result.failed() + " row(s) failed" : "") + ". All are pending approval before they can sign in.");
+        model.addAttribute("staffRowResults", result.outcomes());
         return "upload";
-    }
-
-    private String generateTempPassword() {
-        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-        StringBuilder p = new StringBuilder();
-        for (int i = 0; i < 10; i++) p.append(chars.charAt(RANDOM.nextInt(chars.length())));
-        return p.append("!9").toString();
-    }
-
-    private Map<String, String> rowOutcome(int rowNumber, String label, String status, String detail) {
-        Map<String, String> row = new LinkedHashMap<>();
-        row.put("rowNumber", String.valueOf(rowNumber));
-        row.put("label", label);
-        row.put("status", status);
-        row.put("detail", detail);
-        return row;
-    }
-
-    /**
-     * Reads every row of an uploaded CSV or .xlsx into a list of string
-     * columns (row 0 is the header). Format is chosen by filename extension;
-     * Excel cells are read as their displayed text so numeric roll numbers /
-     * phone numbers come through as written.
-     */
-    private static List<List<String>> parseRows(MultipartFile file) throws java.io.IOException {
-        String name = file.getOriginalFilename();
-        boolean excel = name != null && (name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".xls"));
-        List<List<String>> rows = new ArrayList<>();
-
-        if (excel) {
-            try (org.apache.poi.ss.usermodel.Workbook wb = org.apache.poi.ss.usermodel.WorkbookFactory.create(file.getInputStream())) {
-                org.apache.poi.ss.usermodel.Sheet sheet = wb.getSheetAt(0);
-                org.apache.poi.ss.usermodel.DataFormatter fmt = new org.apache.poi.ss.usermodel.DataFormatter();
-                int lastCol = 0;
-                for (org.apache.poi.ss.usermodel.Row r : sheet) lastCol = Math.max(lastCol, r.getLastCellNum());
-                for (org.apache.poi.ss.usermodel.Row r : sheet) {
-                    List<String> cols = new ArrayList<>();
-                    for (int c = 0; c < lastCol; c++) {
-                        org.apache.poi.ss.usermodel.Cell cell = r.getCell(c,
-                                org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-                        cols.add(cell == null ? "" : fmt.formatCellValue(cell));
-                    }
-                    rows.add(cols);
-                }
-            }
-        } else {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    rows.add(parseCsvLine(line));
-                }
-            }
-        }
-        return rows;
-    }
-
-    /** Minimal RFC4180-style CSV line parser — handles quoted fields with embedded commas/quotes. */
-    private static List<String> parseCsvLine(String line) {
-        List<String> result = new ArrayList<>();
-        StringBuilder field = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (inQuotes) {
-                if (c == '"') {
-                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                        field.append('"');
-                        i++;
-                    } else {
-                        inQuotes = false;
-                    }
-                } else {
-                    field.append(c);
-                }
-            } else {
-                if (c == '"') {
-                    inQuotes = true;
-                } else if (c == ',') {
-                    result.add(field.toString());
-                    field.setLength(0);
-                } else {
-                    field.append(c);
-                }
-            }
-        }
-        result.add(field.toString());
-        return result;
     }
 }
