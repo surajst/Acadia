@@ -62,6 +62,9 @@ public class AdminManagementController {
     @Autowired
     private BusRouteRepository busRouteRepository;
 
+    @Autowired
+    private AdminManagementService adminManagementService;
+
     @GetMapping("/web/admin/management")
     public String showAdminManagement(Model model, Authentication authentication) {
         String role = "ADMIN";
@@ -276,68 +279,9 @@ public class AdminManagementController {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
 
-        SchoolClass schoolClass = schoolClassRepository.findById(schoolClassId)
-            .orElseThrow(() -> new RuntimeException("SchoolClass not found: " + schoolClassId));
+        Student student = adminManagementService.addStudent(firstName, lastName, rollNumber, schoolClassId,
+                loginEmail, loginPassword, tenantId, academicYearId);
 
-        ClassSection classSection = classSectionRepository.findByTenantIdAndGradeNameAndSectionName(tenantId, schoolClass.getGradeLevel(), schoolClass.getSectionName())
-            .orElseGet(() -> {
-                List<ClassSection> sections = tenantId != null ? classSectionRepository.findByTenantId(tenantId) : List.of();
-                if (!sections.isEmpty()) {
-                    return sections.get(0);
-                }
-                ClassSection cs = new ClassSection();
-                cs.setId(UUID.randomUUID());
-                cs.setTenantId(tenantId);
-                cs.setAcademicYearId(academicYearId);
-                cs.setGradeName(schoolClass.getGradeLevel());
-                cs.setSectionName(schoolClass.getSectionName());
-                cs.setRoomNumber(schoolClass.getRoomNumber());
-                return classSectionRepository.save(cs);
-            });
-
-        UUID studentId = UUID.randomUUID();
-        Student student = new Student();
-        student.setId(studentId);
-        student.setTenantId(tenantId);
-        student.setAcademicYearId(academicYearId);
-        student.setFirstName(firstName);
-        student.setLastName(lastName);
-        student.setRollNumber(rollNumber);
-        student.setSchoolClass(schoolClass);
-        student.setClassSection(classSection);
-
-        // Optionally provision a real login for this student, so they aren't
-        // stuck with a null userId (and thus unable to log in at all) —
-        // previously this endpoint never set userId.
-        if (loginEmail != null && !loginEmail.isBlank() && loginPassword != null && !loginPassword.isBlank()) {
-            if (userRepository.existsByEmail(loginEmail)) {
-                throw new RuntimeException("Email already in use: " + loginEmail);
-            }
-            User studentUser = new User();
-            studentUser.setId(UUID.randomUUID());
-            studentUser.setTenantId(tenantId);
-            studentUser.setAcademicYearId(academicYearId);
-            studentUser.setEmail(loginEmail);
-            studentUser.setPasswordHash(passwordEncoder.encode(loginPassword));
-            studentUser.setFullName(firstName + " " + lastName);
-            studentUser.setRole(UserRole.STUDENT);
-            studentUser.setActive(true);
-            userRepository.save(studentUser);
-            student.setUserId(studentUser.getId());
-        }
-
-        studentRepository.save(student);
-
-        // Automatically instantiate and save a default StudentMetric record
-        StudentMetric metric = new StudentMetric();
-        metric.setId(UUID.randomUUID());
-        metric.setTenantId(tenantId);
-        metric.setAcademicYearId(academicYearId);
-        metric.setStudent(student);
-        metric.setSchoolXp(0);
-        metric.setParentXp(0);
-        metric.setActiveStreak(0);
-        studentMetricRepository.save(metric);
         auditLogService.log(authentication, "STUDENT_ADDED", "Student", student.getId(),
                 "Added student " + firstName + " " + lastName + " (roll " + rollNumber + ")");
 
@@ -357,40 +301,12 @@ public class AdminManagementController {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
 
-        Parent parent = new Parent();
-        parent.setId(UUID.randomUUID());
-        parent.setTenantId(tenantId);
-        parent.setAcademicYearId(academicYearId);
-        parent.setFirstName(firstName);
-        parent.setLastName(lastName);
-        parent.setPhoneNumber(phoneNumber);
-
-        if (loginEmail != null && !loginEmail.isBlank() && loginPassword != null && !loginPassword.isBlank()) {
-            if (userRepository.existsByEmail(loginEmail)) {
-                return java.util.Map.of("error", "Email already in use: " + loginEmail);
-            }
-            User parentUser = new User();
-            parentUser.setId(UUID.randomUUID());
-            parentUser.setTenantId(tenantId);
-            parentUser.setAcademicYearId(academicYearId);
-            parentUser.setEmail(loginEmail);
-            parentUser.setPasswordHash(passwordEncoder.encode(loginPassword));
-            parentUser.setFullName(firstName + " " + lastName);
-            parentUser.setRole(UserRole.PARENT);
-            parentUser.setActive(true);
-            userRepository.save(parentUser);
-            parent.setUserId(parentUser.getId());
-            parent.setEmail(loginEmail);
-        }
-
-        parentRepository.save(parent);
-
-        if (studentId != null) {
-            Student student = studentRepository.findById(studentId).orElse(null);
-            if (student != null) {
-                student.getParents().add(parent);
-                studentRepository.save(student);
-            }
+        Parent parent;
+        try {
+            parent = adminManagementService.addParent(firstName, lastName, phoneNumber, studentId,
+                    loginEmail, loginPassword, tenantId, academicYearId);
+        } catch (IllegalArgumentException e) {
+            return java.util.Map.of("error", e.getMessage());
         }
 
         auditLogService.log(authentication, "PARENT_ADDED", "Parent", parent.getId(),
