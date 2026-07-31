@@ -95,6 +95,9 @@ public class StudentPortalController {
     @Autowired
     private CurrentUserService currentUserService;
 
+    @Autowired
+    private StudentRewardService studentRewardService;
+
     @Value("${app.dev-mode:false}")
     private boolean devMode;
 
@@ -595,185 +598,26 @@ public class StudentPortalController {
     @Transactional
     @PostMapping("/web/student/rewards/redeem")
     public String redeemReward(@RequestParam("rewardId") UUID rewardId, Authentication authentication) {
-        RewardItem reward = rewardItemRepository.findById(rewardId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid reward item ID: " + rewardId));
-
         Student student = resolveStudent(authentication);
-
-        UUID studentId = student.getId();
-
-        StudentMetric metric = null;
-        try {
-            metric = studentMetricRepository.findByStudentId(studentId).orElse(null);
-        } catch (Exception e) {
-            // gracefully catch
-        }
-
-        if (metric == null) {
-            metric = new StudentMetric();
-            metric.setId(UUID.randomUUID());
-            metric.setStudent(student);
-            metric.setTenantId(student.getTenantId());
-            metric.setAcademicYearId(student.getAcademicYearId());
-            metric.setSchoolXp(0);
-            metric.setParentXp(0);
-            metric.setActiveStreak(0);
-            try {
-                studentMetricRepository.saveAndFlush(metric);
-            } catch (Exception e) {
-                // gracefully catch
-            }
-        }
-
-        int currentXp = metric.getSchoolXp() != null ? metric.getSchoolXp() : 0;
-        int cost = reward.getXpCost();
-        if (currentXp < cost) {
+        StudentRewardService.RedeemOutcome outcome = studentRewardService.redeemReward(rewardId, student);
+        if (outcome == StudentRewardService.RedeemOutcome.INSUFFICIENT_XP) {
             return "redirect:/web/student/portal?tab=rewards&error=insufficient_xp";
         }
-
-        // Deduct XP immediately as per prompt's request
-        metric.setSchoolXp(Math.max(0, currentXp - cost));
-        try {
-            studentMetricRepository.saveAndFlush(metric);
-        } catch (Exception e) {
-            // gracefully catch
-        }
-
-        // Find/Create parent for Arjun Sharma
-        Parent parent = null;
-        try {
-            parent = student.getParents().isEmpty() ? null : student.getParents().iterator().next();
-        } catch (Exception e) {
-            // gracefully catch
-        }
-
-        if (parent == null) {
-            try {
-                parent = parentRepository.findById(UUID.fromString("99999999-9999-9999-9999-999999999991")).orElse(null);
-            } catch (Exception e) {
-                // gracefully catch
-            }
-        }
-        if (parent == null) {
-            parent = new Parent();
-            parent.setId(UUID.fromString("99999999-9999-9999-9999-999999999991"));
-            UUID tenantId = student.getTenantId();
-            UUID academicYearId = student.getAcademicYearId();
-            if (tenantId == null) {
-                for (Student s : studentRepository.findAll()) {
-                    if (s.getTenantId() != null) {
-                        tenantId = s.getTenantId();
-                        academicYearId = s.getAcademicYearId();
-                        break;
-                    }
-                }
-            }
-            parent.setTenantId(tenantId);
-            parent.setAcademicYearId(academicYearId);
-            parent.setFirstName("Ramesh");
-            parent.setLastName("Sharma");
-            parent.setPhoneNumber("+91 99887 76655");
-            parent.setEmail("ramesh.sharma@example.com");
-            try {
-                parentRepository.saveAndFlush(parent);
-                student.getParents().add(parent);
-                studentRepository.saveAndFlush(student);
-            } catch (Exception e) {
-                // gracefully catch
-            }
-        }
-
-        // Insert pending row into parent_rewards
-        ParentReward pendingReward = new ParentReward();
-        pendingReward.setId(UUID.randomUUID());
-        pendingReward.setTenantId(student.getTenantId());
-        pendingReward.setAcademicYearId(student.getAcademicYearId());
-        pendingReward.setParent(parent);
-        pendingReward.setStudent(student);
-        pendingReward.setRewardTitle(reward.getTitle());
-        pendingReward.setXpCost(reward.getXpCost());
-        pendingReward.setStatus("PENDING");
-        try {
-            parentRewardRepository.saveAndFlush(pendingReward);
-        } catch (Exception e) {
-            // gracefully catch
-        }
-
         return "redirect:/web/student/portal?tab=rewards&success=redeemed";
     }
 
-    @Transactional
     @PostMapping("/web/student/quest/{id}/claim")
     public String claimQuest(@PathVariable("id") UUID id, Authentication authentication) {
-        try {
-            ParentQuest quest = parentQuestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid parent quest ID: " + id));
-
-            Student caller = resolveStudent(authentication);
-            if (caller == null || quest.getStudent() == null || !quest.getStudent().getId().equals(caller.getId())) {
-                throw new IllegalArgumentException("Not authorized for this quest");
-            }
-
-            quest.setStatus("COMPLETED_AWAITING_APPROVAL");
-            parentQuestRepository.saveAndFlush(quest);
-        } catch (Exception e) {
-            throw new RuntimeException("Quest claim failed: " + e.getMessage(), e);
-        }
+        studentRewardService.claimQuest(id, resolveStudent(authentication));
         return "redirect:/web/student/portal?success=quest_claimed";
     }
 
-    @Transactional
     @PostMapping("/web/student/reward/{id}/redeem")
     public String redeemParentReward(@PathVariable("id") UUID id, Authentication authentication) {
-        try {
-            ParentReward reward = parentRewardRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid parent reward ID: " + id));
-
-            Student student = resolveStudent(authentication);
-            if (student == null) {
-                throw new IllegalArgumentException("No student found");
-            }
-            if (reward.getStudent() == null || !reward.getStudent().getId().equals(student.getId())) {
-                throw new IllegalArgumentException("Not authorized for this reward");
-            }
-
-            StudentMetric metric = studentMetricRepository.findByStudentId(student.getId()).orElse(null);
-            if (metric == null) {
-                throw new IllegalArgumentException("No student metrics found");
-            }
-
-            int schoolXp = metric.getSchoolXp() != null ? metric.getSchoolXp() : 0;
-            int parentXp = metric.getParentXp() != null ? metric.getParentXp() : 0;
-            int totalBalance = schoolXp + parentXp;
-            int cost = reward.getXpCost();
-
-            System.err.println("--- REDEEM PARENT REWARD START: studentId=" + student.getId() + " schoolXp=" + schoolXp + " parentXp=" + parentXp + " cost=" + cost + " ---");
-
-            if (totalBalance < cost) {
-                System.err.println("--- REDEEM PAWARD: INSUFFICIENT XP ---");
-                return "redirect:/web/student/portal?tab=rewards&error=insufficient_xp";
-            }
-
-            // Deduct cost: first from parentXp, then from schoolXp
-            if (parentXp >= cost) {
-                metric.setParentXp(parentXp - cost);
-            } else {
-                int remaining = cost - parentXp;
-                metric.setParentXp(0);
-                metric.setSchoolXp(Math.max(0, schoolXp - remaining));
-            }
-
-            System.err.println("--- REDEEM PARENT REWARD PRE-SAVE: new schoolXp=" + metric.getSchoolXp() + " new parentXp=" + metric.getParentXp() + " ---");
-
-            studentMetricRepository.saveAndFlush(metric);
-
-            reward.setStatus("CLAIMED_AWAITING_DELIVERY");
-            parentRewardRepository.saveAndFlush(reward);
-
-            System.err.println("--- REDEEM PARENT REWARD COMPLETED ---");
-
-        } catch (Exception e) {
-            throw new RuntimeException("Reward redemption failed: " + e.getMessage(), e);
+        Student student = resolveStudent(authentication);
+        StudentRewardService.RedeemOutcome outcome = studentRewardService.redeemParentReward(id, student);
+        if (outcome == StudentRewardService.RedeemOutcome.INSUFFICIENT_XP) {
+            return "redirect:/web/student/portal?tab=rewards&error=insufficient_xp";
         }
         return "redirect:/web/student/portal?tab=rewards&success=reward_redeemed";
     }
