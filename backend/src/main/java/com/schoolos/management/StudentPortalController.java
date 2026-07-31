@@ -603,6 +603,9 @@ public class StudentPortalController {
         if (outcome == StudentRewardService.RedeemOutcome.INSUFFICIENT_XP) {
             return "redirect:/web/student/portal?tab=rewards&error=insufficient_xp";
         }
+        if (outcome == StudentRewardService.RedeemOutcome.NO_LINKED_PARENT) {
+            return "redirect:/web/student/portal?tab=rewards&error=no_linked_parent";
+        }
         return "redirect:/web/student/portal?tab=rewards&success=redeemed";
     }
 

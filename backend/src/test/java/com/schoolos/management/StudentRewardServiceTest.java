@@ -38,6 +38,7 @@ public class StudentRewardServiceTest {
     @Autowired private ParentQuestRepository parentQuestRepository;
     @Autowired private ParentRewardRepository parentRewardRepository;
     @Autowired private ParentRepository parentRepository;
+    @Autowired private RewardItemRepository rewardItemRepository;
 
     private UUID tenantId;
     private UUID yearId;
@@ -120,6 +121,22 @@ public class StudentRewardServiceTest {
         return parentRewardRepository.saveAndFlush(r);
     }
 
+    private RewardItem rewardItem(int cost) {
+        RewardItem item = new RewardItem();
+        item.setId(UUID.randomUUID());
+        item.setTenantId(tenantId);
+        item.setAcademicYearId(yearId);
+        item.setTitle("Extra recess");
+        item.setXpCost(cost);
+        item.setInventoryCount(10);
+        return rewardItemRepository.saveAndFlush(item);
+    }
+
+    private Student linkParent(Student s) {
+        s.getParents().add(parent);
+        return studentRepository.saveAndFlush(s);
+    }
+
     private ParentQuest quest(Student owner) {
         ParentQuest q = new ParentQuest();
         q.setId(UUID.randomUUID());
@@ -152,6 +169,50 @@ public class StudentRewardServiceTest {
         studentRewardService.claimQuest(q.getId(), owner);
 
         assertEquals("COMPLETED_AWAITING_APPROVAL", parentQuestRepository.findById(q.getId()).orElseThrow().getStatus());
+    }
+
+    @Test
+    public void redeemReward_rejectsWhenStudentHasNoLinkedParent() {
+        Student student = newStudent("Orphaned");
+        metricFor(student, 500, 0);
+        RewardItem item = rewardItem(100);
+
+        StudentRewardService.RedeemOutcome outcome = studentRewardService.redeemReward(item.getId(), student);
+
+        assertEquals(StudentRewardService.RedeemOutcome.NO_LINKED_PARENT, outcome);
+        // No XP spent and no pending ParentReward created for an unroutable redeem.
+        assertEquals(500, studentMetricRepository.findByStudentId(student.getId()).orElseThrow().getSchoolXp());
+        assertTrue(parentRewardRepository.findAll().stream()
+                .noneMatch(r -> r.getStudent() != null && r.getStudent().getId().equals(student.getId())));
+    }
+
+    @Test
+    public void redeemReward_succeedsAndQueuesPendingRewardForLinkedParent() {
+        Student student = linkParent(newStudent("Linked"));
+        metricFor(student, 500, 0);
+        RewardItem item = rewardItem(100);
+
+        StudentRewardService.RedeemOutcome outcome = studentRewardService.redeemReward(item.getId(), student);
+
+        assertEquals(StudentRewardService.RedeemOutcome.REDEEMED, outcome);
+        assertEquals(400, studentMetricRepository.findByStudentId(student.getId()).orElseThrow().getSchoolXp());
+        ParentReward pending = parentRewardRepository.findAll().stream()
+                .filter(r -> r.getStudent() != null && r.getStudent().getId().equals(student.getId()))
+                .findFirst().orElseThrow();
+        assertEquals("PENDING", pending.getStatus());
+        assertEquals(parent.getId(), pending.getParent().getId());
+    }
+
+    @Test
+    public void redeemReward_insufficientXpDoesNotMutate() {
+        Student student = linkParent(newStudent("Linked"));
+        metricFor(student, 50, 0);
+        RewardItem item = rewardItem(100);
+
+        StudentRewardService.RedeemOutcome outcome = studentRewardService.redeemReward(item.getId(), student);
+
+        assertEquals(StudentRewardService.RedeemOutcome.INSUFFICIENT_XP, outcome);
+        assertEquals(50, studentMetricRepository.findByStudentId(student.getId()).orElseThrow().getSchoolXp());
     }
 
     @Test

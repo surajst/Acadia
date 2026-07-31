@@ -19,27 +19,25 @@ public class StudentRewardService {
 
     private final RewardItemRepository rewardItemRepository;
     private final StudentMetricRepository studentMetricRepository;
-    private final ParentRepository parentRepository;
     private final ParentRewardRepository parentRewardRepository;
     private final ParentQuestRepository parentQuestRepository;
-    private final StudentRepository studentRepository;
 
     public StudentRewardService(RewardItemRepository rewardItemRepository,
                                 StudentMetricRepository studentMetricRepository,
-                                ParentRepository parentRepository,
                                 ParentRewardRepository parentRewardRepository,
-                                ParentQuestRepository parentQuestRepository,
-                                StudentRepository studentRepository) {
+                                ParentQuestRepository parentQuestRepository) {
         this.rewardItemRepository = rewardItemRepository;
         this.studentMetricRepository = studentMetricRepository;
-        this.parentRepository = parentRepository;
         this.parentRewardRepository = parentRewardRepository;
         this.parentQuestRepository = parentQuestRepository;
-        this.studentRepository = studentRepository;
     }
 
-    /** Soft result of a redeem attempt — a shortfall is a normal user outcome, not an error. */
-    public enum RedeemOutcome { REDEEMED, INSUFFICIENT_XP }
+    /**
+     * Soft result of a redeem attempt — these are normal user outcomes, not errors:
+     * a shortfall ({@code INSUFFICIENT_XP}) or a school-XP reward that can't be routed
+     * because the student has no parent linked ({@code NO_LINKED_PARENT}).
+     */
+    public enum RedeemOutcome { REDEEMED, INSUFFICIENT_XP, NO_LINKED_PARENT }
 
     /**
      * Mark a parent quest as completed-awaiting-approval. The caller must own the
@@ -62,12 +60,20 @@ public class StudentRewardService {
      * Redeem a catalogue reward against the student's school XP: verify balance,
      * deduct the cost, and queue a PENDING {@link ParentReward} for the parent to
      * fulfil. Returns {@link RedeemOutcome#INSUFFICIENT_XP} without mutating when
-     * the student can't afford it.
+     * the student can't afford it, or {@link RedeemOutcome#NO_LINKED_PARENT} when
+     * the student has no parent to route the pending reward to.
      */
     @Transactional
     public RedeemOutcome redeemReward(UUID rewardId, Student student) {
         RewardItem reward = rewardItemRepository.findById(rewardId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid reward item ID: " + rewardId));
+
+        // A school-XP reward becomes a pending ParentReward that a linked parent
+        // fulfils. With no parent linked there is nobody to route it to — reject
+        // before touching XP rather than inventing a shared placeholder parent.
+        if (student.getParents().isEmpty()) {
+            return RedeemOutcome.NO_LINKED_PARENT;
+        }
 
         UUID studentId = student.getId();
 
@@ -93,27 +99,9 @@ public class StudentRewardService {
         metric.setSchoolXp(Math.max(0, currentXp - cost));
         studentMetricRepository.saveAndFlush(metric);
 
-        // Resolve the parent to route the pending reward to: the student's own
-        // parent if linked, otherwise a shared fallback parent record.
-        Parent parent = student.getParents().isEmpty() ? null : student.getParents().iterator().next();
-        if (parent == null) {
-            parent = parentRepository.findById(UUID.fromString("99999999-9999-9999-9999-999999999991")).orElse(null);
-        }
-        if (parent == null) {
-            parent = new Parent();
-            parent.setId(UUID.fromString("99999999-9999-9999-9999-999999999991"));
-            UUID tenantId = student.getTenantId();
-            UUID academicYearId = student.getAcademicYearId();
-            parent.setTenantId(tenantId);
-            parent.setAcademicYearId(academicYearId);
-            parent.setFirstName("Ramesh");
-            parent.setLastName("Sharma");
-            parent.setPhoneNumber("+91 99887 76655");
-            parent.setEmail("ramesh.sharma@example.com");
-            parentRepository.saveAndFlush(parent);
-            student.getParents().add(parent);
-            studentRepository.saveAndFlush(student);
-        }
+        // The student's own linked parent receives the pending reward. The
+        // no-parent case was already rejected above.
+        Parent parent = student.getParents().iterator().next();
 
         ParentReward pendingReward = new ParentReward();
         pendingReward.setId(UUID.randomUUID());
