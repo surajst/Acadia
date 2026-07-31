@@ -152,10 +152,14 @@ public class UnifiedDashboardWebController {
                 // query exists for this combination, so filter in-memory (bounded by
                 // one class section's roster size, not the whole tenant).
                 List<Student> byClass = studentRepository.findBySchoolClassId(classId);
+                String nameNeedle = effectiveName == null ? null : effectiveName.toLowerCase();
                 conditionalRoster = byClass.stream()
-                    .filter(s -> effectiveName == null ||
-                                 s.getFirstName().toLowerCase().contains(effectiveName.toLowerCase()) ||
-                                 s.getLastName().toLowerCase().contains(effectiveName.toLowerCase()))
+                    .filter(s -> nameNeedle == null ||
+                                 s.getFirstName().toLowerCase().contains(nameNeedle) ||
+                                 s.getLastName().toLowerCase().contains(nameNeedle) ||
+                                 // Match the full "First Last" too, so a search for the
+                                 // whole displayed name (which spans both columns) hits.
+                                 (s.getFirstName() + " " + s.getLastName()).toLowerCase().contains(nameNeedle))
                     .filter(s -> effectiveGrade == null ||
                                  (s.getClassSection() != null &&
                                   effectiveGrade.equals(s.getClassSection().getGradeName())))

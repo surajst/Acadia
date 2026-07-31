@@ -35,10 +35,13 @@ test.describe.serial('Real User Journey E2E Specs', () => {
     await page.click('button:has-text("Register Student")');
     await page.waitForURL(url => url.pathname.includes('/web/admin/management'));
 
-    // Search for a student by name using rosterSearchInput
-    await page.goto('/web/admin/dashboard?classId=11111111-2222-3333-4444-555555555551');
-    await page.fill('#rosterSearchInput', 'Test Student Playwright');
-    
+    // Search for a student by name within the class roster. The class holds more
+    // students than one page, so the just-added student can sit on a later page;
+    // driving the name filter (as the search box does on Enter) re-queries the
+    // roster so the new student surfaces regardless of pagination.
+    await page.goto('/web/admin/dashboard?classId=11111111-2222-3333-4444-555555555551&name=Test%20Student%20Playwright');
+    await expect(page.locator('#rosterSearchInput')).toHaveValue('Test Student Playwright');
+
     // Assert row is visible
     const studentRow = page.locator('tr:has-text("Test Student Playwright")').first();
     await expect(studentRow).toBeVisible();

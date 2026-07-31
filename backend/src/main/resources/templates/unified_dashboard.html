@@ -562,6 +562,11 @@
             const name = document.getElementById('rosterSearchInput')?.value || '';
             const gradeLevel = document.getElementById('rosterGradeFilter')?.value || '';
             const params = new URLSearchParams();
+            // Preserve the class context so searching within a class roster keeps
+            // showing that class (and reaches students on later pages) instead of
+            // silently dropping the classId filter.
+            const currentClassId = new URLSearchParams(window.location.search).get('classId');
+            if (currentClassId) params.set('classId', currentClassId);
             if (name.trim()) params.set('name', name.trim());
             if (gradeLevel.trim()) params.set('gradeLevel', gradeLevel.trim());
             params.set('page', '0');
