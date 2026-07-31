@@ -80,7 +80,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/web/onboard/signup").permitAll() // public "create your school" form
-                        .requestMatchers("/web/onboard/setup", "/web/onboard/complete").hasAnyRole("ADMIN", "PRINCIPAL")
+                        .requestMatchers("/web/onboard/setup", "/web/onboard/complete").hasRole("ADMIN") // setup wizard is data-entry — ADMIN only, principals are read-only
                         .requestMatchers("/web/admin/dashboard").hasAnyRole("ADMIN", "TEACHER", "PRINCIPAL")
                         .requestMatchers("/web/admin/audit-log", "/web/admin/audit-log/**").hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers("/web/admin/**").hasRole("ADMIN")
@@ -99,16 +99,21 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             String redirectUrl = "/";
                             var authorities = authentication.getAuthorities();
-                            if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))
+                            boolean isAdmin = authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                            if (isAdmin
                                     || authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_PRINCIPAL"))) {
                                 redirectUrl = "/web/admin/dashboard";
-                                boolean onboarded = userRepository.findByEmail(authentication.getName())
-                                        .map(u -> tenantRepository.findById(u.getTenantId())
-                                                .map(com.schoolos.tenant.Tenant::getEffectiveOnboardingCompleted)
-                                                .orElse(true))
-                                        .orElse(true);
-                                if (!onboarded) {
-                                    redirectUrl = "/web/onboard/setup";
+                                // Only ADMINs can run the onboarding wizard; principals are read-only
+                                // and would hit a 403 if redirected there.
+                                if (isAdmin) {
+                                    boolean onboarded = userRepository.findByEmail(authentication.getName())
+                                            .map(u -> tenantRepository.findById(u.getTenantId())
+                                                    .map(com.schoolos.tenant.Tenant::getEffectiveOnboardingCompleted)
+                                                    .orElse(true))
+                                            .orElse(true);
+                                    if (!onboarded) {
+                                        redirectUrl = "/web/onboard/setup";
+                                    }
                                 }
                             } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"))) {
                                 redirectUrl = "/web/teacher/dashboard";
