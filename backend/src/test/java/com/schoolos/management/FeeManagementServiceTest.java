@@ -33,6 +33,12 @@ public class FeeManagementServiceTest {
     @Autowired
     private ClassSectionRepository classSectionRepository;
 
+    @Autowired
+    private com.schoolos.tenant.TenantRepository tenantRepository;
+
+    @Autowired
+    private com.schoolos.tenant.AcademicYearRepository academicYearRepository;
+
     private UUID testInvoiceId;
 
     @BeforeEach
@@ -116,5 +122,74 @@ public class FeeManagementServiceTest {
         assertThrows(IllegalArgumentException.class, () -> {
             feeManagementService.recordPayment(UUID.randomUUID(), new BigDecimal("100.00"), "CASH", null, null);
         });
+    }
+
+    @Test
+    public void getFeeSummary_aggregatesExpectedCollectedAndOutstanding() {
+        // Isolated tenant so the totals are deterministic (no seeded invoices leak in).
+        UUID tenantId = UUID.randomUUID();
+        UUID academicYearId = UUID.randomUUID();
+
+        com.schoolos.tenant.Tenant tenant = new com.schoolos.tenant.Tenant();
+        tenant.setId(tenantId);
+        tenant.setName("Fee Summary Tenant");
+        tenant.setSubdomain("fs-" + tenantId.toString().substring(0, 8));
+        tenant.setActive(true);
+        tenant.setCreatedAt(java.time.Instant.now());
+        tenantRepository.saveAndFlush(tenant);
+
+        com.schoolos.tenant.AcademicYear year = new com.schoolos.tenant.AcademicYear();
+        year.setId(academicYearId);
+        year.setTenantId(tenantId);
+        year.setName("2026-27");
+        year.setStartDate(java.time.LocalDate.of(2026, 4, 1));
+        year.setEndDate(java.time.LocalDate.of(2027, 3, 31));
+        year.setCurrent(true);
+        academicYearRepository.saveAndFlush(year);
+
+        ClassSection classSection = new ClassSection();
+        classSection.setId(UUID.randomUUID());
+        classSection.setTenantId(tenantId);
+        classSection.setAcademicYearId(academicYearId);
+        classSection.setGradeName("Grade 1");
+        classSection.setSectionName("A");
+        classSectionRepository.saveAndFlush(classSection);
+
+        // Two invoices: 10000 (fully paid) and 20000 (4000 paid) => expected 30000, collected 14000, outstanding 16000.
+        saveInvoice(tenantId, academicYearId, newStudent(tenantId, academicYearId, classSection), "10000.00", "10000.00");
+        saveInvoice(tenantId, academicYearId, newStudent(tenantId, academicYearId, classSection), "20000.00", "4000.00");
+
+        FeeManagementService.FeeSummary s = feeManagementService.getFeeSummary(tenantId);
+
+        assertEquals(2, s.totalInvoices());
+        assertEquals(0, new BigDecimal("30000.00").compareTo(s.totalExpected()));
+        assertEquals(0, new BigDecimal("14000.00").compareTo(s.totalCollected()));
+        assertEquals(0, new BigDecimal("16000.00").compareTo(s.totalOutstanding()));
+        assertEquals(47, s.collectionPercent()); // 14000/30000 = 46.67, HALF_UP -> 47
+        assertEquals(1, s.outstandingInvoiceCount()); // the partially-paid one
+    }
+
+    private UUID newStudent(UUID tenantId, UUID academicYearId, ClassSection classSection) {
+        Student student = new Student();
+        student.setId(UUID.randomUUID());
+        student.setTenantId(tenantId);
+        student.setAcademicYearId(academicYearId);
+        student.setFirstName("Fee");
+        student.setLastName("Student");
+        student.setClassSection(classSection);
+        studentRepository.saveAndFlush(student);
+        return student.getId();
+    }
+
+    private void saveInvoice(UUID tenantId, UUID academicYearId, UUID studentId, String total, String paid) {
+        FeeInvoice invoice = new FeeInvoice();
+        invoice.setId(UUID.randomUUID());
+        invoice.setStudentId(studentId);
+        invoice.setTenantId(tenantId);
+        invoice.setAcademicYearId(academicYearId);
+        invoice.setTotalAmount(new BigDecimal(total));
+        invoice.setAmountPaid(new BigDecimal(paid));
+        invoice.updateBalances();
+        feeInvoiceRepository.saveAndFlush(invoice);
     }
 }

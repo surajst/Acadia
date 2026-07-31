@@ -33,16 +33,31 @@ public class FeeManagementService {
      * Read-only school-wide fee rollup — used by the PRINCIPAL oversight
      * dashboard. Aggregates existing FeeInvoice rows; no new business logic.
      */
-    public java.util.Map<String, Object> getSchoolWideFeeSummary(UUID tenantId) {
+    /**
+     * Canonical fee roll-up for a tenant. This is the single place the
+     * expected/collected/outstanding totals and collection percentage are
+     * computed, so the admin dashboard, the principal summary, and any future
+     * consumer share one implementation instead of each looping invoices.
+     */
+    public record FeeSummary(int totalInvoices,
+                             BigDecimal totalExpected,
+                             BigDecimal totalCollected,
+                             BigDecimal totalOutstanding,
+                             int collectionPercent,
+                             long outstandingInvoiceCount) {}
+
+    public FeeSummary getFeeSummary(UUID tenantId) {
         List<FeeInvoice> invoices = tenantId != null ? feeInvoiceRepository.findByTenantId(tenantId) : List.of();
 
         BigDecimal totalExpected = BigDecimal.ZERO;
         BigDecimal totalCollected = BigDecimal.ZERO;
+        BigDecimal totalOutstanding = BigDecimal.ZERO;
         long overdueCount = 0;
 
         for (FeeInvoice invoice : invoices) {
             if (invoice.getTotalAmount() != null) totalExpected = totalExpected.add(invoice.getTotalAmount());
             if (invoice.getAmountPaid() != null) totalCollected = totalCollected.add(invoice.getAmountPaid());
+            if (invoice.getAmountDue() != null) totalOutstanding = totalOutstanding.add(invoice.getAmountDue());
             if (invoice.getStatus() != FeeInvoice.FeeStatus.PAID) overdueCount++;
         }
 
@@ -50,12 +65,19 @@ public class FeeManagementService {
                 ? totalCollected.multiply(BigDecimal.valueOf(100)).divide(totalExpected, 0, java.math.RoundingMode.HALF_UP).intValue()
                 : 0;
 
+        return new FeeSummary(invoices.size(), totalExpected, totalCollected, totalOutstanding, collectionPercent, overdueCount);
+    }
+
+    /** Backwards-compatible map view of {@link #getFeeSummary} for JSON/API consumers. */
+    public java.util.Map<String, Object> getSchoolWideFeeSummary(UUID tenantId) {
+        FeeSummary s = getFeeSummary(tenantId);
         java.util.Map<String, Object> summary = new java.util.HashMap<>();
-        summary.put("totalInvoices", invoices.size());
-        summary.put("totalExpected", totalExpected);
-        summary.put("totalCollected", totalCollected);
-        summary.put("collectionPercent", collectionPercent);
-        summary.put("outstandingInvoiceCount", overdueCount);
+        summary.put("totalInvoices", s.totalInvoices());
+        summary.put("totalExpected", s.totalExpected());
+        summary.put("totalCollected", s.totalCollected());
+        summary.put("totalOutstanding", s.totalOutstanding());
+        summary.put("collectionPercent", s.collectionPercent());
+        summary.put("outstandingInvoiceCount", s.outstandingInvoiceCount());
         return summary;
     }
 

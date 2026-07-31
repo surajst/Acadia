@@ -74,21 +74,12 @@ public class AdminFeeController {
 
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
 
-        // 1. Calculate high-level financial summary metrics — scoped to this tenant only
-        List<FeeInvoice> allInvoices = tenantId != null ? feeInvoiceRepository.findByTenantId(tenantId) : List.of();
-        BigDecimal totalExpectedRevenue = BigDecimal.ZERO;
-        BigDecimal totalCollected = BigDecimal.ZERO;
-        BigDecimal totalOutstandingDeficit = BigDecimal.ZERO;
-
-        for (FeeInvoice invoice : allInvoices) {
-            totalExpectedRevenue = totalExpectedRevenue.add(invoice.getTotalAmount() != null ? invoice.getTotalAmount() : BigDecimal.ZERO);
-            totalCollected = totalCollected.add(invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO);
-            totalOutstandingDeficit = totalOutstandingDeficit.add(invoice.getAmountDue() != null ? invoice.getAmountDue() : BigDecimal.ZERO);
-        }
-
-        model.addAttribute("totalExpectedRevenue", totalExpectedRevenue);
-        model.addAttribute("totalCollected", totalCollected);
-        model.addAttribute("totalOutstandingDeficit", totalOutstandingDeficit);
+        // 1. High-level financial summary — computed once, in the service, so the
+        // admin dashboard and the principal summary can't drift apart.
+        FeeManagementService.FeeSummary summary = feeManagementService.getFeeSummary(tenantId);
+        model.addAttribute("totalExpectedRevenue", summary.totalExpected());
+        model.addAttribute("totalCollected", summary.totalCollected());
+        model.addAttribute("totalOutstandingDeficit", summary.totalOutstanding());
 
         // 2. Fetch paginated invoices chunk, scoped to this tenant only
         Page<FeeInvoice> invoicePage = tenantId != null
