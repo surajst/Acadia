@@ -1,7 +1,11 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
 
-test('Capture Screenshots', async ({ page, context }) => {
+// Not a regression test: a one-off screenshot-capture utility that writes PNGs
+// to a hardcoded personal IDE path and drives pre-reskin JS helpers
+// (switchTab/toggleParentSection) that no longer exist. Skipped so it doesn't
+// fail the suite; keep for reference / manual screenshot runs.
+test.skip('Capture Screenshots', async ({ page, context }) => {
   test.setTimeout(120000);
   const outDir = 'C:\\Users\\st\\.gemini\\antigravity-ide\\brain\\e86492c5-aca5-454d-b0a6-fbc6a0b5d611';
 

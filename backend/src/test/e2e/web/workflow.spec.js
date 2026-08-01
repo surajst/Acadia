@@ -62,14 +62,16 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // STEP 3.1: Log in as Ramesh (Parent) and Assign Quest
     // ----------------------------------------------------
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
-    await page.goto('/web/parent/portal');
-    await page.waitForLoadState('networkidle');
-    await page.fill('#taskDescription', 'Clean Room');
-    await page.fill('#xpBounty', '200');
-    await page.click('button:has-text("Assign Task")');
+    await page.goto('/web/parent/dashboard');
+    await page.locator('[data-tab="profile"]').first().click();
+    const questChild = page.locator('#profile-assignStudentId option', { hasText: 'Arjun' }).first();
+    await page.selectOption('#profile-assignStudentId', await questChild.getAttribute('value'));
+    await page.fill('#profile-taskTitle', 'Clean Room');
+    await page.fill('#profile-xpBounty', '200');
+    await page.locator('#assignTaskForm-profile button[type="submit"]').click();
 
     // Verify assignment redirect/toast success indicator
-    await page.waitForURL(/.*\/web\/parent\/portal.*/);
+    await page.waitForURL(url => url.pathname.includes('/web/parent/dashboard'), { timeout: 90000 });
     const parentToast = page.locator('#toast');
     await expect(parentToast).toBeVisible();
     await expect(parentToast).toContainText('Home task assigned successfully!');
@@ -86,10 +88,10 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // Wait, the claim button is in the challenges tab.
     await page.locator('[data-tab="challenges"]').first().click();
     await page.waitForLoadState('networkidle');
-    const questCard = page.locator('div.bg-slate-900\\/40', { has: page.locator('h4', { hasText: 'Clean Room', exact: true }) }).first();
-    const claimQuestLink = questCard.locator('a[href*="/web/student/quest/"][href$="/claim"]');
-    await expect(claimQuestLink).toBeVisible();
-    await claimQuestLink.click();
+    const questCard = page.locator('div.rounded-2xl', { hasText: 'Clean Room' })
+      .filter({ has: page.locator('button:has-text("Mark Done")') });
+    await expect(questCard).toBeVisible();
+    await questCard.locator('button:has-text("Mark Done")').click();
 
     // Verify claim redirect/toast success indicator
     await page.waitForLoadState('networkidle');
@@ -105,30 +107,32 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // STEP 3.3: Log in as Ramesh (Parent) and Approve Quest
     // ----------------------------------------------------
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
-    await page.goto('/web/parent/portal');
-    await page.waitForLoadState('networkidle');
-    // Locate the verification approval button and click it
-    const parentQuestCard = page.locator('div.bg-slate-900\\/40', { has: page.locator('h4', { hasText: 'Clean Room', exact: true }) }).first();
-    const approveQuestLink = parentQuestCard.locator('a:has-text("✓ Approve & Grant XP")');
-    await approveQuestLink.click();
-
-    // Verify approval changes via toast/reload
-    await page.waitForLoadState('networkidle');
-    await expect(page.locator('#toast')).toBeVisible();
+    await page.goto('/web/parent/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    // The Approval Queue lives in the hidden Quests tab; approval is an AJAX POST.
+    await page.locator('[data-tab="quests"]').first().click();
+    const approveBtn = page.locator('.approve-quest-btn').first();
+    await expect(approveBtn).toBeVisible();
+    const [approveResp] = await Promise.all([
+      page.waitForResponse(r => r.url().includes('/api/parent/approve-quest/') && r.request().method() === 'POST'),
+      approveBtn.click(),
+    ]);
+    expect(approveResp.ok()).toBeTruthy();
 
     // ----------------------------------------------------
     // STEP 3.4: Add Custom Reward as Ramesh
     // ----------------------------------------------------
     // The custom reward form is on the main page
-    await page.goto('/web/parent/portal');
-    await page.waitForLoadState('networkidle');
-
+    await page.goto('/web/parent/dashboard');
+    await page.locator('[data-tab="profile"]').first().click();
+    const rewardChild = page.locator('#rewardStudentId option', { hasText: 'Arjun' }).first();
+    await page.selectOption('#rewardStudentId', await rewardChild.getAttribute('value'));
     await page.fill('#rewardTitle', 'Pizza Party');
     await page.fill('#xpCost', '350');
     await page.click('button:has-text("Create Reward")');
 
     // Verify reward creation redirect/toast success indicator
-    await page.waitForURL(/.*\/web\/parent\/portal.*/);
+    await page.waitForURL(url => url.pathname.includes('/web/parent/dashboard'), { timeout: 90000 });
     const rewardToast = page.locator('#toast');
     await expect(rewardToast).toBeVisible();
     await expect(rewardToast).toContainText('Custom reward added successfully!');
@@ -151,11 +155,11 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     await expect(rewardTitleEl).toBeVisible();
 
     // Click the "Redeem Reward" button for "Pizza Party"
-    const redeemParentRewardLink = page.locator('a[href*="/web/student/reward/"][href$="/redeem"]').first();
+    const redeemParentRewardLink = page.locator('form[action*="/web/student/reward/"][action$="/redeem"] button').first();
     await redeemParentRewardLink.click();
 
     // Verify redemption redirect/toast success indicator
-    await page.waitForURL(/.*\/web\/student\/portal.*/);
+    await page.waitForURL(url => url.pathname.includes('/web/student/portal'), { timeout: 90000 });
     const redeemToast = page.locator('#toast');
     await expect(redeemToast).toBeVisible();
     await expect(redeemToast).toContainText('Custom reward redeemed successfully!');
@@ -181,14 +185,16 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // STEP 3.7: Log in as Ramesh and Release Reward
     // ----------------------------------------------------
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
-    await page.goto('/web/parent/portal');
+    await page.goto('/web/parent/dashboard');
     await page.waitForLoadState('networkidle');
-    // Release the custom reward "Pizza Party" from delivery queue
-    const releaseRewardLink = page.locator('a[href*="/web/parent/reward/"][href$="/release"]').first();
+    // The Deliveries Pending queue lives in the hidden Quests tab.
+    await page.locator('[data-tab="quests"]').first().click();
+    const releaseRewardLink = page.locator('button:has-text("Release & Mark Delivered")').first();
+    await expect(releaseRewardLink).toBeVisible();
     await releaseRewardLink.click();
 
     // Verify release redirect/toast success indicator
-    await page.waitForURL(/.*\/web\/parent\/portal.*/);
+    await page.waitForURL(url => url.pathname.includes('/web/parent/dashboard'), { timeout: 90000 });
     const releaseToast = page.locator('#toast');
     await expect(releaseToast).toBeVisible();
     await expect(releaseToast).toContainText('Reward successfully delivered/released!');

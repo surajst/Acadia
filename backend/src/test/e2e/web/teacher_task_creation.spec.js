@@ -90,7 +90,7 @@ test.describe('Teacher Task Creation', () => {
         await page.waitForLoadState('networkidle');
 
         // Assert "Test Homework Task" visible in Scholastic Challenges
-        const challengeCard = page.locator('#scholastic-tasks-container .bg-slate-900\\/40', { hasText: 'Test Homework Task' });
+        const challengeCard = page.locator('#scholastic-tasks-container > div', { hasText: 'Test Homework Task' });
         await expect(challengeCard).toBeVisible({ timeout: 10000 });
         
         // Assert XP shows 60
@@ -110,7 +110,7 @@ test.describe('Teacher Task Creation', () => {
         await page.goto('/web/student/portal');
         await page.locator('[data-tab="profile"]').first().click();
         await page.waitForLoadState('networkidle');
-        const historyRow = page.locator('.bg-slate-950\\/40', { hasText: 'Test Homework Task' });
+        const historyRow = page.locator('div.space-y-3', { hasText: 'Test Homework Task' });
         await expect(historyRow).toBeVisible();
         await expect(historyRow).toContainText('PENDING');
 
@@ -169,7 +169,7 @@ test.describe('Teacher Task Creation', () => {
         await page.goto('/web/student/portal');
     await page.locator('[data-tab="profile"]').first().click();
     await page.waitForLoadState('networkidle');
-        const historyRowAfter = page.locator('.bg-slate-950\\/40', { hasText: 'Test Homework Task' });
+        const historyRowAfter = page.locator('div.space-y-3', { hasText: 'Test Homework Task' });
         await expect(historyRowAfter).toContainText('APPROVED');
 
         // Assert XP increased by 60
@@ -243,7 +243,7 @@ test.describe('Teacher Task Creation', () => {
         await page.waitForLoadState('networkidle');
 
         // Find "Read Chapter 1" in Scholastic Challenges
-        const challengeCard = page.locator('#scholastic-tasks-container .bg-slate-900\\/40', { hasText: 'Read Chapter 1' });
+        const challengeCard = page.locator('#scholastic-tasks-container > div', { hasText: 'Read Chapter 1' });
         await expect(challengeCard).toBeVisible({ timeout: 10000 });
         
         // Assert ðŸ“– Reading badge visible
@@ -268,7 +268,7 @@ test.describe('Teacher Task Creation', () => {
         await page.goto('/web/student/portal');
         await page.locator('[data-tab="profile"]').first().click();
         await page.waitForLoadState('networkidle');
-        const historyRow = page.locator('.bg-slate-950\\/40', { hasText: 'Read Chapter 1' });
+        const historyRow = page.locator('div.space-y-3', { hasText: 'Read Chapter 1' });
         await expect(historyRow).toBeVisible();
         await expect(historyRow).toContainText('PENDING');
 
@@ -333,7 +333,7 @@ test.describe('Teacher Task Creation', () => {
         await page.goto('/web/student/portal');
     await page.locator('[data-tab="profile"]').first().click();
     await page.waitForLoadState('networkidle');
-        const historyRowAfter = page.locator('.bg-slate-950\\/40', { hasText: 'Read Chapter 1' });
+        const historyRowAfter = page.locator('div.space-y-3', { hasText: 'Read Chapter 1' });
         await expect(historyRowAfter).toContainText('APPROVED');
 
         await page.goto('/web/student/portal');

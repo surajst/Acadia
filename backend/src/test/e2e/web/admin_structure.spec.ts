@@ -44,11 +44,13 @@ test.describe('ACADIA Student Lifecycle Operations Management Specs', () => {
     const incrementedCount = parseInt(incrementedCountText, 10);
     expect(incrementedCount).toBe(initialCount + 1);
 
-    // 8. Navigate to Master Roster Hub for Grade 6 - A to trigger removal
-    await page.goto('/web/admin/dashboard?classId=11111111-2222-3333-4444-555555555551');
+    // 8. Navigate to Master Roster Hub for Grade 6 - A, filtered to the new student.
+    //    Driving the name filter via the URL runs a real server query so the
+    //    just-added student surfaces regardless of which roster page she lands on
+    //    (page.fill alone never triggers a round-trip).
+    await page.goto('/web/admin/dashboard?classId=11111111-2222-3333-4444-555555555551&name=Simran');
 
     // 9. Find the row for 'Simran Kaur' and click the quick-action delete trigger (🗑️)
-    await page.fill('#rosterSearchInput', 'Simran');
     const studentRow = page.locator('tr:has-text("Simran Kaur")').first();
     await expect(studentRow).toBeVisible();
     const deleteTrigger = studentRow.locator('button:has-text("🗑️")');

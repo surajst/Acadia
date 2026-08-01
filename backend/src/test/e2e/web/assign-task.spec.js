@@ -17,22 +17,23 @@ test.describe('Parent-Kid Engagement Flow: Assign Task', () => {
     // 2. Login as Parent
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
 
-    // 3. Navigate to Parent Dashboard
-    await page.goto('/web/parent/portal');
+    // 3. Navigate to Parent Dashboard (the /portal route now redirects here)
+    await page.goto('/web/parent/dashboard');
 
-    // 4. Fill out the Assign Task Form (direct on page)
+    // 4. The Assign Home Task form lives in the hidden Profile tab panel.
+    await page.locator('[data-tab="profile"]').first().click();
     const uniqueTitle = 'Clean the Backyard: ' + Math.random().toString(36).substring(7);
-    await page.fill('#taskDescription', uniqueTitle);
-    await page.fill('#xpBounty', '250');
-    
-    // The studentId is hidden and dynamically set, no need to select from dropdown
-    console.log(`Assigning task to default linked student`);
+    // Child selection is now required.
+    const taskChild = page.locator('#profile-assignStudentId option', { hasText: 'Arjun' }).first();
+    await page.selectOption('#profile-assignStudentId', await taskChild.getAttribute('value'));
+    await page.fill('#profile-taskTitle', uniqueTitle);
+    await page.fill('#profile-xpBounty', '250');
 
     // Submit the form
-    await page.click('button:has-text("Assign Task")');
+    await page.locator('#assignTaskForm-profile button[type="submit"]').click();
 
-    // 6. Verify page reload / modal dismissal
-    await page.waitForURL(/.*success=task_assigned.*/, { timeout: 90000 });
+    // 6. Verify page reload back to the dashboard
+    await page.waitForURL(url => url.pathname.includes('/web/parent/dashboard'), { timeout: 90000 });
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
