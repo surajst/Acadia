@@ -11,6 +11,12 @@ async function login(page, username, password) {
 test.describe('Sprint 6: Direct parent-teacher messaging', () => {
   test.setTimeout(120000);
 
+  // Seed the pilot data (teacher↔class assignment, Arjun + linked parent) so this
+  // spec is self-contained rather than relying on another spec having run first.
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/test/reset');
+  });
+
   test('Teacher starts a conversation, parent replies, teacher sees the reply', async ({ page }) => {
     const suffix = Date.now();
     const openingMessage = `Homework check-in ${suffix}`;
@@ -37,6 +43,8 @@ test.describe('Sprint 6: Direct parent-teacher messaging', () => {
     await page.context().clearCookies();
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
     await page.goto('/web/parent/portal');
+    await page.waitForFunction(() => typeof window.switchTab === 'function', { timeout: 10000 });
+    await page.evaluate(() => window.switchTab('messages'));
     await page.locator('#messages-section').scrollIntoViewIfNeeded();
     await page.waitForFunction((msg) => {
       const list = document.getElementById('msgConversationList');

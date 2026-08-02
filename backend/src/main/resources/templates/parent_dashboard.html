@@ -285,6 +285,9 @@
             <div class="sidebar-item" id="nav-feed" data-tab="feed">
                 <span class="tab-icon">📢</span><span>Feed</span>
             </div>
+            <div class="sidebar-item" id="nav-messages" data-tab="messages">
+                <span class="tab-icon">✉️</span><span>Messages</span>
+            </div>
             <div class="sidebar-item" id="nav-profile" data-tab="profile">
                 <span class="tab-icon">👤</span><span>Profile</span>
             </div>
@@ -624,6 +627,56 @@
 
             </div><!-- /tab-feed -->
 
+            <!-- ████ TAB: MESSAGES ████ -->
+            <div id="tab-messages" class="tab-panel space-y-5">
+
+                <section id="messages-section" class="glass-dark rounded-2xl p-4 md:p-6 border border-slate-200/60 space-y-5">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                            <span>✉️</span> Messages
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Message your child's teachers directly.</p>
+                    </div>
+
+                    <!-- Compose new message -->
+                    <div th:if="${students != null and !#lists.isEmpty(students)}" class="flex flex-wrap gap-2">
+                        <select id="msgStudentSelect"
+                                class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 flex-1 min-w-[160px] focus:outline-none focus:border-indigo-500/60 transition-all">
+                            <option th:each="student : ${students}"
+                                    th:value="${student.id}"
+                                    th:text="${student.firstName} + ' ' + ${student.lastName}"></option>
+                        </select>
+                        <select id="msgTeacherSelect"
+                                class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 flex-1 min-w-[160px] focus:outline-none focus:border-indigo-500/60 transition-all"></select>
+                    </div>
+                    <div th:if="${students != null and !#lists.isEmpty(students)}" class="flex gap-2">
+                        <input id="msgNewBody" placeholder="Type a message…"
+                               class="flex-1 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 placeholder-slate-500 px-3 py-2 focus:outline-none focus:border-indigo-500/60 transition-all">
+                        <button id="msgSendNewBtn"
+                                class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors cursor-pointer">Send</button>
+                    </div>
+
+                    <!-- Conversations + thread -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                        <div class="bg-[#F7F9FC]/60 border border-slate-200/60 rounded-2xl p-4">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Conversations</h4>
+                            <div id="msgConversationList" class="space-y-2"></div>
+                        </div>
+                        <div class="bg-[#F7F9FC]/60 border border-slate-200/60 rounded-2xl p-4">
+                            <h4 id="msgThreadTitle" class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Select a conversation</h4>
+                            <div id="msgThreadMessages" class="space-y-2 mb-3" style="min-height:80px"></div>
+                            <div id="msgReplyBox" class="flex gap-2" style="display:none">
+                                <input id="msgReplyBody" placeholder="Type a reply…"
+                                       class="flex-1 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 placeholder-slate-500 px-3 py-2 focus:outline-none focus:border-indigo-500/60 transition-all">
+                                <button id="msgSendReplyBtn"
+                                        class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors cursor-pointer">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div><!-- /tab-messages -->
+
             <!-- ████ TAB: PROFILE ████ -->
             <div id="tab-profile" class="tab-panel space-y-5">
 
@@ -737,6 +790,9 @@
         <div class="mobile-nav-item" id="mobile-nav-feed" data-tab="feed">
             <span class="tab-icon">📢</span><span>Feed</span>
         </div>
+        <div class="mobile-nav-item" id="mobile-nav-messages" data-tab="messages">
+            <span class="tab-icon">✉️</span><span>Messages</span>
+        </div>
         <div class="mobile-nav-item" id="mobile-nav-profile" data-tab="profile">
             <span class="tab-icon">👤</span><span>Profile</span>
         </div>
@@ -810,7 +866,7 @@
         'use strict';
 
         /* ─── CONSTANTS ─── */
-        var TABS = ['home', 'progress', 'quests', 'feed', 'profile'];
+        var TABS = ['home', 'progress', 'quests', 'feed', 'messages', 'profile'];
 
         /* ─── TAB SWITCHING ─── */
         function switchTab(tabId) {
@@ -1072,6 +1128,132 @@
             });
         }
 
+        /* ─── MESSAGING ─── */
+        var activeConversationId = null;
+
+        // Every value below comes from another user (teacher name, message body, etc.) —
+        // always escape before inserting into innerHTML to prevent stored XSS.
+        function msgEscapeHtml(value) {
+            var div = document.createElement('div');
+            div.textContent = value == null ? '' : String(value);
+            return div.innerHTML;
+        }
+
+        function loadTeachersForStudent() {
+            var studentSelect = document.getElementById('msgStudentSelect');
+            var teacherSelect = document.getElementById('msgTeacherSelect');
+            if (!studentSelect || !teacherSelect) return;
+            var studentId = studentSelect.value;
+            if (!studentId) { teacherSelect.innerHTML = '<option value="">No teachers found</option>'; return; }
+            fetch('/api/parent/messages/teachers?studentId=' + studentId)
+                .then(function(res) { return res.json(); })
+                .then(function(teachers) {
+                    if (!Array.isArray(teachers)) { teacherSelect.innerHTML = '<option value="">No teachers found</option>'; return; }
+                    teacherSelect.innerHTML = teachers.map(function(t) {
+                        return '<option value="' + msgEscapeHtml(t.teacherId) + '">' +
+                            msgEscapeHtml(t.teacherName) + ' (' + msgEscapeHtml(t.subjectName) + ')</option>';
+                    }).join('') || '<option value="">No teachers found</option>';
+                })
+                .catch(function() { teacherSelect.innerHTML = '<option value="">No teachers found</option>'; });
+        }
+
+        function loadConversations() {
+            return fetch('/api/messages/conversations')
+                .then(function(res) { return res.json(); })
+                .then(function(conversations) {
+                    var list = document.getElementById('msgConversationList');
+                    if (!list) return conversations;
+                    if (!Array.isArray(conversations) || conversations.length === 0) {
+                        list.innerHTML = '<p class="text-slate-500 text-xs">No conversations yet.</p>';
+                        return conversations || [];
+                    }
+                    list.innerHTML = conversations.map(function(c) {
+                        return '<div class="cursor-pointer border border-slate-200/60 rounded-xl p-3 hover:border-indigo-500/30 transition-colors ' +
+                            (c.id === activeConversationId ? 'bg-indigo-500/10 border-indigo-500/30' : '') + '" data-conv-id="' + msgEscapeHtml(c.id) + '">' +
+                            '<div class="flex items-center justify-between">' +
+                            '<span class="text-sm font-semibold text-slate-900">' + msgEscapeHtml(c.teacherName) + '</span>' +
+                            (c.unread ? '<span class="h-2 w-2 rounded-full bg-indigo-500"></span>' : '') +
+                            '</div>' +
+                            '<p class="text-xs text-slate-500 truncate mt-1">' + msgEscapeHtml(c.lastMessagePreview || '') + '</p>' +
+                            '</div>';
+                    }).join('');
+                    list.querySelectorAll('[data-conv-id]').forEach(function(el) {
+                        el.addEventListener('click', function() { openConversation(this.dataset.convId); });
+                    });
+                    return conversations;
+                });
+        }
+
+        function openConversation(id) {
+            activeConversationId = id;
+            var replyBox = document.getElementById('msgReplyBox');
+            if (replyBox) replyBox.style.display = 'flex';
+            loadConversations().then(function(convs) {
+                var conv = (convs || []).find(function(c) { return c.id === id; });
+                var title = document.getElementById('msgThreadTitle');
+                if (title) title.textContent = conv ? conv.teacherName : 'Conversation';
+            });
+            fetch('/api/messages/conversations/' + id)
+                .then(function(res) { return res.json(); })
+                .then(function(messages) {
+                    var thread = document.getElementById('msgThreadMessages');
+                    if (!thread || !Array.isArray(messages)) return;
+                    thread.innerHTML = messages.map(function(m) {
+                        return '<div class="max-w-[85%] rounded-xl px-3 py-2 text-sm ' +
+                            (m.mine ? 'bg-indigo-600/20 ml-auto text-slate-900' : 'bg-white border border-slate-200/60 text-slate-800') + '">' +
+                            msgEscapeHtml(m.body) + '</div>';
+                    }).join('');
+                });
+        }
+
+        function wireMessaging() {
+            var studentSelect = document.getElementById('msgStudentSelect');
+            if (studentSelect) {
+                studentSelect.addEventListener('change', loadTeachersForStudent);
+                loadTeachersForStudent();
+            }
+
+            var sendNewBtn = document.getElementById('msgSendNewBtn');
+            if (sendNewBtn) {
+                sendNewBtn.addEventListener('click', function() {
+                    var teacherSelect = document.getElementById('msgTeacherSelect');
+                    var teacherId = teacherSelect ? teacherSelect.value : '';
+                    var studentId = studentSelect ? studentSelect.value : '';
+                    var bodyEl = document.getElementById('msgNewBody');
+                    var body = bodyEl ? bodyEl.value.trim() : '';
+                    if (!teacherId || !studentId || !body) return;
+                    fetch('/api/messages/conversations/start', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ studentId: studentId, teacherId: teacherId, body: body })
+                    }).then(function(res) { return res.json(); }).then(function(conv) {
+                        if (bodyEl) bodyEl.value = '';
+                        if (conv.id) openConversation(conv.id);
+                    });
+                });
+            }
+
+            var sendReplyBtn = document.getElementById('msgSendReplyBtn');
+            if (sendReplyBtn) {
+                sendReplyBtn.addEventListener('click', function() {
+                    if (!activeConversationId) return;
+                    var bodyEl = document.getElementById('msgReplyBody');
+                    var body = bodyEl ? bodyEl.value.trim() : '';
+                    if (!body) return;
+                    fetch('/api/messages/conversations/' + activeConversationId + '/messages', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ body: body })
+                    }).then(function() {
+                        if (bodyEl) bodyEl.value = '';
+                        openConversation(activeConversationId);
+                    });
+                });
+            }
+
+            loadConversations();
+        }
+
         /* ─── INIT ─── */
         document.addEventListener('DOMContentLoaded', function() {
             wireTabClicks();
@@ -1079,6 +1261,7 @@
             wireAnnouncements();
             wireQuestApproval();
             wireAssignModal();
+            wireMessaging();
 
             // Hide all non-active panels
             TABS.forEach(function(t) {
