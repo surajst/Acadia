@@ -159,7 +159,9 @@ public class SecurityConfig {
         // so it needs its own CORS allowance rather than the dev-only list
         // above. Origin patterns (not exact origins) are required for
         // wildcards when allowCredentials is true.
-        configuration.setAllowedOriginPatterns(Arrays.asList("https://*.onrender.com"));
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "https://*.onrender.com",
+                "https://*.concept-edu.com"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         configuration.setAllowCredentials(true);
