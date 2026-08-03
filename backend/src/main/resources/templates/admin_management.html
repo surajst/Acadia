@@ -26,6 +26,34 @@
         ::-webkit-scrollbar-track { background: #F7F9FC; }
         ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #E2E8F0; }
+
+        /* Compact action-card hub */
+        .hub-card {
+            display: flex; flex-direction: column; align-items: flex-start; text-align: left;
+            gap: 6px; padding: 18px; width: 100%;
+            background: #FFFFFF; border: 1px solid #E7EBF2; border-radius: 18px;
+            box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 8px 20px rgba(15,23,42,0.04);
+            cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+        }
+        .hub-card:hover { transform: translateY(-2px); border-color: #C7D2FE; box-shadow: 0 10px 26px rgba(79,70,229,0.10); }
+        .hub-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 42px; height: 42px; border-radius: 12px; font-size: 20px; border: 1px solid transparent; margin-bottom: 2px;
+        }
+        .hub-title { font-size: 15px; font-weight: 700; color: #0F172A; }
+        .hub-desc { font-size: 12.5px; line-height: 1.45; color: #64748B; }
+        .hub-meta { margin-top: 4px; font-size: 11px; font-weight: 600; color: #6366F1; text-transform: uppercase; letter-spacing: .04em; }
+        .back-hub {
+            font-size: 13px; font-weight: 600; color: #475569;
+            background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 8px 14px; cursor: pointer;
+            transition: color .15s, border-color .15s;
+        }
+        .back-hub:hover { color: #4338CA; border-color: #C7D2FE; }
+        .btn-spinner {
+            display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #FFFFFF; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: -2px; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
@@ -86,7 +114,7 @@
                         <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
                             <span>&#128179;</span> Fee Ledger &amp; Billing
                         </a>
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="#staff-registry" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="#staff-registry" onclick="showSection('sec-staff'); return false;" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
                             <span>&#128188;</span> Staff Registry
                         </a>
                         <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/assignments" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
@@ -95,7 +123,7 @@
                         <a th:if="${currentUserRole == 'ADMIN'}" href="/web/teacher/messages" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
                             <span>&#128172;</span> Messages
                         </a>
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="#bus-routes-section" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="#bus-routes-section" onclick="showSection('sec-buses'); return false;" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
                             <span>&#128652;</span> Bus Routes
                         </a>
                         <a th:if="${currentUserRole == 'ADMIN'}" href="/web/management/upload" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
@@ -139,67 +167,103 @@
             </aside>
 
             <!-- Main Panel Content -->
-            <main class="lg:col-span-3 space-y-8" >
+            <main class="lg:col-span-3 space-y-6" >
 
                 <!-- Error banner: surfaces failures caught by this controller's
                      exception handler (e.g. invalid class assignment) instead
                      of silently discarding them. -->
                 <div th:if="${errorMessage != null}"
-                     class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 text-sm text-red-300 flex items-start gap-3">
+                     class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 text-sm text-red-600 flex items-start gap-3">
                     <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     <span th:text="${errorMessage}">Something went wrong.</span>
                 </div>
 
-                <!-- Page Title -->
-                <div class="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl shadow-black/40">
-                    <div class="fixed top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                    <div class="relative z-10 space-y-2">
-                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-700 border border-indigo-500/20">
-                            &#9881;&#65039; Console Core Parameters
-                        </div>
-                        <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-none">
-                            School Structure Management
-                        </h2>
-                        <p class="text-sm text-slate-500 max-w-2xl leading-relaxed">
-                            Admin console interface to track educational branches, classrooms, student enrollments, and academic structure from Kindergarten (KG) to 10th Standard.
-                        </p>
+                <!-- Compact page title -->
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">School Structure Management</h2>
+                        <p class="text-sm text-slate-500">Pick a section to configure. Live counts update as you go.</p>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="px-3 py-1.5 rounded-xl bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 font-semibold"><span th:text="${totalStudents}">0</span> Students</span>
+                        <span class="px-3 py-1.5 rounded-xl bg-emerald-600/10 text-emerald-700 border border-emerald-500/20 font-semibold"><span th:text="${totalStaff}">0</span> Staff</span>
+                        <span class="px-3 py-1.5 rounded-xl bg-amber-600/10 text-amber-700 border border-amber-500/20 font-semibold"><span th:text="${totalClassrooms}">0</span> Classrooms</span>
                     </div>
                 </div>
 
-                <!-- Stats Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="glass-panel rounded-2xl p-6 flex items-center justify-between shadow-xl shadow-slate-300/40">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Students</p>
-                            <h3 class="text-3xl font-bold text-slate-900 mt-1" th:text="${totalStudents}">2</h3>
-                        </div>
-                        <div class="p-3.5 rounded-xl bg-indigo-600/10 text-indigo-600 border border-indigo-500/10 flex items-center justify-center text-xl font-bold">
-                            &#128101;
-                        </div>
-                    </div>
+                <!-- ===== HUB: compact action cards ===== -->
+                <div id="hubGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
 
-                    <div class="glass-panel rounded-2xl p-6 flex items-center justify-between shadow-xl shadow-slate-300/40">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Staff Accounts</p>
-                            <h3 class="text-3xl font-bold text-slate-900 mt-1" th:text="${totalStaff}">2</h3>
-                        </div>
-                        <div class="p-3.5 rounded-xl bg-emerald-600/10 text-emerald-600 border border-emerald-500/10 flex items-center justify-center text-xl font-bold">
-                            &#128188;
-                        </div>
-                    </div>
+                    <button type="button" onclick="showSection('sec-classrooms')" class="hub-card">
+                        <span class="hub-icon bg-indigo-600/10 text-indigo-600 border-indigo-500/15">&#127979;</span>
+                        <span class="hub-title">Classrooms &amp; Students</span>
+                        <span class="hub-desc">Add classrooms and register students into them.</span>
+                        <span class="hub-meta"><span th:text="${totalClassrooms}">0</span> classrooms</span>
+                    </button>
 
-                    <div class="glass-panel rounded-2xl p-6 flex items-center justify-between shadow-xl shadow-slate-300/40">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Classrooms</p>
-                            <h3 class="text-3xl font-bold text-slate-900 mt-1" th:text="${totalClassrooms}">3</h3>
-                        </div>
-                        <div class="p-3.5 rounded-xl bg-amber-600/10 text-amber-600 border border-amber-500/10 flex items-center justify-center text-xl font-bold">
-                            &#127979;
-                        </div>
-                    </div>
+                    <button type="button" onclick="showSection('sec-rewards')" class="hub-card">
+                        <span class="hub-icon bg-amber-600/10 text-amber-600 border-amber-500/15">&#127942;</span>
+                        <span class="hub-title">Rewards Marketplace</span>
+                        <span class="hub-desc">Create rewards students can redeem with earned XP.</span>
+                        <span class="hub-meta"><span th:text="${rewardInventoryList != null ? rewardInventoryList.size() : 0}">0</span> rewards</span>
+                    </button>
+
+                    <button type="button" onclick="showSection('sec-staff')" class="hub-card">
+                        <span class="hub-icon bg-emerald-600/10 text-emerald-600 border-emerald-500/15">&#128188;</span>
+                        <span class="hub-title">Staff Registry</span>
+                        <span class="hub-desc">Invite teachers, principals, admins and drivers.</span>
+                        <span class="hub-meta"><span th:text="${totalStaff}">0</span> accounts</span>
+                    </button>
+
+                    <button type="button" onclick="showSection('sec-buses')" class="hub-card">
+                        <span class="hub-icon bg-sky-600/10 text-sky-600 border-sky-500/15">&#128652;</span>
+                        <span class="hub-title">Bus Routes</span>
+                        <span class="hub-desc">Assign drivers to routes and routes to classes.</span>
+                        <span class="hub-meta">Live pickup tracking</span>
+                    </button>
+
+                    <a href="/web/admin/fees" class="hub-card">
+                        <span class="hub-icon bg-rose-600/10 text-rose-600 border-rose-500/15">&#128179;</span>
+                        <span class="hub-title">Fee Ledger &amp; Billing</span>
+                        <span class="hub-desc">Invoice families and record fee collections.</span>
+                        <span class="hub-meta">Open ledger &rarr;</span>
+                    </a>
+
+                    <a href="/web/admin/assignments" class="hub-card">
+                        <span class="hub-icon bg-violet-600/10 text-violet-600 border-violet-500/15">&#128218;</span>
+                        <span class="hub-title">Teacher Assignments</span>
+                        <span class="hub-desc">Map teachers to the classes and subjects they teach.</span>
+                        <span class="hub-meta">Open assignments &rarr;</span>
+                    </a>
+
+                    <a href="/web/management/upload" class="hub-card">
+                        <span class="hub-icon bg-teal-600/10 text-teal-600 border-teal-500/15">&#128228;</span>
+                        <span class="hub-title">Bulk Import</span>
+                        <span class="hub-desc">Import students or staff in bulk from CSV/Excel.</span>
+                        <span class="hub-meta">Open importer &rarr;</span>
+                    </a>
+
+                    <button type="button" onclick="showSection('sec-export')" class="hub-card">
+                        <span class="hub-icon bg-slate-600/10 text-slate-600 border-slate-500/15">&#128229;</span>
+                        <span class="hub-title">Export Data</span>
+                        <span class="hub-desc">Download students, staff or fees as CSV files.</span>
+                        <span class="hub-meta">3 datasets</span>
+                    </button>
+
+                    <a href="/web/teacher/messages" class="hub-card">
+                        <span class="hub-icon bg-indigo-600/10 text-indigo-600 border-indigo-500/15">&#128172;</span>
+                        <span class="hub-title">Messages</span>
+                        <span class="hub-desc">Message parents and staff across the school.</span>
+                        <span class="hub-meta">Open inbox &rarr;</span>
+                    </a>
                 </div>
+
+                <!-- ===== DETAIL SECTIONS (revealed from the hub) ===== -->
 
                 <!-- Classrooms Table -->
+                <div id="sec-classrooms" data-detail class="hidden">
+                <button type="button" onclick="backToHub()" class="back-hub">&larr; Back to sections</button>
+                <div class="mt-4 glass-panel rounded-3xl shadow-2xl overflow-hidden">
                 <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
                     <div class="p-6 border-b border-slate-200/60 flex justify-between items-center bg-[#F7F9FC]/90">
                         <div>
@@ -268,9 +332,12 @@
                         </table>
                     </div>
                 </div>
+                </div><!-- /sec-classrooms -->
 
                 <!-- Rewards Inventory Management -->
-                <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden space-y-6 p-6">
+                <div id="sec-rewards" data-detail class="hidden">
+                <button type="button" onclick="backToHub()" class="back-hub">&larr; Back to sections</button>
+                <div class="mt-4 glass-panel rounded-3xl shadow-2xl overflow-hidden space-y-6 p-6">
                     <div class="border-b border-slate-200/60 pb-5 flex justify-between items-center">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
@@ -350,9 +417,12 @@
                         </form>
                     </div>
                 </div>
+                </div><!-- /sec-rewards -->
 
                 <!-- Data Export -->
-                <div id="data-export" class="glass-panel rounded-3xl shadow-2xl overflow-hidden p-6">
+                <div id="sec-export" data-detail class="hidden">
+                <button type="button" onclick="backToHub()" class="back-hub">&larr; Back to sections</button>
+                <div id="data-export" class="mt-4 glass-panel rounded-3xl shadow-2xl overflow-hidden p-6">
                     <div class="border-b border-slate-200/60 pb-5 mb-5">
                         <h2 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>&#128229;</span> Export Data
@@ -374,9 +444,12 @@
                         </a>
                     </div>
                 </div>
+                </div><!-- /sec-export -->
 
                 <!-- Staff Registry -->
-                <div id="staff-registry" class="glass-panel rounded-3xl shadow-2xl overflow-hidden space-y-6 p-6">
+                <div id="sec-staff" data-detail class="hidden">
+                <button type="button" onclick="backToHub()" class="back-hub">&larr; Back to sections</button>
+                <div id="staff-registry" class="mt-4 glass-panel rounded-3xl shadow-2xl overflow-hidden space-y-6 p-6">
                     <div class="border-b border-slate-200/60 pb-5">
                         <h2 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>&#128188;</span> Staff Registry
@@ -421,9 +494,12 @@
                         </table>
                     </div>
                 </div>
+                </div><!-- /sec-staff -->
 
                 <!-- Bus Routes Management -->
-                <div id="bus-routes-section" class="glass-panel rounded-3xl shadow-2xl overflow-hidden space-y-6 p-6">
+                <div id="sec-buses" data-detail class="hidden">
+                <button type="button" onclick="backToHub()" class="back-hub">&larr; Back to sections</button>
+                <div id="bus-routes-section" class="mt-4 glass-panel rounded-3xl shadow-2xl overflow-hidden space-y-6 p-6">
                     <div class="border-b border-slate-200/60 pb-5 flex justify-between items-center">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
@@ -447,16 +523,7 @@
                         <div id="classSectionRouteList" class="space-y-2"></div>
                     </div>
                 </div>
-
-                <!-- Footer Roster Back link -->
-                <div class="flex justify-between items-center bg-[#F7F9FC]/60 border border-slate-200/50 rounded-2xl p-5 shadow-lg">
-                    <p class="text-xs text-slate-500">
-                        Operational registry synchronization locks automated indicators natively.
-                    </p>
-                    <a href="/web/admin/dashboard" class="px-5 py-2.5 bg-[#F7F9FC] hover:bg-white text-indigo-700 hover:text-indigo-200 border border-slate-200 hover:border-indigo-500/25 rounded-xl text-xs font-bold transition-all shadow-inner">
-                        &larr; Back to Master Roster Hub
-                    </a>
-                </div>
+                </div><!-- /sec-buses -->
 
             </main>
         </div>
@@ -469,14 +536,14 @@
             <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></div>
-                    <h3 class="text-sm font-bold text-slate-800 tracking-wider uppercase ml-1">Register New Student</h3>
+                    <h3 class="text-sm font-bold text-white tracking-wider uppercase ml-1">Register New Student</h3>
                 </div>
                 <button onclick="closeRegisterModal()" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/50">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
                 </button>
             </div>
 
-            <form action="/web/admin/student/add" method="POST" class="p-6 space-y-4">
+            <form action="/web/admin/student/add" method="POST" class="p-6 space-y-4" onsubmit="showBtnLoading(this, 'Registering…')">
                 <div class="space-y-1">
                     <label for="firstName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">First Name</label>
                     <input type="text" id="firstName" name="firstName" required placeholder="e.g. Rahul"
@@ -531,14 +598,14 @@
             <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></div>
-                    <h3 class="text-sm font-bold text-slate-800 tracking-wider uppercase ml-1">Add Classroom</h3>
+                    <h3 class="text-sm font-bold text-white tracking-wider uppercase ml-1">Add Classroom</h3>
                 </div>
                 <button onclick="closeAddClassroomModal()" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/50">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
                 </button>
             </div>
 
-            <form action="/web/admin/school-classes/add" method="POST" class="p-6 space-y-4">
+            <form action="/web/admin/school-classes/add" method="POST" class="p-6 space-y-4" onsubmit="showBtnLoading(this, 'Adding…')">
                 <div class="space-y-1">
                     <label for="gradeLevel" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Grade Level</label>
                     <input type="text" id="gradeLevel" name="gradeLevel" required placeholder="e.g. Grade 6"
@@ -577,6 +644,36 @@
     </div>
 
     <script>
+        // ── Hub navigation: reveal one detail section, hide the card grid ──
+        function showSection(id) {
+            document.getElementById('hubGrid').classList.add('hidden');
+            document.querySelectorAll('[data-detail]').forEach(s => s.classList.add('hidden'));
+            const sec = document.getElementById(id);
+            if (sec) sec.classList.remove('hidden');
+            document.getElementById('global-scroll-wrapper').scrollTo({ top: 0, behavior: 'auto' });
+        }
+        function backToHub() {
+            document.querySelectorAll('[data-detail]').forEach(s => s.classList.add('hidden'));
+            document.getElementById('hubGrid').classList.remove('hidden');
+            document.getElementById('global-scroll-wrapper').scrollTo({ top: 0, behavior: 'auto' });
+        }
+        // If we arrived via an anchor (e.g. ...#staff-registry), open that section.
+        window.addEventListener('DOMContentLoaded', () => {
+            const map = { 'staff-registry': 'sec-staff', 'bus-routes-section': 'sec-buses', 'data-export': 'sec-export' };
+            const target = map[location.hash.replace('#', '')];
+            if (target) showSection(target);
+        });
+
+        // ── Submit loader for synchronous modal forms ──
+        function showBtnLoading(form, label) {
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span>' + label;
+            }
+            return true;
+        }
+
         function openAddClassroomModal() {
             const modal = document.getElementById('addClassroomModal');
             if (modal) {
