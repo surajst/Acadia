@@ -10,13 +10,27 @@ public class AdminProgressService {
     private final StudentRepository studentRepository;
     private final StudentProgressRepository studentProgressRepository;
     private final CurriculumRepository curriculumRepository;
+    private final ClassSectionRepository classSectionRepository;
 
-    public AdminProgressService(StudentRepository studentRepository, 
+    public AdminProgressService(StudentRepository studentRepository,
                                 StudentProgressRepository studentProgressRepository,
-                                CurriculumRepository curriculumRepository) {
+                                CurriculumRepository curriculumRepository,
+                                ClassSectionRepository classSectionRepository) {
         this.studentRepository = studentRepository;
         this.studentProgressRepository = studentProgressRepository;
         this.curriculumRepository = curriculumRepository;
+        this.classSectionRepository = classSectionRepository;
+    }
+
+    /** Parse the numeric grade out of a free-text grade label, e.g. "Grade 6" / "Class 6" -> 6. */
+    private int parseStandard(String gradeLabel) {
+        if (gradeLabel == null) return -1;
+        try {
+            String digits = gradeLabel.replaceAll("[^0-9]", "");
+            return digits.isEmpty() ? -1 : Integer.parseInt(digits);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     public Map<String, Object> getSchoolWideProgress(UUID tenantId) {
@@ -47,8 +61,22 @@ public class AdminProgressService {
         long totalCompleted = allProgress.stream().filter(StudentProgress::isCompleted).count();
         int overallCompletionPercent = totalExpectedProgress == 0 ? 0 : (int) Math.round((double) totalCompleted * 100 / totalExpectedProgress);
 
+        // Derive the grades to show from what the school actually set up —
+        // its class sections, plus any grade that already has students or
+        // curriculum — instead of a hardcoded 5..10 range that showed
+        // phantom classes to schools using different grade numbers.
+        TreeSet<Integer> standards = new TreeSet<>();
+        if (tenantId != null) {
+            classSectionRepository.findByTenantId(tenantId).forEach(cs -> {
+                int std = parseStandard(cs.getGradeName());
+                if (std > 0) standards.add(std);
+            });
+        }
+        studentsByStandard.keySet().stream().filter(s -> s > 0).forEach(standards::add);
+        curriculumByStandard.keySet().stream().filter(s -> s > 0).forEach(standards::add);
+
         Map<String, Object> byClass = new LinkedHashMap<>();
-        for (int std = 5; std <= 10; std++) {
+        for (int std : standards) {
             List<Student> stdStudents = studentsByStandard.getOrDefault(std, Collections.emptyList());
             List<Curriculum> stdCurriculum = curriculumByStandard.getOrDefault(std, Collections.emptyList());
             Set<UUID> stdStudentIds = stdStudents.stream().map(Student::getId).collect(Collectors.toSet());

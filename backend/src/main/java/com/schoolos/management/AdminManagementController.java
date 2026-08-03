@@ -178,6 +178,31 @@ public class AdminManagementController {
         return "redirect:/web/admin/management?success=class_section_added";
     }
 
+    @PostMapping("/web/admin/class-sections/{id}/update")
+    @ResponseBody
+    public Object updateClassSection(@PathVariable("id") UUID id,
+                                     @RequestParam("gradeName") String gradeName,
+                                     @RequestParam("sectionName") String sectionName,
+                                     @RequestParam(value = "roomNumber", required = false) String roomNumber,
+                                     Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        ClassSection section = classSectionRepository.findById(id).orElse(null);
+        // Tenant-scoped: never let one school edit another's section.
+        if (section == null || tenantId == null || !tenantId.equals(section.getTenantId())) {
+            return java.util.Map.of("error", "Class section not found");
+        }
+        if (gradeName == null || gradeName.isBlank() || sectionName == null || sectionName.isBlank()) {
+            return java.util.Map.of("error", "Grade and section are required");
+        }
+        section.setGradeName(gradeName.trim());
+        section.setSectionName(sectionName.trim());
+        section.setRoomNumber(roomNumber != null ? roomNumber.trim() : null);
+        classSectionRepository.save(section);
+        auditLogService.log(authentication, "CLASS_SECTION_UPDATED", "ClassSection", id,
+                "Updated class section to " + gradeName + " - " + sectionName);
+        return java.util.Map.of("status", "updated");
+    }
+
     @PostMapping("/web/admin/class-sections/{id}/remove")
     @ResponseBody
     public Object removeClassSection(@PathVariable("id") UUID id, Authentication authentication) {

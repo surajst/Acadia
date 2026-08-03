@@ -45,7 +45,7 @@
                 </h1>
                 <p class="text-xs text-slate-500 mt-0.5 font-medium">A quick walkthrough to get your workspace ready</p>
             </div>
-            <a href="/web/onboard/complete" class="text-xs text-slate-500 hover:text-slate-900 transition-colors font-medium">Skip to Dashboard &rarr;</a>
+            <a id="headerSkip" href="/web/onboard/complete" class="text-xs text-slate-500 hover:text-slate-900 transition-colors font-medium">Skip to Dashboard &rarr;</a>
         </div>
     </header>
 
@@ -110,10 +110,15 @@
                     already active — this step is optional. Add, rename, or deactivate subjects, and assign them per grade,
                     on the Subjects page.
                 </p>
-                <a href="/web/admin/subjects" target="_blank" class="inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors border border-slate-300">
-                    Open Subjects Manager &#8599;
-                </a>
-                <p class="text-xs text-slate-400 mt-2">Opens in a new tab — come back here and continue when you're done, or just skip ahead.</p>
+                <button type="button" id="toggleSubjectsBtn" onclick="toggleSubjectsManager()" class="inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors border border-slate-300">
+                    Manage Subjects
+                </button>
+                <div id="subjectsManagerPanel" class="mt-4 hidden">
+                    <div class="rounded-xl border border-slate-200 overflow-hidden max-h-72">
+                        <iframe id="subjectsFrame" title="Subjects Manager" class="w-full" style="height:288px; border:0;"></iframe>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Changes save instantly. Collapse this and continue when you're done.</p>
+                </div>
                 <div class="flex justify-between mt-6">
                     <button onclick="goToStep(1)" class="text-slate-500 hover:text-slate-900 text-sm px-4 py-2">&larr; Back</button>
                     <button onclick="goToStep(3)" class="btn-primary text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
@@ -199,48 +204,116 @@
                 d.classList.toggle('done', s < step);
             });
             currentStep = step;
+            // The header "Skip to Dashboard" is redundant on the final step,
+            // which already has a prominent "Go to Dashboard" button.
+            document.getElementById('headerSkip').style.display = (step === 4) ? 'none' : '';
             if (step === 1) loadClassSections();
             if (step === 3) loadStaff();
         }
 
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        let editingSectionId = null;
+
         async function loadClassSections() {
             const res = await fetch('/web/admin/class-sections');
             const sections = await res.json();
-            document.getElementById('classSectionRows').innerHTML = sections.map(cs => `
-                <tr class="border-b border-slate-100">
-                    <td class="py-2 pr-4">${cs.gradeName}</td>
-                    <td class="py-2 pr-4">${cs.sectionName}</td>
-                    <td class="py-2 pr-4 text-slate-400">${cs.roomNumber || '—'}</td>
-                    <td class="py-2 pr-4 text-right">
-                        <button type="button" onclick="removeClassSection('${cs.id}')"
-                                class="text-slate-400 hover:text-red-600 transition-colors" title="Remove">&#128465;</button>
+            document.getElementById('classSectionRows').innerHTML = sections.map(cs => {
+                if (cs.id === editingSectionId) {
+                    return `
+                    <tr class="border-b border-slate-100 bg-blue-50/40" data-id="${cs.id}">
+                        <td class="py-2 pr-4"><input value="${esc(cs.gradeName)}" class="edit-grade form-field rounded-lg text-sm px-2 py-1 w-24"></td>
+                        <td class="py-2 pr-4"><input value="${esc(cs.sectionName)}" class="edit-section form-field rounded-lg text-sm px-2 py-1 w-16"></td>
+                        <td class="py-2 pr-4"><input value="${esc(cs.roomNumber || '')}" class="edit-room form-field rounded-lg text-sm px-2 py-1 w-24"></td>
+                        <td class="py-2 pr-4 text-right whitespace-nowrap">
+                            <button type="button" onclick="saveClassSection('${cs.id}', this)" class="text-blue-600 hover:text-blue-800 text-xs font-semibold mr-2">Save</button>
+                            <button type="button" onclick="cancelEdit()" class="text-slate-400 hover:text-slate-700 text-xs">Cancel</button>
+                        </td>
+                    </tr>`;
+                }
+                return `
+                <tr class="border-b border-slate-100" data-id="${cs.id}">
+                    <td class="py-2 pr-4">${esc(cs.gradeName)}</td>
+                    <td class="py-2 pr-4">${esc(cs.sectionName)}</td>
+                    <td class="py-2 pr-4 text-slate-400">${esc(cs.roomNumber) || '—'}</td>
+                    <td class="py-2 pr-4 text-right whitespace-nowrap">
+                        <button type="button" onclick="startEdit('${cs.id}')" class="text-slate-400 hover:text-blue-600 transition-colors mr-2" title="Edit">&#9998;</button>
+                        <button type="button" onclick="removeClassSection('${cs.id}', this)" class="text-slate-400 hover:text-red-600 transition-colors" title="Remove">&#128465;</button>
                     </td>
-                </tr>
-            `).join('') || '<tr><td colspan="4" class="py-3 text-slate-400">No sections yet — add your grades below.</td></tr>';
+                </tr>`;
+            }).join('') || '<tr><td colspan="4" class="py-3 text-slate-400">No sections yet — add your grades below.</td></tr>';
         }
 
-        async function removeClassSection(id) {
+        function startEdit(id) { editingSectionId = id; loadClassSections(); }
+        function cancelEdit() { editingSectionId = null; loadClassSections(); }
+
+        async function saveClassSection(id, btn) {
+            const row = btn.closest('tr');
+            const params = new URLSearchParams({
+                gradeName: row.querySelector('.edit-grade').value.trim(),
+                sectionName: row.querySelector('.edit-section').value.trim(),
+                roomNumber: row.querySelector('.edit-room').value.trim(),
+            });
+            btn.textContent = 'Saving…'; btn.disabled = true;
+            const res = await fetch(`/web/admin/class-sections/${id}/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString(),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (data.error) { alert(data.error); btn.textContent = 'Save'; btn.disabled = false; return; }
+            editingSectionId = null;
+            loadClassSections();
+        }
+
+        async function removeClassSection(id, btn) {
+            if (btn) { btn.innerHTML = '⏳'; btn.disabled = true; }
             const res = await fetch(`/web/admin/class-sections/${id}/remove`, { method: 'POST' });
             const data = await res.json().catch(() => ({}));
-            if (data.error) { alert(data.error); return; }
+            if (data.error) { alert(data.error); loadClassSections(); return; }
             loadClassSections();
         }
 
         document.getElementById('classSectionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalLabel = submitBtn.textContent;
+            submitBtn.textContent = 'Adding…'; submitBtn.disabled = true;
             const params = new URLSearchParams({
                 gradeName: document.getElementById('gradeName').value.trim(),
                 sectionName: document.getElementById('sectionName').value.trim(),
                 roomNumber: document.getElementById('roomNumber').value.trim(),
             });
-            await fetch('/web/admin/class-sections/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params.toString(),
-            });
-            e.target.reset();
-            loadClassSections();
+            try {
+                await fetch('/web/admin/class-sections/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString(),
+                });
+                e.target.reset();
+                await loadClassSections();
+            } finally {
+                submitBtn.textContent = originalLabel; submitBtn.disabled = false;
+            }
         });
+
+        function toggleSubjectsManager() {
+            const panel = document.getElementById('subjectsManagerPanel');
+            const frame = document.getElementById('subjectsFrame');
+            const btn = document.getElementById('toggleSubjectsBtn');
+            const isHidden = panel.classList.contains('hidden');
+            if (isHidden) {
+                if (!frame.src) frame.src = '/web/admin/subjects';
+                panel.classList.remove('hidden');
+                btn.textContent = 'Hide Subjects';
+            } else {
+                panel.classList.add('hidden');
+                btn.textContent = 'Manage Subjects';
+            }
+        }
 
         async function loadStaff() {
             const res = await fetch('/web/admin/staff');
