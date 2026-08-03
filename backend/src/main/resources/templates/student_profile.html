@@ -108,6 +108,10 @@
                 </div>
                 <div th:if="${errorMessage != null}"
                      class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 text-sm text-red-600" th:text="${errorMessage}">Something went wrong.</div>
+                <div th:if="${profileMessage != null}"
+                     class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3.5 text-sm text-emerald-700 flex items-center gap-2">
+                    <span>✅</span><span th:text="${profileMessage}">Saved.</span>
+                </div>
 
                 <!-- Core Profile Hero Card -->
                 <div class="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl shadow-black/40">
@@ -119,8 +123,14 @@
                         </div>
                         
                         <div class="text-center sm:text-left space-y-2">
-                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-700 border border-indigo-500/20">
-                                🎓 Student Profile synced
+                            <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-700 border border-indigo-500/20">
+                                    🎓 Student Profile synced
+                                </div>
+                                <button th:if="${currentUserRole == 'ADMIN'}" type="button" onclick="openEditStudentModal()"
+                                        class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 transition-colors cursor-pointer">
+                                    ✏️ Edit
+                                </button>
                             </div>
                             <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-none" th:text="|${student.firstName} ${student.lastName}|">
                                 Aarav Sharma
@@ -385,5 +395,83 @@
 
 
 </div>
+
+    <!-- Edit Student Modal (admin only) -->
+    <div th:if="${currentUserRole == 'ADMIN'}" id="editStudentModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></div>
+                    <h3 class="text-sm font-bold text-white tracking-wider uppercase ml-1">Edit Student</h3>
+                </div>
+                <button type="button" onclick="closeEditStudentModal()" class="text-slate-300 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/10">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
+                </button>
+            </div>
+            <form th:action="@{/web/admin/student/{id}/update(id=${student.id})}" method="post" class="p-6 space-y-4 overflow-y-auto">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="space-y-1">
+                    <label for="editFirstName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">First Name</label>
+                    <input type="text" id="editFirstName" name="firstName" required th:value="${student.firstName}"
+                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label for="editLastName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Last Name</label>
+                    <input type="text" id="editLastName" name="lastName" required th:value="${student.lastName}"
+                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label for="editRollNumber" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Roll Number</label>
+                    <input type="text" id="editRollNumber" name="rollNumber" required th:value="${student.rollNumber}"
+                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                    <p class="text-[11px] text-slate-400 px-1">Note: this doesn't change the student's existing login username.</p>
+                </div>
+                <div class="space-y-1">
+                    <label for="editSchoolClassId" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Class</label>
+                    <select id="editSchoolClassId" name="schoolClassId"
+                            class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        <option th:each="cls : ${classList}" th:value="${cls.id}"
+                                th:text="|${cls.gradeLevel} - ${cls.sectionName}|"
+                                th:selected="${currentSchoolClassId != null and cls.id == currentSchoolClassId}">Grade 6 - A</option>
+                    </select>
+                </div>
+                <div class="pt-4 flex justify-end gap-3 border-t border-slate-200/50">
+                    <button type="button" onclick="closeEditStudentModal()" class="px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold transition-all cursor-pointer">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg transition-all text-xs tracking-wider cursor-pointer">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .btn-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; vertical-align:-2px; margin-right:6px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <script>
+        function openEditStudentModal() {
+            const m = document.getElementById('editStudentModal');
+            if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+        }
+        function closeEditStudentModal() {
+            const m = document.getElementById('editStudentModal');
+            if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+        }
+        window.addEventListener('click', (e) => {
+            const m = document.getElementById('editStudentModal');
+            if (m && e.target === m) closeEditStudentModal();
+        });
+        // Every form submit on this page shows a spinner on its submit button so
+        // each action (edit, reset student, reset guardian) has a visible loader.
+        document.querySelectorAll('form').forEach((form) => {
+            form.addEventListener('submit', () => {
+                const btn = form.querySelector('button[type="submit"]');
+                if (btn && !btn.disabled) {
+                    const label = btn.textContent.trim();
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="btn-spinner"></span>' + (label.startsWith('🔑') ? 'Working…' : 'Saving…');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

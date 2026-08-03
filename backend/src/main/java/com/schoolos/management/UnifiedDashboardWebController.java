@@ -365,6 +365,13 @@ public class UnifiedDashboardWebController {
         model.addAttribute("recentParentNotes", null);
         model.addAttribute("dispatchLedger", Collections.emptyList());
 
+        // Class options for the admin "Edit student" form.
+        UUID profileTenantId = student.getTenantId();
+        model.addAttribute("classList",
+                profileTenantId != null ? schoolClassRepository.findByTenantId(profileTenantId) : Collections.emptyList());
+        model.addAttribute("currentSchoolClassId",
+                student.getSchoolClass() != null ? student.getSchoolClass().getId() : null);
+
         return "student_profile";
     }
 

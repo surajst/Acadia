@@ -418,6 +418,47 @@ public class AdminManagementController {
         return java.util.Map.of("status", "created", "id", parent.getId());
     }
 
+    @PostMapping("/web/admin/student/{id}/update")
+    @Transactional
+    public String updateStudent(@PathVariable("id") UUID id,
+                                @RequestParam("firstName") String firstName,
+                                @RequestParam("lastName") String lastName,
+                                @RequestParam("rollNumber") String rollNumber,
+                                @RequestParam(value = "schoolClassId", required = false) UUID schoolClassId,
+                                Authentication authentication,
+                                org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        Student student = studentRepository.findById(id).orElse(null);
+        if (student == null || tenantId == null || !tenantId.equals(student.getTenantId())) {
+            ra.addFlashAttribute("errorMessage", "Student not found.");
+            return "redirect:/web/admin/management";
+        }
+        if (firstName == null || firstName.isBlank() || lastName == null || lastName.isBlank()
+                || rollNumber == null || rollNumber.isBlank()) {
+            ra.addFlashAttribute("errorMessage", "First name, last name and roll number are required.");
+            return "redirect:/web/teacher/student/" + id;
+        }
+        student.setFirstName(firstName.trim());
+        student.setLastName(lastName.trim());
+        student.setRollNumber(rollNumber.trim());
+        // Optional class move: re-point the student to another classroom (tenant-scoped),
+        // resolving the matching ClassSection so rosters/profile stay consistent.
+        if (schoolClassId != null) {
+            SchoolClass sc = schoolClassRepository.findById(schoolClassId).orElse(null);
+            if (sc != null && tenantId.equals(sc.getTenantId())) {
+                student.setSchoolClass(sc);
+                classSectionRepository
+                        .findByTenantIdAndGradeNameAndSectionName(tenantId, sc.getGradeLevel(), sc.getSectionName())
+                        .ifPresent(student::setClassSection);
+            }
+        }
+        studentRepository.save(student);
+        auditLogService.log(authentication, "STUDENT_UPDATED", "Student", student.getId(),
+                "Updated student to " + firstName + " " + lastName + " (roll " + rollNumber + ")");
+        ra.addFlashAttribute("profileMessage", "Student details updated.");
+        return "redirect:/web/teacher/student/" + id;
+    }
+
     @PostMapping("/web/admin/student/{id}/reset-login")
     @Transactional
     public String resetStudentLogin(@PathVariable("id") UUID id, Authentication authentication,

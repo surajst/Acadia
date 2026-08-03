@@ -104,4 +104,23 @@ test.describe('Student guardian capture & profile display', () => {
     await expect(page.locator('body')).toContainText('Guardian login — +91 90000 33333');
   });
 
+  test('admin can edit a student\'s details from the profile', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+
+    await registerStudent(page, { first: 'Edittest', last: 'Studentfour', roll: '6A-704' });
+    await openProfile(page, 'Edittest Studentfour', 'Edittest');
+
+    await page.click('button:has-text("Edit")');
+    await expect(page.locator('#editStudentModal')).toBeVisible();
+    await expect(page.locator('#editFirstName')).toHaveValue('Edittest');
+    await page.fill('#editLastName', 'Renamedstudent');
+    await page.fill('#editRollNumber', '6A-704Z');
+    await page.click('button:has-text("Save Changes")');
+
+    await expect(page.locator('text=Student details updated')).toBeVisible();
+    await expect(page.locator('h2')).toContainText('Edittest Renamedstudent');
+    await expect(page.locator('body')).toContainText('Roll: 6A-704Z');
+  });
+
 });
