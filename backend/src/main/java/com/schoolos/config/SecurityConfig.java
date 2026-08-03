@@ -134,7 +134,7 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 "/login", "/logout", "/test/**",
                                 "/web/admin/student/add", "/web/admin/rewards/create", "/web/admin/post",
-                                "/web/admin/class-sections/add", "/web/admin/school-classes/add", "/web/admin/staff/add", "/web/admin/parent/add",
+                                "/web/admin/class-sections/add", "/web/admin/class-sections/*/remove", "/web/admin/school-classes/add", "/web/admin/staff/add", "/web/admin/parent/add",
                                 "/web/admin/fees/invoice/create", "/web/admin/fees/collect",
                                 "/web/admin/bus-routes/add", "/web/admin/bus-routes/*/assign-driver", "/web/admin/class-sections/*/assign-bus-route",
                                 "/web/student/**", "/web/parent/**", "/web/teacher/**",

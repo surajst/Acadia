@@ -110,15 +110,10 @@ public class TenantOnboardingService {
 
         subjectService.seedDefaultSubjectsIfNone(tenant.getId(), academicYear.getId());
 
-        // Ensure a new school isn't left with zero classes if the admin never
-        // completes a manual follow-up step.
-        ClassSection firstSection = new ClassSection();
-        firstSection.setId(UUID.randomUUID());
-        firstSection.setTenantId(tenant.getId());
-        firstSection.setAcademicYearId(academicYear.getId());
-        firstSection.setGradeName("Grade 1");
-        firstSection.setSectionName("A");
-        classSectionRepository.save(firstSection);
+        // No placeholder class section is created — the admin defines their real
+        // grades/sections in the setup wizard (Step 1), and class sections are
+        // also auto-created on demand during roster/student import. A dummy
+        // "Grade 1 A" only confused admins into thinking it was pre-configured.
 
         auditLogService.logDirect(tenant.getId(), academicYear.getId(), admin.getId(), admin.getEmail(),
                 "SCHOOL_CREATED", "Tenant", tenant.getId(),

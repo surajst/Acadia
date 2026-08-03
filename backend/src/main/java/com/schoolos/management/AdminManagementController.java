@@ -178,6 +178,25 @@ public class AdminManagementController {
         return "redirect:/web/admin/management?success=class_section_added";
     }
 
+    @PostMapping("/web/admin/class-sections/{id}/remove")
+    @ResponseBody
+    public Object removeClassSection(@PathVariable("id") UUID id, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        ClassSection section = classSectionRepository.findById(id).orElse(null);
+        // Tenant-scoped: never let one school delete another's section.
+        if (section == null || tenantId == null || !tenantId.equals(section.getTenantId())) {
+            return java.util.Map.of("error", "Class section not found");
+        }
+        // Don't orphan students — require the section to be empty first.
+        if (studentRepository.countByClassSection(section) > 0) {
+            return java.util.Map.of("error", "Cannot remove a section that still has students");
+        }
+        classSectionRepository.delete(section);
+        auditLogService.log(authentication, "CLASS_SECTION_REMOVED", "ClassSection", id,
+                "Removed class section " + section.getGradeName() + " - " + section.getSectionName());
+        return java.util.Map.of("status", "removed");
+    }
+
     @PostMapping("/web/admin/school-classes/add")
     public String addSchoolClass(@RequestParam("gradeLevel") String gradeLevel,
                                   @RequestParam("sectionName") String sectionName,

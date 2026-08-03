@@ -50,10 +50,10 @@
     </header>
 
     <div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0;">
-        <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
             <!-- Step indicator -->
-            <div class="flex items-center justify-center gap-2 mb-8" id="stepIndicator">
+            <div class="flex items-center justify-center gap-2 mb-5" id="stepIndicator">
                 <div class="step-dot active" data-step="1"></div>
                 <div class="step-dot" data-step="2"></div>
                 <div class="step-dot" data-step="3"></div>
@@ -65,16 +65,21 @@
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Step 1 &middot; Grades &amp; Sections</h2>
                 <p class="text-sm text-slate-500 mb-4">Set up the grade levels and sections your school uses.</p>
 
-                <table class="w-full text-sm mb-6">
-                    <thead>
-                        <tr class="text-left text-slate-500 border-b border-slate-200">
-                            <th class="py-2 pr-4">Grade</th>
-                            <th class="py-2 pr-4">Section</th>
-                            <th class="py-2 pr-4">Room</th>
-                        </tr>
-                    </thead>
-                    <tbody id="classSectionRows"></tbody>
-                </table>
+                <!-- Fixed-height, internally-scrolling list so a long roster never
+                     pushes the Add form and Continue button below the fold. -->
+                <div class="mb-6 max-h-52 overflow-y-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-slate-500 border-b border-slate-200">
+                                <th class="py-2 pr-4">Grade</th>
+                                <th class="py-2 pr-4">Section</th>
+                                <th class="py-2 pr-4">Room</th>
+                                <th class="py-2 pr-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="classSectionRows"></tbody>
+                    </table>
+                </div>
 
                 <form id="classSectionForm" class="flex flex-wrap gap-3 items-end">
                     <div>
@@ -206,8 +211,19 @@
                     <td class="py-2 pr-4">${cs.gradeName}</td>
                     <td class="py-2 pr-4">${cs.sectionName}</td>
                     <td class="py-2 pr-4 text-slate-400">${cs.roomNumber || '—'}</td>
+                    <td class="py-2 pr-4 text-right">
+                        <button type="button" onclick="removeClassSection('${cs.id}')"
+                                class="text-slate-400 hover:text-red-600 transition-colors" title="Remove">&#128465;</button>
+                    </td>
                 </tr>
-            `).join('') || '<tr><td colspan="3" class="py-3 text-slate-400">No sections yet.</td></tr>';
+            `).join('') || '<tr><td colspan="4" class="py-3 text-slate-400">No sections yet — add your grades below.</td></tr>';
+        }
+
+        async function removeClassSection(id) {
+            const res = await fetch(`/web/admin/class-sections/${id}/remove`, { method: 'POST' });
+            const data = await res.json().catch(() => ({}));
+            if (data.error) { alert(data.error); return; }
+            loadClassSections();
         }
 
         document.getElementById('classSectionForm').addEventListener('submit', async (e) => {
