@@ -178,6 +178,18 @@
                     <span th:text="${errorMessage}">Something went wrong.</span>
                 </div>
 
+                <!-- One-time login credentials for a just-registered student/guardian.
+                     Shown once (flash attribute) so the admin can relay them; not in the URL. -->
+                <div th:if="${newCredentials != null and !newCredentials.isEmpty()}"
+                     class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-start gap-3">
+                    <span class="text-lg leading-none mt-0.5">🔑</span>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Sign-in credentials created — copy them now</p>
+                        <p class="text-sm text-slate-700 font-mono break-words mt-1" th:text="${newCredentials}">Student login — 6A-41 / Ab3…</p>
+                        <p class="text-[11px] text-slate-500 mt-1">Share these with the family. They log in at the app / web with this username and temporary password (shown only once).</p>
+                    </div>
+                </div>
+
                 <!-- Compact page title -->
                 <div class="flex items-center justify-between gap-4 flex-wrap">
                     <div>

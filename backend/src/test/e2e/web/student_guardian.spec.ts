@@ -57,6 +57,12 @@ test.describe('Student guardian capture & profile display', () => {
       guardianFirst: 'Gurmeet', guardianLast: 'Singh', guardianPhone: '+91 90000 12345',
     });
 
+    // One-time sign-in credentials are surfaced for both the student (roll number)
+    // and the guardian (phone) so the admin can relay them.
+    await expect(page.locator('text=Sign-in credentials created')).toBeVisible();
+    await expect(page.locator('body')).toContainText('Student login — 6A-701');
+    await expect(page.locator('body')).toContainText('Guardian login — +91 90000 12345');
+
     await openProfile(page, 'Guardiantest Studentone', 'Guardiantest');
 
     // The guardian we entered appears...

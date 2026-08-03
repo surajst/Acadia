@@ -308,7 +308,8 @@ public class AdminManagementController {
                              @RequestParam(value = "guardianFirstName", required = false) String guardianFirstName,
                              @RequestParam(value = "guardianLastName", required = false) String guardianLastName,
                              @RequestParam(value = "guardianPhone", required = false) String guardianPhone,
-                             Authentication authentication) {
+                             Authentication authentication,
+                             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         // Enforce role checks so only ADMIN roles can register students
         if (authentication != null) {
             boolean isAdmin = false;
@@ -326,24 +327,68 @@ public class AdminManagementController {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
 
+        // Provision a student login the same way bulk import does: username =
+        // roll number, with an auto-generated temp password we relay to the
+        // admin. Skip if the roll number is already used as a login.
+        StringBuilder creds = new StringBuilder();
+        String studentEmail = loginEmail;
+        String studentPassword = loginPassword;
+        if ((studentEmail == null || studentEmail.isBlank())
+                && rollNumber != null && !rollNumber.isBlank()
+                && !userRepository.existsByEmail(rollNumber)) {
+            studentEmail = rollNumber;
+            studentPassword = generateTempPassword();
+        }
+
         Student student = adminManagementService.addStudent(firstName, lastName, rollNumber, schoolClassId,
-                loginEmail, loginPassword, tenantId, academicYearId);
+                studentEmail, studentPassword, tenantId, academicYearId);
 
         auditLogService.log(authentication, "STUDENT_ADDED", "Student", student.getId(),
                 "Added student " + firstName + " " + lastName + " (roll " + rollNumber + ")");
 
-        // Optionally capture and link a guardian in the same step, so a student
-        // is never left with a phantom/default parent on their profile.
+        if (studentPassword != null && studentEmail != null) {
+            creds.append("Student login — ").append(studentEmail).append(" / ").append(studentPassword);
+        }
+
+        // Optionally capture and link a guardian in the same step, provisioning
+        // a parent login (username = phone) so both can actually sign in.
         if (guardianFirstName != null && !guardianFirstName.isBlank()) {
+            String guardianEmail = null;
+            String guardianPassword = null;
+            if (guardianPhone != null && !guardianPhone.isBlank()
+                    && !userRepository.existsByEmail(guardianPhone)) {
+                guardianEmail = guardianPhone;
+                guardianPassword = generateTempPassword();
+            }
             Parent guardian = adminManagementService.addParent(
                     guardianFirstName.trim(),
                     guardianLastName != null ? guardianLastName.trim() : "",
-                    guardianPhone, student.getId(), null, null, tenantId, academicYearId);
+                    guardianPhone, student.getId(), guardianEmail, guardianPassword, tenantId, academicYearId);
             auditLogService.log(authentication, "PARENT_ADDED", "Parent", guardian.getId(),
                     "Linked guardian " + guardianFirstName + " to student " + firstName + " " + lastName);
+            if (guardianPassword != null) {
+                if (creds.length() > 0) creds.append("  ·  ");
+                creds.append("Guardian login — ").append(guardianEmail).append(" / ").append(guardianPassword);
+            }
+        }
+
+        if (creds.length() > 0) {
+            // Flash attribute (server-side, not in the URL) so the one-time
+            // credentials render on the management page without leaking into
+            // the address bar or browser history.
+            redirectAttributes.addFlashAttribute("newCredentials", creds.toString());
         }
 
         return "redirect:/web/admin/management?success=student_added";
+    }
+
+    /** Human-relayable temp password (no ambiguous chars), mirrors RosterImportService. */
+    private String generateTempPassword() {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+        java.security.SecureRandom rnd = new java.security.SecureRandom();
+        StringBuilder p = new StringBuilder();
+        for (int i = 0; i < 10; i++) p.append(chars.charAt(rnd.nextInt(chars.length())));
+        return p.append("!9").toString();
     }
 
     @PostMapping("/web/admin/parent/add")
