@@ -305,6 +305,9 @@ public class AdminManagementController {
                              @RequestParam("schoolClassId") UUID schoolClassId,
                              @RequestParam(value = "loginEmail", required = false) String loginEmail,
                              @RequestParam(value = "loginPassword", required = false) String loginPassword,
+                             @RequestParam(value = "guardianFirstName", required = false) String guardianFirstName,
+                             @RequestParam(value = "guardianLastName", required = false) String guardianLastName,
+                             @RequestParam(value = "guardianPhone", required = false) String guardianPhone,
                              Authentication authentication) {
         // Enforce role checks so only ADMIN roles can register students
         if (authentication != null) {
@@ -328,6 +331,17 @@ public class AdminManagementController {
 
         auditLogService.log(authentication, "STUDENT_ADDED", "Student", student.getId(),
                 "Added student " + firstName + " " + lastName + " (roll " + rollNumber + ")");
+
+        // Optionally capture and link a guardian in the same step, so a student
+        // is never left with a phantom/default parent on their profile.
+        if (guardianFirstName != null && !guardianFirstName.isBlank()) {
+            Parent guardian = adminManagementService.addParent(
+                    guardianFirstName.trim(),
+                    guardianLastName != null ? guardianLastName.trim() : "",
+                    guardianPhone, student.getId(), null, null, tenantId, academicYearId);
+            auditLogService.log(authentication, "PARENT_ADDED", "Parent", guardian.getId(),
+                    "Linked guardian " + guardianFirstName + " to student " + firstName + " " + lastName);
+        }
 
         return "redirect:/web/admin/management?success=student_added";
     }

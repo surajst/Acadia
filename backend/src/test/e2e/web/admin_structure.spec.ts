@@ -23,24 +23,29 @@ test.describe('ACADIA Student Lifecycle Operations Management Specs', () => {
     await page.goto('/web/admin/management');
 
     // 4. Verify baseline aggregate count of active students is at the baseline scale (500+)
-    const initialCountText = await page.locator('h3', { hasText: /^\d+$/ }).nth(0).innerText();
+    //    (count now lives in the compact stat chip in the card-hub header)
+    const initialCountText = await page.locator('[data-testid="stat-students"]').innerText();
     const initialCount = parseInt(initialCountText, 10);
     expect(initialCount).toBeGreaterThanOrEqual(500);
 
-    // 5. Open the Sleek Glassmorphic Registration Modal
+    // 5. Open the Classrooms & Students section from the hub, then the Registration Modal
+    await page.click('button:has-text("Classrooms & Students")');
     await page.click('button:has-text("Register New Student")');
     await expect(page.locator('#registerStudentModal')).toBeVisible();
 
-    // 6. Fill out and submit student registration parameters
+    // 6. Fill out and submit student registration parameters, including a linked guardian
     await page.fill('#firstName', 'Simran');
     await page.fill('#lastName', 'Kaur');
     await page.fill('#rollNumber', '6A-41');
     await page.selectOption('#schoolClassId', { label: 'Grade 6 - A' });
-    await page.click('button:has-text("Register Student")');
+    await page.fill('#guardianFirstName', 'Harpreet');
+    await page.fill('#guardianLastName', 'Kaur');
+    await page.fill('#guardianPhone', '+91 90000 00001');
+    await page.click('#registerStudentModal button[type="submit"]');
 
     // 7. Verify redirect and assert student count instantly increments by 1
     await page.waitForURL((url: URL) => url.pathname.includes('/web/admin/management'));
-    const incrementedCountText = await page.locator('h3', { hasText: /^\d+$/ }).nth(0).innerText();
+    const incrementedCountText = await page.locator('[data-testid="stat-students"]').innerText();
     const incrementedCount = parseInt(incrementedCountText, 10);
     expect(incrementedCount).toBe(initialCount + 1);
 
@@ -64,7 +69,7 @@ test.describe('ACADIA Student Lifecycle Operations Management Specs', () => {
 
     // 12. Verify redirect back to Admin Dashboard and check count returns to baseline
     await page.waitForURL((url: URL) => url.pathname.includes('/web/admin/management'));
-    const finalCountText = await page.locator('h3', { hasText: /^\d+$/ }).nth(0).innerText();
+    const finalCountText = await page.locator('[data-testid="stat-students"]').innerText();
     const finalCount = parseInt(finalCountText, 10);
     expect(finalCount).toBe(initialCount);
   });

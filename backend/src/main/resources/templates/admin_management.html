@@ -185,7 +185,7 @@
                         <p class="text-sm text-slate-500">Pick a section to configure. Live counts update as you go.</p>
                     </div>
                     <div class="flex items-center gap-2 text-xs">
-                        <span class="px-3 py-1.5 rounded-xl bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 font-semibold"><span th:text="${totalStudents}">0</span> Students</span>
+                        <span class="px-3 py-1.5 rounded-xl bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 font-semibold"><span data-testid="stat-students" th:text="${totalStudents}">0</span> Students</span>
                         <span class="px-3 py-1.5 rounded-xl bg-emerald-600/10 text-emerald-700 border border-emerald-500/20 font-semibold"><span th:text="${totalStaff}">0</span> Staff</span>
                         <span class="px-3 py-1.5 rounded-xl bg-amber-600/10 text-amber-700 border border-amber-500/20 font-semibold"><span th:text="${totalClassrooms}">0</span> Classrooms</span>
                     </div>
@@ -531,7 +531,7 @@
 
     <!-- Sleek Glassmorphic Register Student Modal -->
     <div id="registerStudentModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all">
+        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all max-h-[90vh] flex flex-col">
 
             <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
@@ -543,7 +543,7 @@
                 </button>
             </div>
 
-            <form action="/web/admin/student/add" method="POST" class="p-6 space-y-4" onsubmit="showBtnLoading(this, 'Registering…')">
+            <form action="/web/admin/student/add" method="POST" class="p-6 space-y-4 overflow-y-auto" onsubmit="showBtnLoading(this, 'Registering…')">
                 <div class="space-y-1">
                     <label for="firstName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">First Name</label>
                     <input type="text" id="firstName" name="firstName" required placeholder="e.g. Rahul"
@@ -571,11 +571,26 @@
                     </select>
                 </div>
 
-                <div class="bg-indigo-600/5 border border-indigo-500/10 rounded-xl p-3.5 flex items-start gap-3">
-                    <svg class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p class="text-xs text-slate-500 leading-relaxed">
-                        Registering a student automatically initiates a matching default <strong>StudentMetric</strong> XP block (schoolXp=0, parentXp=0, streak=0) to prevent runtime errors.
-                    </p>
+                <div class="pt-3 mt-1 border-t border-slate-200/60">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Guardian / Parent <span class="text-slate-400 normal-case font-medium">(optional)</span></p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label for="guardianFirstName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Guardian First Name</label>
+                            <input type="text" id="guardianFirstName" name="guardianFirstName" placeholder="e.g. Ramesh"
+                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        </div>
+                        <div class="space-y-1">
+                            <label for="guardianLastName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Guardian Last Name</label>
+                            <input type="text" id="guardianLastName" name="guardianLastName" placeholder="e.g. Sharma"
+                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        </div>
+                        <div class="space-y-1 col-span-2">
+                            <label for="guardianPhone" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Guardian Phone</label>
+                            <input type="text" id="guardianPhone" name="guardianPhone" placeholder="e.g. +91 98765 43210"
+                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">Leave blank to add a guardian later. When provided, the guardian is linked to this student and appears on their profile.</p>
                 </div>
 
                 <div class="pt-4 flex justify-end gap-3 border-t border-slate-200/50">
@@ -593,7 +608,7 @@
 
     <!-- Sleek Glassmorphic Add Classroom Modal -->
     <div id="addClassroomModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all">
+        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all max-h-[90vh] flex flex-col">
 
             <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
@@ -605,7 +620,7 @@
                 </button>
             </div>
 
-            <form action="/web/admin/school-classes/add" method="POST" class="p-6 space-y-4" onsubmit="showBtnLoading(this, 'Adding…')">
+            <form action="/web/admin/school-classes/add" method="POST" class="p-6 space-y-4 overflow-y-auto" onsubmit="showBtnLoading(this, 'Adding…')">
                 <div class="space-y-1">
                     <label for="gradeLevel" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Grade Level</label>
                     <input type="text" id="gradeLevel" name="gradeLevel" required placeholder="e.g. Grade 6"

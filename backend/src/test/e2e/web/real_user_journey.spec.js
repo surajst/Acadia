@@ -24,15 +24,16 @@ test.describe.serial('Real User Journey E2E Specs', () => {
     await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
     await expect(page.url()).toContain('/web/admin/dashboard');
 
-    // Add a new student
+    // Add a new student (reveal the Classrooms & Students section from the card hub first)
     await page.goto('/web/admin/management');
+    await page.click('button:has-text("Classrooms & Students")');
     await page.click('button:has-text("Register New Student")');
     await expect(page.locator('#registerStudentModal')).toBeVisible();
     await page.fill('#firstName', 'Test');
     await page.fill('#lastName', 'Student Playwright');
     await page.fill('#rollNumber', '6A-99');
     await page.selectOption('#schoolClassId', { label: 'Grade 6 - A' });
-    await page.click('button:has-text("Register Student")');
+    await page.click('#registerStudentModal button[type="submit"]');
     await page.waitForURL(url => url.pathname.includes('/web/admin/management'));
 
     // Search for a student by name within the class roster. The class holds more

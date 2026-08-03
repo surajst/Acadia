@@ -246,6 +246,7 @@ public class UnifiedDashboardWebController {
     }
 
     @GetMapping("/web/teacher/student/{id}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public String showStudentProfile(@PathVariable("id") UUID id, Model model, Authentication authentication) {
         String role = "TEACHER";
         if (authentication != null) {
@@ -338,16 +339,30 @@ public class UnifiedDashboardWebController {
         model.addAttribute("availableClassesMenu", assignedClassrooms);
         model.addAttribute("systemScope", "RESTRICTED_VIEW");
 
-        // Parent Trust & Home Integration properties
-        model.addAttribute("parentName", "Ramesh Sharma");
-        model.addAttribute("householdStreak", 12);
-        model.addAttribute("parentEngagementScore", 94);
-        model.addAttribute("recentParentNotes", "Arjun completed all daily algebra milestone worksheets at home with high diligence. Family verification complete.");
-        model.addAttribute("dispatchLedger", List.of(
-            Map.of("date", "2026-05-20", "type", "MILESTONE", "status", "SENT", "message", "Milestone evidence '6th Grade Fraction Mastery' submitted."),
-            Map.of("date", "2026-05-19", "type", "ATTENDANCE", "status", "SENT", "message", "Arjun marked PRESENT at school."),
-            Map.of("date", "2026-05-18", "type", "XP_BOUNTY", "status", "DELIVERED", "message", "+250 XP earned for Fraction Mastery approval!")
-        ));
+        // ── Guardian & Home Integration — real data, empty states where none exists ──
+        // No fabricated defaults: a student with no linked guardian shows an
+        // honest "not linked yet" state instead of a phantom parent.
+        Parent primaryGuardian = null;
+        int guardianCount = 0;
+        try {
+            java.util.Set<Parent> parents = student.getParents();
+            if (parents != null) {
+                guardianCount = parents.size();
+                if (!parents.isEmpty()) primaryGuardian = parents.iterator().next();
+            }
+        } catch (Exception e) {
+            // gracefully catch lazy-init / detached issues
+        }
+        model.addAttribute("primaryGuardian",
+                primaryGuardian == null ? null
+                        : (primaryGuardian.getFirstName() + " " + primaryGuardian.getLastName()).trim());
+        model.addAttribute("guardianPhone", primaryGuardian == null ? null : primaryGuardian.getPhoneNumber());
+        model.addAttribute("guardianCount", guardianCount);
+        model.addAttribute("householdStreak",
+                studentMetrics != null && studentMetrics.getActiveStreak() != null ? studentMetrics.getActiveStreak() : 0);
+        // No real per-student verification-note or dispatch feed source yet — show empty states.
+        model.addAttribute("recentParentNotes", null);
+        model.addAttribute("dispatchLedger", Collections.emptyList());
 
         return "student_profile";
     }
