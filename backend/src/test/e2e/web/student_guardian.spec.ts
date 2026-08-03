@@ -84,4 +84,24 @@ test.describe('Student guardian capture & profile display', () => {
     await expect(page.locator('body')).not.toContainText('Ramesh Sharma');
   });
 
+  test('admin can reset/re-issue student and guardian passwords from the profile', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+
+    await registerStudent(page, {
+      first: 'Resettest', last: 'Studentthree', roll: '6A-703',
+      guardianFirst: 'Resetguardian', guardianLast: 'Kaur', guardianPhone: '+91 90000 33333',
+    });
+    await openProfile(page, 'Resettest Studentthree', 'Resettest');
+
+    // Re-issue the student's password → new one-time credentials surface.
+    await page.click('button:has-text("Reset student password")');
+    await expect(page.locator('text=New sign-in credentials')).toBeVisible();
+    await expect(page.locator('body')).toContainText('Student login — 6A-703');
+
+    // Re-issue the guardian's password too.
+    await page.click('button:has-text("Reset guardian password")');
+    await expect(page.locator('body')).toContainText('Guardian login — +91 90000 33333');
+  });
+
 });

@@ -418,6 +418,95 @@ public class AdminManagementController {
         return java.util.Map.of("status", "created", "id", parent.getId());
     }
 
+    @PostMapping("/web/admin/student/{id}/reset-login")
+    @Transactional
+    public String resetStudentLogin(@PathVariable("id") UUID id, Authentication authentication,
+                                    org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        Student student = studentRepository.findById(id).orElse(null);
+        if (student == null || tenantId == null || !tenantId.equals(student.getTenantId())) {
+            ra.addFlashAttribute("errorMessage", "Student not found.");
+            return "redirect:/web/admin/management";
+        }
+        String username = student.getRollNumber();
+        String newPassword = generateTempPassword();
+        User u = student.getUserId() != null ? userRepository.findById(student.getUserId()).orElse(null) : null;
+        if (u == null) {
+            // No login existed yet — create one keyed by roll number.
+            if (username == null || username.isBlank() || userRepository.existsByEmail(username)) {
+                ra.addFlashAttribute("errorMessage", "Cannot create a student login: roll number is missing or already in use.");
+                return "redirect:/web/teacher/student/" + id;
+            }
+            u = new User();
+            u.setId(UUID.randomUUID());
+            u.setTenantId(tenantId);
+            u.setAcademicYearId(student.getAcademicYearId());
+            u.setEmail(username);
+            u.setFullName(student.getFirstName() + " " + student.getLastName());
+            u.setRole(UserRole.STUDENT);
+            u.setActive(true);
+            u.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepository.save(u);
+            student.setUserId(u.getId());
+            studentRepository.save(student);
+        } else {
+            u.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepository.save(u);
+        }
+        auditLogService.log(authentication, "STUDENT_LOGIN_RESET", "User", u.getId(),
+                "Reset student login for " + student.getFirstName() + " " + student.getLastName());
+        ra.addFlashAttribute("newCredentials", "Student login — " + u.getEmail() + " / " + newPassword);
+        return "redirect:/web/teacher/student/" + id;
+    }
+
+    @PostMapping("/web/admin/parent/{parentId}/reset-login")
+    @Transactional
+    public String resetParentLogin(@PathVariable("parentId") UUID parentId,
+                                   @RequestParam("studentId") UUID studentId,
+                                   Authentication authentication,
+                                   org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        Parent parent = parentRepository.findById(parentId).orElse(null);
+        if (parent == null || tenantId == null || !tenantId.equals(parent.getTenantId())) {
+            ra.addFlashAttribute("errorMessage", "Guardian not found.");
+            return "redirect:/web/teacher/student/" + studentId;
+        }
+        String username = (parent.getEmail() != null && !parent.getEmail().isBlank())
+                ? parent.getEmail() : parent.getPhoneNumber();
+        if (username == null || username.isBlank()) {
+            ra.addFlashAttribute("errorMessage", "Guardian has no phone/email to use as a login username.");
+            return "redirect:/web/teacher/student/" + studentId;
+        }
+        String newPassword = generateTempPassword();
+        User u = parent.getUserId() != null ? userRepository.findById(parent.getUserId()).orElse(null) : null;
+        if (u == null) {
+            if (userRepository.existsByEmail(username)) {
+                ra.addFlashAttribute("errorMessage", "Cannot create a guardian login: " + username + " is already in use.");
+                return "redirect:/web/teacher/student/" + studentId;
+            }
+            u = new User();
+            u.setId(UUID.randomUUID());
+            u.setTenantId(tenantId);
+            u.setAcademicYearId(parent.getAcademicYearId());
+            u.setEmail(username);
+            u.setFullName(parent.getFirstName() + " " + parent.getLastName());
+            u.setRole(UserRole.PARENT);
+            u.setActive(true);
+            u.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepository.save(u);
+            parent.setUserId(u.getId());
+            parent.setEmail(username);
+            parentRepository.save(parent);
+        } else {
+            u.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepository.save(u);
+        }
+        auditLogService.log(authentication, "PARENT_LOGIN_RESET", "User", u.getId(),
+                "Reset guardian login for " + parent.getFirstName() + " " + parent.getLastName());
+        ra.addFlashAttribute("newCredentials", "Guardian login — " + u.getEmail() + " / " + newPassword);
+        return "redirect:/web/teacher/student/" + studentId;
+    }
+
     @PostMapping("/web/admin/student/{id}/remove")
     @Transactional
     public String removeStudent(@PathVariable("id") UUID id, Authentication authentication) {

@@ -357,6 +357,7 @@ public class UnifiedDashboardWebController {
                 primaryGuardian == null ? null
                         : (primaryGuardian.getFirstName() + " " + primaryGuardian.getLastName()).trim());
         model.addAttribute("guardianPhone", primaryGuardian == null ? null : primaryGuardian.getPhoneNumber());
+        model.addAttribute("primaryGuardianId", primaryGuardian == null ? null : primaryGuardian.getId());
         model.addAttribute("guardianCount", guardianCount);
         model.addAttribute("householdStreak",
                 studentMetrics != null && studentMetrics.getActiveStreak() != null ? studentMetrics.getActiveStreak() : 0);
