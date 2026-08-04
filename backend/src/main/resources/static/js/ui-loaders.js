@@ -25,7 +25,11 @@
     if (!btn || btn.classList.contains('js-loading') || btn.disabled) return;
     btn.dataset.origHtml = btn.innerHTML;
     btn.classList.add('js-loading');
-    var label = btn.dataset.loadingText || fallbackText || 'Working…';
+    // Keep the button's own label so the spinner reads correctly everywhere
+    // ("Sign In" stays "Sign In", "Add Classroom" stays "Add Classroom").
+    // An explicit data-loading-text wins; icon-only buttons fall back.
+    var own = (btn.textContent || '').trim();
+    var label = btn.dataset.loadingText || own || fallbackText || 'Working…';
     btn.innerHTML = '<span class="acadia-spinner"></span>' + label;
     btn.disabled = true;
   }

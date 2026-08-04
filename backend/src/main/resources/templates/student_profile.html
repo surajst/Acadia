@@ -315,18 +315,8 @@
             const m = document.getElementById('editStudentModal');
             if (m && e.target === m) closeEditStudentModal();
         });
-        // Every form submit on this page shows a spinner on its submit button so
-        // each action (edit, reset student, reset guardian) has a visible loader.
-        document.querySelectorAll('form').forEach((form) => {
-            form.addEventListener('submit', () => {
-                const btn = form.querySelector('button[type="submit"]');
-                if (btn && !btn.disabled) {
-                    const label = btn.textContent.trim();
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="btn-spinner"></span>' + (label.startsWith('🔑') ? 'Working…' : 'Saving…');
-                }
-            });
-        });
+        // Form submit loaders are handled globally by /js/ui-loaders.js, which
+        // keeps each button's own label (Save Changes / Reset … password).
     </script>
     <script src="/js/ui-loaders.js"></script>
 </body>
