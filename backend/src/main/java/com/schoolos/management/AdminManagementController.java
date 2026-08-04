@@ -425,9 +425,13 @@ public class AdminManagementController {
                                 @RequestParam("lastName") String lastName,
                                 @RequestParam("rollNumber") String rollNumber,
                                 @RequestParam(value = "schoolClassId", required = false) UUID schoolClassId,
+                                @RequestParam(value = "guardianFirstName", required = false) String guardianFirstName,
+                                @RequestParam(value = "guardianLastName", required = false) String guardianLastName,
+                                @RequestParam(value = "guardianPhone", required = false) String guardianPhone,
                                 Authentication authentication,
                                 org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
         Student student = studentRepository.findById(id).orElse(null);
         if (student == null || tenantId == null || !tenantId.equals(student.getTenantId())) {
             ra.addFlashAttribute("errorMessage", "Student not found.");
@@ -455,6 +459,38 @@ public class AdminManagementController {
         studentRepository.save(student);
         auditLogService.log(authentication, "STUDENT_UPDATED", "Student", student.getId(),
                 "Updated student to " + firstName + " " + lastName + " (roll " + rollNumber + ")");
+
+        // Guardian: update the existing primary guardian in place, or create and
+        // link a new one (provisioning a login) if the student had none.
+        if (guardianFirstName != null && !guardianFirstName.isBlank()) {
+            Parent existing = student.getParents() != null
+                    ? student.getParents().stream().filter(p -> tenantId.equals(p.getTenantId())).findFirst().orElse(null)
+                    : null;
+            if (existing != null) {
+                existing.setFirstName(guardianFirstName.trim());
+                existing.setLastName(guardianLastName != null ? guardianLastName.trim() : "");
+                if (guardianPhone != null) existing.setPhoneNumber(guardianPhone.trim());
+                parentRepository.save(existing);
+                auditLogService.log(authentication, "PARENT_UPDATED", "Parent", existing.getId(),
+                        "Updated guardian for student " + firstName + " " + lastName);
+            } else {
+                String gEmail = null;
+                String gPass = null;
+                if (guardianPhone != null && !guardianPhone.isBlank() && !userRepository.existsByEmail(guardianPhone)) {
+                    gEmail = guardianPhone;
+                    gPass = generateTempPassword();
+                }
+                Parent g = adminManagementService.addParent(guardianFirstName.trim(),
+                        guardianLastName != null ? guardianLastName.trim() : "",
+                        guardianPhone, student.getId(), gEmail, gPass, tenantId, academicYearId);
+                auditLogService.log(authentication, "PARENT_ADDED", "Parent", g.getId(),
+                        "Linked guardian " + guardianFirstName + " to student " + firstName + " " + lastName);
+                if (gPass != null) {
+                    ra.addFlashAttribute("newCredentials", "Guardian login — " + gEmail + " / " + gPass);
+                }
+            }
+        }
+
         ra.addFlashAttribute("profileMessage", "Student details updated.");
         return "redirect:/web/teacher/student/" + id;
     }

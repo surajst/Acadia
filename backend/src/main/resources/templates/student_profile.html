@@ -290,6 +290,30 @@
                                 th:selected="${currentSchoolClassId != null and cls.id == currentSchoolClassId}">Grade 6 - A</option>
                     </select>
                 </div>
+
+                <!-- Guardian / parent (edit existing or add if none) -->
+                <div class="pt-3 mt-1 border-t border-slate-200/60">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Guardian / Parent</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label for="editGuardianFirstName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">First Name</label>
+                            <input type="text" id="editGuardianFirstName" name="guardianFirstName" placeholder="e.g. Ramesh" th:value="${primaryGuardianFirstName}"
+                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        </div>
+                        <div class="space-y-1">
+                            <label for="editGuardianLastName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Last Name</label>
+                            <input type="text" id="editGuardianLastName" name="guardianLastName" placeholder="e.g. Sharma" th:value="${primaryGuardianLastName}"
+                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        </div>
+                        <div class="space-y-1 col-span-2">
+                            <label for="editGuardianPhone" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Phone</label>
+                            <input type="text" id="editGuardianPhone" name="guardianPhone" placeholder="e.g. +91 98765 43210" th:value="${guardianPhone}"
+                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1.5 px-1">Fill this in to add a guardian if none is linked, or edit the existing one. Editing the phone doesn't change an existing login username.</p>
+                </div>
+
                 <div class="pt-4 flex justify-end gap-3 border-t border-slate-200/50">
                     <button type="button" onclick="closeEditStudentModal()" class="px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold transition-all cursor-pointer">Cancel</button>
                     <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg transition-all text-xs tracking-wider cursor-pointer">Save Changes</button>

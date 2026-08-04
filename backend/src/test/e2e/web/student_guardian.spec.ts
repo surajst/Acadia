@@ -111,16 +111,34 @@ test.describe('Student guardian capture & profile display', () => {
     await registerStudent(page, { first: 'Edittest', last: 'Studentfour', roll: '6A-704' });
     await openProfile(page, 'Edittest Studentfour', 'Edittest');
 
+    // The student was registered without a guardian → empty state.
+    await expect(page.locator('text=No guardian linked yet')).toBeVisible();
+
     await page.click('button:has-text("Edit")');
     await expect(page.locator('#editStudentModal')).toBeVisible();
     await expect(page.locator('#editFirstName')).toHaveValue('Edittest');
     await page.fill('#editLastName', 'Renamedstudent');
     await page.fill('#editRollNumber', '6A-704Z');
+    // Add a guardian in the same edit (create path).
+    await page.fill('#editGuardianFirstName', 'Editadded');
+    await page.fill('#editGuardianLastName', 'Guardian');
+    await page.fill('#editGuardianPhone', '+91 90000 44444');
     await page.click('button:has-text("Save Changes")');
 
     await expect(page.locator('text=Student details updated')).toBeVisible();
     await expect(page.locator('h2')).toContainText('Edittest Renamedstudent');
     await expect(page.locator('body')).toContainText('Roll: 6A-704Z');
+    // The newly added guardian now shows, empty state is gone, and its login is surfaced.
+    await expect(page.locator('body')).toContainText('Editadded Guardian');
+    await expect(page.locator('body')).not.toContainText('No guardian linked yet');
+    await expect(page.locator('body')).toContainText('Guardian login — +91 90000 44444');
+
+    // Editing again pre-fills the guardian and updates it in place.
+    await page.click('button:has-text("Edit")');
+    await expect(page.locator('#editGuardianFirstName')).toHaveValue('Editadded');
+    await page.fill('#editGuardianFirstName', 'Editchanged');
+    await page.click('button:has-text("Save Changes")');
+    await expect(page.locator('body')).toContainText('Editchanged Guardian');
   });
 
 });
