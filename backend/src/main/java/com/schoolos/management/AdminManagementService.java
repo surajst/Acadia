@@ -132,7 +132,8 @@ public class AdminManagementService {
     public Parent addParent(String firstName, String lastName, String phoneNumber, UUID studentId,
                             String loginEmail, String loginPassword, UUID tenantId, UUID academicYearId) {
         if (phoneNumber != null && !phoneNumber.isBlank()) {
-            Parent existing = parentRepository.findByTenantIdAndPhoneNumber(tenantId, phoneNumber).orElse(null);
+            Parent existing = parentRepository.findAllByTenantIdAndPhoneNumber(tenantId, phoneNumber)
+                    .stream().findFirst().orElse(null);
             if (existing != null) {
                 // Reuse the same person: link them to this additional child, and
                 // provision a login only if they don't already have one.

@@ -31,8 +31,8 @@ test.describe('ACADIA Role Clearance Specs', () => {
     // Assert page content (e.g., student name header or cards are visible, and NO Whitelabel Error Page)
     await expect(page.locator('body')).not.toContainText('Forbidden');
     await expect(page.locator('body')).not.toContainText('403');
-    await expect(page.locator('h3:has-text("Individual Attendance")')).toBeVisible();
-    await expect(page.locator('h3:has-text("Parent Trust & Home Integration")')).toBeVisible();
+    await expect(page.locator('h3:has-text("Attendance")')).toBeVisible();
+    await expect(page.locator('h3:has-text("Guardian & Home")')).toBeVisible();
   });
 
 });

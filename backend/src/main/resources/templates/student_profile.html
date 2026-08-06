@@ -3,345 +3,407 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal &middot; ACADIA</title>
+    <title>Student Profile &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
-        
-        body { 
-            font-family: 'Outfit', 'Inter', sans-serif; 
-            background-color: #F7F9FC; 
-            color: #0F172A; 
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-        .glass-panel {
-            background: #FFFFFF;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        /* ── Design tokens ─────────────────────────────────────────────── */
+        :root {
+            --bg:#F4F6FB; --surface:#FFFFFF; --surface-2:#F8FAFC;
+            --line:#E7EAF2; --line-strong:#D9DFEA;
+            --text:#0F172A; --text-2:#475569; --text-3:#94A0B4;
+            --brand:#4F46E5; --brand-50:#EEF0FF; --brand-100:#E0E3FF; --brand-700:#4338CA;
+            --success:#059669; --success-50:#ECFDF5; --success-200:#A7F3D0;
+            --warn:#D97706; --warn-50:#FFFBEB; --warn-200:#FDE68A;
+            --danger:#DC2626; --danger-50:#FEF2F2; --danger-200:#FECACA;
+            --info:#2563EB; --info-50:#EFF6FF; --info-200:#BFDBFE;
+            --r:16px; --r-sm:12px; --r-xs:10px;
+            --sh-1:0 1px 2px rgba(16,24,40,.05);
+            --sh-2:0 8px 24px rgba(16,24,40,.07);
         }
+        body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(--text); }
 
-        .text-glow-indigo {
-            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
-        }
+        .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--sh-1); }
+        .eyebrow { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); }
 
-        .text-glow-emerald {
-            text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
-        }
+        /* Unified badge system — one shape, semantic colors */
+        .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; line-height:1; border:1px solid transparent; }
+        .badge .dot { width:6px; height:6px; border-radius:50%; }
+        .badge--success { background:var(--success-50); color:var(--success); border-color:var(--success-200); }
+        .badge--info    { background:var(--info-50);    color:var(--info);    border-color:var(--info-200); }
+        .badge--neutral { background:var(--surface-2);  color:var(--text-2);  border-color:var(--line-strong); }
+        .badge--warn    { background:var(--warn-50);    color:var(--warn);    border-color:var(--warn-200); }
+        .badge--danger  { background:var(--danger-50);  color:var(--danger);  border-color:var(--danger-200); }
 
-        .text-glow-amber {
-            text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
-        }
+        /* Buttons */
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; font-weight:600; border-radius:var(--r-sm); transition:all .15s ease; cursor:pointer; border:1px solid transparent; }
+        .btn:focus-visible { outline:none; box-shadow:0 0 0 3px var(--brand-100); }
+        .btn-sm { padding:8px 13px; font-size:12.5px; }
+        .btn-primary { background:var(--brand); color:#fff; }
+        .btn-primary:hover { background:var(--brand-700); }
+        .btn-secondary { background:var(--surface); color:var(--text-2); border-color:var(--line-strong); }
+        .btn-secondary:hover { background:var(--surface-2); color:var(--text); }
+        .btn-danger { background:var(--danger); color:#fff; }
+        .btn-danger:hover { background:#B91C1C; }
+        .btn-security { background:var(--surface); color:var(--text); border-color:var(--line-strong); }
+        .btn-security:hover { border-color:var(--brand); color:var(--brand); background:var(--brand-50); }
 
-        /* Custom scrollbar to match dark theme aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #F7F9FC;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #FFFFFF;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #E2E8F0;
-        }
+        /* Stat strip */
+        .stat-seg { padding:18px 20px; }
+        .stat-value { font-size:30px; font-weight:800; letter-spacing:-.02em; line-height:1; }
+
+        /* Form fields */
+        .field { background:var(--surface-2); border:1px solid var(--line-strong); border-radius:var(--r-sm); color:var(--text); font-size:14px; padding:10px 14px; width:100%; outline:none; transition:.15s; }
+        .field:focus { border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-100); background:#fff; }
+        .field-label { font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-3); }
+
+        ::-webkit-scrollbar { width:9px; height:9px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:#D3DAE6; border-radius:6px; }
+        ::-webkit-scrollbar-thumb:hover { background:#B9C2D4; }
     </style>
-    
-    
-
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class=" relative overflow-x-hidden selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="relative selection:bg-indigo-200/60" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
 
-    <!-- Glowing Background blobs for glassmorphic depth -->
-    <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
-    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-600/10 blur-[120px] pointer-events-none"></div>
-
-    <header class="glass-panel border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
-        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <a href="/web/admin/dashboard" class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-700 font-black text-lg transition-transform hover:scale-105">
-                    Ω
-                </a>
+    <!-- ── Top bar ─────────────────────────────────────────────────────── -->
+    <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
+        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <a href="/web/admin/dashboard" class="h-10 w-10 rounded-xl bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand)] font-black text-lg transition hover:bg-[var(--brand-100)]">Ω</a>
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-800 via-slate-700 to-indigo-600 bg-clip-text text-transparent">
-                        Admin Dashboard
-                    </h1>
-                    <p class="text-xs text-slate-500 mt-0.5 font-medium flex items-center gap-1">
-                        <a href="/web/admin/dashboard" class="hover:text-indigo-600 transition-colors">Roster Hub</a>
-                        <span class="text-slate-600">/</span>
-                        <span class="text-slate-600">Student Profile</span>
+                    <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Admin Console</h1>
+                    <p class="text-xs text-[var(--text-3)] mt-1 flex items-center gap-1.5">
+                        <a href="/web/admin/dashboard" class="hover:text-[var(--brand)] transition-colors font-medium">Roster Hub</a>
+                        <span>/</span><span class="text-[var(--text-2)] font-medium">Student Profile</span>
                     </p>
                 </div>
             </div>
-            <div>
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 tracking-wider uppercase">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Operational
-                </span>
-            </div>
+            <span class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Operational</span>
         </div>
     </header>
-<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
 
-
+    <div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0;">
     <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div>
+        <main class="space-y-5">
 
-
-
-            <!-- Main Panel Content -->
-            <main class="space-y-5" >
-
-                <!-- One-time login credentials after a reset (flash; never in the URL).
-                     No auto-hide — the admin needs time to copy — but dismissible. -->
-                <div th:if="${newCredentials != null and !newCredentials.isEmpty()}" data-flash
-                     class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 pr-10 flex items-start gap-3">
-                    <span class="text-lg leading-none mt-0.5">🔑</span>
-                    <div class="min-w-0">
-                        <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">New sign-in credentials — copy them now</p>
-                        <p class="text-sm text-slate-700 font-mono break-words mt-1" th:text="${newCredentials}">Student login — 6A-41 / Ab3…</p>
-                        <p class="text-[11px] text-slate-500 mt-1">Shown only once. Share with the family; they sign in with this username and temporary password.</p>
-                    </div>
+            <!-- Flash toasts (dismissible; transient ones auto-hide) -->
+            <div th:if="${newCredentials != null and !newCredentials.isEmpty()}" data-flash
+                 class="rounded-2xl p-4 pr-10 flex items-start gap-3 border" style="background:var(--success-50); border-color:var(--success-200);">
+                <span class="text-lg leading-none mt-0.5">🔑</span>
+                <div class="min-w-0">
+                    <p class="eyebrow" style="color:var(--success)">New sign-in credentials — copy them now</p>
+                    <p class="text-sm text-slate-700 font-mono break-words mt-1" th:text="${newCredentials}">Student login — 6A-41 / Ab3…</p>
+                    <p class="text-[11px] text-[var(--text-3)] mt-1">Shown only once. Share with the family; they sign in with this username and temporary password.</p>
                 </div>
-                <div th:if="${errorMessage != null}" data-flash data-autohide="8000"
-                     class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 pr-10 text-sm text-red-600" th:text="${errorMessage}">Something went wrong.</div>
-                <div th:if="${profileMessage != null}" data-flash data-autohide="5000"
-                     class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3.5 pr-10 text-sm text-emerald-700 flex items-center gap-2">
-                    <span>✅</span><span th:text="${profileMessage}">Saved.</span>
-                </div>
+            </div>
+            <div th:if="${errorMessage != null}" data-flash data-autohide="8000"
+                 class="rounded-2xl p-4 pr-10 text-sm border flex items-center gap-2" style="background:var(--danger-50); border-color:var(--danger-200); color:var(--danger);">
+                <span>⚠️</span><span th:text="${errorMessage}">Something went wrong.</span>
+            </div>
+            <div th:if="${profileMessage != null}" data-flash data-autohide="5000"
+                 class="rounded-2xl p-3.5 pr-10 text-sm border flex items-center gap-2" style="background:var(--success-50); border-color:var(--success-200); color:var(--success);">
+                <span>✅</span><span th:text="${profileMessage}">Saved.</span>
+            </div>
 
-                <!-- Compact hero: identity + quick actions in one row -->
-                <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-lg flex items-center gap-4 flex-wrap">
-                    <div class="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-gradient-to-tr from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-extrabold text-2xl shadow-lg shadow-indigo-500/30">
+            <!-- ── Identity anchor ──────────────────────────────────────── -->
+            <section class="card card-2 relative overflow-hidden" style="box-shadow:var(--sh-2); border-color:var(--brand-100);">
+                <div class="absolute inset-x-0 top-0 h-1" style="background:linear-gradient(90deg,var(--brand),#7C7AF0);"></div>
+                <div class="p-5 sm:p-6 flex items-center gap-4 sm:gap-5 flex-wrap">
+                    <div class="w-16 h-16 sm:w-[72px] sm:h-[72px] shrink-0 rounded-2xl flex items-center justify-center text-white font-extrabold text-3xl"
+                         style="background:linear-gradient(135deg,var(--brand),#7C7AF0); box-shadow:0 8px 20px rgba(79,70,229,.28);">
                         <span th:text="${student.firstName.substring(0,1)}">A</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-tight" th:text="|${student.firstName} ${student.lastName}|">Aarav Sharma</h2>
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/10 text-indigo-700 border border-indigo-500/20">🎓 Synced</span>
+                        <div class="flex items-center gap-2.5 flex-wrap">
+                            <h2 class="text-2xl sm:text-[28px] font-extrabold text-slate-900 tracking-tight leading-none" th:text="|${student.firstName} ${student.lastName}|">Aarav Sharma</h2>
+                            <span class="badge badge--info">🎓 Synced</span>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2 mt-1.5">
-                            <span class="px-2.5 py-0.5 bg-[#F7F9FC] text-indigo-600 border border-slate-200/80 rounded-lg text-xs font-mono font-bold"
-                                  th:text="|Roll: ${student.rollNumber != null ? student.rollNumber : '--'}|">Roll: 6A01</span>
-                            <span class="px-2.5 py-0.5 bg-[#F7F9FC] text-slate-600 border border-slate-200/80 rounded-lg text-xs font-medium"
-                                  th:text="|Class: ${student.classSection.gradeName} - ${student.classSection.sectionName}|">Class: 6 - A</span>
+                        <div class="flex flex-wrap items-center gap-2 mt-2.5">
+                            <span class="badge badge--neutral font-mono" th:text="|Roll: ${student.rollNumber != null ? student.rollNumber : '—'}|">Roll: 6A01</span>
+                            <span class="badge badge--neutral" th:text="|Class: ${student.classSection.gradeName} - ${student.classSection.sectionName}|">Class: 6 - A</span>
                         </div>
                     </div>
-                    <button th:if="${currentUserRole == 'ADMIN'}" type="button" onclick="openEditStudentModal()"
-                            class="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 transition-colors cursor-pointer">
-                        ✏️ Edit
+                    <button th:if="${currentUserRole == 'ADMIN'}" type="button" onclick="openEditStudentModal()" class="btn btn-secondary btn-sm shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Edit
                     </button>
                 </div>
+            </section>
 
-                <!-- Stat tiles: everything important at a glance -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div class="glass-panel rounded-2xl p-4 shadow-sm">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Attendance</p>
-                        <p class="text-3xl font-black text-emerald-600 mt-1" th:text="|${attendancePercentage}%|">95%</p>
-                        <p class="text-[11px] text-slate-400 mt-0.5" th:text="|${presentCount}/${(presentCount + absentCount)} present|">19/20 present</p>
+            <!-- ── Connected stat strip ─────────────────────────────────── -->
+            <section class="card overflow-hidden">
+                <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0" style="--tw-divide-opacity:1; border-color:var(--line);">
+                    <!-- Attendance: honest empty state when nothing recorded -->
+                    <div class="stat-seg" style="border-color:var(--line)">
+                        <p class="eyebrow">Attendance</p>
+                        <div th:if="${(presentCount + absentCount) > 0}">
+                            <p class="stat-value mt-2" style="color:var(--success)" th:text="|${attendancePercentage}%|">95%</p>
+                            <p class="text-xs text-[var(--text-3)] mt-1.5" th:text="|${presentCount}/${(presentCount + absentCount)} days present|">19/20 days present</p>
+                        </div>
+                        <div th:unless="${(presentCount + absentCount) > 0}">
+                            <p class="stat-value mt-2 text-[var(--text-3)]">—</p>
+                            <p class="text-xs text-[var(--text-3)] mt-1.5">No attendance recorded yet</p>
+                        </div>
                     </div>
-                    <div class="glass-panel rounded-2xl p-4 shadow-sm">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total XP</p>
-                        <p class="text-3xl font-black text-indigo-600 mt-1"
+                    <!-- Total XP -->
+                    <div class="stat-seg" style="border-color:var(--line)">
+                        <p class="eyebrow">Total XP</p>
+                        <p class="stat-value mt-2" style="color:var(--brand)"
                            th:text="${(studentMetrics != null and studentMetrics.schoolXp != null ? studentMetrics.schoolXp : 0) + (studentMetrics != null and studentMetrics.parentXp != null ? studentMetrics.parentXp : 0)}">0</p>
-                        <p class="text-[11px] text-slate-400 mt-0.5"
+                        <p class="text-xs text-[var(--text-3)] mt-1.5"
                            th:text="|School ${studentMetrics != null and studentMetrics.schoolXp != null ? studentMetrics.schoolXp : 0} · Parent ${studentMetrics != null and studentMetrics.parentXp != null ? studentMetrics.parentXp : 0}|">School 0 · Parent 0</p>
                     </div>
-                    <div class="glass-panel rounded-2xl p-4 shadow-sm">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Streak</p>
-                        <p class="text-3xl font-black text-amber-600 mt-1" th:text="${studentMetrics != null and studentMetrics.activeStreak != null ? studentMetrics.activeStreak : 0}">0</p>
-                        <p class="text-[11px] text-slate-400 mt-0.5">days active</p>
+                    <!-- Streak -->
+                    <div class="stat-seg" style="border-color:var(--line)">
+                        <p class="eyebrow">Streak</p>
+                        <p class="stat-value mt-2" style="color:var(--warn)" th:text="${studentMetrics != null and studentMetrics.activeStreak != null ? studentMetrics.activeStreak : 0}">0</p>
+                        <p class="text-xs text-[var(--text-3)] mt-1.5">consecutive days active</p>
                     </div>
-                    <div class="glass-panel rounded-2xl p-4 shadow-sm">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Guardians</p>
-                        <p class="text-3xl font-black text-slate-800 mt-1" th:text="${guardianCount}">0</p>
-                        <p class="text-[11px] text-slate-400 mt-0.5">linked</p>
+                    <!-- Guardians -->
+                    <div class="stat-seg" style="border-color:var(--line)">
+                        <p class="eyebrow">Guardians</p>
+                        <p class="stat-value mt-2 text-slate-800" th:text="${guardianCount}">0</p>
+                        <p class="text-xs text-[var(--text-3)] mt-1.5">linked to this student</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── Detail panels (3-up → 2-up → 1-up) ───────────────────── -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
+
+                <!-- Guardian & Home -->
+                <div class="card p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="eyebrow">Guardian &amp; Home</h3>
+                        <span class="badge badge--neutral" th:text="|${guardianCount} linked|">1 linked</span>
+                    </div>
+                    <div th:if="${primaryGuardian != null}" class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style="background:linear-gradient(135deg,#64748B,#94A3B8);">
+                            <span th:text="${primaryGuardian.substring(0,1)}">R</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-semibold text-slate-900 truncate" th:text="${primaryGuardian}">Ramesh Sharma</p>
+                            <p class="text-xs text-[var(--text-3)]" th:text="${guardianPhone != null ? guardianPhone : 'Authorized contact'}">+91 …</p>
+                        </div>
+                    </div>
+                    <!-- Empty state: deliberate, with action -->
+                    <div th:if="${primaryGuardian == null}" class="text-center py-4">
+                        <div class="w-11 h-11 mx-auto rounded-full flex items-center justify-center text-xl" style="background:var(--surface-2); border:1px solid var(--line);">👤</div>
+                        <p class="text-sm font-semibold text-slate-700 mt-2">No guardian linked yet</p>
+                        <p class="text-xs text-[var(--text-3)] mt-0.5 mb-3">Add a parent so the family can sign in.</p>
+                        <button th:if="${currentUserRole == 'ADMIN'}" type="button" onclick="openEditStudentModal()" class="btn btn-secondary btn-sm">+ Add guardian</button>
+                    </div>
+                    <div class="mt-4 pt-3.5 border-t flex items-center justify-between" style="border-color:var(--line)">
+                        <span class="eyebrow">Home streak</span>
+                        <span class="text-sm font-bold flex items-center gap-1" style="color:var(--warn)">🔥 <span th:text="|${householdStreak} days|">0 days</span></span>
                     </div>
                 </div>
 
-                <!-- Detail: fills the width on large screens (guardian | attendance | activity) -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
-
-                    <!-- Guardian & Home -->
-                    <div class="glass-panel rounded-2xl p-5 shadow-sm">
-                        <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-500 mb-3">Guardian &amp; Home</h3>
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="min-w-0">
-                                <span th:if="${primaryGuardian != null}" class="text-base font-bold text-slate-900 flex items-center gap-2 truncate">
-                                    <span>👤</span><span th:text="${primaryGuardian}">—</span>
-                                </span>
-                                <span th:if="${primaryGuardian == null}" class="text-sm font-semibold text-slate-400 flex items-center gap-2">
-                                    <span>👤</span> No guardian linked yet
-                                </span>
-                                <p class="text-[11px] text-slate-500 mt-0.5"
-                                   th:text="${guardianPhone != null ? guardianPhone : (primaryGuardian != null ? 'Authorized contact' : 'Add a guardian from Register Student')}">Authorized contact</p>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <span class="text-lg font-extrabold text-amber-600 flex items-center gap-1 justify-end">🔥 <span th:text="${householdStreak}">12</span></span>
-                                <p class="text-[10px] text-slate-400 uppercase tracking-wider">home streak</p>
-                            </div>
-                        </div>
-                        <!-- Admin-only login actions -->
-                        <div th:if="${currentUserRole == 'ADMIN'}" class="flex flex-wrap gap-2 mt-4 pt-3 border-t border-slate-200/60">
-                            <form th:action="@{/web/admin/student/{id}/reset-login(id=${student.id})}" method="post">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <button type="submit" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 hover:bg-indigo-600 hover:text-white transition-all">🔑 Reset student password</button>
-                            </form>
-                            <form th:if="${primaryGuardianId != null}" th:action="@{/web/admin/parent/{pid}/reset-login(pid=${primaryGuardianId})}" method="post">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <input type="hidden" name="studentId" th:value="${student.id}"/>
-                                <button type="submit" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 hover:bg-indigo-600 hover:text-white transition-all">🔑 Reset guardian password</button>
-                            </form>
-                        </div>
+                <!-- Attendance -->
+                <div class="card p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="eyebrow">Attendance</h3>
+                        <span class="badge badge--info"><span class="dot bg-[var(--info)]"></span> Live</span>
                     </div>
-
-                    <!-- Attendance detail -->
-                    <div class="glass-panel rounded-2xl p-5 shadow-sm">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Attendance</h3>
-                            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-400/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">Calculated Live</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 mb-3">
-                            <div class="bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl p-3 text-center">
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Present</span>
-                                <span class="text-lg font-bold text-emerald-600" th:text="${presentCount}">19</span>
+                    <div th:if="${(presentCount + absentCount) > 0}">
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="rounded-xl p-3 text-center" style="background:var(--success-50); border:1px solid var(--success-200);">
+                                <span class="eyebrow" style="color:var(--success)">Present</span>
+                                <span class="block text-xl font-bold mt-0.5" style="color:var(--success)" th:text="${presentCount}">19</span>
                             </div>
-                            <div class="bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl p-3 text-center">
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Absent</span>
-                                <span class="text-lg font-bold text-rose-500" th:text="${absentCount}">1</span>
+                            <div class="rounded-xl p-3 text-center" style="background:var(--danger-50); border:1px solid var(--danger-200);">
+                                <span class="eyebrow" style="color:var(--danger)">Absent</span>
+                                <span class="block text-xl font-bold mt-0.5" style="color:var(--danger)" th:text="${absentCount}">1</span>
                             </div>
                         </div>
-                        <div class="w-full bg-rose-500/20 rounded-full h-2 overflow-hidden">
-                            <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" th:style="|width: ${attendancePercentage}%|"></div>
+                        <div class="w-full rounded-full h-2 overflow-hidden" style="background:var(--danger-200)">
+                            <div class="h-full rounded-full transition-all duration-500" style="background:var(--success)" th:style="|width: ${attendancePercentage}%; background:var(--success)|"></div>
                         </div>
-                        <p class="text-[11px] text-slate-400 mt-1.5 text-right" th:text="|${presentCount} / ${(presentCount + absentCount)} days recorded|">19 / 20 days recorded</p>
+                        <p class="text-[11px] text-[var(--text-3)] mt-2 text-right" th:text="|${presentCount} of ${(presentCount + absentCount)} days recorded|">19 of 20 days recorded</p>
                     </div>
+                    <div th:unless="${(presentCount + absentCount) > 0}" class="text-center py-5">
+                        <div class="w-11 h-11 mx-auto rounded-full flex items-center justify-center text-xl" style="background:var(--surface-2); border:1px solid var(--line);">📅</div>
+                        <p class="text-sm font-semibold text-slate-700 mt-2">No attendance recorded yet</p>
+                        <p class="text-xs text-[var(--text-3)] mt-0.5">Daily marks by the class teacher will show here.</p>
+                    </div>
+                </div>
 
-                    <!-- Recent activity (compact; empty states inline) -->
-                    <div class="glass-panel rounded-2xl p-5 shadow-sm space-y-3">
-                    <h3 class="text-xs font-extrabold uppercase tracking-widest text-slate-500 flex items-center gap-2">📡 Recent Activity</h3>
-                    <p th:if="${recentParentNotes != null}" class="text-sm italic text-slate-600 leading-relaxed pl-3 border-l-2 border-indigo-500" th:text="${recentParentNotes}"></p>
-                    <div th:unless="${#lists.isEmpty(dispatchLedger)}" class="overflow-x-auto border border-slate-200/60 rounded-xl">
+                <!-- Recent Activity -->
+                <div class="card p-5">
+                    <h3 class="eyebrow mb-4">Recent Activity</h3>
+                    <p th:if="${recentParentNotes != null}" class="text-sm italic text-slate-600 leading-relaxed pl-3 mb-3" style="border-left:2px solid var(--brand)" th:text="${recentParentNotes}"></p>
+                    <div th:unless="${#lists.isEmpty(dispatchLedger)}" class="overflow-x-auto rounded-xl border" style="border-color:var(--line)">
                         <table class="min-w-full text-left text-xs text-slate-600">
-                            <thead class="bg-[#F7F9FC]/60 text-slate-500 uppercase font-bold tracking-wider text-[10px]">
+                            <thead class="uppercase font-bold tracking-wider text-[10px] text-[var(--text-3)]" style="background:var(--surface-2)">
                                 <tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Type</th><th class="px-3 py-2">Message</th><th class="px-3 py-2 text-right">Status</th></tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-200/60">
+                            <tbody class="divide-y" style="border-color:var(--line)">
                                 <tr th:each="ledger : ${dispatchLedger}">
-                                    <td class="px-3 py-2 whitespace-nowrap font-mono text-slate-500" th:text="${ledger.date}">2026-05-20</td>
-                                    <td class="px-3 py-2 whitespace-nowrap"><span th:text="${ledger.type}" class="px-2 py-0.5 rounded-md border text-[10px] font-bold bg-indigo-500/10 text-indigo-600 border-indigo-500/20">MILESTONE</span></td>
+                                    <td class="px-3 py-2 whitespace-nowrap font-mono text-[var(--text-3)]" th:text="${ledger.date}">2026-05-20</td>
+                                    <td class="px-3 py-2 whitespace-nowrap"><span class="badge badge--info" th:text="${ledger.type}">MILESTONE</span></td>
                                     <td class="px-3 py-2 text-slate-600" th:text="${ledger.message}">…</td>
-                                    <td class="px-3 py-2 text-right whitespace-nowrap"><span th:text="${ledger.status}" class="px-2 py-0.5 rounded-full border text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border-emerald-500/20">SENT</span></td>
+                                    <td class="px-3 py-2 text-right whitespace-nowrap"><span class="badge badge--success" th:text="${ledger.status}">SENT</span></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    <p th:if="${recentParentNotes == null and #lists.isEmpty(dispatchLedger)}" class="text-sm text-slate-400">No recent activity recorded yet.</p>
-                    <a href="/web/admin/dashboard" class="inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-800">← Back to Roster Hub</a>
+                    <!-- Deliberate empty state -->
+                    <div th:if="${recentParentNotes == null and #lists.isEmpty(dispatchLedger)}" class="text-center py-6">
+                        <div class="w-11 h-11 mx-auto rounded-full flex items-center justify-center text-xl" style="background:var(--surface-2); border:1px solid var(--line);">📡</div>
+                        <p class="text-sm font-semibold text-slate-700 mt-2">No activity yet</p>
+                        <p class="text-xs text-[var(--text-3)] mt-0.5">Milestone approvals, attendance and reward alerts will appear here as they happen.</p>
                     </div>
                 </div>
+            </section>
 
-            </main>
+            <!-- ── Account & Security (admin only) ──────────────────────── -->
+            <section th:if="${currentUserRole == 'ADMIN'}" class="card p-5">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:var(--brand-50); border:1px solid var(--brand-100);">
+                        <svg class="w-4 h-4 text-[var(--brand)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900">Account &amp; Security</h3>
+                        <p class="text-xs text-[var(--text-3)] mt-0.5">Re-issue a temporary sign-in password. The current one stops working immediately.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2.5">
+                    <button type="button" class="btn btn-security btn-sm"
+                            th:attr="data-reset-name=|${student.firstName} ${student.lastName}|"
+                            onclick="askReset('student', this.getAttribute('data-reset-name'))">🔑 Reset student password</button>
+                    <button th:if="${primaryGuardianId != null}" type="button" class="btn btn-security btn-sm"
+                            th:attr="data-reset-name=${primaryGuardian}"
+                            onclick="askReset('guardian', this.getAttribute('data-reset-name'))">🔑 Reset guardian password</button>
+                </div>
+                <!-- Hidden forms submitted after confirmation -->
+                <form id="resetStudentForm" th:action="@{/web/admin/student/{id}/reset-login(id=${student.id})}" method="post" class="hidden">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                </form>
+                <form th:if="${primaryGuardianId != null}" id="resetGuardianForm" th:action="@{/web/admin/parent/{pid}/reset-login(pid=${primaryGuardianId})}" method="post" class="hidden">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="studentId" th:value="${student.id}"/>
+                </form>
+            </section>
+
+            <div class="pt-1">
+                <a href="/web/admin/dashboard" class="btn btn-secondary btn-sm">← Back to Roster Hub</a>
+            </div>
+        </main>
+    </div>
+    </div>
+
+    <!-- ── Reset confirmation dialog ────────────────────────────────────── -->
+    <div th:if="${currentUserRole == 'ADMIN'}" id="confirmModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden" style="box-shadow:var(--sh-2)">
+            <div class="p-5">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style="background:var(--warn-50); border:1px solid var(--warn-200);">
+                        <svg class="w-5 h-5" style="color:var(--warn)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.93 19h14.14c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.2 16c-.77 1.33.2 3 1.73 3z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Reset password?</h3>
+                        <p id="confirmBody" class="text-sm text-[var(--text-2)] mt-1 leading-relaxed">This generates a new temporary password and invalidates the current one.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="px-5 py-3.5 flex justify-end gap-2.5" style="background:var(--surface-2); border-top:1px solid var(--line)">
+                <button type="button" onclick="closeConfirm()" class="btn btn-secondary btn-sm">Cancel</button>
+                <button type="button" id="confirmResetBtn" onclick="doReset()" class="btn btn-primary btn-sm">Yes, reset password</button>
+            </div>
         </div>
     </div>
 
-
-</div>
-
-    <!-- Edit Student Modal (admin only) -->
-    <div th:if="${currentUserRole == 'ADMIN'}" id="editStudentModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
-            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></div>
-                    <h3 class="text-sm font-bold text-white tracking-wider uppercase ml-1">Edit Student</h3>
-                </div>
-                <button type="button" onclick="closeEditStudentModal()" class="text-slate-300 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/10">
+    <!-- ── Edit Student modal (admin only) ──────────────────────────────── -->
+    <div th:if="${currentUserRole == 'ADMIN'}" id="editStudentModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-2xl overflow-hidden max-h-[92vh] flex flex-col" style="box-shadow:var(--sh-2)">
+            <div class="px-5 py-4 flex items-center justify-between border-b" style="border-color:var(--line)">
+                <h3 class="text-base font-bold text-slate-900">Edit student</h3>
+                <button type="button" onclick="closeEditStudentModal()" class="text-[var(--text-3)] hover:text-slate-700 p-1 rounded-lg hover:bg-[var(--surface-2)]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
                 </button>
             </div>
-            <form th:action="@{/web/admin/student/{id}/update(id=${student.id})}" method="post" class="p-6 space-y-4 overflow-y-auto">
+            <form th:action="@{/web/admin/student/{id}/update(id=${student.id})}" method="post" class="p-5 space-y-4 overflow-y-auto">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <div class="space-y-1">
-                    <label for="editFirstName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">First Name</label>
-                    <input type="text" id="editFirstName" name="firstName" required th:value="${student.firstName}"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1.5">
+                        <label for="editFirstName" class="field-label block">First name</label>
+                        <input type="text" id="editFirstName" name="firstName" required th:value="${student.firstName}" class="field">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="editLastName" class="field-label block">Last name</label>
+                        <input type="text" id="editLastName" name="lastName" required th:value="${student.lastName}" class="field">
+                    </div>
                 </div>
-                <div class="space-y-1">
-                    <label for="editLastName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Last Name</label>
-                    <input type="text" id="editLastName" name="lastName" required th:value="${student.lastName}"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                <div class="space-y-1.5">
+                    <label for="editRollNumber" class="field-label block">Roll number</label>
+                    <input type="text" id="editRollNumber" name="rollNumber" required th:value="${student.rollNumber}" class="field">
+                    <p class="text-[11px] text-[var(--text-3)]">Doesn't change the student's existing login username.</p>
                 </div>
-                <div class="space-y-1">
-                    <label for="editRollNumber" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Roll Number</label>
-                    <input type="text" id="editRollNumber" name="rollNumber" required th:value="${student.rollNumber}"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
-                    <p class="text-[11px] text-slate-400 px-1">Note: this doesn't change the student's existing login username.</p>
-                </div>
-                <div class="space-y-1">
-                    <label for="editSchoolClassId" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Class</label>
-                    <select id="editSchoolClassId" name="schoolClassId"
-                            class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
-                        <option th:each="cls : ${classList}" th:value="${cls.id}"
-                                th:text="|${cls.gradeLevel} - ${cls.sectionName}|"
+                <div class="space-y-1.5">
+                    <label for="editSchoolClassId" class="field-label block">Class</label>
+                    <select id="editSchoolClassId" name="schoolClassId" class="field">
+                        <option th:each="cls : ${classList}" th:value="${cls.id}" th:text="|${cls.gradeLevel} - ${cls.sectionName}|"
                                 th:selected="${currentSchoolClassId != null and cls.id == currentSchoolClassId}">Grade 6 - A</option>
                     </select>
                 </div>
-
-                <!-- Guardian / parent (edit existing or add if none) -->
-                <div class="pt-3 mt-1 border-t border-slate-200/60">
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Guardian / Parent</p>
+                <div class="pt-3 border-t" style="border-color:var(--line)">
+                    <p class="field-label mb-2.5">Guardian / Parent</p>
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="space-y-1">
-                            <label for="editGuardianFirstName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">First Name</label>
-                            <input type="text" id="editGuardianFirstName" name="guardianFirstName" placeholder="e.g. Ramesh" th:value="${primaryGuardianFirstName}"
-                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        <div class="space-y-1.5">
+                            <label for="editGuardianFirstName" class="field-label block">First name</label>
+                            <input type="text" id="editGuardianFirstName" name="guardianFirstName" placeholder="e.g. Ramesh" th:value="${primaryGuardianFirstName}" class="field">
                         </div>
-                        <div class="space-y-1">
-                            <label for="editGuardianLastName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Last Name</label>
-                            <input type="text" id="editGuardianLastName" name="guardianLastName" placeholder="e.g. Sharma" th:value="${primaryGuardianLastName}"
-                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        <div class="space-y-1.5">
+                            <label for="editGuardianLastName" class="field-label block">Last name</label>
+                            <input type="text" id="editGuardianLastName" name="guardianLastName" placeholder="e.g. Sharma" th:value="${primaryGuardianLastName}" class="field">
                         </div>
-                        <div class="space-y-1 col-span-2">
-                            <label for="editGuardianPhone" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Phone</label>
-                            <input type="text" id="editGuardianPhone" name="guardianPhone" placeholder="e.g. +91 98765 43210" th:value="${guardianPhone}"
-                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        <div class="space-y-1.5 col-span-2">
+                            <label for="editGuardianPhone" class="field-label block">Phone</label>
+                            <input type="text" id="editGuardianPhone" name="guardianPhone" placeholder="e.g. +91 98765 43210" th:value="${guardianPhone}" class="field">
                         </div>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-1.5 px-1">Fill this in to add a guardian if none is linked, or edit the existing one. Editing the phone doesn't change an existing login username.</p>
+                    <p class="text-[11px] text-[var(--text-3)] mt-2">Add a guardian if none is linked, or edit the existing one. A shared phone links one guardian account to all their children.</p>
                 </div>
-
-                <div class="pt-4 flex justify-end gap-3 border-t border-slate-200/50">
-                    <button type="button" onclick="closeEditStudentModal()" class="px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold transition-all cursor-pointer">Cancel</button>
-                    <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg transition-all text-xs tracking-wider cursor-pointer">Save Changes</button>
+                <div class="pt-3 flex justify-end gap-2.5 border-t" style="border-color:var(--line)">
+                    <button type="button" onclick="closeEditStudentModal()" class="btn btn-secondary btn-sm">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Save changes</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <style>
-        .btn-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; vertical-align:-2px; margin-right:6px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
     <script>
-        function openEditStudentModal() {
-            const m = document.getElementById('editStudentModal');
-            if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+        function show(m){ if(m){ m.classList.remove('hidden'); m.classList.add('flex'); } }
+        function hide(m){ if(m){ m.classList.add('hidden'); m.classList.remove('flex'); } }
+        function openEditStudentModal(){ show(document.getElementById('editStudentModal')); }
+        function closeEditStudentModal(){ hide(document.getElementById('editStudentModal')); }
+
+        // Reset password confirmation flow
+        var pendingReset = null;
+        function askReset(kind, name){
+            pendingReset = kind;
+            var who = kind === 'guardian' ? ('the guardian' + (name ? ' (' + name + ')' : '')) : ('this student' + (name ? ' (' + name + ')' : ''));
+            document.getElementById('confirmBody').textContent =
+                'This generates a new temporary password for ' + who + ' and immediately invalidates the current one. You’ll get the new credentials to share.';
+            show(document.getElementById('confirmModal'));
         }
-        function closeEditStudentModal() {
-            const m = document.getElementById('editStudentModal');
-            if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+        function closeConfirm(){ pendingReset = null; hide(document.getElementById('confirmModal')); }
+        function doReset(){
+            var form = pendingReset === 'guardian' ? document.getElementById('resetGuardianForm') : document.getElementById('resetStudentForm');
+            var btn = document.getElementById('confirmResetBtn');
+            btn.disabled = true; btn.textContent = 'Resetting…';
+            if (form) form.submit();
         }
-        window.addEventListener('click', (e) => {
-            const m = document.getElementById('editStudentModal');
-            if (m && e.target === m) closeEditStudentModal();
+
+        // Dismiss modals on backdrop click / Escape
+        ['editStudentModal','confirmModal'].forEach(function(id){
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('click', function(e){ if (e.target === el) hide(el); });
         });
-        // Form submit loaders are handled globally by /js/ui-loaders.js, which
-        // keeps each button's own label (Save Changes / Reset … password).
+        document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ ['editStudentModal','confirmModal'].forEach(function(id){ hide(document.getElementById(id)); }); } });
     </script>
     <script src="/js/ui-loaders.js"></script>
 </body>

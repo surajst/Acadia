@@ -94,13 +94,15 @@ test.describe('Student guardian capture & profile display', () => {
     });
     await openProfile(page, 'Resettest Studentthree', 'Resettest');
 
-    // Re-issue the student's password → new one-time credentials surface.
+    // Re-issue the student's password → confirm dialog → new one-time credentials.
     await page.click('button:has-text("Reset student password")');
+    await page.click('button:has-text("Yes, reset password")');
     await expect(page.locator('text=New sign-in credentials')).toBeVisible();
     await expect(page.locator('body')).toContainText('Student login — 6A-703');
 
-    // Re-issue the guardian's password too.
+    // Re-issue the guardian's password too (same confirm step).
     await page.click('button:has-text("Reset guardian password")');
+    await page.click('button:has-text("Yes, reset password")');
     await expect(page.locator('body')).toContainText('Guardian login — +91 90000 33333');
   });
 
