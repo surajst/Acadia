@@ -60,4 +60,31 @@
     var btn = e.target.closest ? e.target.closest('[data-loader]') : null;
     if (btn) spin(btn, btn.getAttribute('data-loader') || 'Working…');
   }, true);
+
+  // Dismissible flash banners: any element marked data-flash gets a close (✕)
+  // button; data-autohide="<ms>" also fades it out automatically.
+  function initFlash() {
+    var nodes = document.querySelectorAll('[data-flash]');
+    for (var i = 0; i < nodes.length; i++) {
+      (function (el) {
+        if (el.dataset.flashInit) return;
+        el.dataset.flashInit = '1';
+        if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+        var x = document.createElement('button');
+        x.type = 'button';
+        x.textContent = '✕';
+        x.setAttribute('aria-label', 'Dismiss');
+        x.style.cssText = 'position:absolute;top:8px;right:10px;padding:2px 6px;border:0;background:transparent;cursor:pointer;font-size:13px;line-height:1;color:inherit;opacity:.55';
+        x.addEventListener('mouseenter', function () { x.style.opacity = '1'; });
+        x.addEventListener('mouseleave', function () { x.style.opacity = '.55'; });
+        function dismiss() { el.style.transition = 'opacity .35s'; el.style.opacity = '0'; setTimeout(function () { el.remove(); }, 350); }
+        x.addEventListener('click', dismiss);
+        el.appendChild(x);
+        var ah = parseInt(el.dataset.autohide || '0', 10);
+        if (ah > 0) setTimeout(dismiss, ah);
+      })(nodes[i]);
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initFlash);
+  else initFlash();
 })();

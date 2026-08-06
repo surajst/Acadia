@@ -172,16 +172,16 @@
                 <!-- Error banner: surfaces failures caught by this controller's
                      exception handler (e.g. invalid class assignment) instead
                      of silently discarding them. -->
-                <div th:if="${errorMessage != null}"
-                     class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 text-sm text-red-600 flex items-start gap-3">
+                <div th:if="${errorMessage != null}" data-flash data-autohide="8000"
+                     class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 pr-10 text-sm text-red-600 flex items-start gap-3">
                     <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     <span th:text="${errorMessage}">Something went wrong.</span>
                 </div>
 
                 <!-- One-time login credentials for a just-registered student/guardian.
                      Shown once (flash attribute) so the admin can relay them; not in the URL. -->
-                <div th:if="${newCredentials != null and !newCredentials.isEmpty()}"
-                     class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-start gap-3">
+                <div th:if="${newCredentials != null and !newCredentials.isEmpty()}" data-flash
+                     class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 pr-10 flex items-start gap-3">
                     <span class="text-lg leading-none mt-0.5">🔑</span>
                     <div class="min-w-0">
                         <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Sign-in credentials created — copy them now</p>
