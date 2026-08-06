@@ -5,461 +5,285 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Workspace &middot; ACADIA</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    
-    
-
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+        :root {
+            --bg:#F4F6FB; --surface:#FFFFFF; --surface-2:#F8FAFC;
+            --line:#E7EAF2; --line-strong:#D9DFEA;
+            --text:#0F172A; --text-2:#475569; --text-3:#94A0B4;
+            --brand:#4F46E5; --brand-50:#EEF0FF; --brand-100:#E0E3FF; --brand-700:#4338CA;
+            --success:#059669; --success-50:#ECFDF5; --success-200:#A7F3D0;
+            --warn:#D97706; --warn-50:#FFFBEB; --warn-200:#FDE68A;
+            --danger:#DC2626; --danger-50:#FEF2F2; --danger-200:#FECACA;
+            --info:#2563EB; --info-50:#EFF6FF; --info-200:#BFDBFE;
+            --r:16px; --r-sm:12px; --sh-1:0 1px 2px rgba(16,24,40,.05); --sh-2:0 8px 24px rgba(16,24,40,.07);
+        }
+        body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(--text); }
+        .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--sh-1); }
+        .eyebrow { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); }
+        .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; line-height:1; border:1px solid transparent; }
+        .badge .dot { width:6px; height:6px; border-radius:50%; }
+        .badge--success { background:var(--success-50); color:var(--success); border-color:var(--success-200); }
+        .badge--info    { background:var(--info-50);    color:var(--info);    border-color:var(--info-200); }
+        .badge--neutral { background:var(--surface-2);  color:var(--text-2);  border-color:var(--line-strong); }
+        .badge--warn    { background:var(--warn-50);    color:var(--warn);    border-color:var(--warn-200); }
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; font-weight:600; border-radius:var(--r-sm); transition:all .15s ease; cursor:pointer; border:1px solid transparent; }
+        .btn:focus-visible { outline:none; box-shadow:0 0 0 3px var(--brand-100); }
+        .btn-sm { padding:8px 13px; font-size:12.5px; } .btn-xs { padding:6px 11px; font-size:12px; }
+        .btn-primary { background:var(--brand); color:#fff; } .btn-primary:hover { background:var(--brand-700); }
+        .btn-secondary { background:var(--surface); color:var(--text-2); border-color:var(--line-strong); } .btn-secondary:hover { background:var(--surface-2); color:var(--text); }
+        .btn-reject { background:var(--surface); color:var(--text-2); border-color:var(--line-strong); } .btn-reject:hover { background:var(--danger-50); color:var(--danger); border-color:var(--danger-200); }
+        .navlink { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--r-sm); font-size:14px; font-weight:500; color:var(--text-2); transition:.15s; }
+        .navlink:hover { background:var(--surface-2); color:var(--text); }
+        .navlink.active { background:var(--brand-50); color:var(--brand); font-weight:600; border:1px solid var(--brand-100); }
+        ::-webkit-scrollbar { width:9px; height:9px; } ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:#D3DAE6; border-radius:6px; } ::-webkit-scrollbar-thumb:hover { background:#B9C2D4; }
+    </style>
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class=" max- overflow-hidden flex flex-col bg-[#F7F9FC] text-slate-800 font-sans" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="flex flex-col" style="height:100vh; overflow:hidden; background:var(--bg);">
 
-    <header class="bg-[#F7F9FC] border-b border-slate-200/50 shrink-0 z-40 backdrop-blur-md bg-opacity-95">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div style="display:flex; align-items:center; gap:10px;">
-  <img src="/images/acadia-logo.png" alt="ACADIA"
-       style="height:32px; ">
-  <span style="font-size:16px; font-weight:600; color:#0F172A;
-               letter-spacing:2px;">ACADIA</span>
-</div>
-            <div class="flex items-center gap-4">
-                <div class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-700 font-black text-lg">Ω</div>
+    <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
+        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <div class="h-10 w-10 rounded-xl bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand)] font-black text-lg">Ω</div>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Teacher Verification Queue</h1>
-                    <p class="text-slate-500 mt-0.5 text-xs font-medium">Unified task management for teacher review workflows.</p>
+                    <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Teacher Workspace</h1>
+                    <p class="text-xs text-[var(--text-3)] mt-1">Verify submissions &amp; manage your review workflow.</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#F7F9FC]/80 text-slate-600 border border-slate-200/50">
-                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Academic Validation
-                </span>
+                <span class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Validation</span>
                 <form th:action="@{/logout}" method="post">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-red-900/30 text-red-600 border border-red-700/40 hover:bg-red-900/50 transition-colors">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    <button type="submit" class="btn btn-secondary btn-xs">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                         Logout
                     </button>
                 </form>
             </div>
         </div>
     </header>
-<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
 
-
-    <div class="flex flex-row flex-1 min-h-0 w-full max-w-7xl mx-auto px-4 md:px-8 py-6 gap-8">
-        <aside class="w-1/4 shrink-0 hidden lg:flex flex-col space-y-6 overflow-y-auto pb-4 pr-2">
-            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-5 shadow-xl shadow-slate-300/40 space-y-5">
-                <div>
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Navigation Hub</h2>
-                    <p class="text-sm text-slate-500 mt-2">Quick access to teacher workspace sections.</p>
+    <div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
+        <div class="flex flex-row flex-1 min-h-0 w-full max-w-[1500px] mx-auto px-4 md:px-8 py-5 gap-6">
+            <aside class="w-1/4 shrink-0 hidden lg:flex flex-col space-y-4 overflow-y-auto pb-4">
+                <div class="card p-3">
+                    <h3 class="eyebrow px-2 mb-2">Navigation</h3>
+                    <nav class="space-y-1">
+                        <a th:if="${currentUserRole == 'ADMIN'}" th:href="@{/web/admin/management}" class="navlink"><span>⚙️</span> School Configuration</a>
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="#staff-registry" class="navlink"><span>💼</span> Staff Registry</a>
+                        <a th:if="${currentUserRole == 'TEACHER' or currentUserRole == 'PRINCIPAL'}" th:href="@{/web/admin/dashboard}" class="navlink"><span>📊</span> Student Rosters</a>
+                        <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/attendance}" class="navlink"><span>📅</span> Daily Attendance</a>
+                        <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/dashboard}" class="navlink active"><span>🎯</span> Milestone Verification</a>
+                        <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/tasks}" class="navlink"><span>📋</span> My Tasks</a>
+                        <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/assessments}" class="navlink"><span>🧮</span> Gradebook</a>
+                        <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/messages}" class="navlink"><span>✉️</span> Messages</a>
+                        <a th:if="${currentUserRole == 'STUDENT'}" href="/web/student/portal" class="navlink"><span>🛡️</span> My Learning</a>
+                        <a th:if="${currentUserRole == 'PARENT'}" href="/web/parent/portal" class="navlink"><span>🛡️</span> Parent Portal</a>
+                    </nav>
                 </div>
-                <nav class="space-y-2">
-                    <!-- ADMIN items -->
-                    <a th:if="${currentUserRole == 'ADMIN'}" th:href="@{/web/admin/management}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>⚙️</span>
-                        <span>School Configuration</span>
-                    </a>
-                    <a th:if="${currentUserRole == 'ADMIN'}" href="#staff-registry" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>💼</span>
-                        <span>Staff Registry</span>
-                    </a>
-
-                    <!-- TEACHER items -->
-                    <a th:if="${currentUserRole == 'TEACHER' or currentUserRole == 'PRINCIPAL'}" th:href="@{/web/admin/dashboard}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>📊</span>
-                        <span>Student Rosters</span>
-                    </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/attendance}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>📅</span>
-                        <span>Daily Attendance Log</span>
-                    </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/dashboard}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition-all bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 shadow-inner">
-                        <span>🎯</span>
-                        <span>Milestone Verification</span>
-                    </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/tasks}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>📋</span>
-                        <span>My Tasks</span>
-                    </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/assessments}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>🧮</span>
-                        <span>Gradebook</span>
-                    </a>
-                    <a th:if="${currentUserRole == 'TEACHER'}" th:href="@{/web/teacher/messages}" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>✉️</span>
-                        <span>Messages</span>
-                    </a>
-
-                    <!-- STUDENT items -->
-                    <a th:if="${currentUserRole == 'STUDENT'}" href="/web/student/portal" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>🛡️</span>
-                        <span>My Learning Dashboard</span>
-                    </a>
-                    <a th:if="${currentUserRole == 'STUDENT'}" href="#rewards-ledger" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>🏆</span>
-                        <span>Rewards Ledger</span>
-                    </a>
-                    <a th:if="${currentUserRole == 'STUDENT'}" href="#submission-history" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>📜</span>
-                        <span>Submission History</span>
-                    </a>
-
-                    <a th:if="${currentUserRole == 'PARENT'}" href="/web/parent/portal" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-medium transition-all bg-[#F7F9FC]/70 text-slate-800 hover:bg-white border border-slate-200/60">
-                        <span>🛡️</span>
-                        <span>Parent Portal Gateway</span>
-                    </a>
-                </nav>
-            </div>
-
-            <div class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-2xl p-5 text-sm text-slate-600 space-y-3 leading-relaxed shadow-xl shadow-slate-300/40">
-                <p class="font-bold uppercase tracking-wider flex items-center gap-2 text-emerald-600">
-                    <span>⚡</span>
-                    System Guidance
-                </p>
-                <p>Verify submissions, resolve pending approvals, and maintain teacher-facing workflow continuity across the dashboard.</p>
-            </div>
-        </aside>
-
-        <main class="flex-1 min-h-0 overflow-y-auto space-y-6 pb-6 pr-2" >
-            <!-- Today's Schedule (TEACHER only) -->
-            <div th:if="${currentUserRole == 'TEACHER'}" id="todaySchedulePanel" class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-900">Today's Schedule</h2>
-                        <p class="text-slate-500 mt-1 text-sm">Your periods for today, with attendance status per class.</p>
-                    </div>
-                    <span class="text-xs uppercase tracking-wider text-slate-500" id="todayScheduleDate"></span>
+                <div class="card p-4 text-sm text-[var(--text-2)] leading-relaxed">
+                    <p class="eyebrow flex items-center gap-1.5" style="color:var(--success)"><span>⚡</span> System Guidance</p>
+                    <p class="mt-2">Verify submissions, resolve pending approvals, and keep your review queue clear.</p>
                 </div>
-                <div id="todayScheduleRows" class="grid gap-3">
-                    <p class="text-slate-500 text-sm">Loading schedule…</p>
-                </div>
-            </div>
+            </aside>
 
-            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-6 space-y-4">
-                <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-900">Verification Queue
-                            <span class="text-sm font-semibold text-indigo-700 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-0.5 align-middle ml-2" th:text="${#lists.size(pendingSubmissions)} + ' pending'">0 pending</span>
-                        </h2>
-                        <p class="text-slate-500 mt-1 text-sm">Review academic milestone submissions from students and award XP balances.</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button type="button" onclick="bulkApproveMilestones()" th:if="${not #lists.isEmpty(pendingSubmissions)}"
-                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors">
-                            Approve Selected
-                        </button>
-                        <span class="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-[#F7F9FC]/70 px-4 py-2 text-xs uppercase tracking-wider text-slate-600">
-                            <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                            Real-time review mode
-                        </span>
-                    </div>
-                </div>
+            <main class="flex-1 min-h-0 overflow-y-auto space-y-5 pb-6">
 
-                <div class="grid gap-6">
-                    <div class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-2xl p-6">
-                        <div class="text-sm uppercase tracking-wider text-slate-500 font-semibold mb-2">Active processing queue</div>
-                        <p class="text-slate-500">The teacher verification queue displays student milestone submissions that require approval or rejection.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-6">
-                <div class="space-y-6">
-                    <div th:if="${#lists.isEmpty(pendingSubmissions)}" class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-xl py-6 px-8 flex items-center justify-center gap-5">
-                        <div class="text-3xl">🎉</div>
-                        <div class="text-left">
-                            <h3 class="text-lg font-semibold text-slate-900">Queue completely cleared!</h3>
-                            <p class="text-slate-500 mt-1 text-sm">There are currently no active student proof-of-work submissions awaiting academic validation reviews.</p>
+                <!-- Today's Schedule (TEACHER only) -->
+                <div th:if="${currentUserRole == 'TEACHER'}" id="todaySchedulePanel" class="card p-5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Today's Schedule</h2>
+                            <p class="text-[var(--text-3)] text-xs mt-0.5">Your periods for today, with attendance status per class.</p>
                         </div>
+                        <span class="eyebrow" id="todayScheduleDate"></span>
+                    </div>
+                    <div id="todayScheduleRows" class="grid gap-2"><p class="text-[var(--text-3)] text-sm">Loading schedule…</p></div>
+                </div>
+
+                <!-- Milestone Verification Queue -->
+                <div class="card p-5 space-y-4">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Verification Queue
+                                <span class="badge badge--info align-middle ml-1" th:text="${#lists.size(pendingSubmissions)} + ' pending'">0 pending</span>
+                            </h2>
+                            <p class="text-[var(--text-3)] mt-0.5 text-sm">Review student milestone submissions and award XP.</p>
+                        </div>
+                        <button type="button" onclick="bulkApproveMilestones()" th:if="${not #lists.isEmpty(pendingSubmissions)}" class="btn btn-primary btn-sm">Approve Selected</button>
                     </div>
 
-                    <div th:each="task : ${pendingSubmissions}" th:id="'task-row-' + ${task.id}"
-                         class="bg-[#F7F9FC]/40 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-slate-200/60 hover:bg-white/50 shadow-xl shadow-black/10">
-                        <div class="space-y-3 flex-1">
-                            <div class="flex flex-wrap items-center gap-3">
-                                <input type="checkbox" class="milestone-checkbox h-4 w-4 rounded border-slate-200 bg-[#F7F9FC]" th:value="${task.id}">
-                                <span class="text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-500/20" th:text="${task.skillName}">Fraction Mastery</span>
-                                <span class="text-xs font-medium text-amber-300 bg-amber-400/10 px-2.5 py-1 rounded-md border border-amber-400/20" th:text="'+' + ${task.xpBounty} + ' Academic XP'">+250 XP</span>
-                            </div>
-                            <h2 class="text-xl font-bold tracking-tight text-slate-900" th:text="${task.studentName}">Student Name</h2>
-                            <p class="text-xs text-slate-500 flex items-center gap-1.5">
-                                ⏱️ Submitted at: <span th:text="${#temporals.format(task.submittedAt, 'yyyy-MM-dd HH:mm')}">2026-05-18 17:00</span>
-                            </p>
-                            
-                            <!-- Proof of Work Notes & Reading Answers -->
-                            <div class="mt-4 p-4 rounded-xl bg-[#F7F9FC]/50 border border-slate-200/40 backdrop-blur-sm text-slate-600 text-sm max-w-xl">
-                                
-                                <!-- Reading Answers -->
-                                <div th:if="${task.answer1 != null or task.answer2 != null or task.answer3 != null}" class="space-y-4">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <span class="px-2 py-0.5 bg-indigo-500/20 text-indigo-700 rounded text-xs font-bold uppercase tracking-wider">📖 Reading Task Answers</span>
-                                    </div>
-                                    <div th:if="${task.answer1 != null}" class="space-y-1">
-                                        <p class="text-xs italic text-slate-500">Question 1</p>
-                                        <p class="text-slate-900 text-sm font-medium" th:text="${task.answer1}"></p>
-                                    </div>
-                                    <div th:if="${task.answer2 != null}" class="space-y-1">
-                                        <p class="text-xs italic text-slate-500">Question 2</p>
-                                        <p class="text-slate-900 text-sm font-medium" th:text="${task.answer2}"></p>
-                                    </div>
-                                    <div th:if="${task.answer3 != null}" class="space-y-1">
-                                        <p class="text-xs italic text-slate-500">Question 3</p>
-                                        <p class="text-slate-900 text-sm font-medium" th:text="${task.answer3}"></p>
-                                    </div>
-                                    
-                                    <div th:if="${task.proofOfWorkNotes != null and !task.proofOfWorkNotes.isEmpty()}" class="pt-3 border-t border-slate-200/60 mt-3">
-                                        <p class="text-xs italic text-slate-500 mb-1">Additional Notes</p>
-                                        <p class="text-slate-600" th:text="${task.proofOfWorkNotes}"></p>
-                                    </div>
-                                </div>
-
-                                <!-- Standard Proof of Work -->
-                                <div th:unless="${task.answer1 != null or task.answer2 != null or task.answer3 != null}">
-                                    <p class="font-bold text-xs uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
-                                        <span>📝</span> Proof of Work Notes
-                                    </p>
-                                    <p class="text-slate-600 italic font-normal" th:text="${task.proofOfWorkNotes != null ? task.proofOfWorkNotes : 'No proof notes supplied.'}">"I completed the fraction exercises on page 42 and double-checked my answers with the visual models."</p>
-                                </div>
+                    <div class="space-y-3">
+                        <div th:if="${#lists.isEmpty(pendingSubmissions)}" class="rounded-xl py-6 px-6 flex items-center gap-4" style="background:var(--surface-2); border:1px solid var(--line)">
+                            <div class="text-3xl">🎉</div>
+                            <div>
+                                <h3 class="text-base font-semibold text-slate-900">Queue cleared</h3>
+                                <p class="text-[var(--text-3)] mt-0.5 text-sm">No student submissions are awaiting validation.</p>
                             </div>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-3 border-t border-slate-200/60 pt-4 md:pt-0 md:border-0">
-                            <button type="button" th:data-id="${task.id}" onclick="evaluateMilestone(this.getAttribute('data-id'), 'reject')"
-                               class="px-5 py-2.5 bg-[#F7F9FC]/80 hover:bg-rose-950/40 text-slate-600 hover:text-rose-400 font-medium rounded-xl border border-slate-200/60 hover:border-rose-900/50 transition-all text-sm text-center min-w-[100px] cursor-pointer">
-                                Reject
-                            </button>
-                            <button type="button" th:data-id="${task.id}" onclick="evaluateMilestone(this.getAttribute('data-id'), 'approve')"
-                               class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30 transition-all text-sm text-center min-w-[120px] cursor-pointer">
-                                Approve Task
-                            </button>
+                        <div th:each="task : ${pendingSubmissions}" th:id="'task-row-' + ${task.id}"
+                             class="rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 transition-all hover:border-[var(--brand-100)]"
+                             style="background:var(--surface); border:1px solid var(--line)">
+                            <div class="space-y-2.5 flex-1">
+                                <div class="flex flex-wrap items-center gap-2.5">
+                                    <input type="checkbox" class="milestone-checkbox h-4 w-4 rounded" style="accent-color:var(--brand)" th:value="${task.id}">
+                                    <span class="badge badge--info" th:text="${task.skillName}">Fraction Mastery</span>
+                                    <span class="badge badge--warn" th:text="'+' + ${task.xpBounty} + ' XP'">+250 XP</span>
+                                </div>
+                                <h2 class="text-lg font-bold tracking-tight text-slate-900" th:text="${task.studentName}">Student Name</h2>
+                                <p class="text-xs text-[var(--text-3)] flex items-center gap-1.5">⏱️ Submitted: <span th:text="${#temporals.format(task.submittedAt, 'yyyy-MM-dd HH:mm')}">2026-05-18 17:00</span></p>
+                                <div class="mt-2 p-3.5 rounded-xl text-[var(--text-2)] text-sm max-w-xl" style="background:var(--surface-2); border:1px solid var(--line)">
+                                    <div th:if="${task.answer1 != null or task.answer2 != null or task.answer3 != null}" class="space-y-3">
+                                        <span class="badge badge--info">📖 Reading Answers</span>
+                                        <div th:if="${task.answer1 != null}" class="space-y-0.5"><p class="text-xs italic text-[var(--text-3)]">Question 1</p><p class="text-slate-900 text-sm font-medium" th:text="${task.answer1}"></p></div>
+                                        <div th:if="${task.answer2 != null}" class="space-y-0.5"><p class="text-xs italic text-[var(--text-3)]">Question 2</p><p class="text-slate-900 text-sm font-medium" th:text="${task.answer2}"></p></div>
+                                        <div th:if="${task.answer3 != null}" class="space-y-0.5"><p class="text-xs italic text-[var(--text-3)]">Question 3</p><p class="text-slate-900 text-sm font-medium" th:text="${task.answer3}"></p></div>
+                                        <div th:if="${task.proofOfWorkNotes != null and !task.proofOfWorkNotes.isEmpty()}" class="pt-2.5 border-t mt-2.5" style="border-color:var(--line)"><p class="text-xs italic text-[var(--text-3)] mb-1">Additional Notes</p><p class="text-[var(--text-2)]" th:text="${task.proofOfWorkNotes}"></p></div>
+                                    </div>
+                                    <div th:unless="${task.answer1 != null or task.answer2 != null or task.answer3 != null}">
+                                        <p class="eyebrow mb-1.5 flex items-center gap-1.5"><span>📝</span> Proof of Work</p>
+                                        <p class="text-[var(--text-2)] italic" th:text="${task.proofOfWorkNotes != null ? task.proofOfWorkNotes : 'No proof notes supplied.'}"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2.5 border-t pt-4 md:pt-0 md:border-0" style="border-color:var(--line)">
+                                <button type="button" th:data-id="${task.id}" onclick="evaluateMilestone(this.getAttribute('data-id'), 'reject')" class="btn btn-reject btn-sm min-w-[100px]">Reject</button>
+                                <button type="button" th:data-id="${task.id}" onclick="evaluateMilestone(this.getAttribute('data-id'), 'approve')" class="btn btn-primary btn-sm min-w-[120px]">Approve Task</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl shadow-slate-300/40 p-6 space-y-4 mt-8">
-                <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-900">Syllabus Verification Queue
-                            <span class="text-sm font-semibold text-indigo-700 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2.5 py-0.5 align-middle ml-2" th:text="${#lists.size(pendingProgressQueue)} + ' pending'">0 pending</span>
-                        </h2>
-                        <p class="text-slate-500 mt-1 text-sm">Review student syllabus completions and award XP.</p>
-                    </div>
-                    <button type="button" onclick="bulkApproveSyllabus()" th:if="${not #lists.isEmpty(pendingProgressQueue)}"
-                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors">
-                        Approve Selected
-                    </button>
-                </div>
 
-                <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl p-6">
-                    <div class="space-y-6">
-                        <div th:if="${#lists.isEmpty(pendingProgressQueue)}" class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-xl py-6 px-8 flex items-center justify-center gap-5">
+                <!-- Syllabus Verification Queue -->
+                <div class="card p-5 space-y-4">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Syllabus Verification Queue
+                                <span class="badge badge--info align-middle ml-1" th:text="${#lists.size(pendingProgressQueue)} + ' pending'">0 pending</span>
+                            </h2>
+                            <p class="text-[var(--text-3)] mt-0.5 text-sm">Review student syllabus completions and award XP.</p>
+                        </div>
+                        <button type="button" onclick="bulkApproveSyllabus()" th:if="${not #lists.isEmpty(pendingProgressQueue)}" class="btn btn-primary btn-sm">Approve Selected</button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div th:if="${#lists.isEmpty(pendingProgressQueue)}" class="rounded-xl py-6 px-6 flex items-center gap-4" style="background:var(--surface-2); border:1px solid var(--line)">
                             <div class="text-3xl">📖</div>
-                            <div class="text-left">
-                                <h3 class="text-lg font-semibold text-slate-900">No pending syllabus verifications.</h3>
-                                <p class="text-slate-500 mt-1 text-sm">All student topic completions have been reviewed.</p>
+                            <div>
+                                <h3 class="text-base font-semibold text-slate-900">No pending syllabus verifications</h3>
+                                <p class="text-[var(--text-3)] mt-0.5 text-sm">All student topic completions have been reviewed.</p>
                             </div>
                         </div>
 
                         <div th:each="prog : ${pendingProgressQueue}" th:id="'progress-row-' + ${prog.id}"
-                             class="bg-[#F7F9FC]/40 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-slate-200/60 hover:bg-white/50 shadow-xl shadow-black/10">
-                            <div class="space-y-3 flex-1">
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <input type="checkbox" class="syllabus-checkbox h-4 w-4 rounded border-slate-200 bg-[#F7F9FC]" th:value="${prog.id}">
-                                    <span class="text-xs font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-500/20" th:text="${prog.subjectName}">Subject</span>
-                                    <span class="text-xs font-medium text-emerald-700 bg-emerald-400/10 px-2.5 py-1 rounded-md border border-emerald-400/20" th:text="${prog.topicName}">Topic</span>
+                             class="rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 transition-all hover:border-[var(--brand-100)]"
+                             style="background:var(--surface); border:1px solid var(--line)">
+                            <div class="space-y-2.5 flex-1">
+                                <div class="flex flex-wrap items-center gap-2.5">
+                                    <input type="checkbox" class="syllabus-checkbox h-4 w-4 rounded" style="accent-color:var(--brand)" th:value="${prog.id}">
+                                    <span class="badge badge--info" th:text="${prog.subjectName}">Subject</span>
+                                    <span class="badge badge--success" th:text="${prog.topicName}">Topic</span>
                                 </div>
-                                <h2 class="text-xl font-bold tracking-tight text-slate-900" th:text="${prog.studentName}">Student Name</h2>
-                                <p class="text-xs text-slate-500 flex items-center gap-1.5">
-                                    ⏱️ Submitted at: <span th:text="${prog.submittedAt != null ? #temporals.format(prog.submittedAt, 'yyyy-MM-dd HH:mm') : 'Recently'}">Time</span>
-                                </p>
+                                <h2 class="text-lg font-bold tracking-tight text-slate-900" th:text="${prog.studentName}">Student Name</h2>
+                                <p class="text-xs text-[var(--text-3)] flex items-center gap-1.5">⏱️ Submitted: <span th:text="${prog.submittedAt != null ? #temporals.format(prog.submittedAt, 'yyyy-MM-dd HH:mm') : 'Recently'}">Time</span></p>
                             </div>
-
-                            <div class="flex flex-wrap items-center gap-3 border-t border-slate-200/60 pt-4 md:pt-0 md:border-0">
-                                <button type="button" th:data-id="${prog.id}" onclick="evaluateSyllabus(this.getAttribute('data-id'), 'reject')"
-                                   class="px-5 py-2.5 bg-[#F7F9FC]/80 hover:bg-rose-950/40 text-slate-600 hover:text-rose-400 font-medium rounded-xl border border-slate-200/60 hover:border-rose-900/50 transition-all text-sm text-center min-w-[100px] cursor-pointer">
-                                    Reject
-                                </button>
-                                <button type="button" th:data-id="${prog.id}" onclick="evaluateSyllabus(this.getAttribute('data-id'), 'approve')"
-                                   class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30 transition-all text-sm text-center min-w-[120px] cursor-pointer">
-                                    Approve
-                                </button>
+                            <div class="flex flex-wrap items-center gap-2.5 border-t pt-4 md:pt-0 md:border-0" style="border-color:var(--line)">
+                                <button type="button" th:data-id="${prog.id}" onclick="evaluateSyllabus(this.getAttribute('data-id'), 'reject')" class="btn btn-reject btn-sm min-w-[100px]">Reject</button>
+                                <button type="button" th:data-id="${prog.id}" onclick="evaluateSyllabus(this.getAttribute('data-id'), 'approve')" class="btn btn-primary btn-sm min-w-[120px]">Approve</button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </div>
+
+        <footer class="shrink-0 text-center py-2 text-[11px] text-[var(--text-3)] border-t" style="border-color:var(--line)">ACADIA · Connect | Manage | Empower</footer>
     </div>
 
     <script>
         function evaluateSyllabus(progressId, actionState) {
             let formData = new URLSearchParams();
             formData.append('studentProgressId', progressId);
-
             if (actionState === 'reject') {
                 const reason = prompt("Enter a reason for rejection (optional):");
-                if (reason === null) return; // cancelled
-                if (reason.trim() !== '') {
-                    formData.append('reason', reason);
-                }
-            } else {
-                if (!confirm(`Are you sure you want to approve this topic?`)) return;
-            }
-
+                if (reason === null) return;
+                if (reason.trim() !== '') formData.append('reason', reason);
+            } else { if (!confirm(`Are you sure you want to approve this topic?`)) return; }
             const csrfToken = document.querySelector('input[name="_csrf"]').value;
-
             fetch(`/api/teacher/progress/${actionState}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: formData.toString()
-            })
-            .then(async response => {
+                method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken }, body: formData.toString()
+            }).then(async response => {
                 if (response.ok) {
-                    const elementTarget = document.getElementById(`progress-row-${progressId}`);
-                    if (elementTarget) {
-                        elementTarget.style.opacity = '0';
-                        elementTarget.style.transform = 'scale(0.95)';
-                        setTimeout(() => {
-                            elementTarget.remove();
-                            if (document.querySelectorAll('[id^="progress-row-"]').length === 0) {
-                                window.location.reload();
-                            }
-                        }, 300);
-                    }
-                } else {
-                    const resJson = await response.json();
-                    alert(`Verification Processing Fault: ${resJson.error || 'Unknown error'}`);
-                }
-            })
-            .catch(error => {
-                console.error('Network Engine Exception:', error);
-                alert('Failed to securely contact processing micro-service.');
-            });
+                    const el = document.getElementById(`progress-row-${progressId}`);
+                    if (el) { el.style.opacity = '0'; el.style.transform = 'scale(0.95)';
+                        setTimeout(() => { el.remove(); if (document.querySelectorAll('[id^="progress-row-"]').length === 0) window.location.reload(); }, 300); }
+                } else { const j = await response.json(); alert(`Verification Processing Fault: ${j.error || 'Unknown error'}`); }
+            }).catch(() => alert('Failed to securely contact processing micro-service.'));
         }
         async function evaluateMilestone(submissionId, actionState) {
             let formData = new URLSearchParams();
             formData.append('submissionId', submissionId);
-
             if (actionState === 'reject') {
                 const reason = prompt("Enter a reason for rejection (optional):");
-                if (reason === null) return; // cancelled
-                if (reason.trim() !== '') {
-                    formData.append('reason', reason);
-                }
-            } else {
-                if (!confirm(`Are you sure you want to approve this task?`)) return;
-            }
-
+                if (reason === null) return;
+                if (reason.trim() !== '') formData.append('reason', reason);
+            } else { if (!confirm(`Are you sure you want to approve this task?`)) return; }
             const csrfToken = document.querySelector('input[name="_csrf"]').value;
-            const targetUrl = actionState === 'approve' 
-                ? '/api/teacher/milestone/approve' 
-                : '/api/teacher/milestone/reject';
-
+            const targetUrl = actionState === 'approve' ? '/api/teacher/milestone/approve' : '/api/teacher/milestone/reject';
             try {
-                const response = await fetch(targetUrl, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-CSRF-TOKEN': csrfToken 
-                    },
-                    body: formData
-                });
-
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    alert('Error updating milestone. Please try again.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Network error. Please try again.');
-            }
+                const response = await fetch(targetUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken }, body: formData });
+                if (response.ok) window.location.reload(); else alert('Error updating milestone. Please try again.');
+            } catch (error) { alert('Network error. Please try again.'); }
         }
-
         async function bulkApproveMilestones() {
             const ids = Array.from(document.querySelectorAll('.milestone-checkbox:checked')).map(cb => cb.value);
             if (ids.length === 0) { alert('Select at least one submission first.'); return; }
             if (!confirm(`Approve ${ids.length} selected submission(s)?`)) return;
-
             const csrfToken = document.querySelector('input[name="_csrf"]').value;
             for (const id of ids) {
-                const formData = new URLSearchParams();
-                formData.append('submissionId', id);
-                await fetch('/api/teacher/milestone/approve', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
-                    body: formData
-                });
+                const fd = new URLSearchParams(); fd.append('submissionId', id);
+                await fetch('/api/teacher/milestone/approve', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken }, body: fd });
             }
             window.location.reload();
         }
-
         async function bulkApproveSyllabus() {
             const ids = Array.from(document.querySelectorAll('.syllabus-checkbox:checked')).map(cb => cb.value);
             if (ids.length === 0) { alert('Select at least one topic first.'); return; }
             if (!confirm(`Approve ${ids.length} selected topic(s)?`)) return;
-
             const csrfToken = document.querySelector('input[name="_csrf"]').value;
             for (const id of ids) {
-                const formData = new URLSearchParams();
-                formData.append('studentProgressId', id);
-                await fetch('/api/teacher/progress/approve', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
-                    body: formData
-                });
+                const fd = new URLSearchParams(); fd.append('studentProgressId', id);
+                await fetch('/api/teacher/progress/approve', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken }, body: fd });
             }
             window.location.reload();
         }
-
         async function loadTodaySchedule() {
             const panel = document.getElementById('todaySchedulePanel');
-            if (!panel) return; // not a TEACHER view
-
-            const dateLabel = document.getElementById('todayScheduleDate');
-            dateLabel.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
-
+            if (!panel) return;
+            document.getElementById('todayScheduleDate').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
             const rows = document.getElementById('todayScheduleRows');
             try {
                 const res = await fetch('/api/teacher/timetable/today');
                 const periods = await res.json();
-                if (!Array.isArray(periods) || periods.length === 0) {
-                    rows.innerHTML = '<p class="text-slate-500 text-sm">No periods scheduled for today.</p>';
-                    return;
-                }
+                if (!Array.isArray(periods) || periods.length === 0) { rows.innerHTML = '<p class="text-[var(--text-3)] text-sm">No periods scheduled for today.</p>'; return; }
                 rows.innerHTML = periods.map(p => `
-                    <div class="flex items-center justify-between bg-[#F7F9FC]/60 border border-slate-200/60 rounded-xl px-4 py-3">
+                    <div class="flex items-center justify-between rounded-xl px-4 py-2.5" style="background:var(--surface-2); border:1px solid var(--line)">
                         <div class="flex items-center gap-4">
-                            <span class="text-xs font-mono text-slate-500 w-24">${p.startTime}–${p.endTime}</span>
+                            <span class="text-xs font-mono text-[var(--text-3)] w-24">${p.startTime}–${p.endTime}</span>
                             <span class="text-sm font-semibold text-slate-900">${p.subjectName}</span>
-                            <span class="text-xs text-slate-500">${p.className}</span>
-                            <span class="text-xs text-slate-500">${p.roomNumber || ''}</span>
+                            <span class="text-xs text-[var(--text-3)]">${p.className}</span>
+                            <span class="text-xs text-[var(--text-3)]">${p.roomNumber || ''}</span>
                         </div>
-                        <span class="text-xs px-2.5 py-1 rounded-md border ${p.attendanceMarked
-                            ? 'text-emerald-700 bg-emerald-400/10 border-emerald-400/20'
-                            : 'text-amber-300 bg-amber-400/10 border-amber-400/20'}">
-                            ${p.attendanceMarked ? 'Attendance marked' : 'Attendance pending'}
-                        </span>
-                    </div>
-                `).join('');
-            } catch (err) {
-                rows.innerHTML = '<p class="text-slate-500 text-sm">Could not load schedule.</p>';
-            }
+                        <span class="badge ${p.attendanceMarked ? 'badge--success' : 'badge--warn'}">${p.attendanceMarked ? 'Attendance marked' : 'Attendance pending'}</span>
+                    </div>`).join('');
+            } catch (err) { rows.innerHTML = '<p class="text-[var(--text-3)] text-sm">Could not load schedule.</p>'; }
         }
         loadTodaySchedule();
     </script>
-
-
-    <footer style="text-align:center; padding:8px;
-               font-size:11px; color:rgba(255,255,255,0.2);
-               border-top:1px solid rgba(255,255,255,0.05);
-               flex-shrink:0;">
-  ACADIA &middot; Connect | Manage | Empower
-</footer>
-</div>
     <script src="/js/ui-loaders.js"></script>
 </body>
 </html>

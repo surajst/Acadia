@@ -3,455 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fee Management &middot; ACADIA</title>
+    <title>Fee Ledger &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
-        
-        body { 
-            font-family: 'Outfit', 'Inter', sans-serif; 
-            background-color: #F7F9FC; 
-            color: #0F172A; 
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+        :root {
+            --bg:#F4F6FB; --surface:#FFFFFF; --surface-2:#F8FAFC;
+            --line:#E7EAF2; --line-strong:#D9DFEA;
+            --text:#0F172A; --text-2:#475569; --text-3:#94A0B4;
+            --brand:#4F46E5; --brand-50:#EEF0FF; --brand-100:#E0E3FF; --brand-700:#4338CA;
+            --success:#059669; --success-50:#ECFDF5; --success-200:#A7F3D0;
+            --warn:#D97706; --warn-50:#FFFBEB; --warn-200:#FDE68A;
+            --danger:#DC2626; --danger-50:#FEF2F2; --danger-200:#FECACA;
+            --info:#2563EB; --info-50:#EFF6FF; --info-200:#BFDBFE;
+            --r:16px; --r-sm:12px; --sh-1:0 1px 2px rgba(16,24,40,.05); --sh-2:0 8px 24px rgba(16,24,40,.07);
         }
-
-        .glass-panel {
-            background: #FFFFFF;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* Custom scrollbar to match dark theme aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #F7F9FC;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #FFFFFF;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #E2E8F0;
-        }
+        body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(--text); }
+        .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--sh-1); }
+        .eyebrow { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); }
+        .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; line-height:1; border:1px solid transparent; }
+        .badge .dot { width:6px; height:6px; border-radius:50%; }
+        .badge--success { background:var(--success-50); color:var(--success); border-color:var(--success-200); }
+        .badge--warn    { background:var(--warn-50);    color:var(--warn);    border-color:var(--warn-200); }
+        .badge--danger  { background:var(--danger-50);  color:var(--danger);  border-color:var(--danger-200); }
+        .badge--neutral { background:var(--surface-2);  color:var(--text-2);  border-color:var(--line-strong); }
+        .badge--info    { background:var(--info-50);    color:var(--info);    border-color:var(--info-200); }
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; font-weight:600; border-radius:var(--r-sm); transition:all .15s ease; cursor:pointer; border:1px solid transparent; }
+        .btn:focus-visible { outline:none; box-shadow:0 0 0 3px var(--brand-100); }
+        .btn-sm { padding:8px 13px; font-size:12.5px; } .btn-xs { padding:6px 11px; font-size:12px; }
+        .btn-primary { background:var(--brand); color:#fff; } .btn-primary:hover { background:var(--brand-700); }
+        .btn-success { background:var(--success); color:#fff; } .btn-success:hover { background:#047857; }
+        .btn-secondary { background:var(--surface); color:var(--text-2); border-color:var(--line-strong); } .btn-secondary:hover { background:var(--surface-2); color:var(--text); }
+        .btn-success-soft { background:var(--success-50); color:var(--success); border-color:var(--success-200); } .btn-success-soft:hover { background:var(--success); color:#fff; }
+        .field { background:var(--surface-2); border:1px solid var(--line-strong); border-radius:var(--r-sm); color:var(--text); font-size:14px; padding:10px 14px; width:100%; outline:none; transition:.15s; }
+        .field:focus { border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-100); background:#fff; }
+        .field-label { font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-3); }
+        .navlink { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--r-sm); font-size:14px; font-weight:500; color:var(--text-2); transition:.15s; }
+        .navlink:hover { background:var(--surface-2); color:var(--text); }
+        .navlink.active { background:var(--brand-50); color:var(--brand); font-weight:600; border:1px solid var(--brand-100); }
+        ::-webkit-scrollbar { width:9px; height:9px; } ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:#D3DAE6; border-radius:6px; } ::-webkit-scrollbar-thumb:hover { background:#B9C2D4; }
     </style>
-    
-    
-
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class=" relative overflow-x-hidden selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="flex flex-col" style="height:100vh; overflow:hidden; background:var(--bg);">
 
-    <!-- Glowing Background blobs for glassmorphic depth -->
-    <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
-    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-600/10 blur-[120px] pointer-events-none"></div>
-
-    <header class="glass-panel border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div style="display:flex; align-items:center; gap:10px;">
-  <img src="/images/acadia-logo.png" alt="ACADIA"
-       style="height:32px; ">
-  <span style="font-size:16px; font-weight:600; color:#0F172A;
-               letter-spacing:2px;">ACADIA</span>
-</div>
-            <div class="flex items-center gap-4">
-                <a href="/web/admin/dashboard" class="h-11 w-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-700 font-black text-lg transition-transform hover:scale-105">
-                    Ω
-                </a>
+    <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
+        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <a href="/web/admin/dashboard" class="h-10 w-10 rounded-xl bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand)] font-black text-lg transition hover:bg-[var(--brand-100)]">Ω</a>
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-800 via-slate-700 to-indigo-600 bg-clip-text text-transparent">
-                        Admin Dashboard
-                    </h1>
-                    <p class="text-xs text-slate-500 mt-0.5 font-medium flex items-center gap-1">
-                        <a href="/web/admin/dashboard" class="hover:text-indigo-600 transition-colors">Roster Hub</a>
-                        <span class="text-slate-600">/</span>
-                        <span class="text-slate-600">Fee Ledger & Billing</span>
+                    <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Fee Ledger</h1>
+                    <p class="text-xs text-[var(--text-3)] mt-1 flex items-center gap-1.5">
+                        <a href="/web/admin/dashboard" class="hover:text-[var(--brand)] transition-colors font-medium">Roster Hub</a>
+                        <span>/</span><span class="text-[var(--text-2)] font-medium">Fee Ledger &amp; Billing</span>
                     </p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="openCreateInvoiceModal()"
-                        class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-700 hover:text-indigo-200 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-inner backdrop-blur-md flex items-center gap-1.5 cursor-pointer">
-                    &#10133; Create Invoice
-                </button>
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 tracking-wider uppercase">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Financial Ledger Active
-                </span>
+                <button onclick="openCreateInvoiceModal()" class="btn btn-primary btn-sm">➕ Create Invoice</button>
+                <span class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Ledger Active</span>
             </div>
         </div>
     </header>
-<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
 
+    <div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0;">
+    <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        
-        <!-- Toast success alerts -->
-        <div th:if="${param.success != null}" class="mb-8 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-sm font-semibold flex items-center gap-2 animate-fade-in shadow-lg">
+        <div th:if="${param.success != null}" data-flash data-autohide="6000"
+             class="mb-5 p-3.5 pr-10 rounded-xl text-sm font-medium flex items-center gap-2 border"
+             style="background:var(--success-50); border-color:var(--success-200); color:var(--success);">
             <span>✨</span> Payment transaction recorded successfully! Roster balances updated.
         </div>
-
-        <div th:if="${errorMessage != null}" class="mb-8 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 text-sm font-semibold flex items-center gap-2 animate-fade-in shadow-lg">
+        <div th:if="${errorMessage != null}" data-flash data-autohide="8000"
+             class="mb-5 p-3.5 pr-10 rounded-xl text-sm font-medium flex items-center gap-2 border"
+             style="background:var(--danger-50); border-color:var(--danger-200); color:var(--danger);">
             <span>⚠️</span> <span th:text="${errorMessage}">Error occurred</span>
         </div>
 
-        <!-- 3 Glowing KPI cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <!-- Expected Revenue Card -->
-            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden shadow-xl shadow-slate-300/40 group hover:border-indigo-500/20 transition-all">
-                <div class="fixed -right-6 -bottom-6 w-24 h-24 rounded-full bg-indigo-600/5 blur-2xl group-hover:bg-indigo-600/10 transition-all"></div>
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Revenue Target</span>
-                    <div class="p-2 rounded-xl bg-indigo-600/10 text-indigo-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                    </div>
+        <!-- KPI strip -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="card p-5">
+                <div class="flex items-center justify-between">
+                    <span class="eyebrow">Total Revenue Target</span>
+                    <span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--brand-50); color:var(--brand)">🎯</span>
                 </div>
-                <h3 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight" th:text="|₹ ${#numbers.formatDecimal(totalExpectedRevenue, 1, 'COMMA', 2, 'POINT')}|">₹ 10,000,000.00</h3>
-                <p class="text-xs text-slate-500 mt-2 font-medium">Sum of all dynamic grade-level structures</p>
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2" th:text="|₹ ${#numbers.formatDecimal(totalExpectedRevenue, 1, 'COMMA', 2, 'POINT')}|">₹ 10,000,000.00</h3>
+                <p class="text-xs text-[var(--text-3)] mt-1.5">Sum of all grade-level fee structures</p>
             </div>
-
-            <!-- Collected Invoices Card -->
-            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden shadow-xl shadow-slate-300/40 group hover:border-emerald-500/20 transition-all">
-                <div class="fixed -right-6 -bottom-6 w-24 h-24 rounded-full bg-emerald-600/5 blur-2xl group-hover:bg-emerald-600/10 transition-all"></div>
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Collected Invoices</span>
-                    <div class="p-2 rounded-xl bg-emerald-600/10 text-emerald-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
+            <div class="card p-5">
+                <div class="flex items-center justify-between">
+                    <span class="eyebrow">Total Collected Invoices</span>
+                    <span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--success-50); color:var(--success)">✓</span>
                 </div>
-                <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight" th:text="|₹ ${#numbers.formatDecimal(totalCollected, 1, 'COMMA', 2, 'POINT')}|">₹ 7,500,000.00</h3>
-                <p class="text-xs text-slate-500 mt-2 font-medium">Actual billing transactions validated</p>
+                <h3 class="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2" style="color:var(--success)" th:text="|₹ ${#numbers.formatDecimal(totalCollected, 1, 'COMMA', 2, 'POINT')}|">₹ 7,500,000.00</h3>
+                <p class="text-xs text-[var(--text-3)] mt-1.5">Validated billing transactions</p>
             </div>
-
-            <!-- Deficit Balance Card -->
-            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden shadow-xl shadow-slate-300/40 group hover:border-red-500/20 transition-all">
-                <div class="fixed -right-6 -bottom-6 w-24 h-24 rounded-full bg-red-600/5 blur-2xl group-hover:bg-red-600/10 transition-all"></div>
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Outstanding Deficit</span>
-                    <div class="p-2 rounded-xl bg-red-600/10 text-red-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    </div>
+            <div class="card p-5">
+                <div class="flex items-center justify-between">
+                    <span class="eyebrow">Outstanding Deficit</span>
+                    <span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--danger-50); color:var(--danger)">!</span>
                 </div>
-                <h3 class="text-2xl sm:text-3xl font-black text-red-600 tracking-tight" th:text="|₹ ${#numbers.formatDecimal(totalOutstandingDeficit, 1, 'COMMA', 2, 'POINT')}|">₹ 2,500,000.00</h3>
-                <p class="text-xs text-slate-500 mt-2 font-medium">Uncollected balances remaining</p>
+                <h3 class="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2" style="color:var(--danger)" th:text="|₹ ${#numbers.formatDecimal(totalOutstandingDeficit, 1, 'COMMA', 2, 'POINT')}|">₹ 2,500,000.00</h3>
+                <p class="text-xs text-[var(--text-3)] mt-1.5">Uncollected balances remaining</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-            
-            <!-- Side Navigation Sidebar -->
-            <aside class="space-y-6 lg:col-span-1">
-                <div class="bg-[#F7F9FC]/80 border border-slate-200/50 rounded-2xl p-4 shadow-xl shadow-slate-300/40 space-y-4">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 px-2">Navigation Scope</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-5 items-start">
+            <aside class="lg:col-span-1">
+                <div class="card p-3">
+                    <h3 class="eyebrow px-2 mb-2">Navigation</h3>
                     <nav class="space-y-1">
-                        <!-- ADMIN items -->
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
-                            <span>⚙️</span> School Configuration
-                        </a>
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees" class="flex items-center gap-3 px-3 py-2.5 bg-indigo-600/10 text-indigo-700 rounded-xl font-semibold text-sm border border-indigo-500/20 shadow-inner">
-                            <span>💳</span> Fee Ledger & Billing
-                        </a>
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management#staff-registry" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
-                            <span>💼</span> Staff Registry
-                        </a>
-
-                        <!-- TEACHER items -->
-                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/admin/dashboard" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
-                            <span>📊</span> Student Rosters & Metrics
-                        </a>
-                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/attendance" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
-                            <span>📅</span> Daily Attendance Log
-                        </a>
-                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/dashboard" class="flex items-center gap-3 px-3 py-2.5 hover:bg-white text-slate-600 rounded-xl font-medium text-sm transition-all">
-                            <span>🎯</span> Milestone Verification
-                        </a>
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="navlink"><span>⚙️</span> School Configuration</a>
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees" class="navlink active"><span>💳</span> Fee Ledger &amp; Billing</a>
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management#staff-registry" class="navlink"><span>💼</span> Staff Registry</a>
+                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/admin/dashboard" class="navlink"><span>📊</span> Student Rosters</a>
+                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/attendance" class="navlink"><span>📅</span> Daily Attendance</a>
+                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/dashboard" class="navlink"><span>🎯</span> Milestone Verification</a>
                     </nav>
                 </div>
             </aside>
 
-            <!-- Main billing ledger table -->
-            <div class="lg:col-span-3 space-y-6">
-                <div class="bg-[#F7F9FC] border border-slate-200/50 rounded-2xl shadow-xl overflow-hidden">
-                    <div class="p-6 border-b border-slate-200/60 flex justify-between items-center bg-[#F1F5F9]">
+            <div class="lg:col-span-3">
+                <div class="card overflow-hidden">
+                    <div class="p-4 border-b flex justify-between items-center flex-wrap gap-2" style="border-color:var(--line)">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900 tracking-tight">Active Invoicing Ledger</h2>
-                            <p class="text-xs text-slate-500 mt-0.5">Real-time collections directory across 22 classrooms</p>
+                            <h2 class="text-base font-bold text-slate-900 tracking-tight">Invoicing Ledger</h2>
+                            <p class="text-xs text-[var(--text-3)] mt-0.5">Real-time collections across all classrooms.</p>
                         </div>
-                        <span class="text-xs font-mono font-semibold text-slate-500" th:text="|Showing ${#lists.size(enrichedInvoices)} records of ${totalItems}|">Showing 20 records</span>
+                        <span class="badge badge--neutral font-mono" th:text="|${#lists.size(enrichedInvoices)} of ${totalItems} records|">20 of 507 records</span>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-[#F7F9FC]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
-                                    <th class="py-4 px-6">Student Roster</th>
-                                    <th class="py-4 px-6">Grade</th>
-                                    <th class="py-4 px-6">Total Fee</th>
-                                    <th class="py-4 px-6">Paid Balance</th>
-                                    <th class="py-4 px-6">Due Balance</th>
-                                    <th class="py-4 px-6">Status</th>
-                                    <th class="py-4 px-6 text-center">Collection</th>
+                                <tr class="text-[var(--text-3)] uppercase text-[10px] tracking-wider font-bold" style="background:var(--surface-2)">
+                                    <th class="py-3 px-5">Student</th>
+                                    <th class="py-3 px-5">Grade</th>
+                                    <th class="py-3 px-5">Total Fee</th>
+                                    <th class="py-3 px-5">Paid</th>
+                                    <th class="py-3 px-5">Due</th>
+                                    <th class="py-3 px-5">Status</th>
+                                    <th class="py-3 px-5 text-center">Collection</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-800/40 text-sm">
-                                <tr th:each="dto : ${enrichedInvoices}" class="hover:bg-[#F7F9FC]/30 transition-colors group">
-                                    <!-- Student details -->
-                                    <td class="py-4 px-6 font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors">
+                            <tbody class="text-sm">
+                                <tr th:each="dto : ${enrichedInvoices}" class="border-b hover:bg-[var(--surface-2)] transition-colors group" style="border-color:var(--line)">
+                                    <td class="py-3 px-5 font-semibold text-slate-900">
                                         <div class="flex items-center gap-3">
-                                            <div class="h-8 w-8 rounded-full bg-white border border-slate-200/80 flex items-center justify-center text-xs font-bold text-slate-600 group-hover:border-indigo-500/30 transition-all"
-                                                 th:text="${dto.student != null ? #strings.substring(dto.student.firstName, 0, 1) + #strings.substring(dto.student.lastName, 0, 1) : 'ST'}">
-                                                ST
-                                            </div>
+                                            <div class="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:linear-gradient(135deg,#64748B,#94A3B8)"
+                                                 th:text="${dto.student != null ? #strings.substring(dto.student.firstName, 0, 1) + #strings.substring(dto.student.lastName, 0, 1) : 'ST'}">ST</div>
                                             <div>
                                                 <p th:text="${dto.student != null ? dto.student.firstName + ' ' + dto.student.lastName : 'Unknown Student'}">Aarav Sharma</p>
-                                                <span class="text-[10px] font-mono text-slate-500" th:text="${dto.student != null ? dto.student.rollNumber : '--'}">6A01</span>
+                                                <span class="text-[10px] font-mono text-[var(--text-3)]" th:text="${dto.student != null ? dto.student.rollNumber : '--'}">6A01</span>
                                             </div>
                                         </div>
                                     </td>
-                                    <!-- Grade level -->
-                                    <td class="py-4 px-6">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-white text-slate-600 border border-slate-200/50"
-                                              th:text="${dto.student != null && dto.student.schoolClass != null ? dto.student.schoolClass.gradeLevel : 'Grade 6'}">
-                                            Grade 6
-                                        </span>
+                                    <td class="py-3 px-5">
+                                        <span class="badge badge--neutral" th:text="${dto.student != null && dto.student.schoolClass != null ? dto.student.schoolClass.gradeLevel : 'Grade 6'}">Grade 6</span>
                                     </td>
-                                    <!-- Total billing -->
-                                    <td class="py-4 px-6 font-mono font-medium text-slate-600"
-                                        th:text="|₹ ${#numbers.formatDecimal(dto.invoice.totalAmount, 1, 'COMMA', 2, 'POINT')}|">₹ 20,000.00</td>
-                                    <!-- Paid balance -->
-                                    <td class="py-4 px-6 font-mono font-medium text-emerald-600"
-                                        th:text="|₹ ${#numbers.formatDecimal(dto.invoice.amountPaid, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
-                                    <!-- Due balance -->
-                                    <td class="py-4 px-6 font-mono font-medium text-red-600"
-                                        th:text="|₹ ${#numbers.formatDecimal(dto.invoice.amountDue, 1, 'COMMA', 2, 'POINT')}|">₹ 15,000.00</td>
-                                    <!-- Status badging -->
-                                    <td class="py-4 px-6">
-                                        <span th:if="${dto.invoice.status.name() == 'PAID'}" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm shadow-emerald-500/5 uppercase tracking-wide">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                            Paid
-                                        </span>
-                                        <span th:if="${dto.invoice.status.name() == 'PARTIALLY_PAID'}" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 shadow-sm shadow-amber-500/5 uppercase tracking-wide">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                                            Partial
-                                        </span>
-                                        <span th:if="${dto.invoice.status.name() == 'UNPAID'}" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/10 text-red-600 border border-red-500/20 shadow-sm shadow-red-500/5 uppercase tracking-wide">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
-                                            Unpaid
-                                        </span>
+                                    <td class="py-3 px-5 font-mono font-medium text-slate-600" th:text="|₹ ${#numbers.formatDecimal(dto.invoice.totalAmount, 1, 'COMMA', 2, 'POINT')}|">₹ 20,000.00</td>
+                                    <td class="py-3 px-5 font-mono font-medium" style="color:var(--success)" th:text="|₹ ${#numbers.formatDecimal(dto.invoice.amountPaid, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
+                                    <td class="py-3 px-5 font-mono font-medium" style="color:var(--danger)" th:text="|₹ ${#numbers.formatDecimal(dto.invoice.amountDue, 1, 'COMMA', 2, 'POINT')}|">₹ 15,000.00</td>
+                                    <td class="py-3 px-5">
+                                        <span th:if="${dto.invoice.status.name() == 'PAID'}" class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Paid</span>
+                                        <span th:if="${dto.invoice.status.name() == 'PARTIALLY_PAID'}" class="badge badge--warn"><span class="dot bg-[var(--warn)]"></span> Partial</span>
+                                        <span th:if="${dto.invoice.status.name() == 'UNPAID'}" class="badge badge--danger"><span class="dot bg-[var(--danger)]"></span> Unpaid</span>
                                     </td>
-                                    <!-- Collect action -->
-                                    <td class="py-4 px-6 text-center space-y-1.5">
+                                    <td class="py-3 px-5 text-center space-y-1.5">
                                         <button th:if="${dto.invoice.status.name() != 'PAID'}"
                                                 th:data-id="${dto.invoice.id}"
                                                 th:data-name="${dto.student != null ? dto.student.firstName + ' ' + dto.student.lastName : 'Student'}"
                                                 th:data-due="${dto.invoice.amountDue}"
                                                 onclick="openPaymentModal(this.getAttribute('data-id'), this.getAttribute('data-name'), this.getAttribute('data-due'))"
-                                                class="px-3 py-1.5 bg-emerald-600/15 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg border border-emerald-500/20 text-xs font-bold transition-all cursor-pointer block w-full">
-                                            Record Payment
-                                        </button>
-                                        <span th:if="${dto.invoice.status.name() == 'PAID'}" class="text-xs text-slate-500 font-semibold italic">Settled</span>
-
+                                                class="btn btn-success-soft btn-xs w-full">Record Payment</button>
+                                        <span th:if="${dto.invoice.status.name() == 'PAID'}" class="text-xs text-[var(--text-3)] font-semibold italic">Settled</span>
                                         <button th:if="${dto.invoice.status.name() != 'PAID' and (dto.invoice.waiverStatus == null or dto.invoice.waiverStatus.name() == 'NONE' or dto.invoice.waiverStatus.name() == 'REJECTED')}"
-                                                th:data-id="${dto.invoice.id}"
-                                                onclick="requestWaiver(this.getAttribute('data-id'))"
-                                                class="px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-700 rounded-lg border border-slate-200 text-xs font-bold transition-all cursor-pointer block w-full">
-                                            Request Waiver
-                                        </button>
-                                        <span th:if="${dto.invoice.waiverStatus != null and dto.invoice.waiverStatus.name() == 'PENDING'}" class="text-[10px] text-amber-600 font-semibold uppercase tracking-wide block">Waiver Pending</span>
-                                        <span th:if="${dto.invoice.waiverStatus != null and dto.invoice.waiverStatus.name() == 'APPROVED'}" class="text-[10px] text-emerald-600 font-semibold uppercase tracking-wide block">Waiver Applied</span>
+                                                th:data-id="${dto.invoice.id}" onclick="requestWaiver(this.getAttribute('data-id'))"
+                                                class="btn btn-secondary btn-xs w-full">Request Waiver</button>
+                                        <span th:if="${dto.invoice.waiverStatus != null and dto.invoice.waiverStatus.name() == 'PENDING'}" class="badge badge--warn">Waiver Pending</span>
+                                        <span th:if="${dto.invoice.waiverStatus != null and dto.invoice.waiverStatus.name() == 'APPROVED'}" class="badge badge--success">Waiver Applied</span>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Dynamic page-driven navigation controls -->
-                    <div class="p-6 border-t border-slate-200/60 bg-[#F7F9FC]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <span class="text-xs text-slate-500 font-semibold" th:text="|Page ${currentPage + 1} of ${totalPages}|">Page 1 of 26</span>
+                    <div class="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3" style="border-color:var(--line); background:var(--surface-2)">
+                        <span class="text-xs text-[var(--text-3)] font-semibold" th:text="|Page ${currentPage + 1} of ${totalPages}|">Page 1 of 26</span>
                         <div class="flex items-center gap-2">
-                            <a th:href="@{/web/admin/fees(page=${currentPage - 1})}"
-                               th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40' : 'hover:bg-white hover:text-slate-900 border-slate-200/50 text-slate-600'"
-                               class="px-3.5 py-2 border rounded-xl text-xs font-bold transition-all flex items-center gap-1 bg-[#F7F9FC] cursor-pointer">
-                                ◀ Previous
-                            </a>
-                            <a th:href="@{/web/admin/fees(page=${currentPage + 1})}"
-                               th:classappend="${currentPage + 1 >= totalPages} ? 'pointer-events-none opacity-40' : 'hover:bg-white hover:text-slate-900 border-slate-200/50 text-slate-600'"
-                               class="px-3.5 py-2 border rounded-xl text-xs font-bold transition-all flex items-center gap-1 bg-[#F7F9FC] cursor-pointer">
-                                Next ▶
-                            </a>
+                            <a th:href="@{/web/admin/fees(page=${currentPage - 1})}" th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40' : ''" class="btn btn-secondary btn-xs">◀ Previous</a>
+                            <a th:href="@{/web/admin/fees(page=${currentPage + 1})}" th:classappend="${currentPage + 1 >= totalPages} ? 'pointer-events-none opacity-40' : ''" class="btn btn-secondary btn-xs">Next ▶</a>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
+    </div>
 
-    <!-- Payments Entry Modal Box Form -->
-    <div id="paymentModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all glass-panel">
-            
-            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <span class="text-lg">💳</span>
-                    <h3 class="text-sm font-bold text-slate-800 tracking-wider uppercase">Record Fee Transaction</h3>
-                </div>
-                <button onclick="closePaymentModal()" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/50">
+    <!-- Payment modal -->
+    <div id="paymentModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-2xl overflow-hidden max-h-[92vh] flex flex-col" style="box-shadow:var(--sh-2)">
+            <div class="px-5 py-4 flex items-center justify-between border-b" style="border-color:var(--line)">
+                <h3 class="text-base font-bold text-slate-900">💳 Record fee transaction</h3>
+                <button onclick="closePaymentModal()" class="text-[var(--text-3)] hover:text-slate-700 p-1 rounded-lg hover:bg-[var(--surface-2)]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
                 </button>
             </div>
-
-            <form id="paymentForm" method="POST" action="/web/admin/fees/collect" class="p-6 space-y-5">
-                <!-- Spring CSRF Token -->
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <!-- Target Invoice ID -->
-                <input type="hidden" id="invoiceIdInput" name="invoiceId" value="" />
-
-                <div class="space-y-4">
-                    <div class="bg-[#F7F9FC]/40 p-4 rounded-xl border border-slate-200/40 space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-indigo-600 tracking-wider block">Student Name</span>
-                        <p id="studentNameDisplay" class="text-sm font-semibold text-slate-900">--</p>
+            <form id="paymentForm" method="POST" action="/web/admin/fees/collect" class="p-5 space-y-4 overflow-y-auto">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" id="invoiceIdInput" name="invoiceId" value=""/>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-xl p-3" style="background:var(--surface-2); border:1px solid var(--line)">
+                        <span class="field-label block">Student</span>
+                        <p id="studentNameDisplay" class="text-sm font-semibold text-slate-900 mt-0.5">--</p>
                     </div>
-
-                    <div class="bg-[#F7F9FC]/40 p-4 rounded-xl border border-slate-200/40 space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-red-600 tracking-wider block">Remaining Balance Due</span>
-                        <p id="remainingDueDisplay" class="text-sm font-mono font-semibold text-slate-900">₹ --</p>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label for="paymentModeSelect" class="text-[10px] uppercase font-bold text-slate-500 tracking-wider block ml-1">Payment Mode</label>
-                        <select id="paymentModeSelect" name="paymentMode" class="w-full bg-[#F8FAFC] border border-slate-200 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none transition-all">
-                            <option value="CASH">CASH</option>
-                            <option value="ONLINE">ONLINE</option>
-                            <option value="CHECK">CHECK</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label for="amountInput" class="text-[10px] uppercase font-bold text-slate-500 tracking-wider block ml-1">Payment Amount (INR)</label>
-                        <input type="number" id="amountInput" name="amount" step="0.01" min="0.01" placeholder="5000.00" required
-                               class="w-full bg-[#F8FAFC] border border-slate-200 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none transition-all font-mono" />
+                    <div class="rounded-xl p-3" style="background:var(--danger-50); border:1px solid var(--danger-200)">
+                        <span class="field-label block" style="color:var(--danger)">Balance Due</span>
+                        <p id="remainingDueDisplay" class="text-sm font-mono font-semibold text-slate-900 mt-0.5">₹ --</p>
                     </div>
                 </div>
-
-                <div class="flex items-center justify-end gap-3 border-t border-slate-200/60 pt-5 mt-4">
-                    <button type="button" onclick="closePaymentModal()" class="px-4 py-2 hover:bg-white text-slate-500 hover:text-slate-900 rounded-xl text-xs font-bold transition-all border border-slate-200 cursor-pointer">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/10 transition-all cursor-pointer">
-                        Record Transaction
-                    </button>
+                <div class="space-y-1.5">
+                    <label for="paymentModeSelect" class="field-label block">Payment mode</label>
+                    <select id="paymentModeSelect" name="paymentMode" class="field">
+                        <option value="CASH">CASH</option>
+                        <option value="ONLINE">ONLINE</option>
+                        <option value="CHECK">CHECK</option>
+                    </select>
+                </div>
+                <div class="space-y-1.5">
+                    <label for="amountInput" class="field-label block">Payment amount (INR)</label>
+                    <input type="number" id="amountInput" name="amount" step="0.01" min="0.01" placeholder="5000.00" required class="field font-mono"/>
+                </div>
+                <div class="flex items-center justify-end gap-2.5 border-t pt-4" style="border-color:var(--line)">
+                    <button type="button" onclick="closePaymentModal()" class="btn btn-secondary btn-sm">Cancel</button>
+                    <button type="submit" class="btn btn-success btn-sm">Record Transaction</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Create Invoice Modal Box Form -->
-    <div id="createInvoiceModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all glass-panel">
-
-            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <span class="text-lg">🧾</span>
-                    <h3 class="text-sm font-bold text-slate-800 tracking-wider uppercase">Create Invoice</h3>
-                </div>
-                <button onclick="closeCreateInvoiceModal()" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/50">
+    <!-- Create invoice modal -->
+    <div id="createInvoiceModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-2xl overflow-hidden" style="box-shadow:var(--sh-2)">
+            <div class="px-5 py-4 flex items-center justify-between border-b" style="border-color:var(--line)">
+                <h3 class="text-base font-bold text-slate-900">🧾 Create invoice</h3>
+                <button onclick="closeCreateInvoiceModal()" class="text-[var(--text-3)] hover:text-slate-700 p-1 rounded-lg hover:bg-[var(--surface-2)]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
                 </button>
             </div>
-
-            <form method="POST" action="/web/admin/fees/invoice/create" class="p-6 space-y-5">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
+            <form method="POST" action="/web/admin/fees/invoice/create" class="p-5 space-y-4">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="space-y-1.5">
-                    <label for="invoiceStudentSelect" class="text-[10px] uppercase font-bold text-slate-500 tracking-wider block ml-1">Student</label>
-                    <select id="invoiceStudentSelect" name="studentId" required
-                            class="w-full bg-[#F8FAFC] border border-slate-200 focus:border-indigo-500/60 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none transition-all">
-                        <option value="" disabled selected>Select a student...</option>
+                    <label for="invoiceStudentSelect" class="field-label block">Student</label>
+                    <select id="invoiceStudentSelect" name="studentId" required class="field">
+                        <option value="" disabled selected>Select a student…</option>
                         <option th:each="s : ${allStudents}" th:value="${s.id}" th:text="|${s.firstName} ${s.lastName}|">Student Name</option>
                     </select>
                 </div>
-
-                <p class="text-xs text-slate-500 leading-relaxed">
-                    Total amount is auto-calculated from this tenant's fee structure for the student's grade (or a default if none is configured).
-                </p>
-
-                <div class="flex items-center justify-end gap-3 border-t border-slate-200/60 pt-5 mt-4">
-                    <button type="button" onclick="closeCreateInvoiceModal()" class="px-4 py-2 hover:bg-white text-slate-500 hover:text-slate-900 rounded-xl text-xs font-bold transition-all border border-slate-200 cursor-pointer">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/10 transition-all cursor-pointer">
-                        Create Invoice
-                    </button>
+                <p class="text-xs text-[var(--text-3)] leading-relaxed">Total is auto-calculated from this school's fee structure for the student's grade (or a default if none is configured).</p>
+                <div class="flex items-center justify-end gap-2.5 border-t pt-4" style="border-color:var(--line)">
+                    <button type="button" onclick="closeCreateInvoiceModal()" class="btn btn-secondary btn-sm">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Create Invoice</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <script>
-        function openCreateInvoiceModal() {
-            const modal = document.getElementById('createInvoiceModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-        function closeCreateInvoiceModal() {
-            const modal = document.getElementById('createInvoiceModal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
-        window.addEventListener('click', (event) => {
-            const modal = document.getElementById('createInvoiceModal');
-            if (modal && event.target === modal) {
-                closeCreateInvoiceModal();
-            }
-        });
+    <footer class="shrink-0 text-center py-2 text-[11px] text-[var(--text-3)] border-t" style="border-color:var(--line)">ACADIA · Connect | Manage | Empower</footer>
 
+    <script>
+        function openCreateInvoiceModal() { const m=document.getElementById('createInvoiceModal'); m.classList.remove('hidden'); m.classList.add('flex'); }
+        function closeCreateInvoiceModal() { const m=document.getElementById('createInvoiceModal'); m.classList.remove('flex'); m.classList.add('hidden'); }
         function openPaymentModal(invoiceId, studentName, remainingDue) {
             document.getElementById('invoiceIdInput').value = invoiceId;
             document.getElementById('studentNameDisplay').innerText = studentName;
             document.getElementById('remainingDueDisplay').innerText = "₹ " + parseFloat(remainingDue).toLocaleString('en-IN', { minimumFractionDigits: 2 });
             document.getElementById('amountInput').value = "";
             document.getElementById('amountInput').max = remainingDue;
-
-            const modal = document.getElementById('paymentModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            const m=document.getElementById('paymentModal'); m.classList.remove('hidden'); m.classList.add('flex');
         }
-
-        function closePaymentModal() {
-            const modal = document.getElementById('paymentModal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
+        function closePaymentModal() { const m=document.getElementById('paymentModal'); m.classList.remove('flex'); m.classList.add('hidden'); }
+        window.addEventListener('click', (e) => {
+            ['createInvoiceModal','paymentModal'].forEach(id => { const m=document.getElementById(id); if (m && e.target === m) { m.classList.add('hidden'); m.classList.remove('flex'); } });
+        });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ['createInvoiceModal','paymentModal'].forEach(id => { const m=document.getElementById(id); if(m){m.classList.add('hidden'); m.classList.remove('flex');} }); });
 
         async function requestWaiver(invoiceId) {
             const amount = prompt('Waiver amount (₹):');
             if (!amount || isNaN(parseFloat(amount))) return;
             const reason = prompt('Reason for waiver:') || 'No reason provided';
-
             const csrfToken = document.querySelector('input[name="_csrf"]').value;
             const params = new URLSearchParams({ waiverAmount: amount, reason: reason });
             const res = await fetch(`/api/admin/fees/${invoiceId}/waiver/request`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
-                body: params.toString(),
+                method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken }, body: params.toString(),
             });
             const data = await res.json();
             if (data.error) { alert(data.error); return; }
             window.location.reload();
         }
     </script>
-
-
-    <footer style="text-align:center; padding:8px;
-               font-size:11px; color:rgba(255,255,255,0.2);
-               border-top:1px solid rgba(255,255,255,0.05);
-               flex-shrink:0;">
-  ACADIA &middot; Connect | Manage | Empower
-</footer>
-</div>
     <script src="/js/ui-loaders.js"></script>
 </body>
 </html>
