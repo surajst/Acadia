@@ -121,10 +121,32 @@ public class AdminManagementService {
     /**
      * Create a parent, optionally provisioning a login and linking to a student.
      * Throws {@link IllegalArgumentException} if the login email is already in use.
+     *
+     * <p>Multi-child households: if a guardian with the same phone number already
+     * exists in this tenant, that existing guardian is reused (and linked to the
+     * additional student) instead of creating a duplicate record. This keeps one
+     * parent = one login = one child-switcher across all their kids, which is how
+     * the parent portal resolves children ({@code findByParentsContaining}).</p>
      */
     @Transactional
     public Parent addParent(String firstName, String lastName, String phoneNumber, UUID studentId,
                             String loginEmail, String loginPassword, UUID tenantId, UUID academicYearId) {
+        if (phoneNumber != null && !phoneNumber.isBlank()) {
+            Parent existing = parentRepository.findByTenantIdAndPhoneNumber(tenantId, phoneNumber).orElse(null);
+            if (existing != null) {
+                // Reuse the same person: link them to this additional child, and
+                // provision a login only if they don't already have one.
+                if (existing.getUserId() == null
+                        && loginEmail != null && !loginEmail.isBlank()
+                        && loginPassword != null && !loginPassword.isBlank()) {
+                    provisionParentLogin(existing, loginEmail, loginPassword, tenantId, academicYearId);
+                    parentRepository.save(existing);
+                }
+                linkParentToStudent(existing, studentId);
+                return existing;
+            }
+        }
+
         Parent parent = new Parent();
         parent.setId(UUID.randomUUID());
         parent.setTenantId(tenantId);
@@ -134,33 +156,41 @@ public class AdminManagementService {
         parent.setPhoneNumber(phoneNumber);
 
         if (loginEmail != null && !loginEmail.isBlank() && loginPassword != null && !loginPassword.isBlank()) {
-            if (userRepository.existsByEmail(loginEmail)) {
-                throw new IllegalArgumentException("Email already in use: " + loginEmail);
-            }
-            User parentUser = new User();
-            parentUser.setId(UUID.randomUUID());
-            parentUser.setTenantId(tenantId);
-            parentUser.setAcademicYearId(academicYearId);
-            parentUser.setEmail(loginEmail);
-            parentUser.setPasswordHash(passwordEncoder.encode(loginPassword));
-            parentUser.setFullName(firstName + " " + lastName);
-            parentUser.setRole(UserRole.PARENT);
-            parentUser.setActive(true);
-            userRepository.save(parentUser);
-            parent.setUserId(parentUser.getId());
-            parent.setEmail(loginEmail);
+            provisionParentLogin(parent, loginEmail, loginPassword, tenantId, academicYearId);
         }
 
         parentRepository.save(parent);
-
-        if (studentId != null) {
-            Student student = studentRepository.findById(studentId).orElse(null);
-            if (student != null) {
-                student.getParents().add(parent);
-                studentRepository.save(student);
-            }
-        }
-
+        linkParentToStudent(parent, studentId);
         return parent;
+    }
+
+    /** Create a PARENT login for the given parent (username = loginEmail). */
+    private void provisionParentLogin(Parent parent, String loginEmail, String loginPassword,
+                                      UUID tenantId, UUID academicYearId) {
+        if (userRepository.existsByEmail(loginEmail)) {
+            throw new IllegalArgumentException("Email already in use: " + loginEmail);
+        }
+        User parentUser = new User();
+        parentUser.setId(UUID.randomUUID());
+        parentUser.setTenantId(tenantId);
+        parentUser.setAcademicYearId(academicYearId);
+        parentUser.setEmail(loginEmail);
+        parentUser.setPasswordHash(passwordEncoder.encode(loginPassword));
+        parentUser.setFullName(parent.getFirstName() + " " + parent.getLastName());
+        parentUser.setRole(UserRole.PARENT);
+        parentUser.setActive(true);
+        userRepository.save(parentUser);
+        parent.setUserId(parentUser.getId());
+        parent.setEmail(loginEmail);
+    }
+
+    /** Link a parent to a student (no-op if the student is missing); dedups via the Set. */
+    private void linkParentToStudent(Parent parent, UUID studentId) {
+        if (studentId == null) return;
+        Student student = studentRepository.findById(studentId).orElse(null);
+        if (student != null) {
+            student.getParents().add(parent);
+            studentRepository.save(student);
+        }
     }
 }

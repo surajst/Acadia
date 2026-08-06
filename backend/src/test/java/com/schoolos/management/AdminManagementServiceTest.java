@@ -122,4 +122,27 @@ public class AdminManagementServiceTest {
         assertThrows(IllegalArgumentException.class, () ->
                 adminManagementService.addParent("B", "Two", null, null, email, "pw12345!", tenantId, yearId));
     }
+
+    @Test
+    public void addParent_sameParentWithMultipleChildrenReusesOneAccount() {
+        String phone = "+91 9812345678";
+        Student kid1 = adminManagementService.addStudent("Kid", "One", "M1", schoolClass.getId(), null, null, tenantId, yearId);
+        Student kid2 = adminManagementService.addStudent("Kid", "Two", "M2", schoolClass.getId(), null, null, tenantId, yearId);
+
+        // First child: parent gets a login (username = phone).
+        Parent p1 = adminManagementService.addParent("Suraj", "Tomar", phone, kid1.getId(), phone, "pw12345!", tenantId, yearId);
+        // Second child: same phone → must reuse the SAME parent, not create a duplicate,
+        // and not fail trying to re-create the login.
+        Parent p2 = adminManagementService.addParent("Suraj", "Tomar", phone, kid2.getId(), phone, "pw12345!", tenantId, yearId);
+
+        assertEquals(p1.getId(), p2.getId(), "same-phone guardian should be reused, not duplicated");
+
+        // One parent account is now linked to BOTH children.
+        assertTrue(studentRepository.findById(kid1.getId()).orElseThrow().getParents()
+                .stream().anyMatch(p -> p.getId().equals(p1.getId())));
+        assertTrue(studentRepository.findById(kid2.getId()).orElseThrow().getParents()
+                .stream().anyMatch(p -> p.getId().equals(p1.getId())));
+        // The parent portal resolves both kids from that single parent.
+        assertEquals(2, studentRepository.findByParentsContaining(p1).size());
+    }
 }
