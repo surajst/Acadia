@@ -259,6 +259,8 @@ public class UnifiedDashboardWebController {
         }
         model.addAttribute("currentUserRole", role);
 
+        UUID currentTenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+
         Student student = null;
         try {
             student = studentRepository.findById(id).orElse(null);
@@ -266,24 +268,31 @@ public class UnifiedDashboardWebController {
             // gracefully catch repository issues
         }
 
-        if (student == null) {
-            student = new Student();
-            student.setId(id);
-            student.setFirstName("Safe");
-            student.setLastName("Fallback Student");
-            student.setRollNumber("F-01");
-            ClassSection mockSection = new ClassSection();
-            mockSection.setId(UUID.randomUUID());
-            mockSection.setGradeName("Grade Fallback");
-            mockSection.setSectionName("F");
-            student.setClassSection(mockSection);
+        // Tenant guard: never let one school read another school's student
+        // (name, roll, guardian PII). A foreign — or unresolved-tenant — record
+        // is treated as absent and routed to the safe fallback below.
+        if (student != null && (currentTenantId == null
+                || !currentTenantId.equals(student.getTenantId()))) {
+            student = null;
         }
+        // Foreign-tenant or non-existent student: never render a profile (the
+        // old mock-fallback tried to persist a metric for a non-existent
+        // student, which marked the read-only tx rollback-only and 500'd).
+        // Send the viewer back to their roster with an honest "not found".
+        if (student == null) {
+            String dest = "TEACHER".equals(role) ? "/web/teacher/dashboard" : "/web/admin/dashboard";
+            return "redirect:" + dest + "?error=student_not_found";
+        }
+        // Past this point the student is guaranteed to belong to the caller's tenant.
+        boolean ownStudent = true;
 
         long presentCount = 0;
         long absentCount = 0;
         try {
-            presentCount = attendanceRepository.countByStudentIdAndStatus(id, AttendanceStatus.PRESENT);
-            absentCount = attendanceRepository.countByStudentIdAndStatus(id, AttendanceStatus.ABSENT);
+            if (ownStudent) {
+                presentCount = attendanceRepository.countByStudentIdAndStatus(id, AttendanceStatus.PRESENT);
+                absentCount = attendanceRepository.countByStudentIdAndStatus(id, AttendanceStatus.ABSENT);
+            }
         } catch (Exception e) {
             // gracefully catch
         }
@@ -298,7 +307,9 @@ public class UnifiedDashboardWebController {
 
         StudentMetric studentMetrics = null;
         try {
-            studentMetrics = studentMetricRepository.findByStudentId(id).orElse(null);
+            if (ownStudent) {
+                studentMetrics = studentMetricRepository.findByStudentId(id).orElse(null);
+            }
         } catch (Exception e) {
             // gracefully catch
         }
@@ -480,7 +491,10 @@ public class UnifiedDashboardWebController {
     public String submitAttendance(
             @RequestParam("studentIds") List<UUID> studentIds,
             @RequestParam("statuses") List<AttendanceStatus> statuses,
-            @RequestParam(value = "classId", required = false) UUID classId) {
+            @RequestParam(value = "classId", required = false) UUID classId,
+            Authentication authentication) {
+
+        UUID currentTenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
 
         try {
             LocalDate today = LocalDate.now();
@@ -491,6 +505,13 @@ public class UnifiedDashboardWebController {
 
                 Student student = studentRepository.findById(studentId)
                         .orElseThrow(() -> new IllegalArgumentException("Invalid student Id:" + studentId));
+
+                // Tenant guard: a teacher may only mark attendance for students
+                // in their own school — never write into another tenant by
+                // POSTing a foreign studentId.
+                if (currentTenantId == null || !currentTenantId.equals(student.getTenantId())) {
+                    throw new IllegalArgumentException("Not authorized for student: " + studentId);
+                }
 
                 Attendance attendance = new Attendance();
                 attendance.setId(UUID.randomUUID());

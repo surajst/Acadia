@@ -143,4 +143,48 @@ test.describe('Student guardian capture & profile display', () => {
     await expect(page.locator('body')).toContainText('Editchanged Guardian');
   });
 
+  // Regression for a cross-tenant PII leak: GET /web/teacher/student/{id} did a
+  // findById() with no tenant check, so any authenticated admin/teacher from
+  // another school could read a student's full profile (name, roll, guardian
+  // PII) by guessing the UUID. A foreign id must now redirect to the caller's
+  // roster with ?error=student_not_found and leak nothing.
+  test('one school cannot open another school\'s student profile by id (tenant isolation)', async ({ page }) => {
+    await page.goto('/test/reset');
+
+    // School A: open a seeded student's profile and capture its id from the URL.
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await registerStudent(page, { first: 'Isolationa', last: 'Studentfive', roll: '6A-705' });
+    await openProfile(page, 'Isolationa Studentfive', 'Isolationa');
+    await expect(page.locator('h2')).toContainText('Isolationa Studentfive');
+    const victimUrl = page.url();
+    const victimId = victimUrl.split('/web/teacher/student/')[1].split(/[?#]/)[0];
+
+    // School B: a brand-new, isolated tenant via the public self-serve signup.
+    const suffix = Date.now();
+    const bEmail = `iso-admin-${suffix}@schoolb.test`;
+    const bPass = `IsoPass!${suffix}`;
+    const resp = await page.request.post('/api/onboard/create-school', {
+      data: {
+        schoolName: `Isolation School B ${suffix}`,
+        subdomain: `iso-b-${suffix}`,
+        adminEmail: bEmail,
+        adminPassword: bPass,
+        adminFullName: 'Isolation BAdmin',
+      },
+    });
+    expect(resp.ok()).toBeTruthy();
+
+    // As School B's admin, attempt to open School A's student directly by id.
+    await page.context().clearCookies();
+    await login(page, bEmail, bPass);
+    await page.goto(`/web/teacher/student/${victimId}`);
+
+    // Must be bounced to B's own roster with an honest "not found" — never the
+    // victim's profile. None of School A's PII may appear on the page.
+    await page.waitForURL((url: URL) => url.pathname.includes('/web/admin/dashboard'));
+    expect(page.url()).toContain('error=student_not_found');
+    await expect(page.locator('body')).not.toContainText('Isolationa Studentfive');
+    await expect(page.locator('body')).not.toContainText('6A-705');
+  });
+
 });
