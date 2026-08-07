@@ -52,6 +52,17 @@ class LayeringArchitectureTest {
     }
 
     @Test
+    void interfaceLayerHandlesNoPersistenceEntities() {
+        // The web layer must receive flat view objects from the application layer,
+        // never JPA entities — nothing about storage should reach a controller.
+        noClasses().that().resideInAPackage("..web..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.concept.management..", "com.concept.academics..")
+                .allowEmptyShould(true)
+                .check(MIGRATED);
+    }
+
+    @Test
     void controllersLiveInTheWebLayer() {
         classes().that().haveSimpleNameEndingWith("Controller")
                 .should().resideInAPackage("..web..")

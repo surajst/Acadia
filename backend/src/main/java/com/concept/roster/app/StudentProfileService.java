@@ -1,15 +1,14 @@
 package com.concept.roster.app;
 
+import com.concept.academics.StudentMetric;
+import com.concept.academics.StudentMetricRepository;
 import com.concept.management.AttendanceRepository;
 import com.concept.management.AttendanceStatus;
 import com.concept.management.ClassSection;
-import com.concept.management.ClassSectionRepository;
 import com.concept.management.Parent;
 import com.concept.management.SchoolClass;
 import com.concept.management.SchoolClassRepository;
 import com.concept.management.Student;
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
 import com.concept.roster.data.RosterStudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +17,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Application layer for the student-profile read. Owns the decision — including
- * the single, structural tenant check — and returns a {@link StudentProfileView}.
- * It knows nothing about HTTP: no request, no model, no template.
+ * the single, structural tenant check — and returns a flat {@link StudentProfileView}.
+ * It knows nothing about HTTP (no request, no model, no template) and lets no
+ * entity escape: everything is mapped to plain values before it returns.
  */
 @Service
 public class StudentProfileService {
@@ -31,28 +32,24 @@ public class StudentProfileService {
     private final StudentMetricRepository studentMetricRepository;
     private final AttendanceRepository attendanceRepository;
     private final SchoolClassRepository schoolClassRepository;
-    private final ClassSectionRepository classSectionRepository;
 
     public StudentProfileService(RosterStudentRepository studentRepository,
                                  StudentMetricRepository studentMetricRepository,
                                  AttendanceRepository attendanceRepository,
-                                 SchoolClassRepository schoolClassRepository,
-                                 ClassSectionRepository classSectionRepository) {
+                                 SchoolClassRepository schoolClassRepository) {
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.attendanceRepository = attendanceRepository;
         this.schoolClassRepository = schoolClassRepository;
-        this.classSectionRepository = classSectionRepository;
     }
 
     /**
      * @param studentId the student being viewed
      * @param tenantId  the caller's tenant — the only tenant whose students are visible
-     * @param username  the caller's login, used to scope the sidebar's classroom menu
      * @throws StudentProfileNotFoundException if the student is missing or in another tenant
      */
     @Transactional(readOnly = true)
-    public StudentProfileView getProfile(UUID studentId, UUID tenantId, String username) {
+    public StudentProfileView getProfile(UUID studentId, UUID tenantId) {
         // Structural tenant isolation: no bare findById exists on this repository.
         Student student = studentRepository.findByIdAndTenantId(studentId, tenantId)
                 .orElseThrow(() -> new StudentProfileNotFoundException(studentId));
@@ -62,10 +59,14 @@ public class StudentProfileService {
         long totalDays = presentCount + absentCount;
         int attendancePercentage = totalDays == 0 ? 100 : (int) Math.round(((double) presentCount / totalDays) * 100);
 
-        StudentMetric studentMetrics = studentMetricRepository.findByStudentId(studentId)
-                .orElseGet(() -> zeroedMetric(student));
+        StudentMetric metric = studentMetricRepository.findByStudentId(studentId).orElse(null);
+        int schoolXp = metric != null && metric.getSchoolXp() != null ? metric.getSchoolXp() : 0;
+        int parentXp = metric != null && metric.getParentXp() != null ? metric.getParentXp() : 0;
+        int activeStreak = metric != null && metric.getActiveStreak() != null ? metric.getActiveStreak() : 0;
 
-        List<ClassSection> availableClassesMenu = resolveClassroomMenu(tenantId, username);
+        ClassSection section = student.getClassSection();
+        String gradeName = section != null ? section.getGradeName() : null;
+        String sectionName = section != null ? section.getSectionName() : null;
 
         Parent primaryGuardian = null;
         int guardianCount = 0;
@@ -77,20 +78,25 @@ public class StudentProfileService {
             }
         }
 
-        int householdStreak = studentMetrics != null && studentMetrics.getActiveStreak() != null
-                ? studentMetrics.getActiveStreak() : 0;
-
-        List<SchoolClass> classList = tenantId != null
-                ? schoolClassRepository.findByTenantId(tenantId) : Collections.emptyList();
+        List<ClassOption> classList = tenantId == null ? Collections.emptyList()
+                : schoolClassRepository.findByTenantId(tenantId).stream()
+                        .map(this::toOption)
+                        .collect(Collectors.toList());
         UUID currentSchoolClassId = student.getSchoolClass() != null ? student.getSchoolClass().getId() : null;
 
         return new StudentProfileView(
-                student,
+                student.getId(),
+                student.getFirstName(),
+                student.getLastName(),
+                student.getRollNumber(),
+                gradeName,
+                sectionName,
                 presentCount,
                 absentCount,
                 attendancePercentage,
-                studentMetrics,
-                availableClassesMenu,
+                schoolXp,
+                parentXp,
+                activeStreak,
                 primaryGuardian == null ? null
                         : (primaryGuardian.getFirstName() + " " + primaryGuardian.getLastName()).trim(),
                 primaryGuardian == null ? null : primaryGuardian.getPhoneNumber(),
@@ -98,34 +104,12 @@ public class StudentProfileService {
                 primaryGuardian == null ? "" : primaryGuardian.getFirstName(),
                 primaryGuardian == null ? "" : primaryGuardian.getLastName(),
                 guardianCount,
-                householdStreak,
+                activeStreak,
                 classList,
                 currentSchoolClassId);
     }
 
-    /** Sidebar classroom menu: the caller's assigned sections, or the tenant's if none are assigned. */
-    private List<ClassSection> resolveClassroomMenu(UUID tenantId, String username) {
-        if (tenantId == null || username == null) {
-            return Collections.emptyList();
-        }
-        UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
-        List<ClassSection> assigned = classSectionRepository.findByTeacherIdAndTenantId(teacherId, tenantId);
-        if (assigned.isEmpty()) {
-            return classSectionRepository.findByTenantId(tenantId);
-        }
-        return assigned;
-    }
-
-    /** A transient, non-persisted zeroed metric so a student with no metrics row still renders honest zeros. */
-    private StudentMetric zeroedMetric(Student student) {
-        StudentMetric m = new StudentMetric();
-        m.setId(UUID.randomUUID());
-        m.setStudent(student);
-        m.setTenantId(student.getTenantId());
-        m.setAcademicYearId(student.getAcademicYearId());
-        m.setSchoolXp(0);
-        m.setParentXp(0);
-        m.setActiveStreak(0);
-        return m;
+    private ClassOption toOption(SchoolClass c) {
+        return new ClassOption(c.getId(), (c.getGradeLevel() + " - " + c.getSectionName()).trim());
     }
 }

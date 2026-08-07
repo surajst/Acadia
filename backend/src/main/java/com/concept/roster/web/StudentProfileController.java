@@ -17,8 +17,8 @@ import java.util.UUID;
 /**
  * Interface layer for the student profile. Binds the request, resolves the
  * caller's role and tenant, delegates the decision to the application layer,
- * and maps the returned view onto the model. No business logic, no repository,
- * no entity types — the reference shape from ADR 0001.
+ * and maps the returned flat view onto the model. No business logic, no
+ * repository, no entity types — the reference shape from ADR 0001.
  */
 @Controller
 public class StudentProfileController {
@@ -35,11 +35,10 @@ public class StudentProfileController {
     public String showProfile(@PathVariable("id") UUID id, Model model, Authentication authentication) {
         String role = resolveRole(authentication);
         UUID tenantId = tenantContext.getTenantId().orElse(null);
-        String username = authentication != null ? authentication.getName() : null;
 
         StudentProfileView view;
         try {
-            view = studentProfileService.getProfile(id, tenantId, username);
+            view = studentProfileService.getProfile(id, tenantId);
         } catch (StudentProfileNotFoundException e) {
             // Foreign or missing student: bounce to the caller's own roster, leak nothing.
             String dest = "TEACHER".equals(role) ? "/web/teacher/dashboard" : "/web/admin/dashboard";
@@ -48,12 +47,18 @@ public class StudentProfileController {
 
         model.addAttribute("currentUserRole", role);
         model.addAttribute("systemScope", "RESTRICTED_VIEW");
-        model.addAttribute("student", view.student());
+        model.addAttribute("studentId", view.studentId());
+        model.addAttribute("studentFirstName", view.firstName());
+        model.addAttribute("studentLastName", view.lastName());
+        model.addAttribute("rollNumber", view.rollNumber());
+        model.addAttribute("gradeName", view.gradeName());
+        model.addAttribute("sectionName", view.sectionName());
         model.addAttribute("presentCount", view.presentCount());
         model.addAttribute("absentCount", view.absentCount());
         model.addAttribute("attendancePercentage", view.attendancePercentage());
-        model.addAttribute("studentMetrics", view.studentMetrics());
-        model.addAttribute("availableClassesMenu", view.availableClassesMenu());
+        model.addAttribute("schoolXp", view.schoolXp());
+        model.addAttribute("parentXp", view.parentXp());
+        model.addAttribute("activeStreak", view.activeStreak());
         model.addAttribute("primaryGuardian", view.primaryGuardian());
         model.addAttribute("guardianPhone", view.guardianPhone());
         model.addAttribute("primaryGuardianId", view.primaryGuardianId());
