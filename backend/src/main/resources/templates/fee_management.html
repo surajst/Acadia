@@ -153,37 +153,37 @@
                                     <td class="py-3 px-5 font-semibold text-slate-900">
                                         <div class="flex items-center gap-3">
                                             <div class="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:linear-gradient(135deg,#64748B,#94A3B8)"
-                                                 th:text="${dto.student != null ? #strings.substring(dto.student.firstName, 0, 1) + #strings.substring(dto.student.lastName, 0, 1) : 'ST'}">ST</div>
+                                                 th:text="${dto.initials}">ST</div>
                                             <div>
-                                                <p th:text="${dto.student != null ? dto.student.firstName + ' ' + dto.student.lastName : 'Unknown Student'}">Aarav Sharma</p>
-                                                <span class="text-[10px] font-mono text-[var(--text-3)]" th:text="${dto.student != null ? dto.student.rollNumber : '--'}">6A01</span>
+                                                <p th:text="${dto.studentName}">Aarav Sharma</p>
+                                                <span class="text-[10px] font-mono text-[var(--text-3)]" th:text="${dto.rollNumber}">6A01</span>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="py-3 px-5">
-                                        <span class="badge badge--neutral" th:text="${dto.student != null && dto.student.schoolClass != null ? dto.student.schoolClass.gradeLevel : 'Grade 6'}">Grade 6</span>
+                                        <span class="badge badge--neutral" th:text="${dto.gradeLevel}">Grade 6</span>
                                     </td>
-                                    <td class="py-3 px-5 font-mono font-medium text-slate-600" th:text="|₹ ${#numbers.formatDecimal(dto.invoice.totalAmount, 1, 'COMMA', 2, 'POINT')}|">₹ 20,000.00</td>
-                                    <td class="py-3 px-5 font-mono font-medium" style="color:var(--success)" th:text="|₹ ${#numbers.formatDecimal(dto.invoice.amountPaid, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
-                                    <td class="py-3 px-5 font-mono font-medium" style="color:var(--danger)" th:text="|₹ ${#numbers.formatDecimal(dto.invoice.amountDue, 1, 'COMMA', 2, 'POINT')}|">₹ 15,000.00</td>
+                                    <td class="py-3 px-5 font-mono font-medium text-slate-600" th:text="|₹ ${#numbers.formatDecimal(dto.totalAmount, 1, 'COMMA', 2, 'POINT')}|">₹ 20,000.00</td>
+                                    <td class="py-3 px-5 font-mono font-medium" style="color:var(--success)" th:text="|₹ ${#numbers.formatDecimal(dto.amountPaid, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
+                                    <td class="py-3 px-5 font-mono font-medium" style="color:var(--danger)" th:text="|₹ ${#numbers.formatDecimal(dto.amountDue, 1, 'COMMA', 2, 'POINT')}|">₹ 15,000.00</td>
                                     <td class="py-3 px-5">
-                                        <span th:if="${dto.invoice.status.name() == 'PAID'}" class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Paid</span>
-                                        <span th:if="${dto.invoice.status.name() == 'PARTIALLY_PAID'}" class="badge badge--warn"><span class="dot bg-[var(--warn)]"></span> Partial</span>
-                                        <span th:if="${dto.invoice.status.name() == 'UNPAID'}" class="badge badge--danger"><span class="dot bg-[var(--danger)]"></span> Unpaid</span>
+                                        <span th:if="${dto.status == 'PAID'}" class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Paid</span>
+                                        <span th:if="${dto.status == 'PARTIALLY_PAID'}" class="badge badge--warn"><span class="dot bg-[var(--warn)]"></span> Partial</span>
+                                        <span th:if="${dto.status == 'UNPAID'}" class="badge badge--danger"><span class="dot bg-[var(--danger)]"></span> Unpaid</span>
                                     </td>
                                     <td class="py-3 px-5 text-center space-y-1.5">
-                                        <button th:if="${dto.invoice.status.name() != 'PAID'}"
-                                                th:data-id="${dto.invoice.id}"
-                                                th:data-name="${dto.student != null ? dto.student.firstName + ' ' + dto.student.lastName : 'Student'}"
-                                                th:data-due="${dto.invoice.amountDue}"
+                                        <button th:if="${dto.status != 'PAID'}"
+                                                th:data-id="${dto.invoiceId}"
+                                                th:data-name="${dto.studentName}"
+                                                th:data-due="${dto.amountDue}"
                                                 onclick="openPaymentModal(this.getAttribute('data-id'), this.getAttribute('data-name'), this.getAttribute('data-due'))"
                                                 class="btn btn-success-soft btn-xs w-full">Record Payment</button>
-                                        <span th:if="${dto.invoice.status.name() == 'PAID'}" class="text-xs text-[var(--text-3)] font-semibold italic">Settled</span>
-                                        <button th:if="${dto.invoice.status.name() != 'PAID' and (dto.invoice.waiverStatus == null or dto.invoice.waiverStatus.name() == 'NONE' or dto.invoice.waiverStatus.name() == 'REJECTED')}"
-                                                th:data-id="${dto.invoice.id}" onclick="requestWaiver(this.getAttribute('data-id'))"
+                                        <span th:if="${dto.status == 'PAID'}" class="text-xs text-[var(--text-3)] font-semibold italic">Settled</span>
+                                        <button th:if="${dto.status != 'PAID' and (dto.waiverStatus == 'NONE' or dto.waiverStatus == 'REJECTED')}"
+                                                th:data-id="${dto.invoiceId}" onclick="requestWaiver(this.getAttribute('data-id'))"
                                                 class="btn btn-secondary btn-xs w-full">Request Waiver</button>
-                                        <span th:if="${dto.invoice.waiverStatus != null and dto.invoice.waiverStatus.name() == 'PENDING'}" class="badge badge--warn">Waiver Pending</span>
-                                        <span th:if="${dto.invoice.waiverStatus != null and dto.invoice.waiverStatus.name() == 'APPROVED'}" class="badge badge--success">Waiver Applied</span>
+                                        <span th:if="${dto.waiverStatus == 'PENDING'}" class="badge badge--warn">Waiver Pending</span>
+                                        <span th:if="${dto.waiverStatus == 'APPROVED'}" class="badge badge--success">Waiver Applied</span>
                                     </td>
                                 </tr>
                             </tbody>

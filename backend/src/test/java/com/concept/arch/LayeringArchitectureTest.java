@@ -23,8 +23,9 @@ class LayeringArchitectureTest {
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
             .importPackages(
                     "com.concept.roster..",
-                    "com.concept.attendance.."
-                    // add "com.concept.fees..", ... as migrated
+                    "com.concept.attendance..",
+                    "com.concept.fees.."
+                    // add more domains as migrated
             );
 
     @Test
