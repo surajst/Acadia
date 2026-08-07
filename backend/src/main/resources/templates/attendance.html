@@ -233,7 +233,7 @@
                         
                         <!-- Header Class & Date Tags -->
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#F7F9FC]/80 text-indigo-700 border border-indigo-500/20" th:text="${schoolClass != null ? schoolClass.gradeLevel + ' - ' + schoolClass.sectionName : 'All Classes'}">
+                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#F7F9FC]/80 text-indigo-700 border border-indigo-500/20" th:text="${currentClassLabel != null ? currentClassLabel : 'All Classes'}">
                                 Grade 6 - A
                             </span>
                             <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#F7F9FC]/80 text-emerald-700 border border-emerald-500/20" th:text="${#temporals.format(currentDate, 'MMMM dd, yyyy')}">
@@ -251,9 +251,9 @@
                     <div class="relative">
                         <select onchange="location = this.value;" class="bg-[#F7F9FC]/80 border border-slate-200 text-slate-800 text-sm font-semibold rounded-xl px-4 py-2.5 pr-10 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer">
                             <option th:each="cls : ${classList}" 
-                                    th:value="@{/web/teacher/attendance(classId=${cls.id})}" 
-                                    th:text="|${cls.gradeLevel} - ${cls.sectionName}|"
-                                    th:selected="${schoolClass != null && schoolClass.id == cls.id}">
+                                    th:value="@{/web/teacher/attendance(classId=${cls.id})}"
+                                    th:text="${cls.label}"
+                                    th:selected="${currentClassId != null && currentClassId == cls.id}">
                                 Grade 6 - A
                             </option>
                             <option th:if="${#lists.isEmpty(classList)}" value="">No Classes Available</option>
@@ -280,7 +280,7 @@
 
                 <form id="attendanceForm" th:action="@{/web/teacher/attendance/submit}" method="POST">
                     <!-- Hidden field to bind current class context for redirect redirection back -->
-                    <input type="hidden" name="classId" th:value="${schoolClass != null ? schoolClass.id : ''}" th:if="${schoolClass != null}" />
+                    <input type="hidden" name="classId" th:value="${currentClassId != null ? currentClassId : ''}" th:if="${currentClassId != null}" />
                     
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">

@@ -1,0 +1,35 @@
+package com.concept.fees.app;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+/** Flat, presentation-ready data for the admin fee ledger. No entities. */
+public record FeeDashboardView(
+        BigDecimal totalExpected,
+        BigDecimal totalCollected,
+        BigDecimal totalOutstanding,
+        List<InvoiceRow> invoices,
+        List<StudentOption> students,
+        int currentPage,
+        int totalPages,
+        long totalItems,
+        int pageSize
+) {
+    /** One row of the ledger table — invoice joined to its student, flattened. */
+    public record InvoiceRow(
+            UUID invoiceId,
+            String studentName,
+            String initials,
+            String rollNumber,
+            String gradeLevel,
+            String status,        // PAID | PARTIALLY_PAID | UNPAID
+            BigDecimal totalAmount,
+            BigDecimal amountPaid,
+            BigDecimal amountDue,
+            String waiverStatus   // NONE | PENDING | APPROVED | REJECTED
+    ) {}
+
+    /** A student for the "create invoice" picker. */
+    public record StudentOption(UUID id, String firstName, String lastName) {}
+}

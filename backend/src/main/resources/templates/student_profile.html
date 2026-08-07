@@ -114,16 +114,16 @@
                 <div class="p-5 sm:p-6 flex items-center gap-4 sm:gap-5 flex-wrap">
                     <div class="w-16 h-16 sm:w-[72px] sm:h-[72px] shrink-0 rounded-2xl flex items-center justify-center text-white font-extrabold text-3xl"
                          style="background:linear-gradient(135deg,var(--brand),#7C7AF0); box-shadow:0 8px 20px rgba(79,70,229,.28);">
-                        <span th:text="${student.firstName.substring(0,1)}">A</span>
+                        <span th:text="${studentFirstName.substring(0,1)}">A</span>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2.5 flex-wrap">
-                            <h2 class="text-2xl sm:text-[28px] font-extrabold text-slate-900 tracking-tight leading-none" th:text="|${student.firstName} ${student.lastName}|">Aarav Sharma</h2>
+                            <h2 class="text-2xl sm:text-[28px] font-extrabold text-slate-900 tracking-tight leading-none" th:text="|${studentFirstName} ${studentLastName}|">Aarav Sharma</h2>
                             <span class="badge badge--info">🎓 Synced</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 mt-2.5">
-                            <span class="badge badge--neutral font-mono" th:text="|Roll: ${student.rollNumber != null ? student.rollNumber : '—'}|">Roll: 6A01</span>
-                            <span class="badge badge--neutral" th:text="|Class: ${student.classSection.gradeName} - ${student.classSection.sectionName}|">Class: 6 - A</span>
+                            <span class="badge badge--neutral font-mono" th:text="|Roll: ${rollNumber != null ? rollNumber : '—'}|">Roll: 6A01</span>
+                            <span class="badge badge--neutral" th:text="|Class: ${gradeName} - ${sectionName}|">Class: 6 - A</span>
                         </div>
                     </div>
                     <button th:if="${currentUserRole == 'ADMIN'}" type="button" onclick="openEditStudentModal()" class="btn btn-secondary btn-sm shrink-0">
@@ -152,14 +152,14 @@
                     <div class="stat-seg" style="border-color:var(--line)">
                         <p class="eyebrow">Total XP</p>
                         <p class="stat-value mt-2" style="color:var(--brand)"
-                           th:text="${(studentMetrics != null and studentMetrics.schoolXp != null ? studentMetrics.schoolXp : 0) + (studentMetrics != null and studentMetrics.parentXp != null ? studentMetrics.parentXp : 0)}">0</p>
+                           th:text="${schoolXp + parentXp}">0</p>
                         <p class="text-xs text-[var(--text-3)] mt-1.5"
-                           th:text="|School ${studentMetrics != null and studentMetrics.schoolXp != null ? studentMetrics.schoolXp : 0} · Parent ${studentMetrics != null and studentMetrics.parentXp != null ? studentMetrics.parentXp : 0}|">School 0 · Parent 0</p>
+                           th:text="|School ${schoolXp} · Parent ${parentXp}|">School 0 · Parent 0</p>
                     </div>
                     <!-- Streak -->
                     <div class="stat-seg" style="border-color:var(--line)">
                         <p class="eyebrow">Streak</p>
-                        <p class="stat-value mt-2" style="color:var(--warn)" th:text="${studentMetrics != null and studentMetrics.activeStreak != null ? studentMetrics.activeStreak : 0}">0</p>
+                        <p class="stat-value mt-2" style="color:var(--warn)" th:text="${activeStreak}">0</p>
                         <p class="text-xs text-[var(--text-3)] mt-1.5">consecutive days active</p>
                     </div>
                     <!-- Guardians -->
@@ -272,19 +272,19 @@
                 </div>
                 <div class="flex flex-wrap gap-2.5">
                     <button type="button" class="btn btn-security btn-sm"
-                            th:attr="data-reset-name=|${student.firstName} ${student.lastName}|"
+                            th:attr="data-reset-name=|${studentFirstName} ${studentLastName}|"
                             onclick="askReset('student', this.getAttribute('data-reset-name'))">🔑 Reset student password</button>
                     <button th:if="${primaryGuardianId != null}" type="button" class="btn btn-security btn-sm"
                             th:attr="data-reset-name=${primaryGuardian}"
                             onclick="askReset('guardian', this.getAttribute('data-reset-name'))">🔑 Reset guardian password</button>
                 </div>
                 <!-- Hidden forms submitted after confirmation -->
-                <form id="resetStudentForm" th:action="@{/web/admin/student/{id}/reset-login(id=${student.id})}" method="post" class="hidden">
+                <form id="resetStudentForm" th:action="@{/web/admin/student/{id}/reset-login(id=${studentId})}" method="post" class="hidden">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 </form>
                 <form th:if="${primaryGuardianId != null}" id="resetGuardianForm" th:action="@{/web/admin/parent/{pid}/reset-login(pid=${primaryGuardianId})}" method="post" class="hidden">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <input type="hidden" name="studentId" th:value="${student.id}"/>
+                    <input type="hidden" name="studentId" th:value="${studentId}"/>
                 </form>
             </section>
 
@@ -325,27 +325,27 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
                 </button>
             </div>
-            <form th:action="@{/web/admin/student/{id}/update(id=${student.id})}" method="post" class="p-5 space-y-4 overflow-y-auto">
+            <form th:action="@{/web/admin/student/{id}/update(id=${studentId})}" method="post" class="p-5 space-y-4 overflow-y-auto">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="space-y-1.5">
                         <label for="editFirstName" class="field-label block">First name</label>
-                        <input type="text" id="editFirstName" name="firstName" required th:value="${student.firstName}" class="field">
+                        <input type="text" id="editFirstName" name="firstName" required th:value="${studentFirstName}" class="field">
                     </div>
                     <div class="space-y-1.5">
                         <label for="editLastName" class="field-label block">Last name</label>
-                        <input type="text" id="editLastName" name="lastName" required th:value="${student.lastName}" class="field">
+                        <input type="text" id="editLastName" name="lastName" required th:value="${studentLastName}" class="field">
                     </div>
                 </div>
                 <div class="space-y-1.5">
                     <label for="editRollNumber" class="field-label block">Roll number</label>
-                    <input type="text" id="editRollNumber" name="rollNumber" required th:value="${student.rollNumber}" class="field">
+                    <input type="text" id="editRollNumber" name="rollNumber" required th:value="${rollNumber}" class="field">
                     <p class="text-[11px] text-[var(--text-3)]">Doesn't change the student's existing login username.</p>
                 </div>
                 <div class="space-y-1.5">
                     <label for="editSchoolClassId" class="field-label block">Class</label>
                     <select id="editSchoolClassId" name="schoolClassId" class="field">
-                        <option th:each="cls : ${classList}" th:value="${cls.id}" th:text="|${cls.gradeLevel} - ${cls.sectionName}|"
+                        <option th:each="cls : ${classList}" th:value="${cls.id}" th:text="${cls.label}"
                                 th:selected="${currentSchoolClassId != null and cls.id == currentSchoolClassId}">Grade 6 - A</option>
                     </select>
                 </div>
