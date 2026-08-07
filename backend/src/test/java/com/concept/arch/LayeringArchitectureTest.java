@@ -22,8 +22,9 @@ class LayeringArchitectureTest {
     private static final JavaClasses MIGRATED = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
             .importPackages(
-                    "com.concept.roster.."
-                    // add "com.concept.fees..", "com.concept.attendance..", ... as migrated
+                    "com.concept.roster..",
+                    "com.concept.attendance.."
+                    // add "com.concept.fees..", ... as migrated
             );
 
     @Test
