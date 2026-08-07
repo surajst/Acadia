@@ -38,6 +38,15 @@ public class TenantContext {
         return currentUserService.getCurrentTenantId(auth);
     }
 
+    /** The acting academic year, or empty when unauthenticated. */
+    public Optional<UUID> getAcademicYearId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return Optional.empty();
+        }
+        return currentUserService.getCurrentAcademicYearId(auth);
+    }
+
     /**
      * The acting tenant, or an exception when there is none. Use in application
      * code that must never run without a tenant — a missing tenant here is a

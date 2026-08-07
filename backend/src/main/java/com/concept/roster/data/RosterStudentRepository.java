@@ -1,6 +1,7 @@
 package com.concept.roster.data;
 
 import com.concept.common.TenantScopedRepository;
+import com.concept.management.ClassSection;
 import com.concept.management.Student;
 import org.springframework.stereotype.Repository;
 
@@ -14,4 +15,7 @@ import java.util.UUID;
  */
 @Repository
 public interface RosterStudentRepository extends TenantScopedRepository<Student, UUID> {
+
+    /** How many students are still in a section — used to block deleting a non-empty one. */
+    long countByClassSection(ClassSection classSection);
 }
