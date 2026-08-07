@@ -20,6 +20,13 @@ jobs:
           java-version: '21'
           cache: maven
 
+      # Fail fast and visibly if the interface/application/data layering (ADR 0001)
+      # is violated, before the slower full test + e2e run. Mark this check
+      # "required" in the branch protection rules so a violating PR can't merge.
+      - name: Enforce architecture (ArchUnit)
+        working-directory: backend
+        run: mvn -B test -Dtest=LayeringArchitectureTest
+
       - name: Run backend unit tests
         working-directory: backend
         run: mvn -B test
