@@ -14,7 +14,7 @@ import java.util.UUID;
 /**
  * Single source of truth for "who is making this request" — replaces the
  * fuzzy firstName/email-prefix matching that used to be duplicated across
- * MobileParentRestController, ParentPortalApiController, ReportCardApiController,
+ * the parent slice (ParentService), ReportCardApiController,
  * TeacherTaskApiController, MobileStudentRestController, and StudentPortalController.
  *
  * Resolution is a direct lookup: Authentication -> User (by email, always set
