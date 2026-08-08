@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Map;
@@ -161,6 +163,6 @@ public class StudentAdminController {
                 return;
             }
         }
-        throw new RuntimeException("Access denied: Only administrators can " + action);
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only administrators can " + action);
     }
 }

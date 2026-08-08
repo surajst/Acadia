@@ -24,7 +24,11 @@ class LayeringArchitectureTest {
             .importPackages(
                     "com.concept.roster..",
                     "com.concept.attendance..",
-                    "com.concept.fees.."
+                    "com.concept.fees..",
+                    "com.concept.staff..",
+                    "com.concept.rewards..",
+                    "com.concept.transport.admin..",
+                    "com.concept.console.."
                     // add more domains as migrated
             );
 

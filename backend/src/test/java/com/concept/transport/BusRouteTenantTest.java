@@ -6,8 +6,8 @@ import com.concept.management.Parent;
 import com.concept.management.ParentRepository;
 import com.concept.management.Student;
 import com.concept.management.StudentRepository;
-import com.concept.management.AdminManagementController;
 import com.concept.management.MobileParentRestController;
+import com.concept.transport.admin.app.BusRouteAdminService;
 import com.concept.tenant.AcademicYear;
 import com.concept.tenant.AcademicYearRepository;
 import com.concept.tenant.Tenant;
@@ -52,7 +52,7 @@ public class BusRouteTenantTest {
     private MobileParentRestController parentController;
 
     @Autowired
-    private AdminManagementController adminController;
+    private BusRouteAdminService busRouteAdminService;
 
     @Autowired
     private BusRouteRepository busRouteRepository;
@@ -268,20 +268,20 @@ public class BusRouteTenantTest {
     @Test
     public void adminAssignDriver_rejectsNonDriverRoleUser() {
         User teacher = makeUser(tenantA, academicYearIdA, UserRole.TEACHER);
-        Object result = adminController.assignBusRouteDriver(routeA.getId(), teacher.getId(), asAdminA);
-        assertTrue(((Map<?, ?>) result).containsKey("error"));
+        assertThrows(IllegalArgumentException.class, () ->
+                busRouteAdminService.assignDriver(routeA.getId(), teacher.getId(), tenantA, asAdminA));
     }
 
     @Test
     public void adminAssignDriver_rejectsCrossTenantDriver() {
-        Object result = adminController.assignBusRouteDriver(routeA.getId(), driverB.getId(), asAdminA);
-        assertTrue(((Map<?, ?>) result).containsKey("error"));
+        assertThrows(IllegalArgumentException.class, () ->
+                busRouteAdminService.assignDriver(routeA.getId(), driverB.getId(), tenantA, asAdminA));
     }
 
     @Test
     public void adminAssignBusRoute_rejectsCrossTenantRoute() {
-        Object result = adminController.assignClassSectionBusRoute(sectionA.getId(), routeB.getId(), asAdminA);
-        assertTrue(((Map<?, ?>) result).containsKey("error"));
+        assertThrows(IllegalArgumentException.class, () ->
+                busRouteAdminService.assignClassSectionRoute(sectionA.getId(), routeB.getId(), tenantA, asAdminA));
 
         ClassSection reloaded = classSectionRepository.findById(sectionA.getId()).orElseThrow();
         assertEquals(routeA.getId(), reloaded.getBusRouteId());
