@@ -263,7 +263,8 @@ test.describe('UI: Teacher Assignments nav link in admin_management', () => {
     await page.goto('/web/admin/management');
     await page.waitForLoadState('load');
 
-    const navLink = page.locator('a[href="/web/admin/assignments"]:has-text("Teacher Assignments")');
+    // Scope to the sidebar nav link, not the hub card (a.hub-card) that shares the href.
+    const navLink = page.locator('a[href="/web/admin/assignments"]:not(.hub-card)');
     await expect(navLink).toBeVisible();
   });
 

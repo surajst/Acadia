@@ -19,10 +19,12 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
 
     // 3. Verify statistics cards
     // Admin dashboard shows attendance percentage and absences / total students
-    const attendanceEl = page.locator('h3:has-text("%")').first();
+    // KPI cards render the figures in <p class="text-2xl …"> (the Slate-mist reskin
+    // moved these off <h3>), e.g. "100%" and "0 / 506".
+    const attendanceEl = page.locator('p.text-2xl:has-text("%")').first();
     await expect(attendanceEl).toBeVisible();
-    
-    const absencesEl = page.locator('h3:has-text("/")').first();
+
+    const absencesEl = page.locator('p.text-2xl:has-text("/")').first();
     await expect(absencesEl).toBeVisible();
   });
 
