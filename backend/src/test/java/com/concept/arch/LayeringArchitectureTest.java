@@ -29,7 +29,8 @@ class LayeringArchitectureTest {
                     "com.concept.rewards..",
                     "com.concept.transport.admin..",
                     "com.concept.console..",
-                    "com.concept.dashboard.."
+                    "com.concept.dashboard..",
+                    "com.concept.messaging.."
                     // add more domains as migrated
             );
 

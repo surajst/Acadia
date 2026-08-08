@@ -6,8 +6,10 @@ import com.concept.management.ClassSection;
 import com.concept.management.ClassSectionRepository;
 import com.concept.management.Conversation;
 import com.concept.management.ConversationRepository;
-import com.concept.management.MessagingApiController;
 import com.concept.management.MobileParentRestController;
+import com.concept.messaging.app.MessagingException;
+import com.concept.messaging.app.MessagingService;
+import com.concept.messaging.app.MessagingViews.MessageRef;
 import com.concept.management.Parent;
 import com.concept.management.ParentRepository;
 import com.concept.management.Student;
@@ -59,7 +61,7 @@ public class LanguageFeatureTenantTest {
     private MobileParentRestController parentController;
 
     @Autowired
-    private MessagingApiController messagingApiController;
+    private MessagingService messagingService;
 
     @Autowired
     private AnnouncementRepository announcementRepository;
@@ -242,10 +244,9 @@ public class LanguageFeatureTenantTest {
         conversation.setTeacherId(UUID.randomUUID());
         conversationRepository.saveAndFlush(conversation);
 
-        MockMultipartFile audio = new MockMultipartFile("audio", "voice.wav", "audio/wav", new byte[] { 0, 1, 2 });
-        ResponseEntity<?> response = messagingApiController.voiceReply(
-                conversation.getId(), audio, "hi", actAs(asParentA));
-        assertEquals(403, response.getStatusCode().value());
+        MessagingException ex = assertThrows(MessagingException.class, () ->
+                messagingService.voiceReply(parentUserA.getEmail(), conversation.getId(), new byte[] { 0, 1, 2 }, "hi"));
+        assertEquals(403, ex.status());
     }
 
     @Test
@@ -278,10 +279,8 @@ public class LanguageFeatureTenantTest {
 
         when(translationService.translate("hola profesor", "en")).thenReturn("hello teacher");
 
-        MockMultipartFile audio = new MockMultipartFile("audio", "voice.wav", "audio/wav", new byte[] { 0, 1, 2 });
-        ResponseEntity<?> response = messagingApiController.voiceReply(
-                conversation.getId(), audio, "hi", actAs(asParentA));
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals("hello teacher", ((Map<?, ?>) response.getBody()).get("body"));
+        actAs(asParentA);
+        MessageRef result = messagingService.voiceReply(parentUserA.getEmail(), conversation.getId(), new byte[] { 0, 1, 2 }, "hi");
+        assertEquals("hello teacher", result.body());
     }
 }
