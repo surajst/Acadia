@@ -1,13 +1,17 @@
-package com.concept.management;
+package com.concept.assessment.web;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 
+/**
+ * Interface layer for the teacher assessment-scores page. Renders the view;
+ * all data loads client-side via the assessment JSON API (ADR 0001).
+ */
 @Controller
-public class TeacherAssessmentsWebController {
+public class AssessmentsWebController {
 
     @GetMapping("/web/teacher/assessments")
     public String viewAssessments(Model model, Authentication authentication) {
