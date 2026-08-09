@@ -1,14 +1,20 @@
-package com.concept.management;
+package com.concept.roster.app;
 
+import com.concept.management.ClassSection;
+import com.concept.management.ClassSectionRepository;
+import com.concept.management.Parent;
+import com.concept.management.ParentRepository;
+import com.concept.management.Student;
+import com.concept.management.StudentRepository;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
 import com.concept.user.UserRole;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -75,8 +81,8 @@ public class RosterImportService {
      * without writing anything. Returns the parsed rows so the caller can stash
      * them and commit later via {@link #commitStudents}.
      */
-    public StudentPreview previewStudents(MultipartFile file, User currentUser) throws IOException {
-        List<List<String>> allRows = parseRows(file);
+    public StudentPreview previewStudents(InputStream inputStream, String filename, User currentUser) throws IOException {
+        List<List<String>> allRows = parseRows(inputStream, filename);
         List<Map<String, String>> outcomes = new ArrayList<>();
         int willCreate = 0, willSkip = 0, willFail = 0;
         // Roll numbers seen earlier in THIS file, so an intra-file duplicate is
@@ -281,8 +287,8 @@ public class RosterImportService {
      * Each new staff member gets an auto-generated temp password (surfaced in
      * the row detail to relay) and stays PENDING approval before they can sign in.
      */
-    public ImportResult importStaff(MultipartFile file, UUID tenantId, UUID academicYearId) throws IOException {
-        List<List<String>> allRows = parseRows(file);
+    public ImportResult importStaff(InputStream inputStream, String filename, UUID tenantId, UUID academicYearId) throws IOException {
+        List<List<String>> allRows = parseRows(inputStream, filename);
         List<Map<String, String>> outcomes = new ArrayList<>();
         int created = 0, skipped = 0, failed = 0;
 
@@ -372,13 +378,12 @@ public class RosterImportService {
      * Excel cells are read as their displayed text so numeric roll numbers /
      * phone numbers come through as written.
      */
-    private static List<List<String>> parseRows(MultipartFile file) throws IOException {
-        String name = file.getOriginalFilename();
-        boolean excel = name != null && (name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".xls"));
+    private static List<List<String>> parseRows(InputStream inputStream, String filename) throws IOException {
+        boolean excel = filename != null && (filename.toLowerCase().endsWith(".xlsx") || filename.toLowerCase().endsWith(".xls"));
         List<List<String>> rows = new ArrayList<>();
 
         if (excel) {
-            try (org.apache.poi.ss.usermodel.Workbook wb = org.apache.poi.ss.usermodel.WorkbookFactory.create(file.getInputStream())) {
+            try (org.apache.poi.ss.usermodel.Workbook wb = org.apache.poi.ss.usermodel.WorkbookFactory.create(inputStream)) {
                 org.apache.poi.ss.usermodel.Sheet sheet = wb.getSheetAt(0);
                 org.apache.poi.ss.usermodel.DataFormatter fmt = new org.apache.poi.ss.usermodel.DataFormatter();
                 int lastCol = 0;
@@ -394,7 +399,7 @@ public class RosterImportService {
                 }
             }
         } else {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     rows.add(parseCsvLine(line));

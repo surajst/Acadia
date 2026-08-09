@@ -1,44 +1,49 @@
-package com.concept.management;
+package com.concept.export.app;
 
+import com.concept.management.ClassSection;
+import com.concept.management.FeeInvoice;
+import com.concept.management.FeeInvoiceRepository;
+import com.concept.management.Parent;
+import com.concept.management.Student;
+import com.concept.management.StudentRepository;
 import com.concept.user.CurrentUserService;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
 import com.concept.user.UserRole;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Admin data export — tenant-scoped CSV downloads for students, staff, and
- * fees. Lets a school pull its own data back out (and lets us verify bulk
- * import round-trips). ADMIN only; every query is scoped to the caller's
- * tenant so one school can never export another's data.
+ * Application layer for admin data export (ADR 0001). Builds tenant-scoped CSV
+ * bodies for students, staff, and fees, reading the shared management
+ * repositories; every query is scoped to the caller's tenant so one school can
+ * never export another's data. The interface layer only wraps the returned
+ * string into an HTTP download.
  */
-@RestController
-@RequestMapping("/web/admin/export")
-@PreAuthorize("hasRole('ADMIN')")
-public class ExportController {
+@Service
+public class ExportService {
 
-    @Autowired private CurrentUserService currentUserService;
-    @Autowired private StudentRepository studentRepository;
-    @Autowired private UserRepository userRepository;
-    @Autowired private FeeInvoiceRepository feeInvoiceRepository;
+    private final CurrentUserService currentUserService;
+    private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
+    private final FeeInvoiceRepository feeInvoiceRepository;
 
-    @GetMapping("/students.csv")
-    public ResponseEntity<byte[]> exportStudents(Authentication authentication) {
+    public ExportService(CurrentUserService currentUserService,
+                         StudentRepository studentRepository,
+                         UserRepository userRepository,
+                         FeeInvoiceRepository feeInvoiceRepository) {
+        this.currentUserService = currentUserService;
+        this.studentRepository = studentRepository;
+        this.userRepository = userRepository;
+        this.feeInvoiceRepository = feeInvoiceRepository;
+    }
+
+    public String studentsCsv(Authentication authentication) {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         StringBuilder sb = new StringBuilder();
         sb.append("FirstName,LastName,RollNumber,Grade,Section,ParentName,ParentPhone\n");
@@ -54,11 +59,10 @@ public class ExportController {
                         parentName, parentPhone));
             }
         }
-        return csv("students", sb.toString());
+        return sb.toString();
     }
 
-    @GetMapping("/staff.csv")
-    public ResponseEntity<byte[]> exportStaff(Authentication authentication) {
+    public String staffCsv(Authentication authentication) {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         StringBuilder sb = new StringBuilder();
         sb.append("FullName,Email,Role,Status\n");
@@ -70,11 +74,10 @@ public class ExportController {
                         u.isActive() ? "Active" : "Pending"));
             }
         }
-        return csv("staff", sb.toString());
+        return sb.toString();
     }
 
-    @GetMapping("/fees.csv")
-    public ResponseEntity<byte[]> exportFees(Authentication authentication) {
+    public String feesCsv(Authentication authentication) {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         StringBuilder sb = new StringBuilder();
         sb.append("StudentName,RollNumber,TotalAmount,AmountPaid,AmountDue,Status\n");
@@ -92,14 +95,14 @@ public class ExportController {
                         inv.getStatus() != null ? inv.getStatus().name() : ""));
             }
         }
-        return csv("fees", sb.toString());
+        return sb.toString();
     }
 
     private static String str(Object o) { return o == null ? "" : o.toString(); }
 
     /** Builds one CSV row from fields, escaping each, terminated with a newline. */
     private static String row(String... fields) {
-        return Arrays.stream(fields).map(ExportController::escape).collect(Collectors.joining(",")) + "\n";
+        return Arrays.stream(fields).map(ExportService::escape).collect(Collectors.joining(",")) + "\n";
     }
 
     /** RFC4180 escaping: wrap in quotes and double internal quotes when the field needs it. */
@@ -109,14 +112,5 @@ public class ExportController {
             return "\"" + field.replace("\"", "\"\"") + "\"";
         }
         return field;
-    }
-
-    private static ResponseEntity<byte[]> csv(String name, String body) {
-        String filename = "acadia-" + name + "-" + LocalDate.now() + ".csv";
-        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
-        headers.setContentDispositionFormData("attachment", filename);
-        return ResponseEntity.ok().headers(headers).body(bytes);
     }
 }

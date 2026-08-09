@@ -39,7 +39,9 @@ class LayeringArchitectureTest {
                     "com.concept.assessment..",
                     "com.concept.oversight..",
                     "com.concept.curriculum..",
-                    "com.concept.teacher.."
+                    "com.concept.teacher..",
+                    "com.concept.notification..",
+                    "com.concept.export.."
                     // add more domains as migrated
             );
 
