@@ -261,7 +261,7 @@
                                 <tbody class="divide-y divide-slate-800/40 text-sm">
                                     <tr th:each="a : ${assignments}" class="hover:bg-[#F7F9FC]/30 transition-colors group">
                                         <td class="py-2 px-4 font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors"
-                                            th:text="${a.classSection.gradeName + ' \u2013 ' + a.classSection.sectionName}">Grade 6 – A</td>
+                                            th:text="${a.className}">Grade 6 – A</td>
                                         <td class="py-2 px-4 text-slate-600" th:text="${a.subjectName}">Mathematics</td>
                                         <td class="py-2 px-4">
                                             <span th:if="${a.homeClass}"
