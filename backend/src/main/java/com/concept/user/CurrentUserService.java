@@ -15,7 +15,8 @@ import java.util.UUID;
  * Single source of truth for "who is making this request" — replaces the
  * fuzzy firstName/email-prefix matching that used to be duplicated across
  * the parent slice (ParentService), the assessment slice,
- * the tasks slice (TasksService), the student slice (StudentService), and StudentPortalController.
+ * the tasks slice (TasksService), and the student slice (StudentService,
+ * StudentPortalPageService).
  *
  * Resolution is a direct lookup: Authentication -> User (by email, always set
  * as the JWT/session subject) -> Parent/Student (by userId FK). No fallback

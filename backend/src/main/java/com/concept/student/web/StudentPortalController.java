@@ -1,38 +1,37 @@
-package com.concept.management;
+package com.concept.student.web;
 
-import com.concept.user.CurrentUserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.concept.student.app.StudentPortalPageService;
+import com.concept.student.app.StudentPortalPageService.RedeemResult;
+import com.concept.student.app.StudentPortalPageService.StudentPortalView;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * Interface layer for the student portal page. Thin binding over
+ * {@link StudentPortalPageService}; all querying, entity-to-view flattening,
+ * and reward mutations live in the application layer (ADR 0001).
+ */
 @Controller
 public class StudentPortalController {
 
-    @Autowired
-    private CurrentUserService currentUserService;
+    private final StudentPortalPageService studentPortalPageService;
 
-    @Autowired
-    private StudentRewardService studentRewardService;
-
-    @Autowired
-    private StudentPortalService studentPortalService;
-
-    private Student resolveStudent(Authentication authentication) {
-        return currentUserService.getCurrentStudent(authentication)
-                .orElseThrow(() -> new IllegalArgumentException("Student record not found"));
+    public StudentPortalController(StudentPortalPageService studentPortalPageService) {
+        this.studentPortalPageService = studentPortalPageService;
     }
 
     private String resolveRole(Authentication authentication) {
@@ -48,12 +47,11 @@ public class StudentPortalController {
     @GetMapping("/web/student/portal")
     public String getStudentPortal(@RequestParam(value = "tab", required = false, defaultValue = "dashboard") String activeTab,
                                    Model model, Authentication authentication) {
-        Student student = resolveStudent(authentication);
-        StudentPortalService.DashboardView v = studentPortalService.buildDashboard(student);
+        StudentPortalView v = studentPortalPageService.dashboard(authentication);
 
         model.addAttribute("activeTab", activeTab);
         model.addAttribute("student", v.student());
-        model.addAttribute("studentMetrics", v.metrics());
+        model.addAttribute("studentMetrics", v.studentMetrics());
         model.addAttribute("totalXp", v.totalXp());
         model.addAttribute("scholarLevel", v.scholarLevel());
         model.addAttribute("levelProgress", v.levelProgress());
@@ -79,22 +77,19 @@ public class StudentPortalController {
                                   @RequestParam(value = "answer3", required = false) String answer3,
                                   @RequestParam(value = "teacherTaskId", required = false) UUID teacherTaskId,
                                   Authentication authentication) {
-        Student student = resolveStudent(authentication);
-        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
-        studentPortalService.submitMilestone(skillName, proofOfWorkNotes, answer1, answer2, answer3,
-                teacherTaskId, student, tenantId);
+        studentPortalPageService.submitMilestone(skillName, proofOfWorkNotes, answer1, answer2, answer3,
+                teacherTaskId, authentication);
         return "redirect:/web/student/portal?success=true";
     }
 
     @Transactional
     @PostMapping("/web/student/rewards/redeem")
     public String redeemReward(@RequestParam("rewardId") UUID rewardId, Authentication authentication) {
-        Student student = resolveStudent(authentication);
-        StudentRewardService.RedeemOutcome outcome = studentRewardService.redeemReward(rewardId, student);
-        if (outcome == StudentRewardService.RedeemOutcome.INSUFFICIENT_XP) {
+        RedeemResult outcome = studentPortalPageService.redeemReward(rewardId, authentication);
+        if (outcome == RedeemResult.INSUFFICIENT_XP) {
             return "redirect:/web/student/portal?tab=rewards&error=insufficient_xp";
         }
-        if (outcome == StudentRewardService.RedeemOutcome.NO_LINKED_PARENT) {
+        if (outcome == RedeemResult.NO_LINKED_PARENT) {
             return "redirect:/web/student/portal?tab=rewards&error=no_linked_parent";
         }
         return "redirect:/web/student/portal?tab=rewards&success=redeemed";
@@ -102,23 +97,22 @@ public class StudentPortalController {
 
     @PostMapping("/web/student/quest/{id}/claim")
     public String claimQuest(@PathVariable("id") UUID id, Authentication authentication) {
-        studentRewardService.claimQuest(id, resolveStudent(authentication));
+        studentPortalPageService.claimQuest(id, authentication);
         return "redirect:/web/student/portal?success=quest_claimed";
     }
 
     @PostMapping("/web/student/reward/{id}/redeem")
     public String redeemParentReward(@PathVariable("id") UUID id, Authentication authentication) {
-        Student student = resolveStudent(authentication);
-        StudentRewardService.RedeemOutcome outcome = studentRewardService.redeemParentReward(id, student);
-        if (outcome == StudentRewardService.RedeemOutcome.INSUFFICIENT_XP) {
+        RedeemResult outcome = studentPortalPageService.redeemParentReward(id, authentication);
+        if (outcome == RedeemResult.INSUFFICIENT_XP) {
             return "redirect:/web/student/portal?tab=rewards&error=insufficient_xp";
         }
         return "redirect:/web/student/portal?tab=rewards&success=reward_redeemed";
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public org.springframework.http.ResponseEntity<String> handleResponseStatusException(ResponseStatusException ex) {
-        return org.springframework.http.ResponseEntity.status(ex.getStatusCode()).body(ex.getReason());
+    public ResponseEntity<String> handleResponseStatusException(ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode()).body(ex.getReason());
     }
 
     @ExceptionHandler(Exception.class)
