@@ -10,8 +10,10 @@ import com.concept.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.concept.tasks.app.AttendancePayload;
+import com.concept.tasks.app.TasksException;
+import com.concept.tasks.app.TasksService;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AttendanceApiControllerTenantTest {
 
     @Autowired
-    private AttendanceApiController attendanceApiController;
+    private TasksService tasksService;
 
     @Autowired
     private UserRepository userRepository;
@@ -145,26 +147,25 @@ public class AttendanceApiControllerTenantTest {
 
     @Test
     public void getTodayAttendance_ownSection_succeeds() {
-        ResponseEntity<?> response = attendanceApiController.getTodayAttendance(sectionA.getId(), authA);
-        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(tasksService.todayAttendance(sectionA.getId(), authA));
     }
 
     @Test
     public void getTodayAttendance_otherTenantSection_rejected() {
-        ResponseEntity<?> response = attendanceApiController.getTodayAttendance(sectionB.getId(), authA);
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals(Map.of("error", "Section not found"), response.getBody());
+        TasksException ex = assertThrows(TasksException.class,
+                () -> tasksService.todayAttendance(sectionB.getId(), authA));
+        assertEquals(400, ex.status());
+        assertEquals("Section not found", ex.getMessage());
     }
 
     @Test
     public void submitAttendance_otherTenantStudent_isSkippedAndNotPersisted() {
-        var entry = new AttendanceApiController.AttendanceEntry(studentB.getId(), AttendanceStatus.ABSENT, null);
-        var payload = new AttendanceApiController.AttendancePayload(List.of(entry));
+        var entry = new AttendancePayload.AttendanceEntry(studentB.getId(), AttendanceStatus.ABSENT, null);
+        var payload = new AttendancePayload(List.of(entry));
 
-        ResponseEntity<?> response = attendanceApiController.submitAttendance(payload, authA);
+        Map<String, Object> result = tasksService.submitAttendance(payload, authA);
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(Map.of("status", "success", "saved", 0, "skipped", 1), response.getBody());
+        assertEquals(Map.of("status", "success", "saved", 0, "skipped", 1), result);
         assertTrue(attendanceRepository.findByClassSectionAndAttendanceDate(sectionB, LocalDate.now()).isEmpty());
     }
 }
