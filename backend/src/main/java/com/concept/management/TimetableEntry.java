@@ -1,4 +1,5 @@
 package com.concept.management;
+import com.concept.shared.data.ClassSection;
 
 import com.concept.common.BaseTenantEntity;
 import jakarta.persistence.Column;

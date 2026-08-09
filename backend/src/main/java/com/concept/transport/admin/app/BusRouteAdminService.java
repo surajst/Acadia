@@ -1,7 +1,7 @@
 package com.concept.transport.admin.app;
 
 import com.concept.common.AuditLogService;
-import com.concept.management.ClassSection;
+import com.concept.shared.data.ClassSection;
 import com.concept.transport.BusRoute;
 import com.concept.transport.admin.data.AdminBusClassSectionRepository;
 import com.concept.transport.admin.data.AdminBusRouteRepository;

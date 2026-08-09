@@ -1,10 +1,10 @@
 package com.concept.timetable.app;
 
 import com.concept.common.AuditLogService;
-import com.concept.management.Attendance;
-import com.concept.management.AttendanceRepository;
-import com.concept.management.ClassSection;
-import com.concept.management.ClassSectionRepository;
+import com.concept.shared.data.Attendance;
+import com.concept.shared.data.AttendanceRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.ClassSectionRepository;
 import com.concept.management.TimetableEntry;
 import com.concept.management.TimetableRepository;
 import com.concept.user.CurrentUserService;

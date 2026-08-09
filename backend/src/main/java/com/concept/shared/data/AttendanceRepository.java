@@ -1,4 +1,4 @@
-package com.concept.management;
+package com.concept.shared.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

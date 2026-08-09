@@ -1,9 +1,9 @@
 package com.concept.messaging.data;
 
 import com.concept.common.TenantScopedRepository;
-import com.concept.management.ClassSection;
-import com.concept.management.Parent;
-import com.concept.management.Student;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.Parent;
+import com.concept.shared.data.Student;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

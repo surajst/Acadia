@@ -1,9 +1,9 @@
 package com.concept.user;
 
-import com.concept.management.Parent;
-import com.concept.management.ParentRepository;
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.Parent;
+import com.concept.shared.data.ParentRepository;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,5 @@
 package com.concept.management;
+import com.concept.shared.data.Student;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

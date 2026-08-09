@@ -1,7 +1,7 @@
 package com.concept.dashboard.data;
 
-import com.concept.management.Attendance;
-import com.concept.management.AttendanceStatus;
+import com.concept.shared.data.Attendance;
+import com.concept.shared.data.AttendanceStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

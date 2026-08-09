@@ -1,6 +1,6 @@
 package com.concept.console.data;
 
-import com.concept.management.Student;
+import com.concept.shared.data.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

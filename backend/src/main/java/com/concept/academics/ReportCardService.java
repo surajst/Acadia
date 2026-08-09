@@ -1,7 +1,7 @@
 package com.concept.academics;
 
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
 import com.concept.tenant.Tenant;
 import com.concept.tenant.TenantRepository;
 import org.springframework.beans.factory.annotation.Autowired;

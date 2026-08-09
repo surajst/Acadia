@@ -1,4 +1,10 @@
 package com.concept.management;
+import com.concept.shared.data.AttendanceStatus;
+import com.concept.shared.data.AttendanceRepository;
+import com.concept.shared.data.ClassSectionRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.StudentRepository;
+import com.concept.shared.data.Student;
 
 import com.concept.tenant.AcademicYear;
 import com.concept.tenant.AcademicYearRepository;

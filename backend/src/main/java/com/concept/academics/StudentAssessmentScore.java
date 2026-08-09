@@ -1,6 +1,6 @@
 package com.concept.academics;
 
-import com.concept.management.Student;
+import com.concept.shared.data.Student;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;

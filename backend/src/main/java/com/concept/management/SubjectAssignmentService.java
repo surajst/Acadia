@@ -1,4 +1,6 @@
 package com.concept.management;
+import com.concept.shared.data.ClassSectionRepository;
+import com.concept.shared.data.ClassSection;
 
 import com.concept.user.User;
 import com.concept.user.UserRepository;

@@ -1,4 +1,5 @@
 package com.concept.management;
+import com.concept.shared.data.Student;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

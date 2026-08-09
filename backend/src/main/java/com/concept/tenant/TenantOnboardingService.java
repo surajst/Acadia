@@ -2,8 +2,8 @@ package com.concept.tenant;
 
 import com.concept.academics.SubjectService;
 import com.concept.common.AuditLogService;
-import com.concept.management.ClassSection;
-import com.concept.management.ClassSectionRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.ClassSectionRepository;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
 import com.concept.user.UserRole;

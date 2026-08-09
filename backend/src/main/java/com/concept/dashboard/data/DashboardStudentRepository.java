@@ -1,7 +1,7 @@
 package com.concept.dashboard.data;
 
-import com.concept.management.ClassSection;
-import com.concept.management.Student;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.Student;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

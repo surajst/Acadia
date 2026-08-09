@@ -1,6 +1,6 @@
 package com.concept.attendance.data;
 
-import com.concept.management.Attendance;
+import com.concept.shared.data.Attendance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

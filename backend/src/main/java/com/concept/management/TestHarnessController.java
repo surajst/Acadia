@@ -1,4 +1,13 @@
 package com.concept.management;
+import com.concept.shared.data.AttendanceStatus;
+import com.concept.shared.data.AttendanceRepository;
+import com.concept.shared.data.Attendance;
+import com.concept.shared.data.ClassSectionRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.ParentRepository;
+import com.concept.shared.data.Parent;
+import com.concept.shared.data.StudentRepository;
+import com.concept.shared.data.Student;
 
 import com.concept.academics.StudentMetric;
 import com.concept.academics.StudentMetricRepository;

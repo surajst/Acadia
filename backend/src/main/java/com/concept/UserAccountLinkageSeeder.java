@@ -1,10 +1,10 @@
 package com.concept;
 
 import com.concept.academics.SubjectService;
-import com.concept.management.Parent;
-import com.concept.management.ParentRepository;
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.Parent;
+import com.concept.shared.data.ParentRepository;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
 import com.concept.management.TeacherTask;
 import com.concept.management.TeacherTaskRepository;
 import com.concept.tenant.AcademicYear;

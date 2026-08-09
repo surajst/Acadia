@@ -1,7 +1,7 @@
 package com.concept.academics;
 
 import com.concept.common.BaseTenantEntity;
-import com.concept.management.Student;
+import com.concept.shared.data.Student;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;

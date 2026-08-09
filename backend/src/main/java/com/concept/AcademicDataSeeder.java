@@ -1,17 +1,17 @@
 package com.concept;
 
-import com.concept.management.ClassSection;
-import com.concept.management.ClassSectionRepository;
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.ClassSectionRepository;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
 import com.concept.management.AcademicSubmission;
 import com.concept.management.AcademicSubmissionRepository;
-import com.concept.management.SchoolClass;
-import com.concept.management.SchoolClassRepository;
+import com.concept.shared.data.SchoolClass;
+import com.concept.shared.data.SchoolClassRepository;
 import com.concept.management.RewardItem;
 import com.concept.management.RewardItemRepository;
-import com.concept.management.Parent;
-import com.concept.management.ParentRepository;
+import com.concept.shared.data.Parent;
+import com.concept.shared.data.ParentRepository;
 import com.concept.management.ParentReward;
 import com.concept.management.ParentRewardRepository;
 import org.springframework.beans.factory.annotation.Autowired;

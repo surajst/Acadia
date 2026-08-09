@@ -1,8 +1,8 @@
 package com.concept.teacher.app;
 
-import com.concept.management.AttendanceRepository;
-import com.concept.management.ClassSection;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.AttendanceRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.StudentRepository;
 import com.concept.management.SubjectAssignment;
 import com.concept.management.SubjectAssignmentRepository;
 import com.concept.user.User;

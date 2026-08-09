@@ -1,4 +1,7 @@
 package com.concept.management;
+import com.concept.shared.data.ClassSectionRepository;
+import com.concept.shared.data.StudentRepository;
+import com.concept.shared.data.Student;
 
 import org.springframework.stereotype.Service;
 import java.util.*;

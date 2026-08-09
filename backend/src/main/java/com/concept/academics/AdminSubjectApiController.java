@@ -1,6 +1,6 @@
 package com.concept.academics;
 
-import com.concept.management.ClassSectionRepository;
+import com.concept.shared.data.ClassSectionRepository;
 import com.concept.user.CurrentUserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -4,7 +4,7 @@ import com.concept.fees.data.FeeStudentRepository;
 import com.concept.management.FeeInvoice;
 import com.concept.management.FeeInvoiceRepository;
 import com.concept.management.FeeManagementService;
-import com.concept.management.Student;
+import com.concept.shared.data.Student;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
