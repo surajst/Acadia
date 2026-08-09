@@ -1,4 +1,5 @@
-package com.concept.management;
+package com.concept.fees;
+import com.concept.fees.app.FeeManagementService;
 import com.concept.fees.data.FeeStructureRepository;
 import com.concept.fees.data.FeeStructure;
 import com.concept.fees.data.FeeInvoice;

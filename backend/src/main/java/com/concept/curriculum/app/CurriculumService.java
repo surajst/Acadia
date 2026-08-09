@@ -1,4 +1,4 @@
-package com.concept.management;
+package com.concept.curriculum.app;
 import com.concept.curriculum.data.SyllabusType;
 import com.concept.curriculum.data.CurriculumRepository;
 import com.concept.curriculum.data.Curriculum;

@@ -1,4 +1,5 @@
-package com.concept.management;
+package com.concept.oversight;
+import com.concept.oversight.app.StudentProgressService;
 import com.concept.assignment.data.SubjectProgressDto;
 import com.concept.curriculum.data.SyllabusType;
 import com.concept.curriculum.data.CurriculumRepository;

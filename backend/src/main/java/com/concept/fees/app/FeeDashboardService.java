@@ -3,7 +3,7 @@ package com.concept.fees.app;
 import com.concept.fees.data.FeeStudentRepository;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;
-import com.concept.management.FeeManagementService;
+import com.concept.fees.app.FeeManagementService;
 import com.concept.shared.data.Student;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

@@ -11,11 +11,17 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 /**
  * Enforces the interface/application/data layering from ADR 0001.
  *
- * <p>Scoped to migrated domains only (currently {@code roster}) so it stays
- * green while the legacy {@code management} package is carved up. As each
- * domain is refactored onto the {@code <domain>.web/app/data} template, add its
- * package here. The rules use {@code allowEmptyShould(true)} so they pass
- * vacuously until the target packages exist.
+ * <p>The legacy {@code management} god-package has been fully carved up and
+ * deleted. The layering rules run over every migrated domain slice plus the
+ * {@code shared} kernel ({@link #MIGRATED}). Infrastructure packages that
+ * predate and sit outside the slice template — {@code user}, {@code tenant},
+ * {@code common}, {@code config}, {@code academics}, {@code announcement}, the
+ * dev-only {@code devtools} harness, and the root seeders — are intentionally
+ * out of scope for the web/app/data rules.
+ *
+ * <p>{@link #noCodeDependsOnTheDeletedManagementPackage()} additionally runs
+ * over the whole codebase as a tripwire: nothing anywhere may depend on
+ * {@code com.concept.management}, so the god-package cannot be resurrected.
  */
 class LayeringArchitectureTest {
 
@@ -43,8 +49,11 @@ class LayeringArchitectureTest {
                     "com.concept.notification..",
                     "com.concept.export..",
                     "com.concept.shared.."
-                    // add more domains as migrated
             );
+
+    private static final JavaClasses WHOLE_CODEBASE = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("com.concept..");
 
     @Test
     void interfaceLayerDoesNotTouchTheDataLayer() {
@@ -77,8 +86,7 @@ class LayeringArchitectureTest {
         // never JPA entities — nothing about storage should reach a controller.
         noClasses().that().resideInAPackage("..web..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.concept.management..", "com.concept.academics..",
-                        "com.concept.shared.data..")
+                        "com.concept.academics..", "com.concept.shared.data..")
                 .allowEmptyShould(true)
                 .check(MIGRATED);
     }
@@ -97,5 +105,15 @@ class LayeringArchitectureTest {
                 .should().resideInAPackage("..data..")
                 .allowEmptyShould(true)
                 .check(MIGRATED);
+    }
+
+    @Test
+    void noCodeDependsOnTheDeletedManagementPackage() {
+        // The legacy god-package is gone; this tripwire runs over the whole
+        // codebase so it can never be reintroduced.
+        noClasses().that().resideOutsideOfPackage("com.concept.management..")
+                .should().dependOnClassesThat().resideInAPackage("com.concept.management..")
+                .allowEmptyShould(true)
+                .check(WHOLE_CODEBASE);
     }
 }

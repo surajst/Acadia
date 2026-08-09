@@ -1,4 +1,4 @@
-package com.concept.management;
+package com.concept.oversight.app;
 import com.concept.student.data.StudentProgressRepository;
 import com.concept.student.data.StudentProgress;
 import com.concept.curriculum.data.CurriculumRepository;

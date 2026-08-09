@@ -1,6 +1,6 @@
 package com.concept;
 
-import com.concept.management.FeeManagementService;
+import com.concept.fees.app.FeeManagementService;
 import com.concept.fees.data.FeeInvoiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;

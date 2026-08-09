@@ -15,7 +15,7 @@ import com.concept.shared.data.StudentRepository;
 import com.concept.assignment.data.SubjectAssignmentRepository;
 import com.concept.tasks.data.TaskType;
 import com.concept.tasks.data.TeacherTaskRequest;
-import com.concept.management.TeacherTaskService;
+import com.concept.tasks.app.TeacherTaskService;
 import com.concept.user.CurrentUserService;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
