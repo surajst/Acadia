@@ -1,4 +1,8 @@
 package com.concept.management;
+import com.concept.tasks.data.TaskType;
+import com.concept.tasks.data.TeacherTaskRequest;
+import com.concept.tasks.data.TeacherTaskRepository;
+import com.concept.tasks.data.TeacherTask;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

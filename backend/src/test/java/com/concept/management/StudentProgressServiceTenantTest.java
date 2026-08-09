@@ -1,4 +1,8 @@
 package com.concept.management;
+import com.concept.assignment.data.SubjectProgressDto;
+import com.concept.curriculum.data.SyllabusType;
+import com.concept.curriculum.data.CurriculumRepository;
+import com.concept.curriculum.data.Curriculum;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.StudentRepository;

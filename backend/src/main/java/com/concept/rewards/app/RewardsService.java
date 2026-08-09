@@ -1,6 +1,6 @@
 package com.concept.rewards.app;
 
-import com.concept.management.RewardItem;
+import com.concept.rewards.data.RewardItem;
 import com.concept.rewards.data.RewardCatalogRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

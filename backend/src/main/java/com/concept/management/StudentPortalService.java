@@ -1,4 +1,14 @@
 package com.concept.management;
+import com.concept.student.data.AcademicSubmissionRepository;
+import com.concept.student.data.AcademicSubmission;
+import com.concept.parent.data.ParentRewardRepository;
+import com.concept.parent.data.ParentReward;
+import com.concept.parent.data.ParentQuestRepository;
+import com.concept.parent.data.ParentQuest;
+import com.concept.rewards.data.RewardItemRepository;
+import com.concept.rewards.data.RewardItem;
+import com.concept.tasks.data.TeacherTaskRepository;
+import com.concept.tasks.data.TeacherTask;
 import com.concept.shared.data.Student;
 
 import com.concept.academics.MathSkill;

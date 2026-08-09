@@ -1,4 +1,11 @@
 package com.concept.management;
+import com.concept.student.data.StudentProgressRepository;
+import com.concept.student.data.StudentProgress;
+import com.concept.student.data.AcademicSubmissionRepository;
+import com.concept.student.data.AcademicSubmission;
+import com.concept.assignment.data.SubjectAssignmentRepository;
+import com.concept.assignment.data.SubjectAssignment;
+import com.concept.curriculum.data.Curriculum;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.StudentRepository;
 import com.concept.shared.data.Student;

@@ -1,4 +1,7 @@
 package com.concept.management;
+import com.concept.fees.data.FeeStructureRepository;
+import com.concept.fees.data.FeeStructure;
+import com.concept.fees.data.FeeInvoice;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.StudentRepository;

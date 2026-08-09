@@ -1,4 +1,7 @@
 package com.concept.management;
+import com.concept.curriculum.data.SyllabusType;
+import com.concept.curriculum.data.CurriculumRepository;
+import com.concept.curriculum.data.Curriculum;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

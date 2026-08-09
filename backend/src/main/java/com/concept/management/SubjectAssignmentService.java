@@ -1,4 +1,6 @@
 package com.concept.management;
+import com.concept.assignment.data.SubjectAssignmentRepository;
+import com.concept.assignment.data.SubjectAssignment;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.ClassSection;
 

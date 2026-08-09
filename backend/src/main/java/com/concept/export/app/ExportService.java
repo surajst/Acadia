@@ -1,8 +1,8 @@
 package com.concept.export.app;
 
 import com.concept.shared.data.ClassSection;
-import com.concept.management.FeeInvoice;
-import com.concept.management.FeeInvoiceRepository;
+import com.concept.fees.data.FeeInvoice;
+import com.concept.fees.data.FeeInvoiceRepository;
 import com.concept.shared.data.Parent;
 import com.concept.shared.data.Student;
 import com.concept.shared.data.StudentRepository;

@@ -1,7 +1,7 @@
 package com.concept.messaging.app;
 
-import com.concept.management.Conversation;
-import com.concept.management.ConversationRepository;
+import com.concept.messaging.data.Conversation;
+import com.concept.messaging.data.ConversationRepository;
 import com.concept.tenant.AcademicYear;
 import com.concept.tenant.AcademicYearRepository;
 import com.concept.tenant.Tenant;

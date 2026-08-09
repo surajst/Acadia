@@ -1,6 +1,6 @@
 package com.concept.messaging.data;
 
-import com.concept.management.Notification;
+import com.concept.notification.data.Notification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
