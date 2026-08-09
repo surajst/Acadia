@@ -1,4 +1,4 @@
-package com.concept.student.data;
+package com.concept.oversight.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

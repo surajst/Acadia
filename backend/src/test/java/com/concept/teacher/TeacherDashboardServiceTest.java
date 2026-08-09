@@ -1,7 +1,7 @@
 package com.concept.teacher;
 import com.concept.teacher.app.TeacherDashboardService;
-import com.concept.student.data.AcademicSubmissionRepository;
-import com.concept.student.data.AcademicSubmission;
+import com.concept.shared.data.AcademicSubmissionRepository;
+import com.concept.shared.data.AcademicSubmission;
 import com.concept.assignment.data.SubjectAssignmentRepository;
 import com.concept.assignment.data.SubjectAssignment;
 import com.concept.shared.data.ClassSectionRepository;

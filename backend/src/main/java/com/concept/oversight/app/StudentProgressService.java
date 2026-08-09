@@ -1,6 +1,6 @@
 package com.concept.oversight.app;
-import com.concept.student.data.StudentProgressRepository;
-import com.concept.student.data.StudentProgress;
+import com.concept.oversight.data.StudentProgressRepository;
+import com.concept.oversight.data.StudentProgress;
 import com.concept.assignment.data.SubjectProgressDto;
 import com.concept.curriculum.data.TopicDto;
 import com.concept.curriculum.data.CurriculumRepository;

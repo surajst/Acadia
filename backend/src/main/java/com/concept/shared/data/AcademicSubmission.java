@@ -1,4 +1,4 @@
-package com.concept.student.data;
+package com.concept.shared.data;
 
 import jakarta.persistence.*;
 import java.util.UUID;

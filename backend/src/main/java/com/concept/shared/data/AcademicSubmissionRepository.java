@@ -1,4 +1,4 @@
-package com.concept.student.data;
+package com.concept.shared.data;
 import com.concept.shared.data.Student;
 
 import org.springframework.data.jpa.repository.JpaRepository;

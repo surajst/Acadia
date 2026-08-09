@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 /**
  * Enforces the interface/application/data layering from ADR 0001.
@@ -104,6 +105,17 @@ class LayeringArchitectureTest {
         classes().that().haveSimpleNameEndingWith("Repository")
                 .should().resideInAPackage("..data..")
                 .allowEmptyShould(true)
+                .check(MIGRATED);
+    }
+
+    @Test
+    void domainSlicesAreFreeOfDependencyCycles() {
+        // Slices may share the kernel and call across boundaries, but the graph
+        // of slice-to-slice dependencies must stay acyclic — no two slices may
+        // depend on each other (directly or transitively). This is what keeps
+        // the architecture modular horizontally, not just layered vertically.
+        slices().matching("com.concept.(*)..")
+                .should().beFreeOfCycles()
                 .check(MIGRATED);
     }
 

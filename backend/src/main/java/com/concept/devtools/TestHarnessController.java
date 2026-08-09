@@ -1,8 +1,8 @@
 package com.concept.devtools;
 import com.concept.fees.app.FeeManagementService;
 import com.concept.assignment.app.SubjectAssignmentService;
-import com.concept.student.data.StudentProgressRepository;
-import com.concept.student.data.AcademicSubmissionRepository;
+import com.concept.oversight.data.StudentProgressRepository;
+import com.concept.shared.data.AcademicSubmissionRepository;
 import com.concept.parent.data.ParentRewardRepository;
 import com.concept.parent.data.ParentQuestRepository;
 import com.concept.parent.data.ParentQuest;
