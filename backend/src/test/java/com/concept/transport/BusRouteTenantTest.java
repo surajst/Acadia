@@ -6,7 +6,8 @@ import com.concept.management.Parent;
 import com.concept.management.ParentRepository;
 import com.concept.management.Student;
 import com.concept.management.StudentRepository;
-import com.concept.management.MobileParentRestController;
+import com.concept.parent.app.ParentException;
+import com.concept.parent.app.ParentService;
 import com.concept.transport.admin.app.BusRouteAdminService;
 import com.concept.tenant.AcademicYear;
 import com.concept.tenant.AcademicYearRepository;
@@ -49,7 +50,7 @@ public class BusRouteTenantTest {
     private MobileDriverRestController driverController;
 
     @Autowired
-    private MobileParentRestController parentController;
+    private ParentService parentService;
 
     @Autowired
     private BusRouteAdminService busRouteAdminService;
@@ -248,9 +249,7 @@ public class BusRouteTenantTest {
         driverController.pingLocation(ping, actAs(asDriverA));
 
         Authentication asParentA = authFor(parentUserA);
-        ResponseEntity<?> response = parentController.getBusLocation(studentA.getId(), actAs(asParentA));
-        assertEquals(200, response.getStatusCode().value());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        Map<String, Object> body = parentService.busLocation(studentA.getId(), actAs(asParentA));
         assertEquals(true, body.get("assigned"));
         assertEquals("Route A", body.get("routeName"));
         assertEquals(10.0, (Double) body.get("latitude"));
@@ -261,8 +260,9 @@ public class BusRouteTenantTest {
         User strangerParentUser = makeUser(tenantB, academicYearIdB, UserRole.PARENT);
         Authentication asStrangerParent = authFor(strangerParentUser);
 
-        ResponseEntity<?> response = parentController.getBusLocation(studentA.getId(), asStrangerParent);
-        assertEquals(400, response.getStatusCode().value());
+        ParentException ex = assertThrows(ParentException.class, () ->
+                parentService.busLocation(studentA.getId(), asStrangerParent));
+        assertEquals(400, ex.status());
     }
 
     @Test

@@ -6,7 +6,8 @@ import com.concept.management.ClassSection;
 import com.concept.management.ClassSectionRepository;
 import com.concept.management.Conversation;
 import com.concept.management.ConversationRepository;
-import com.concept.management.MobileParentRestController;
+import com.concept.parent.app.ParentException;
+import com.concept.parent.app.ParentService;
 import com.concept.messaging.app.MessagingException;
 import com.concept.messaging.app.MessagingService;
 import com.concept.messaging.app.MessagingViews.MessageRef;
@@ -58,7 +59,7 @@ import static org.mockito.Mockito.when;
 public class LanguageFeatureTenantTest {
 
     @Autowired
-    private MobileParentRestController parentController;
+    private ParentService parentService;
 
     @Autowired
     private MessagingService messagingService;
@@ -185,10 +186,9 @@ public class LanguageFeatureTenantTest {
 
     @Test
     public void parentCanTranslateOwnTenantAnnouncement() {
-        ResponseEntity<?> response = parentController.getAnnouncementLocalized(
+        Map<String, Object> body = parentService.announcementLocalized(
                 announcementA.getId(), "hi", actAs(asParentA));
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals("<translated>", ((Map<?, ?>) response.getBody()).get("title"));
+        assertEquals("<translated>", body.get("title"));
     }
 
     @Test
@@ -206,30 +206,29 @@ public class LanguageFeatureTenantTest {
         announcementB.setCreatedAt(LocalDateTime.now());
         announcementRepository.saveAndFlush(announcementB);
 
-        ResponseEntity<?> response = parentController.getAnnouncementLocalized(
-                announcementB.getId(), "hi", actAs(asParentA));
-        assertEquals(400, response.getStatusCode().value());
+        ParentException ex = assertThrows(ParentException.class, () ->
+                parentService.announcementLocalized(announcementB.getId(), "hi", actAs(asParentA)));
+        assertEquals(400, ex.status());
     }
 
     @Test
     public void announcementSpeechRejectsUnsupportedLanguage() {
-        ResponseEntity<?> response = parentController.getAnnouncementSpeech(
-                announcementA.getId(), "xx-not-a-lang", actAs(asParentA));
-        assertEquals(400, response.getStatusCode().value());
+        ParentException ex = assertThrows(ParentException.class, () ->
+                parentService.announcementSpeech(announcementA.getId(), "xx-not-a-lang", actAs(asParentA)));
+        assertEquals(400, ex.status());
     }
 
     @Test
     public void setPreferredLanguage_rejectsUnsupportedCode() {
-        ResponseEntity<?> response = parentController.setPreferredLanguage(
-                Map.of("language", "xx"), actAs(asParentA));
-        assertEquals(400, response.getStatusCode().value());
+        ParentException ex = assertThrows(ParentException.class, () ->
+                parentService.setPreferredLanguage("xx", actAs(asParentA)));
+        assertEquals(400, ex.status());
     }
 
     @Test
     public void setPreferredLanguage_savesSupportedCode() {
-        ResponseEntity<?> response = parentController.setPreferredLanguage(
-                Map.of("language", "hi"), actAs(asParentA));
-        assertEquals(200, response.getStatusCode().value());
+        Map<String, Object> body = parentService.setPreferredLanguage("hi", actAs(asParentA));
+        assertEquals("hi", body.get("language"));
         Parent reloaded = parentRepository.findById(parentA.getId()).orElseThrow();
         assertEquals("hi", reloaded.getPreferredLanguage());
     }
