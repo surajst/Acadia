@@ -1,4 +1,4 @@
-package com.concept.student.data;
+package com.concept.oversight.data;
 import com.concept.curriculum.data.Curriculum;
 import com.concept.shared.data.Student;
 

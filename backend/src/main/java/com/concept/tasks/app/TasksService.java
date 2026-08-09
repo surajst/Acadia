@@ -1,8 +1,8 @@
 package com.concept.tasks.app;
 
 import com.concept.common.NotificationDeliveryService;
-import com.concept.student.data.AcademicSubmission;
-import com.concept.student.data.AcademicSubmissionRepository;
+import com.concept.shared.data.AcademicSubmission;
+import com.concept.shared.data.AcademicSubmissionRepository;
 import com.concept.shared.data.Attendance;
 import com.concept.shared.data.AttendanceRepository;
 import com.concept.shared.data.AttendanceStatus;

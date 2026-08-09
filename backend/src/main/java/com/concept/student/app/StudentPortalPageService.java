@@ -1,6 +1,6 @@
 package com.concept.student.app;
 
-import com.concept.student.data.AcademicSubmission;
+import com.concept.shared.data.AcademicSubmission;
 import com.concept.parent.data.ParentQuest;
 import com.concept.parent.data.ParentReward;
 import com.concept.rewards.data.RewardItem;
