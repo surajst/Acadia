@@ -1,7 +1,7 @@
 package com.concept.notification.app;
 
-import com.concept.management.Notification;
-import com.concept.management.NotificationRepository;
+import com.concept.notification.data.Notification;
+import com.concept.notification.data.NotificationRepository;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
 import org.springframework.security.core.Authentication;

@@ -1,7 +1,7 @@
 package com.concept;
 
 import com.concept.management.FeeManagementService;
-import com.concept.management.FeeInvoiceRepository;
+import com.concept.fees.data.FeeInvoiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

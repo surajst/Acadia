@@ -1,7 +1,7 @@
 package com.concept.messaging.data;
 
 import com.concept.common.TenantScopedRepository;
-import com.concept.management.Conversation;
+import com.concept.messaging.data.Conversation;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

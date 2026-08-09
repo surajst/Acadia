@@ -1,4 +1,6 @@
 package com.concept.academics;
+import com.concept.tasks.data.TeacherTask;
+import com.concept.curriculum.data.Curriculum;
 
 import com.concept.common.BaseTenantEntity;
 import jakarta.persistence.Column;

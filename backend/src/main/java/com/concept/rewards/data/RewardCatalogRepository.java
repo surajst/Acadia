@@ -1,6 +1,6 @@
 package com.concept.rewards.data;
 
-import com.concept.management.RewardItem;
+import com.concept.rewards.data.RewardItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

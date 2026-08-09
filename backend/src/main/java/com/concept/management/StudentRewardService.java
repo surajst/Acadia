@@ -1,4 +1,10 @@
 package com.concept.management;
+import com.concept.parent.data.ParentRewardRepository;
+import com.concept.parent.data.ParentReward;
+import com.concept.parent.data.ParentQuestRepository;
+import com.concept.parent.data.ParentQuest;
+import com.concept.rewards.data.RewardItemRepository;
+import com.concept.rewards.data.RewardItem;
 import com.concept.shared.data.Parent;
 import com.concept.shared.data.Student;
 

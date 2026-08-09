@@ -1,7 +1,7 @@
 package com.concept.messaging.data;
 
 import com.concept.shared.data.ClassSection;
-import com.concept.management.SubjectAssignment;
+import com.concept.assignment.data.SubjectAssignment;
 import com.concept.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

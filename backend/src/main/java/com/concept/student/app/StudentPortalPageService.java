@@ -1,9 +1,9 @@
 package com.concept.student.app;
 
-import com.concept.management.AcademicSubmission;
-import com.concept.management.ParentQuest;
-import com.concept.management.ParentReward;
-import com.concept.management.RewardItem;
+import com.concept.student.data.AcademicSubmission;
+import com.concept.parent.data.ParentQuest;
+import com.concept.parent.data.ParentReward;
+import com.concept.rewards.data.RewardItem;
 import com.concept.shared.data.Student;
 import com.concept.management.StudentPortalService;
 import com.concept.management.StudentRewardService;

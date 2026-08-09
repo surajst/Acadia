@@ -1,4 +1,5 @@
 package com.concept.tenant;
+import com.concept.parent.data.ParentQuest;
 
 /**
  * FULL_SMS — full school management system (fees, curriculum admin, etc).

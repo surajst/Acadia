@@ -1,20 +1,20 @@
 package com.concept.tasks.app;
 
 import com.concept.common.NotificationDeliveryService;
-import com.concept.management.AcademicSubmission;
-import com.concept.management.AcademicSubmissionRepository;
+import com.concept.student.data.AcademicSubmission;
+import com.concept.student.data.AcademicSubmissionRepository;
 import com.concept.shared.data.Attendance;
 import com.concept.shared.data.AttendanceRepository;
 import com.concept.shared.data.AttendanceStatus;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.Parent;
-import com.concept.management.ParentQuestRepository;
+import com.concept.parent.data.ParentQuestRepository;
 import com.concept.shared.data.Student;
 import com.concept.shared.data.StudentRepository;
-import com.concept.management.SubjectAssignmentRepository;
-import com.concept.management.TaskType;
-import com.concept.management.TeacherTaskRequest;
+import com.concept.assignment.data.SubjectAssignmentRepository;
+import com.concept.tasks.data.TaskType;
+import com.concept.tasks.data.TeacherTaskRequest;
 import com.concept.management.TeacherTaskService;
 import com.concept.user.CurrentUserService;
 import com.concept.user.User;

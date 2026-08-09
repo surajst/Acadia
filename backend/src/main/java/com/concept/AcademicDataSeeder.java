@@ -1,19 +1,20 @@
 package com.concept;
+import com.concept.curriculum.data.Curriculum;
 
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.Student;
 import com.concept.shared.data.StudentRepository;
-import com.concept.management.AcademicSubmission;
-import com.concept.management.AcademicSubmissionRepository;
+import com.concept.student.data.AcademicSubmission;
+import com.concept.student.data.AcademicSubmissionRepository;
 import com.concept.shared.data.SchoolClass;
 import com.concept.shared.data.SchoolClassRepository;
-import com.concept.management.RewardItem;
-import com.concept.management.RewardItemRepository;
+import com.concept.rewards.data.RewardItem;
+import com.concept.rewards.data.RewardItemRepository;
 import com.concept.shared.data.Parent;
 import com.concept.shared.data.ParentRepository;
-import com.concept.management.ParentReward;
-import com.concept.management.ParentRewardRepository;
+import com.concept.parent.data.ParentReward;
+import com.concept.parent.data.ParentRewardRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

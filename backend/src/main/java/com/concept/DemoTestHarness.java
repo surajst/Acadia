@@ -1,4 +1,6 @@
 package com.concept;
+import com.concept.parent.data.ParentRewardRepository;
+import com.concept.parent.data.ParentQuestRepository;
 
 import com.concept.announcement.Announcement;
 import com.concept.announcement.AnnouncementService;
@@ -9,8 +11,8 @@ import com.concept.shared.data.Student;
 import com.concept.shared.data.StudentRepository;
 import com.concept.shared.data.Parent;
 import com.concept.shared.data.ParentRepository;
-import com.concept.management.ParentQuest;
-import com.concept.management.ParentReward;
+import com.concept.parent.data.ParentQuest;
+import com.concept.parent.data.ParentReward;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,8 +34,8 @@ public class DemoTestHarness implements CommandLineRunner {
     private final com.concept.academics.MathChapterRepository mathChapterRepository;
     private final com.concept.academics.MathSkillRepository mathSkillRepository;
     private final com.concept.academics.StudentMetricRepository studentMetricRepository;
-    private final com.concept.management.ParentQuestRepository parentQuestRepository;
-    private final com.concept.management.ParentRewardRepository parentRewardRepository;
+    private final com.concept.parent.data.ParentQuestRepository parentQuestRepository;
+    private final com.concept.parent.data.ParentRewardRepository parentRewardRepository;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
     private final String demoAdminPassword;
@@ -46,8 +48,8 @@ public class DemoTestHarness implements CommandLineRunner {
                            com.concept.academics.MathChapterRepository mathChapterRepository,
                            com.concept.academics.MathSkillRepository mathSkillRepository,
                            com.concept.academics.StudentMetricRepository studentMetricRepository,
-                           com.concept.management.ParentQuestRepository parentQuestRepository,
-                           com.concept.management.ParentRewardRepository parentRewardRepository,
+                           com.concept.parent.data.ParentQuestRepository parentQuestRepository,
+                           com.concept.parent.data.ParentRewardRepository parentRewardRepository,
                            JdbcTemplate jdbcTemplate,
                            PasswordEncoder passwordEncoder,
                            @org.springframework.beans.factory.annotation.Value("${demo.admin.password:PilotLaunchSecure2026!}") String demoAdminPassword) {
