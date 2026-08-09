@@ -31,7 +31,8 @@ class LayeringArchitectureTest {
                     "com.concept.console..",
                     "com.concept.dashboard..",
                     "com.concept.messaging..",
-                    "com.concept.parent.."
+                    "com.concept.parent..",
+                    "com.concept.timetable.."
                     // add more domains as migrated
             );
 
