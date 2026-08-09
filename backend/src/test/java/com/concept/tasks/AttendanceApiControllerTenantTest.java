@@ -1,4 +1,4 @@
-package com.concept.management;
+package com.concept.tasks;
 import com.concept.assignment.data.SubjectAssignmentRepository;
 import com.concept.assignment.data.SubjectAssignment;
 import com.concept.shared.data.AttendanceStatus;

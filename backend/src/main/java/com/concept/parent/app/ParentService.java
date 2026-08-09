@@ -17,7 +17,7 @@ import com.concept.parent.data.ParentReward;
 import com.concept.parent.data.ParentRewardRepository;
 import com.concept.shared.data.ParentRepository;
 import com.concept.shared.data.Student;
-import com.concept.management.StudentProgressService;
+import com.concept.oversight.app.StudentProgressService;
 import com.concept.shared.data.StudentRepository;
 import com.concept.parentapp.AttendanceRecord;
 import com.concept.parentapp.DateRange;

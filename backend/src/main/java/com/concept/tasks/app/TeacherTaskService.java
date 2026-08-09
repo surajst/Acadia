@@ -1,4 +1,4 @@
-package com.concept.management;
+package com.concept.tasks.app;
 import com.concept.tasks.data.TaskType;
 import com.concept.tasks.data.TeacherTaskRequest;
 import com.concept.tasks.data.TeacherTaskRepository;

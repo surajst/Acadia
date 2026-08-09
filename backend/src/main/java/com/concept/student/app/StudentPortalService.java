@@ -1,4 +1,4 @@
-package com.concept.management;
+package com.concept.student.app;
 import com.concept.student.data.AcademicSubmissionRepository;
 import com.concept.student.data.AcademicSubmission;
 import com.concept.parent.data.ParentRewardRepository;

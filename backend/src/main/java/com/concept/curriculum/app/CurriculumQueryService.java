@@ -1,6 +1,6 @@
 package com.concept.curriculum.app;
 
-import com.concept.management.CurriculumService;
+import com.concept.curriculum.app.CurriculumService;
 import com.concept.curriculum.data.SyllabusType;
 import com.concept.user.CurrentUserService;
 import org.springframework.security.core.Authentication;

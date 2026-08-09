@@ -8,7 +8,7 @@ import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.assignment.data.SubjectAssignment;
 import com.concept.assignment.data.SubjectAssignmentRepository;
-import com.concept.management.SubjectAssignmentService;
+import com.concept.assignment.app.SubjectAssignmentService;
 import com.concept.user.CurrentUserService;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
