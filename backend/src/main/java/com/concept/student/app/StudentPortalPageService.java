@@ -40,7 +40,7 @@ public class StudentPortalPageService {
 
     public record StudentView(String firstName, String lastName, String className) {}
 
-    public record MetricView(Integer activeStreak) {}
+    public record MetricView(Integer schoolXp, Integer parentXp, Integer activeStreak) {}
 
     public record SubmissionView(String skillName, java.time.LocalDateTime submittedAt, String status,
                                  String proofOfWorkNotes, String rejectionReason, Integer xpBounty) {}
@@ -72,9 +72,11 @@ public class StudentPortalPageService {
         Student student = requireStudent(authentication);
         StudentPortalService.DashboardView v = studentPortalService.buildDashboard(student);
 
+        var m = v.metrics();
         return new StudentPortalView(
                 toStudentView(v.student()),
-                new MetricView(v.metrics() != null ? v.metrics().getActiveStreak() : 0),
+                (m != null) ? new MetricView(m.getSchoolXp(), m.getParentXp(), m.getActiveStreak())
+                            : new MetricView(0, 0, 0),
                 v.totalXp(), v.scholarLevel(), v.levelProgress(), v.xpToNextLevel(),
                 v.submissions().stream().map(StudentPortalPageService::toSubmissionView).toList(),
                 v.availableSkills().stream().map(StudentPortalPageService::toSkillView).toList(),
