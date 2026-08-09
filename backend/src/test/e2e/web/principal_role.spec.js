@@ -43,10 +43,12 @@ test.describe('Sprint 3: PRINCIPAL role and access boundaries', () => {
     await page.context().clearCookies();
     await login(page, principalEmail, 'PilotLaunchSecure2026!');
 
-    // Dashboard renders the read-only KPI cards
+    // Dashboard renders the read-only KPI cards. The Slate-mist reskin split the
+    // labels into an eyebrow + a percent figure, so the card reads "Curriculum"
+    // (not the old "Curriculum Completion") and "Fee Collection".
     await page.goto('/web/admin/dashboard');
     await expect(page.locator('body')).not.toContainText('Forbidden');
-    await expect(page.locator('body')).toContainText('Curriculum Completion');
+    await expect(page.locator('body')).toContainText('Curriculum');
     await expect(page.locator('body')).toContainText('Fee Collection');
 
     // Blocked from ADMIN-only data-entry / setup pages
