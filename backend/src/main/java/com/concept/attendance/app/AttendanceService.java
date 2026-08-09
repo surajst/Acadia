@@ -3,12 +3,12 @@ package com.concept.attendance.app;
 import com.concept.attendance.data.AttendanceRecordRepository;
 import com.concept.attendance.data.AttendanceStudentRepository;
 import com.concept.common.NotificationDeliveryService;
-import com.concept.management.Attendance;
-import com.concept.management.AttendanceStatus;
-import com.concept.management.Parent;
-import com.concept.management.SchoolClass;
-import com.concept.management.SchoolClassRepository;
-import com.concept.management.Student;
+import com.concept.shared.data.Attendance;
+import com.concept.shared.data.AttendanceStatus;
+import com.concept.shared.data.Parent;
+import com.concept.shared.data.SchoolClass;
+import com.concept.shared.data.SchoolClassRepository;
+import com.concept.shared.data.Student;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

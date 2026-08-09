@@ -1,4 +1,4 @@
-package com.concept.management;
+package com.concept.shared.data;
 
 public enum AttendanceStatus {
     PRESENT,

@@ -1,11 +1,11 @@
 package com.concept.transport;
 
-import com.concept.management.ClassSection;
-import com.concept.management.ClassSectionRepository;
-import com.concept.management.Parent;
-import com.concept.management.ParentRepository;
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.ClassSectionRepository;
+import com.concept.shared.data.Parent;
+import com.concept.shared.data.ParentRepository;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
 import com.concept.parent.app.ParentException;
 import com.concept.parent.app.ParentService;
 import com.concept.transport.admin.app.BusRouteAdminService;

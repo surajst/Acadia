@@ -2,12 +2,12 @@ package com.concept;
 
 import com.concept.academics.StudentMetric;
 import com.concept.academics.StudentMetricRepository;
-import com.concept.management.ClassSection;
-import com.concept.management.ClassSectionRepository;
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
-import com.concept.management.SchoolClass;
-import com.concept.management.SchoolClassRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.ClassSectionRepository;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
+import com.concept.shared.data.SchoolClass;
+import com.concept.shared.data.SchoolClassRepository;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
 import com.concept.user.UserRole;

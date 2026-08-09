@@ -1,11 +1,11 @@
 package com.concept.export.app;
 
-import com.concept.management.ClassSection;
+import com.concept.shared.data.ClassSection;
 import com.concept.management.FeeInvoice;
 import com.concept.management.FeeInvoiceRepository;
-import com.concept.management.Parent;
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.Parent;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
 import com.concept.user.CurrentUserService;
 import com.concept.user.User;
 import com.concept.user.UserRepository;

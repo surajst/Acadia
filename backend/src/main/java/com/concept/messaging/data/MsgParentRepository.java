@@ -1,7 +1,7 @@
 package com.concept.messaging.data;
 
 import com.concept.common.TenantScopedRepository;
-import com.concept.management.Parent;
+import com.concept.shared.data.Parent;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;

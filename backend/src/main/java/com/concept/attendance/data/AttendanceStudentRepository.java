@@ -1,7 +1,7 @@
 package com.concept.attendance.data;
 
 import com.concept.common.TenantScopedRepository;
-import com.concept.management.Student;
+import com.concept.shared.data.Student;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

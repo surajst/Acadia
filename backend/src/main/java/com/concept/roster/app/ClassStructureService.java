@@ -1,8 +1,8 @@
 package com.concept.roster.app;
 
 import com.concept.common.AuditLogService;
-import com.concept.management.ClassSection;
-import com.concept.management.SchoolClass;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.SchoolClass;
 import com.concept.roster.data.RosterClassSectionRepository;
 import com.concept.roster.data.RosterSchoolClassRepository;
 import com.concept.roster.data.RosterStudentRepository;

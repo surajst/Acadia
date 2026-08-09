@@ -15,9 +15,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import com.concept.management.StudentRepository;
-import com.concept.management.AttendanceRepository;
-import com.concept.management.AttendanceStatus;
+import com.concept.shared.data.StudentRepository;
+import com.concept.shared.data.AttendanceRepository;
+import com.concept.shared.data.AttendanceStatus;
 
 @Controller
 @RequestMapping("/web")

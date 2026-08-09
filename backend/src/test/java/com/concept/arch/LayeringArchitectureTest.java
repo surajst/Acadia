@@ -41,7 +41,8 @@ class LayeringArchitectureTest {
                     "com.concept.curriculum..",
                     "com.concept.teacher..",
                     "com.concept.notification..",
-                    "com.concept.export.."
+                    "com.concept.export..",
+                    "com.concept.shared.."
                     // add more domains as migrated
             );
 
@@ -76,7 +77,8 @@ class LayeringArchitectureTest {
         // never JPA entities — nothing about storage should reach a controller.
         noClasses().that().resideInAPackage("..web..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.concept.management..", "com.concept.academics..")
+                        "com.concept.management..", "com.concept.academics..",
+                        "com.concept.shared.data..")
                 .allowEmptyShould(true)
                 .check(MIGRATED);
     }

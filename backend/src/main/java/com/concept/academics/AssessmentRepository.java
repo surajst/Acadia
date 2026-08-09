@@ -1,6 +1,6 @@
 package com.concept.academics;
 
-import com.concept.management.ClassSection;
+import com.concept.shared.data.ClassSection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

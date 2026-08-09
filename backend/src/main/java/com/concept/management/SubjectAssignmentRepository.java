@@ -1,4 +1,5 @@
 package com.concept.management;
+import com.concept.shared.data.ClassSection;
 
 import com.concept.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -4,7 +4,7 @@ import com.concept.management.AcademicSubmission;
 import com.concept.management.ParentQuest;
 import com.concept.management.ParentReward;
 import com.concept.management.RewardItem;
-import com.concept.management.Student;
+import com.concept.shared.data.Student;
 import com.concept.management.StudentPortalService;
 import com.concept.management.StudentRewardService;
 import com.concept.user.CurrentUserService;

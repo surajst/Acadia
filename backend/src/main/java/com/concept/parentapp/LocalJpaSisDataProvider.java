@@ -2,11 +2,11 @@ package com.concept.parentapp;
 
 import com.concept.academics.AssessmentService;
 import com.concept.academics.SubjectPerformance;
-import com.concept.management.Attendance;
-import com.concept.management.AttendanceRepository;
-import com.concept.management.ClassSection;
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.Attendance;
+import com.concept.shared.data.AttendanceRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

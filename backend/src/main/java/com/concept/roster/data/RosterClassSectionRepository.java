@@ -1,7 +1,7 @@
 package com.concept.roster.data;
 
 import com.concept.common.TenantScopedRepository;
-import com.concept.management.ClassSection;
+import com.concept.shared.data.ClassSection;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

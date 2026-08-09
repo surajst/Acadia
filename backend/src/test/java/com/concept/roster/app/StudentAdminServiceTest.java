@@ -1,10 +1,10 @@
 package com.concept.roster.app;
 
 import com.concept.academics.StudentMetricRepository;
-import com.concept.management.SchoolClass;
-import com.concept.management.SchoolClassRepository;
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.SchoolClass;
+import com.concept.shared.data.SchoolClassRepository;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
 import com.concept.tenant.AcademicYear;
 import com.concept.tenant.AcademicYearRepository;
 import com.concept.tenant.Tenant;

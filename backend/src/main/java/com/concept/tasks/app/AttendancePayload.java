@@ -1,6 +1,6 @@
 package com.concept.tasks.app;
 
-import com.concept.management.AttendanceStatus;
+import com.concept.shared.data.AttendanceStatus;
 
 import java.util.List;
 import java.util.UUID;

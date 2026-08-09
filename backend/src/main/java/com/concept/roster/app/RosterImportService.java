@@ -1,11 +1,11 @@
 package com.concept.roster.app;
 
-import com.concept.management.ClassSection;
-import com.concept.management.ClassSectionRepository;
-import com.concept.management.Parent;
-import com.concept.management.ParentRepository;
-import com.concept.management.Student;
-import com.concept.management.StudentRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.ClassSectionRepository;
+import com.concept.shared.data.Parent;
+import com.concept.shared.data.ParentRepository;
+import com.concept.shared.data.Student;
+import com.concept.shared.data.StudentRepository;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
 import com.concept.user.UserRole;

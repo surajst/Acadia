@@ -1,7 +1,7 @@
 package com.concept.academics;
 
 import com.concept.common.BaseTenantEntity;
-import com.concept.management.ClassSection;
+import com.concept.shared.data.ClassSection;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
