@@ -1,6 +1,7 @@
-package com.concept.management;
+package com.concept.roster.web;
 
 import com.concept.common.AuditLogService;
+import com.concept.roster.app.RosterImportService;
 import com.concept.user.User;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,7 @@ public class UploadWebController {
 
         RosterImportService.StudentPreview preview;
         try {
-            preview = rosterImportService.previewStudents(file, currentUser);
+            preview = rosterImportService.previewStudents(file.getInputStream(), file.getOriginalFilename(), currentUser);
         } catch (Exception e) {
             model.addAttribute("error", "Could not read the uploaded file: " + e.getMessage());
             return "upload";
@@ -127,7 +128,7 @@ public class UploadWebController {
 
         RosterImportService.ImportResult result;
         try {
-            result = rosterImportService.importStaff(file, tenantId, academicYearId);
+            result = rosterImportService.importStaff(file.getInputStream(), file.getOriginalFilename(), tenantId, academicYearId);
         } catch (Exception e) {
             model.addAttribute("staffError", "Could not read the uploaded file: " + e.getMessage());
             return "upload";

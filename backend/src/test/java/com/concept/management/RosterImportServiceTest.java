@@ -1,5 +1,6 @@
 package com.concept.management;
 
+import com.concept.roster.app.RosterImportService;
 import com.concept.tenant.AcademicYear;
 import com.concept.tenant.AcademicYearRepository;
 import com.concept.tenant.Tenant;
@@ -86,7 +87,7 @@ public class RosterImportServiceTest {
                 ",NoName,R2,Grade 6,C,Parent X,+91 9812345673",  // missing first name -> error
                 "Bad,Phone,R3,Grade 6,C,Parent Y,abc");          // bad phone -> error
 
-        RosterImportService.StudentPreview preview = rosterImportService.previewStudents(csv(content), admin);
+        RosterImportService.StudentPreview preview = rosterImportService.previewStudents(csv(content).getInputStream(), "roster.csv", admin);
 
         assertEquals(1, preview.willCreate());
         assertEquals(1, preview.willSkip());
@@ -104,7 +105,7 @@ public class RosterImportServiceTest {
                 "Aarav,Mehta,R1,Grade 5,A,Rohan Mehta,+91 9812345670",
                 "Isha,Verma,R2,Grade 5,B,Sunil Verma,+91 9812345671");
 
-        RosterImportService.StudentPreview preview = rosterImportService.previewStudents(csv(content), admin);
+        RosterImportService.StudentPreview preview = rosterImportService.previewStudents(csv(content).getInputStream(), "roster.csv", admin);
         RosterImportService.ImportResult result = rosterImportService.commitStudents(preview.rows(), admin);
 
         assertEquals(2, result.created());
@@ -123,10 +124,10 @@ public class RosterImportServiceTest {
                 "Aarav,Mehta,R1,Grade 5,A,Rohan Mehta,+91 9812345670");
 
         // First import creates R1.
-        rosterImportService.commitStudents(rosterImportService.previewStudents(csv(content), admin).rows(), admin);
+        rosterImportService.commitStudents(rosterImportService.previewStudents(csv(content).getInputStream(), "roster.csv", admin).rows(), admin);
         // Second import of the same roll number is skipped, not duplicated.
         RosterImportService.ImportResult second =
-                rosterImportService.commitStudents(rosterImportService.previewStudents(csv(content), admin).rows(), admin);
+                rosterImportService.commitStudents(rosterImportService.previewStudents(csv(content).getInputStream(), "roster.csv", admin).rows(), admin);
 
         assertEquals(0, second.created());
         assertEquals(1, second.skipped());
@@ -141,7 +142,7 @@ public class RosterImportServiceTest {
                 "Bad Role,badrole." + UUID.randomUUID() + "@school.edu,WIZARD");
 
         RosterImportService.ImportResult result =
-                rosterImportService.importStaff(csv(content), admin.getTenantId(), admin.getAcademicYearId());
+                rosterImportService.importStaff(csv(content).getInputStream(), "roster.csv", admin.getTenantId(), admin.getAcademicYearId());
 
         assertEquals(1, result.created());
         assertEquals(1, result.failed());
