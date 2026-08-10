@@ -326,8 +326,8 @@
 
                 <!-- Active Streak & Level Pill -->
                 <div class="flex gap-2 justify-end mb-6 -mt-2">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-700 border border-indigo-500/30 tracking-wide" th:text="${scholarLevel != null ? 'Level ' + scholarLevel + ' Scholar' : 'Level 1 Scholar'}">Level 1 Scholar</span>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-600 border border-amber-500/30 tracking-wide">
+                    <span class="badge badge--brand text-xs font-bold tracking-wide" th:text="${scholarLevel != null ? 'Level ' + scholarLevel + ' Scholar' : 'Level 1 Scholar'}">Level 1 Scholar</span>
+                    <span class="badge badge--warn text-xs font-bold tracking-wide">
                         <span>&#x1F525;</span> <span th:text="${studentMetrics != null && studentMetrics.activeStreak != null ? studentMetrics.activeStreak : 0}">3</span> <span class="sr-only">Active</span> Streak
                     </span>
                 </div>
