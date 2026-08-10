@@ -251,12 +251,12 @@
                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
             </svg>
         </div>
-        <div class="ms-3 text-sm font-bold text-slate-100"
+        <div class="ms-3 text-sm font-bold text-slate-800"
              th:text="${param.success[0] == 'task_assigned' ? 'Home task assigned successfully!' : (param.success[0] == 'reward_added' ? 'Custom reward added successfully!' : (param.success[0] == 'quest_approved' ? 'Task completion approved! Child awarded XP.' : (param.success[0] == 'reward_released' ? 'Reward successfully delivered/released!' : (param.success[0] == 'approved' ? 'Co-sign approved and unlocked!' : (param.success[0] == 'held' ? 'Reward placed on hold.' : 'Action processed successfully!')))))}">
             Action processed successfully!
         </div>
         <button id="toast-close-btn" type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
+                class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-800 rounded-lg p-1.5 hover:bg-slate-100 inline-flex items-center justify-center h-8 w-8 transition-colors">
             <span class="sr-only">Close</span>
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
@@ -318,7 +318,7 @@
                 <!-- Parent Info Card -->
                 <div th:if="${parent != null}" class="rounded-xl p-4 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 shadow-lg shadow-slate-300/40 flex justify-between items-center mt-2 mb-2">
                     <div>
-                        <h2 class="text-base font-bold text-slate-100" th:text="${parent.firstName} + ' ' + ${parent.lastName}">Parent Name</h2>
+                        <h2 class="text-base font-bold text-slate-900" th:text="${parent.firstName} + ' ' + ${parent.lastName}">Parent Name</h2>
                         <p class="text-xs text-slate-500 mt-1 font-medium">Guardian Workspace</p>
                     </div>
                     <div class="text-right">
@@ -604,7 +604,7 @@
                                            th:text="${ann.content}">Announcement content preview...</p>
                                     </div>
                                     <div class="shrink-0 flex flex-col items-end gap-1.5">
-                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 border border-indigo-500/20"
+                                        <span class="badge badge--brand text-[10px] font-bold"
                                               th:text="${ann.targetGrade}">ALL</span>
                                         <span class="text-[10px] text-slate-600"
                                               th:text="${#temporals.format(ann.createdAt, 'MMM dd')}">May 20</span>

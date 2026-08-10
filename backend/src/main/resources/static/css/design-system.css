@@ -46,6 +46,8 @@ body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(
 .badge--neutral { background:var(--surface-2);  color:var(--text-2);  border-color:var(--line-strong); }
 .badge--warn    { background:var(--warn-50);    color:var(--warn);    border-color:var(--warn-200); }
 .badge--danger  { background:var(--danger-50);  color:var(--danger);  border-color:var(--danger-200); }
+.badge--brand   { background:var(--brand-50);    color:var(--brand);   border-color:var(--brand-100); }
+.badge--pink    { background:#FCE7F3;            color:#DB2777;        border-color:#FBCFE8; }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; font-weight:600; border-radius:var(--r-sm); transition:all .15s ease; cursor:pointer; border:1px solid transparent; }
