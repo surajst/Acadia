@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Student Portal &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/design-system.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -16,7 +17,7 @@
         }
         body {
             font-family: 'Outfit', 'Inter', sans-serif;
-            background-color: #F7F9FC;
+            background-color: #F4F6FB;
             color: #0F172A;
             display: flex;
             flex-direction: column;
@@ -181,7 +182,7 @@
         @keyframes slideIn { from { transform: translateX(110%); opacity:0; } to { transform: translateX(0); opacity:1; } }
 
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #F7F9FC; }
+        ::-webkit-scrollbar-track { background: #F4F6FB; }
         ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #E2E8F0; }
     </style>
@@ -234,7 +235,7 @@
 
     <!-- ══ SUCCESS TOAST ══ -->
     <div th:if="${param.success}" id="toast"
-         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F7F9FC]/95 rounded-2xl shadow-2xl border border-emerald-500/30">
+         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F4F6FB]/95 rounded-2xl shadow-2xl border border-emerald-500/30">
         <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-emerald-700 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
             <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
@@ -245,7 +246,7 @@
             Milestone submitted successfully!
         </div>
         <button id="toast-close-btn" type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-[#F7F9FC] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
+                class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
             <span class="sr-only">Close</span>
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
@@ -255,14 +256,14 @@
 
     <!-- ══ ERROR TOAST ══ -->
     <div th:if="${param.error}" id="toast-error"
-         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F7F9FC]/95 rounded-2xl shadow-2xl border border-rose-500/30">
+         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F4F6FB]/95 rounded-2xl shadow-2xl border border-rose-500/30">
         <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-rose-300 bg-rose-500/10 rounded-lg border border-rose-500/20">✕</div>
         <div class="ms-3 text-sm font-bold text-slate-100"
              th:text="${param.error[0] == 'insufficient_xp' ? 'Insufficient Experience Points!' : 'An error occurred during transaction.'}">
             Error occurred!
         </div>
         <button id="toast-error-close-btn" type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-[#F7F9FC] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
+                class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
             <span class="sr-only">Close</span>
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
@@ -299,7 +300,7 @@
 
             <div class="flex-1"></div>
 
-            <div class="mx-1 mt-4 px-3 py-3 rounded-xl bg-[#F7F9FC]/40 border border-slate-200/50 text-xs text-slate-500 leading-relaxed">
+            <div class="mx-1 mt-4 px-3 py-3 rounded-xl bg-[#F4F6FB]/40 border border-slate-200/50 text-xs text-slate-500 leading-relaxed">
                 <p class="font-bold text-indigo-600/60 text-[9px] uppercase tracking-wider mb-1">Scholar Roadmap</p>
                 <p>Submit evidence for milestones your teacher validates to earn XP and level up.</p>
             </div>
@@ -341,7 +342,7 @@
                                 <span class="text-xs font-semibold text-indigo-600 uppercase tracking-widest">Total XP</span>
                             </h3>
                         </div>
-                        <div class="text-sm font-semibold text-slate-500 bg-[#F7F9FC]/60 border border-slate-200/60 rounded-xl px-4 py-2.5 shrink-0">
+                        <div class="text-sm font-semibold text-slate-500 bg-[#F4F6FB]/60 border border-slate-200/60 rounded-xl px-4 py-2.5 shrink-0">
                             🎯 Next Level in:
                             <span class="text-indigo-700 font-bold"
                                   th:text="${(xpToNextLevel != null ? xpToNextLevel : 500) + ' XP'}">250 XP</span>
@@ -352,7 +353,7 @@
                             <span th:text="${scholarLevel != null ? 'Level ' + scholarLevel : 'Level 1'}">Level 1</span>
                             <span th:text="${scholarLevel != null ? 'Level ' + (scholarLevel + 1) : 'Level 2'}">Level 2</span>
                         </div>
-                        <div class="w-full h-4 bg-[#F7F9FC]/60 rounded-full p-0.5 border border-slate-200/80 overflow-hidden">
+                        <div class="w-full h-4 bg-[#F4F6FB]/60 rounded-full p-0.5 border border-slate-200/80 overflow-hidden">
                             <div class="h-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-400 rounded-full transition-all duration-700 glow-progress"
                                  th:style="'width: ' + (levelProgress != null ? levelProgress : 0) + '%'"></div>
                         </div>
@@ -415,7 +416,7 @@
             <div id="tab-syllabus" class="tab-panel space-y-6">
 
                 <!-- Inline XP toast (syllabus only) -->
-                <div id="xp-toast" class="hidden fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F7F9FC]/95 rounded-2xl shadow-2xl border border-indigo-500/30 toast-enter">
+                <div id="xp-toast" class="hidden fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F4F6FB]/95 rounded-2xl shadow-2xl border border-indigo-500/30 toast-enter">
                     <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-indigo-700 bg-indigo-500/10 rounded-lg border border-indigo-500/20">⭐</div>
                     <div class="ms-3 text-sm font-bold text-slate-100"><span id="xp-toast-msg">XP awarded!</span></div>
                     <button id="xp-toast-close" type="button" class="ms-auto -mx-1.5 -my-1.5 text-slate-500 hover:text-slate-900 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">✕</button>
@@ -437,17 +438,17 @@
 
                     <!-- Loading Skeleton -->
                     <div id="syllabus-skeleton" class="space-y-4">
-                        <div class="bg-[#F7F9FC]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
+                        <div class="bg-[#F4F6FB]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
                             <div class="h-4 bg-slate-700/50 rounded w-1/3"></div>
                             <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
                             <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
                         </div>
-                        <div class="bg-[#F7F9FC]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
+                        <div class="bg-[#F4F6FB]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
                             <div class="h-4 bg-slate-700/50 rounded w-2/5"></div>
                             <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
                             <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
                         </div>
-                        <div class="bg-[#F7F9FC]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
+                        <div class="bg-[#F4F6FB]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
                             <div class="h-4 bg-slate-700/50 rounded w-1/2"></div>
                             <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
                             <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
@@ -455,7 +456,7 @@
                     </div>
 
                     <!-- Empty state -->
-                    <div id="syllabus-empty" class="hidden text-center py-4 px-6 bg-[#F7F9FC]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;">
+                    <div id="syllabus-empty" class="hidden text-center py-4 px-6 bg-[#F4F6FB]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;">
                         <span class="text-2xl">📖</span>
                         <p class="text-sm text-slate-500 mt-1 font-medium">Curriculum coming soon. No topics assigned yet.</p>
                     </div>
@@ -494,7 +495,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div th:each="quest : ${parentQuests}"
                              th:if="${quest.status == 'PENDING' or quest.status == 'IN_PROGRESS' or quest.status == 'COMPLETED_AWAITING_APPROVAL'}"
-                             class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all group">
+                             class="bg-[#F4F6FB]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all group">
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-3xl">🏠</span>
@@ -528,7 +529,7 @@
                         </div>
 
                         <div th:if="${#lists.isEmpty(parentQuests) or (!#lists.contains(parentQuests.![status], 'PENDING') and !#lists.contains(parentQuests.![status], 'IN_PROGRESS') and !#lists.contains(parentQuests.![status], 'COMPLETED_AWAITING_APPROVAL'))}"
-                             class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-[#F7F9FC]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;">
+                             class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-[#F4F6FB]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;">
                             <span class="text-2xl">🎉</span>
                             <p class="text-sm text-slate-500 mt-1 font-medium">All home quests are completed!</p>
                         </div>
@@ -549,7 +550,7 @@
                         <div>
                             <label for="skillName" class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">Academic Module / Skill</label>
                             <select id="skillName" name="skillName" required
-                                    class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none cursor-pointer">
+                                    class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none cursor-pointer">
                                 <option value="" disabled selected>-- Select a Module --</option>
                                 <option th:each="skill : ${availableSkills}"
                                         th:value="${skill.skillName}"
@@ -562,7 +563,7 @@
                             <label for="proofOfWorkNotes" class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1.5">Proof-of-Work Documentation / Link</label>
                             <textarea id="proofOfWorkNotes" name="proofOfWorkNotes" required rows="3"
                                       placeholder="Enter links to your working sheets, Google Docs, or explain your completed exercises..."
-                                      class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none resize-none placeholder-slate-600"></textarea>
+                                      class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none resize-none placeholder-slate-600"></textarea>
                         </div>
                         <button type="submit"
                                 class="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg transition-all text-sm uppercase tracking-wider cursor-pointer">
@@ -574,7 +575,7 @@
                 <!-- Task Submission Modal (opened by JS) -->
                 <div id="taskSubmissionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
                     <div id="task-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
-                    <div class="relative bg-[#F7F9FC] border border-slate-200/60 rounded-3xl p-5 md:p-8 w-full max-w-lg shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
+                    <div class="relative bg-[#F4F6FB] border border-slate-200/60 rounded-3xl p-5 md:p-8 w-full max-w-lg shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
                         <button id="task-modal-close-btn" type="button"
                                 class="absolute top-4 right-4 text-slate-500 hover:text-slate-900 text-xl font-bold px-2 cursor-pointer">✕</button>
                         <h2 class="text-2xl font-bold text-slate-900 mb-2" id="modalTaskTitle">Task Title</h2>
@@ -587,7 +588,7 @@
                             <div class="space-y-2">
                                 <label class="text-xs font-bold uppercase tracking-wider text-slate-500 block px-1">Proof of Work Notes</label>
                                 <textarea name="proofOfWorkNotes" required rows="3" placeholder="Additional notes or links..."
-                                          class="w-full px-4 py-3 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none resize-none"></textarea>
+                                          class="w-full px-4 py-3 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none resize-none"></textarea>
                             </div>
                             <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg transition-all uppercase tracking-wider text-sm cursor-pointer">
                                 Submit Task Evidence
@@ -617,7 +618,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div th:each="reward : ${rewardInventoryList}"
-                             class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all group">
+                             class="bg-[#F4F6FB]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all group">
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-3xl" th:text="${reward.displayEmoji}">📜</span>
@@ -662,7 +663,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div th:each="preward : ${parentRewards}"
-                             class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-500/20 transition-all group">
+                             class="bg-[#F4F6FB]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-500/20 transition-all group">
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-3xl">🎁</span>
@@ -691,7 +692,7 @@
                             </div>
                         </div>
                         <div th:if="${#lists.isEmpty(parentRewards)}"
-                             class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-[#F7F9FC]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;">
+                             class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-[#F4F6FB]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;">
                             <span class="text-2xl">📭</span>
                             <p class="text-sm text-slate-500 mt-1 font-medium">No parent-defined rewards available.</p>
                         </div>
@@ -713,7 +714,7 @@
 
                     <div class="space-y-4 max-h-[600px] overflow-y-auto pr-1">
                         <div th:each="sub : ${submissions}"
-                             class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-4 space-y-3 hover:border-slate-200/60 transition-all">
+                             class="bg-[#F4F6FB]/40 border border-slate-200/60 rounded-2xl p-4 space-y-3 hover:border-slate-200/60 transition-all">
                             <div class="flex items-start justify-between gap-3 flex-wrap">
                                 <div>
                                     <h4 class="text-sm font-bold text-slate-900" th:text="${sub.skillName}">6th Grade Fraction Mastery</h4>
@@ -725,7 +726,7 @@
                                       th:text="${sub.status}">PENDING</span>
                             </div>
                             <div th:if="${sub.proofOfWorkNotes != null and !#strings.isEmpty(sub.proofOfWorkNotes)}"
-                                 class="p-2.5 rounded-lg bg-[#F7F9FC]/60 border border-slate-200/40 text-xs text-slate-500 leading-relaxed">
+                                 class="p-2.5 rounded-lg bg-[#F4F6FB]/60 border border-slate-200/40 text-xs text-slate-500 leading-relaxed">
                                 <span class="font-bold text-[9px] uppercase tracking-wider text-slate-500 block mb-1">Your notes:</span>
                                 <p class="italic" th:text="${sub.proofOfWorkNotes}">"No proof notes supplied."</p>
                             </div>
@@ -1003,7 +1004,7 @@
                 var xpEarned = subjectData.topics.filter(function(t) { return t.completed; }).reduce(function(s,t) { return s + t.xpReward; }, 0);
 
                 var card = document.createElement('div');
-                card.className = 'bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 space-y-4 hover:border-slate-200/50 transition-all';
+                card.className = 'bg-[#F4F6FB]/40 border border-slate-200/60 rounded-2xl p-5 space-y-4 hover:border-slate-200/50 transition-all';
                 card.id = 'subject-card-' + subjectKey;
 
                 var topicsId = 'topics-' + subjectKey;
@@ -1017,7 +1018,7 @@
                         topicsRows += `<div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-amber-500/5 border border-amber-500/10"><span class="text-amber-600 text-base flex-shrink-0">⏳</span><span class="text-sm text-slate-600 flex-1">${topic.topicName}</span><span class="text-xs font-bold text-amber-600 shrink-0">Pending</span></div>`;
                     } else {
                         var rejHtml = topic.status === 'REJECTED' ? `<span class="text-rose-400 text-base flex-shrink-0">❌</span><span class="text-xs text-rose-400 italic flex-shrink-0 max-w-[200px] truncate" title="${topic.rejectionReason}">Reason: ${topic.rejectionReason}</span>` : '';
-                        topicsRows += `<div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-[#F7F9FC]/30 border border-slate-200/40 flex-wrap"><span class="text-slate-600 text-base flex-shrink-0">○</span><span class="text-sm text-slate-500 flex-1 min-w-[120px]">${topic.topicName}</span>${rejHtml}<button class="mark-complete-btn text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-700 hover:text-white border border-indigo-500/20 rounded-lg transition-all cursor-pointer shrink-0 whitespace-nowrap ml-auto" data-curriculum-id="${topic.id}" data-subject-key="${subjectKey}">Mark Complete</button></div>`;
+                        topicsRows += `<div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-[#F4F6FB]/30 border border-slate-200/40 flex-wrap"><span class="text-slate-600 text-base flex-shrink-0">○</span><span class="text-sm text-slate-500 flex-1 min-w-[120px]">${topic.topicName}</span>${rejHtml}<button class="mark-complete-btn text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-700 hover:text-white border border-indigo-500/20 rounded-lg transition-all cursor-pointer shrink-0 whitespace-nowrap ml-auto" data-curriculum-id="${topic.id}" data-subject-key="${subjectKey}">Mark Complete</button></div>`;
                     }
                 });
 
@@ -1033,7 +1034,7 @@
                         <span class="text-xs font-bold ${colors.text} ${colors.bg} border ${colors.border} px-3 py-1 rounded-full">${pct}% done</span>
                     </div>
                     <div class="space-y-1.5">
-                        <div class="w-full h-2.5 bg-[#F7F9FC]/60 rounded-full overflow-hidden border border-slate-200/80">
+                        <div class="w-full h-2.5 bg-[#F4F6FB]/60 rounded-full overflow-hidden border border-slate-200/80">
                             <div class="h-full bg-gradient-to-r ${colors.bar} rounded-full transition-all duration-700" style="width:${pct}%"></div>
                         </div>
                         <p class="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">${subjectData.completed} of ${subjectData.total} complete</p>
@@ -1133,7 +1134,7 @@
                 var tasks = await resp.json();
 
                 if (tasks.length === 0) {
-                    container.innerHTML = `<div class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-[#F7F9FC]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;"><p class="text-sm text-slate-500 font-medium">No assigned challenges currently.</p></div>`;
+                    container.innerHTML = `<div class="col-span-1 md:col-span-2 py-4 px-6 text-center bg-[#F4F6FB]/10 border border-dashed border-slate-200/60 rounded-2xl" style="max-height:100px;"><p class="text-sm text-slate-500 font-medium">No assigned challenges currently.</p></div>`;
                     return;
                 }
 
@@ -1141,7 +1142,7 @@
                     var readingBadge = task.taskType === 'READING' ? `<span class="px-2 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded text-[10px] font-bold uppercase tracking-wider">📖 Reading</span>` : '';
                     var overdueBadge = task.taskStatus === 'OVERDUE' ? `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-600 border border-amber-500/20 rounded text-[10px] font-bold uppercase tracking-wider">⚠️ OVERDUE</span>` : '';
                     return `
-                    <div class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all">
+                    <div class="bg-[#F4F6FB]/40 border border-slate-200/60 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/20 transition-all">
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <div class="flex gap-2">
@@ -1235,7 +1236,7 @@
                             var d = new Date(r.date + 'T00:00:00');
                             var dayName = r.dayOfWeek.charAt(0) + r.dayOfWeek.slice(1).toLowerCase().substring(0,2);
                             var dateStr = d.getDate() + ' ' + mNames[d.getMonth()];
-                            return '<div class="flex items-center gap-3 px-4 py-2 rounded-xl bg-[#F7F9FC]/40 border border-slate-200/50 hover:border-slate-200/60 transition-colors">'
+                            return '<div class="flex items-center gap-3 px-4 py-2 rounded-xl bg-[#F4F6FB]/40 border border-slate-200/50 hover:border-slate-200/60 transition-colors">'
                                 + '<span class="text-xs font-bold text-slate-500 w-8">' + dayName + '</span>'
                                 + '<span class="text-sm text-slate-600 flex-1">' + dateStr + '</span>'
                                 + '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ' + meta.badge + ' ' + meta.text + '"><span class="w-1.5 h-1.5 rounded-full ' + meta.dot + '"></span>' + meta.label + '</span>'
@@ -1269,7 +1270,7 @@
                                 qContainer.innerHTML += `
                                 <div class="space-y-1.5">
                                     <label class="text-sm font-semibold text-slate-600 block">${questions[qKey]}</label>
-                                    <input type="text" name="answer${i+1}" required class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none">
+                                    <input type="text" name="answer${i+1}" required class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 text-sm outline-none">
                                 </div>`;
                             }
                         });

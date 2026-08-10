@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Curriculum Intelligence &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/design-system.css">
     <style>
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #F7F9FC; }
+        ::-webkit-scrollbar-track { background: #F4F6FB; }
         ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #E2E8F0; }
         .glass-panel {
@@ -22,9 +23,9 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-[#F7F9FC] text-slate-800 font-sans  max- overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="bg-[#F4F6FB] text-slate-800 font-sans  max- overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
 
-    <header class="bg-[#F7F9FC] border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+    <header class="bg-[#F4F6FB] border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div style="display:flex; align-items:center; gap:10px;">
   <img src="/images/acadia-logo.png" alt="ACADIA"
@@ -33,7 +34,7 @@
                letter-spacing:2px;">ACADIA</span>
 </div>
             <div class="flex items-center gap-4">
-                <a href="/web/admin/dashboard" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200 p-2 rounded-xl bg-[#F7F9FC]/50 hover:bg-white">
+                <a href="/web/admin/dashboard" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200 p-2 rounded-xl bg-[#F4F6FB]/50 hover:bg-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 </a>
                 <div>
@@ -44,7 +45,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <select id="classFilter" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-4 py-2 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all">
+                <select id="classFilter" class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-4 py-2 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all">
                     <option value="ALL">All Classes</option>
                     <option value="5">Class 5</option>
                     <option value="6">Class 6</option>
@@ -280,7 +281,7 @@
             }
             
             container.innerHTML = chapters.map(ch => `
-                <div class="bg-[#F7F9FC]/50 border border-slate-200/80 rounded-xl p-3 flex justify-between items-center hover:border-slate-200 transition-colors">
+                <div class="bg-[#F4F6FB]/50 border border-slate-200/80 rounded-xl p-3 flex justify-between items-center hover:border-slate-200 transition-colors">
                     <div>
                         <h4 class="text-sm font-semibold text-slate-900">${ch.topicName}</h4>
                         <p class="text-xs text-slate-500 uppercase tracking-wider mt-0.5">${ch.subject} <span class="mx-1 opacity-50">•</span> Class ${ch.standard || '--'}</p>
@@ -300,7 +301,7 @@
             }
 
             container.innerHTML = students.map((st, idx) => `
-                <div class="bg-[#F7F9FC]/50 border border-slate-200/80 rounded-xl p-3 flex justify-between items-center hover:border-slate-200 transition-colors">
+                <div class="bg-[#F4F6FB]/50 border border-slate-200/80 rounded-xl p-3 flex justify-between items-center hover:border-slate-200 transition-colors">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 shrink-0 rounded-full bg-indigo-600/20 text-indigo-600 flex items-center justify-center font-bold text-xs border border-indigo-500/20 shadow-inner">
                             #${idx + 1}

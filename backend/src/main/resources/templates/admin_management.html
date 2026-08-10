@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Management &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/design-system.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -23,7 +24,7 @@
 
         /* Custom scrollbar to match dark theme aesthetics */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #F7F9FC; }
+        ::-webkit-scrollbar-track { background: #F4F6FB; }
         ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #E2E8F0; }
 
@@ -94,7 +95,7 @@
 
             <!-- Side Navigation Sidebar -->
             <aside class="space-y-6 lg:col-span-1">
-                <div class="bg-[#F7F9FC]/80 border border-slate-200/50 rounded-2xl p-4 shadow-xl shadow-slate-300/40 space-y-4">
+                <div class="bg-[#F4F6FB]/80 border border-slate-200/50 rounded-2xl p-4 shadow-xl shadow-slate-300/40 space-y-4">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 px-2">Navigation Scope</h3>
                     <nav class="space-y-1">
                         <!-- ADMIN items -->
@@ -148,7 +149,7 @@
                     </nav>
                 </div>
 
-                <div class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-2xl p-5 text-sm text-slate-600 space-y-3 leading-relaxed shadow-xl shadow-slate-300/40">
+                <div class="bg-[#F4F6FB]/90 border border-slate-200/60 rounded-2xl p-5 text-sm text-slate-600 space-y-3 leading-relaxed shadow-xl shadow-slate-300/40">
                     <p class="font-bold uppercase tracking-wider flex items-center gap-1.5 text-emerald-600">
                         <span>&#9889;</span> System Operational Notice
                     </p>
@@ -246,7 +247,7 @@
                     </a>
 
                     <button type="button" onclick="showSection('sec-export')" class="hub-card">
-                        <span class="hub-icon bg-slate-600/10 text-slate-600 border-slate-500/15">&#128229;</span>
+                        <span class="hub-icon bg-slate-600/10 text-slate-600 border-slate-500/15">&#059669;</span>
                         <span class="hub-title">Export Data</span>
                         <span class="hub-desc">Download students, staff or fees as CSV files.</span>
                         <span class="hub-meta">3 datasets</span>
@@ -267,7 +268,7 @@
                 <button type="button" onclick="backToHub()" class="back-hub">&larr; Back to sections</button>
                 <div class="mt-4 glass-panel rounded-3xl shadow-2xl overflow-hidden">
                 <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
-                    <div class="p-6 border-b border-slate-200/60 flex justify-between items-center bg-[#F7F9FC]/90">
+                    <div class="p-6 border-b border-slate-200/60 flex justify-between items-center bg-[#F4F6FB]/90">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900 tracking-tight">Active Classrooms</h2>
                             <p class="text-xs text-slate-500 mt-0.5">Real-time enrollment rates and room assignment trackers</p>
@@ -287,7 +288,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-[#F7F9FC]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
+                                <tr class="bg-[#F4F6FB]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
                                     <th class="py-4 px-6">Grade / Section</th>
                                     <th class="py-4 px-6">Room Number</th>
                                     <th class="py-4 px-6">Enrolled / Capacity</th>
@@ -296,7 +297,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800/40 text-sm">
-                                <tr th:each="cls : ${classList}" class="hover:bg-[#F7F9FC]/30 transition-colors group">
+                                <tr th:each="cls : ${classList}" class="hover:bg-[#F4F6FB]/30 transition-colors group">
                                     <td class="py-4 px-6 font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors">
                                         <span th:text="|${cls.gradeLevel} - ${cls.sectionName}|">Grade 6 - A</span>
                                     </td>
@@ -310,7 +311,7 @@
                                     </td>
                                     <td class="py-4 px-6">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-24 bg-[#F7F9FC]/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+                                            <div class="w-24 bg-[#F4F6FB]/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
                                                 <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full transition-all duration-500"
                                                      th:style="|width: ${cls.totalCapacity > 0 ? cls.studentCount * 100.0 / cls.totalCapacity : 0}%|"></div>
                                             </div>
@@ -350,10 +351,10 @@
                     </div>
 
                     <!-- Rewards Table -->
-                    <div class="overflow-x-auto border border-slate-200/40 rounded-2xl bg-[#F7F9FC]/20">
+                    <div class="overflow-x-auto border border-slate-200/40 rounded-2xl bg-[#F4F6FB]/20">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-[#F7F9FC]/60 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
+                                <tr class="bg-[#F4F6FB]/60 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
                                     <th class="py-4 px-6 w-16 text-center">Emoji</th>
                                     <th class="py-4 px-6">Reward Title</th>
                                     <th class="py-4 px-6">Description</th>
@@ -362,7 +363,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800/40 text-sm">
-                                <tr th:each="reward : ${rewardInventoryList}" class="hover:bg-[#F7F9FC]/30 transition-colors">
+                                <tr th:each="reward : ${rewardInventoryList}" class="hover:bg-[#F4F6FB]/30 transition-colors">
                                     <td class="py-4 px-6 text-center text-2xl font-bold" th:text="${reward.displayEmoji}">&#128220;</td>
                                     <td class="py-4 px-6 font-semibold text-slate-900" th:text="${reward.title}">Honor Roll Certificate</td>
                                     <td class="py-4 px-6 text-xs text-slate-500 leading-relaxed max-w-xs" th:text="${reward.description}">Receive a formal certificate of merit recognizing your achievements.</td>
@@ -379,7 +380,7 @@
                     </div>
 
                     <!-- Add Reward Form -->
-                    <div class="bg-[#F7F9FC]/40 border border-slate-200/60 rounded-2xl p-6 space-y-4">
+                    <div class="bg-[#F4F6FB]/40 border border-slate-200/60 rounded-2xl p-6 space-y-4">
                         <div>
                             <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Add Dynamic Reward Entry</h3>
                             <p class="text-xs text-slate-500 mt-0.5">Submit new academic milestones or physical rewards to seed them into the student portals immediately.</p>
@@ -388,27 +389,27 @@
                             <div class="space-y-1">
                                 <label for="title" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Reward Title</label>
                                 <input type="text" id="title" name="title" required placeholder="e.g. Science Explorer Kit"
-                                       class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                                       class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                             </div>
                             <div class="space-y-1">
                                 <label for="displayEmoji" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Display Emoji</label>
                                 <input type="text" id="displayEmoji" name="displayEmoji" required placeholder="e.g. &#x1f9ea;" maxlength="4"
-                                       class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                                       class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                             </div>
                             <div class="space-y-1 md:col-span-2">
                                 <label for="description" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Description</label>
                                 <textarea id="description" name="description" required rows="2" placeholder="Describe the physical or academic benefit of this reward..."
-                                          class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none transition-all"></textarea>
+                                          class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none transition-all"></textarea>
                             </div>
                             <div class="space-y-1">
                                 <label for="xpCost" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">XP Cost</label>
                                 <input type="number" id="xpCost" name="xpCost" required min="1" placeholder="e.g. 250"
-                                       class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                                       class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                             </div>
                             <div class="space-y-1">
                                 <label for="inventoryCount" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Inventory Stock Count</label>
                                 <input type="number" id="inventoryCount" name="inventoryCount" required min="0" placeholder="e.g. 15"
-                                       class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                                       class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                             </div>
                             <div class="md:col-span-2 pt-2">
                                 <button type="submit"
@@ -427,22 +428,22 @@
                 <div id="data-export" class="mt-4 glass-panel rounded-3xl shadow-2xl overflow-hidden p-6">
                     <div class="border-b border-slate-200/60 pb-5 mb-5">
                         <h2 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <span>&#128229;</span> Export Data
+                            <span>&#059669;</span> Export Data
                         </h2>
                         <p class="text-xs text-slate-500 mt-0.5">Download your school's records as CSV.</p>
                     </div>
                     <div class="flex flex-wrap gap-3">
                         <a href="/web/admin/export/students.csv"
                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-700 hover:text-indigo-200 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all">
-                            &#128229; Students CSV
+                            &#059669; Students CSV
                         </a>
                         <a href="/web/admin/export/staff.csv"
                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-700 hover:text-indigo-200 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all">
-                            &#128229; Staff CSV
+                            &#059669; Staff CSV
                         </a>
                         <a href="/web/admin/export/fees.csv"
                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-700 hover:text-indigo-200 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all">
-                            &#128229; Fees CSV
+                            &#059669; Fees CSV
                         </a>
                     </div>
                 </div>
@@ -464,11 +465,11 @@
 
                     <form id="addStaffForm" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input id="staffFullName" required placeholder="Full name"
-                               class="px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                               class="px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                         <input id="staffEmail" type="email" required placeholder="name@school.edu"
-                               class="px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                               class="px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                         <select id="staffRole"
-                                class="px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                                class="px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                             <option value="TEACHER">Teacher</option>
                             <option value="PRINCIPAL">Principal</option>
                             <option value="ADMIN">Admin</option>
@@ -512,7 +513,7 @@
                     </div>
 
                     <div class="flex gap-2">
-                        <input id="newRouteName" placeholder="e.g. Route A" class="flex-1 px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                        <input id="newRouteName" placeholder="e.g. Route A" class="flex-1 px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                         <button id="addRouteBtn" class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-700 hover:text-indigo-200 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer">
                             &#10133; Add Route
                         </button>
@@ -533,7 +534,7 @@
 
     <!-- Sleek Glassmorphic Register Student Modal -->
     <div id="registerStudentModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all max-h-[90vh] flex flex-col">
+        <div class="bg-[#F4F6FB] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all max-h-[90vh] flex flex-col">
 
             <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
@@ -549,25 +550,25 @@
                 <div class="space-y-1">
                     <label for="firstName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">First Name</label>
                     <input type="text" id="firstName" name="firstName" required placeholder="e.g. Rahul"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                           class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                 </div>
 
                 <div class="space-y-1">
                     <label for="lastName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Last Name</label>
                     <input type="text" id="lastName" name="lastName" required placeholder="e.g. Sharma"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                           class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                 </div>
 
                 <div class="space-y-1">
                     <label for="rollNumber" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Roll Number</label>
                     <input type="text" id="rollNumber" name="rollNumber" required placeholder="e.g. 6A-41"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                           class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                 </div>
 
                 <div class="space-y-1">
                     <label for="schoolClassId" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Class Assignment</label>
                     <select id="schoolClassId" name="schoolClassId" required
-                            class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                            class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                         <option value="" disabled selected>Select active class...</option>
                         <option th:each="cls : ${classList}" th:value="${cls.id}" th:text="|${cls.gradeLevel} - ${cls.sectionName}|">Grade 6 - A</option>
                     </select>
@@ -579,17 +580,17 @@
                         <div class="space-y-1">
                             <label for="guardianFirstName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Guardian First Name</label>
                             <input type="text" id="guardianFirstName" name="guardianFirstName" placeholder="e.g. Ramesh"
-                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                                   class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                         </div>
                         <div class="space-y-1">
                             <label for="guardianLastName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Guardian Last Name</label>
                             <input type="text" id="guardianLastName" name="guardianLastName" placeholder="e.g. Sharma"
-                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                                   class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                         </div>
                         <div class="space-y-1 col-span-2">
                             <label for="guardianPhone" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Guardian Phone</label>
                             <input type="text" id="guardianPhone" name="guardianPhone" placeholder="e.g. +91 98765 43210"
-                                   class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                                   class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                         </div>
                     </div>
                     <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">Leave blank to add a guardian later. When provided, the guardian is linked to this student and appears on their profile.</p>
@@ -610,7 +611,7 @@
 
     <!-- Sleek Glassmorphic Add Classroom Modal -->
     <div id="addClassroomModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#F7F9FC] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all max-h-[90vh] flex flex-col">
+        <div class="bg-[#F4F6FB] border border-slate-200 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl transform scale-100 transition-all max-h-[90vh] flex flex-col">
 
             <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
@@ -626,25 +627,25 @@
                 <div class="space-y-1">
                     <label for="gradeLevel" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Grade Level</label>
                     <input type="text" id="gradeLevel" name="gradeLevel" required placeholder="e.g. Grade 6"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                           class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                 </div>
 
                 <div class="space-y-1">
                     <label for="sectionName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Section Name</label>
                     <input type="text" id="sectionName" name="sectionName" required placeholder="e.g. A"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                           class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                 </div>
 
                 <div class="space-y-1">
                     <label for="roomNumber" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Room Number (optional)</label>
                     <input type="text" id="roomNumber" name="roomNumber" placeholder="e.g. Room 204"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                           class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                 </div>
 
                 <div class="space-y-1">
                     <label for="totalCapacity" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Total Capacity</label>
                     <input type="number" id="totalCapacity" name="totalCapacity" required min="1" placeholder="e.g. 30"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                           class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                 </div>
 
                 <div class="pt-4 flex justify-end gap-3 border-t border-slate-200/50">
@@ -768,12 +769,12 @@
             const driverOptions = driversCache.map(d => `<option value="${d.id}">${d.fullName}</option>`).join('');
 
             document.getElementById('busRoutesList').innerHTML = routesCache.map(route => `
-                <div class="flex items-center justify-between bg-[#F7F9FC]/40 border border-slate-200/60 rounded-xl p-4">
+                <div class="flex items-center justify-between bg-[#F4F6FB]/40 border border-slate-200/60 rounded-xl p-4">
                     <div>
                         <p class="text-sm font-semibold text-slate-900">${route.name}</p>
                         <p class="text-xs text-slate-500 mt-0.5">${driverName(route.driverId) || 'No driver assigned'} &middot; ${routeStatusText(route)}</p>
                     </div>
-                    <select data-route-id="${route.id}" class="assign-driver-select bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-xs px-3 py-2">
+                    <select data-route-id="${route.id}" class="assign-driver-select bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-xs px-3 py-2">
                         <option value="">Assign driver&hellip;</option>
                         ${driverOptions}
                     </select>
@@ -796,9 +797,9 @@
             await loadClassSections();
             const routeOptions = routesCache.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
             document.getElementById('classSectionRouteList').innerHTML = classSectionsCache.map(section => `
-                <div class="flex items-center justify-between bg-[#F7F9FC]/30 border border-slate-200/50 rounded-xl px-4 py-2.5">
+                <div class="flex items-center justify-between bg-[#F4F6FB]/30 border border-slate-200/50 rounded-xl px-4 py-2.5">
                     <span class="text-sm text-slate-600">${section.gradeName} &ndash; ${section.sectionName}</span>
-                    <select data-section-id="${section.id}" class="assign-route-select bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-xs px-3 py-2">
+                    <select data-section-id="${section.id}" class="assign-route-select bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-xs px-3 py-2">
                         <option value="">No route&hellip;</option>
                         ${routeOptions}
                     </select>

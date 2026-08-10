@@ -5,40 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Workspace &middot; ACADIA</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
-        :root {
-            --bg:#F4F6FB; --surface:#FFFFFF; --surface-2:#F8FAFC;
-            --line:#E7EAF2; --line-strong:#D9DFEA;
-            --text:#0F172A; --text-2:#475569; --text-3:#94A0B4;
-            --brand:#4F46E5; --brand-50:#EEF0FF; --brand-100:#E0E3FF; --brand-700:#4338CA;
-            --success:#059669; --success-50:#ECFDF5; --success-200:#A7F3D0;
-            --warn:#D97706; --warn-50:#FFFBEB; --warn-200:#FDE68A;
-            --danger:#DC2626; --danger-50:#FEF2F2; --danger-200:#FECACA;
-            --info:#2563EB; --info-50:#EFF6FF; --info-200:#BFDBFE;
-            --r:16px; --r-sm:12px; --sh-1:0 1px 2px rgba(16,24,40,.05); --sh-2:0 8px 24px rgba(16,24,40,.07);
-        }
-        body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(--text); }
-        .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--sh-1); }
-        .eyebrow { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); }
-        .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; line-height:1; border:1px solid transparent; }
-        .badge .dot { width:6px; height:6px; border-radius:50%; }
-        .badge--success { background:var(--success-50); color:var(--success); border-color:var(--success-200); }
-        .badge--info    { background:var(--info-50);    color:var(--info);    border-color:var(--info-200); }
-        .badge--neutral { background:var(--surface-2);  color:var(--text-2);  border-color:var(--line-strong); }
-        .badge--warn    { background:var(--warn-50);    color:var(--warn);    border-color:var(--warn-200); }
-        .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; font-weight:600; border-radius:var(--r-sm); transition:all .15s ease; cursor:pointer; border:1px solid transparent; }
-        .btn:focus-visible { outline:none; box-shadow:0 0 0 3px var(--brand-100); }
-        .btn-sm { padding:8px 13px; font-size:12.5px; } .btn-xs { padding:6px 11px; font-size:12px; }
-        .btn-primary { background:var(--brand); color:#fff; } .btn-primary:hover { background:var(--brand-700); }
-        .btn-secondary { background:var(--surface); color:var(--text-2); border-color:var(--line-strong); } .btn-secondary:hover { background:var(--surface-2); color:var(--text); }
-        .btn-reject { background:var(--surface); color:var(--text-2); border-color:var(--line-strong); } .btn-reject:hover { background:var(--danger-50); color:var(--danger); border-color:var(--danger-200); }
-        .navlink { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--r-sm); font-size:14px; font-weight:500; color:var(--text-2); transition:.15s; }
-        .navlink:hover { background:var(--surface-2); color:var(--text); }
-        .navlink.active { background:var(--brand-50); color:var(--brand); font-weight:600; border:1px solid var(--brand-100); }
-        ::-webkit-scrollbar { width:9px; height:9px; } ::-webkit-scrollbar-track { background:transparent; }
-        ::-webkit-scrollbar-thumb { background:#D3DAE6; border-radius:6px; } ::-webkit-scrollbar-thumb:hover { background:#B9C2D4; }
-    </style>
+    <link rel="stylesheet" href="/css/design-system.css">
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>

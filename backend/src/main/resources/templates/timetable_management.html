@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timetable &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/design-system.css">
     <style>
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #F7F9FC; }
+        ::-webkit-scrollbar-track { background: #F4F6FB; }
         ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 4px; }
         .glass-panel {
             background: #FFFFFF;
@@ -18,12 +19,12 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-[#F7F9FC] text-slate-800 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="bg-[#F4F6FB] text-slate-800 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
 
-    <header class="bg-[#F7F9FC] border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
+    <header class="bg-[#F4F6FB] border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div style="display:flex; align-items:center; gap:10px;">
-                <a href="/web/admin/dashboard" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200 p-2 rounded-xl bg-[#F7F9FC]/50 hover:bg-white">
+                <a href="/web/admin/dashboard" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200 p-2 rounded-xl bg-[#F4F6FB]/50 hover:bg-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 </a>
                 <div>
@@ -44,7 +45,7 @@
             <section class="glass-panel rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold text-slate-900">Periods</h2>
-                    <select id="filterSection" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-4 py-2">
+                    <select id="filterSection" class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-4 py-2">
                         <option value="">All class sections</option>
                     </select>
                 </div>
@@ -74,15 +75,15 @@
                 <form id="addPeriodForm" class="flex flex-wrap gap-3 items-end">
                     <div>
                         <label class="block text-xs text-slate-500 mb-1">Class Section</label>
-                        <select id="classSectionId" required class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2"></select>
+                        <select id="classSectionId" required class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2"></select>
                     </div>
                     <div>
                         <label class="block text-xs text-slate-500 mb-1">Teacher</label>
-                        <select id="teacherId" required class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2"></select>
+                        <select id="teacherId" required class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2"></select>
                     </div>
                     <div>
                         <label class="block text-xs text-slate-500 mb-1">Day</label>
-                        <select id="dayOfWeek" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
+                        <select id="dayOfWeek" class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
                             <option value="MON">Monday</option>
                             <option value="TUE">Tuesday</option>
                             <option value="WED">Wednesday</option>
@@ -92,23 +93,23 @@
                     </div>
                     <div>
                         <label class="block text-xs text-slate-500 mb-1">Period #</label>
-                        <input id="periodNumber" type="number" min="1" max="10" required value="1" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 w-20">
+                        <input id="periodNumber" type="number" min="1" max="10" required value="1" class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 w-20">
                     </div>
                     <div>
                         <label class="block text-xs text-slate-500 mb-1">Start</label>
-                        <input id="startTime" type="time" required value="08:00" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
+                        <input id="startTime" type="time" required value="08:00" class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
                     </div>
                     <div>
                         <label class="block text-xs text-slate-500 mb-1">End</label>
-                        <input id="endTime" type="time" required value="08:45" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
+                        <input id="endTime" type="time" required value="08:45" class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2">
                     </div>
                     <div>
                         <label class="block text-xs text-slate-500 mb-1">Subject</label>
-                        <select id="subjectName" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2"></select>
+                        <select id="subjectName" class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2"></select>
                     </div>
                     <div>
                         <label class="block text-xs text-slate-500 mb-1">Room (optional)</label>
-                        <input id="roomNumber" class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 w-28" placeholder="Room 101">
+                        <input id="roomNumber" class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 w-28" placeholder="Room 101">
                     </div>
                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">Add Period</button>
                 </form>
