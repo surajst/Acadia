@@ -4,9 +4,9 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity(name = "TeacherAcademicSubmission") // Explicitly named to isolate it from the management package entity
+@Entity
 @Table(name = "teacher_verifications")
-public class AcademicSubmission {
+public class TeacherVerification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

@@ -7,7 +7,7 @@ import java.util.UUID;
 
 // We explicitly name the bean here to avoid any hidden auto-naming collisions
 @Repository("teacherVerificationRepository")
-public interface TeacherVerificationRepository extends JpaRepository<AcademicSubmission, UUID> {
-    
-    List<AcademicSubmission> findByTenantIdAndStatusOrderBySubmittedAtDesc(UUID tenantId, String status);
+public interface TeacherVerificationRepository extends JpaRepository<TeacherVerification, UUID> {
+
+    List<TeacherVerification> findByTenantIdAndStatusOrderBySubmittedAtDesc(UUID tenantId, String status);
 }
