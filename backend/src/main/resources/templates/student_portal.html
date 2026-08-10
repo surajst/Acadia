@@ -241,12 +241,12 @@
                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
             </svg>
         </div>
-        <div class="ms-3 text-sm font-bold text-slate-100"
+        <div class="ms-3 text-sm font-bold text-slate-800"
              th:text="${param.success[0] == 'quest_claimed' ? 'Home quest marked as completed!' : (param.success[0] == 'reward_redeemed' ? 'Custom reward redeemed successfully!' : (param.success[0] == 'redeemed' ? 'Reward redeemed successfully!' : 'Milestone submitted successfully!'))}">
             Milestone submitted successfully!
         </div>
         <button id="toast-close-btn" type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
+                class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-800 rounded-lg p-1.5 hover:bg-slate-100 inline-flex items-center justify-center h-8 w-8 transition-colors">
             <span class="sr-only">Close</span>
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
@@ -258,12 +258,12 @@
     <div th:if="${param.error}" id="toast-error"
          class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F4F6FB]/95 rounded-2xl shadow-2xl border border-rose-500/30">
         <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-rose-300 bg-rose-500/10 rounded-lg border border-rose-500/20">✕</div>
-        <div class="ms-3 text-sm font-bold text-slate-100"
+        <div class="ms-3 text-sm font-bold text-slate-800"
              th:text="${param.error[0] == 'insufficient_xp' ? 'Insufficient Experience Points!' : 'An error occurred during transaction.'}">
             Error occurred!
         </div>
         <button id="toast-error-close-btn" type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
+                class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-800 rounded-lg p-1.5 hover:bg-slate-100 inline-flex items-center justify-center h-8 w-8 transition-colors">
             <span class="sr-only">Close</span>
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
@@ -315,7 +315,7 @@
                 <!-- Info Card -->
                 <div class="rounded-xl p-4 bg-gradient-to-r from-orange-500/10 to-rose-500/10 border border-orange-500/20 shadow-lg shadow-slate-300/40 flex justify-between items-center mb-6">
                     <div>
-                        <h2 class="text-base font-bold text-slate-100" th:text="${student != null ? student.firstName + ' ' + student.lastName : 'Arjun Sharma'}">Arjun Sharma</h2>
+                        <h2 class="text-base font-bold text-slate-900" th:text="${student != null ? student.firstName + ' ' + student.lastName : 'Arjun Sharma'}">Arjun Sharma</h2>
                         <p class="text-xs text-slate-500 mt-1 font-medium" th:text="${student != null ? student.className : 'Grade 6 - A'}">Grade 6 - A</p>
                     </div>
                     <div class="text-right">
@@ -418,7 +418,7 @@
                 <!-- Inline XP toast (syllabus only) -->
                 <div id="xp-toast" class="hidden fixed top-4 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F4F6FB]/95 rounded-2xl shadow-2xl border border-indigo-500/30 toast-enter">
                     <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-indigo-700 bg-indigo-500/10 rounded-lg border border-indigo-500/20">⭐</div>
-                    <div class="ms-3 text-sm font-bold text-slate-100"><span id="xp-toast-msg">XP awarded!</span></div>
+                    <div class="ms-3 text-sm font-bold text-slate-800"><span id="xp-toast-msg">XP awarded!</span></div>
                     <button id="xp-toast-close" type="button" class="ms-auto -mx-1.5 -my-1.5 text-slate-500 hover:text-slate-900 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">✕</button>
                 </div>
 
