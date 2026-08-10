@@ -25,10 +25,10 @@
 
         /* ── Glass ── */
         .glass-panel {
-            background: #FFFFFF;
+            background: var(--surface, #FFFFFF);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--line, #E7EAF2);
         }
 
         /* ── Sidebar ── */
@@ -333,7 +333,7 @@
                 </div>
 
                 <!-- XP Progress Card -->
-                <div class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-5 relative overflow-hidden">
+                <div class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm space-y-5 relative overflow-hidden">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Accumulated Experience Points</p>
@@ -391,7 +391,7 @@
             <!-- ████ TAB: ATTENDANCE ████ -->
             <div id="tab-attendance" class="tab-panel space-y-6">
 
-                <div class="glass-panel rounded-3xl p-4 shadow-xl shadow-slate-300/40">
+                <div class="glass-panel rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-base font-bold text-slate-900">📅 Attendance Record</h2>
@@ -403,7 +403,7 @@
                     </div>
                 </div>
 
-                <div class="glass-panel rounded-3xl p-4 shadow-xl shadow-slate-300/40">
+                <div class="glass-panel rounded-2xl p-4 shadow-sm">
                     <h3 class="text-sm font-bold text-slate-800 mb-4">Monthly Breakdown</h3>
                     <div id="attendance-records-container">
                         <p class="text-slate-500 text-sm italic py-4 px-2">Loading attendance records...</p>
@@ -422,7 +422,7 @@
                     <button id="xp-toast-close" type="button" class="ms-auto -mx-1.5 -my-1.5 text-slate-500 hover:text-slate-900 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">✕</button>
                 </div>
 
-                <section id="syllabus-progress-section" class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
+                <section id="syllabus-progress-section" class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm space-y-6">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div>
                             <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
@@ -471,7 +471,7 @@
             <div id="tab-challenges" class="tab-panel space-y-6">
 
                 <!-- Scholastic Challenges -->
-                <section id="scholastic-challenges-section" class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
+                <section id="scholastic-challenges-section" class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm space-y-6">
                     <div>
                         <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>🎯</span> Scholastic Challenges
@@ -484,7 +484,7 @@
                 </section>
 
                 <!-- Parent Quest Board -->
-                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
+                <section class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm space-y-6">
                     <div>
                         <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>🛡️</span> Home Quest Board (Parent-Assigned Tasks)
@@ -537,7 +537,7 @@
                 </section>
 
                 <!-- Submit New Milestone -->
-                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-5">
+                <section class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm space-y-5">
                     <div>
                         <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>🚀</span> Submit New Milestone
@@ -602,7 +602,7 @@
             <!-- ████ TAB: REWARDS ████ -->
             <div id="tab-rewards" class="tab-panel space-y-6">
 
-                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
+                <section class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm space-y-6">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/40 pb-5">
                         <div>
                             <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
@@ -653,7 +653,7 @@
                     </div>
                 </section>
 
-                <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
+                <section class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm space-y-6">
                     <div class="border-b border-slate-200/40 pb-5">
                         <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>🏠</span> Parent-Defined Custom Rewards
@@ -704,7 +704,7 @@
             <!-- ████ TAB: PROFILE ████ -->
             <div id="tab-profile" class="tab-panel space-y-6">
 
-                <section th:if="${currentUserRole == 'STUDENT'}" class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-slate-300/40 space-y-6">
+                <section th:if="${currentUserRole == 'STUDENT'}" class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm space-y-6">
                     <div>
                         <h3 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <span>📜</span> Submission History Log
