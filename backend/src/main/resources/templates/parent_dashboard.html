@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Parent Portal &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/design-system.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
@@ -16,7 +17,7 @@
         }
         body {
             font-family: 'Outfit', 'Inter', sans-serif;
-            background-color: #F7F9FC;
+            background-color: #F4F6FB;
             color: #0F172A;
             display: flex;
             flex-direction: column;
@@ -192,7 +193,7 @@
         @keyframes slideIn { from { transform: translateX(110%); opacity:0; } to { transform: translateX(0); opacity:1; } }
 
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #F7F9FC; }
+        ::-webkit-scrollbar-track { background: #F4F6FB; }
         ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #E2E8F0; }
     </style>
@@ -244,7 +245,7 @@
 
     <!-- ══ SUCCESS TOAST ══ -->
     <div th:if="${param.success}" id="toast"
-         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-sm p-4 bg-[#F7F9FC]/95 rounded-2xl shadow-2xl border border-emerald-500/30">
+         class="toast-enter fixed top-4 right-6 z-50 flex items-center w-full max-w-sm p-4 bg-[#F4F6FB]/95 rounded-2xl shadow-2xl border border-emerald-500/30">
         <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-emerald-700 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
             <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
@@ -255,7 +256,7 @@
             Action processed successfully!
         </div>
         <button id="toast-close-btn" type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-[#F7F9FC] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
+                class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
             <span class="sr-only">Close</span>
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
@@ -294,7 +295,7 @@
 
             <div class="flex-1"></div>
 
-            <div class="mx-1 mt-4 px-3 py-3 rounded-xl bg-[#F7F9FC]/40 border border-slate-200/50 text-xs text-slate-500 leading-relaxed">
+            <div class="mx-1 mt-4 px-3 py-3 rounded-xl bg-[#F4F6FB]/40 border border-slate-200/50 text-xs text-slate-500 leading-relaxed">
                 <p class="font-bold text-indigo-600/60 text-[9px] uppercase tracking-wider mb-1">Guardian Workspace</p>
                 <p>Review your child's progress, approve quests, and manage rewards from here.</p>
             </div>
@@ -308,7 +309,7 @@
 
                 <!-- Empty state: no linked Parent record for this user -->
                 <div th:if="${parent == null}"
-                     class="rounded-xl p-6 bg-[#F7F9FC]/60 border border-slate-200/60 text-center mt-2 mb-2">
+                     class="rounded-xl p-6 bg-[#F4F6FB]/60 border border-slate-200/60 text-center mt-2 mb-2">
                     <p class="text-3xl mb-2">👤</p>
                     <h2 class="text-base font-bold text-slate-800">No parent data found</h2>
                     <p class="text-xs text-slate-500 mt-1" th:text="${errorMessage} ?: 'No parent data found.'">No parent data found.</p>
@@ -355,7 +356,7 @@
                         <!-- Metrics grid -->
                         <div th:with="metrics=${studentMetrics[student.id.toString()]}"
                              class="grid grid-cols-2 gap-3 md:grid-cols-4 relative z-10">
-                            <div class="bg-[#F7F9FC]/60 rounded-xl p-3 border border-slate-200/60">
+                            <div class="bg-[#F4F6FB]/60 rounded-xl p-3 border border-slate-200/60">
                                 <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">School XP</p>
                                 <p class="text-xl font-black text-indigo-600" th:text="${metrics?.schoolXp ?: 0}">0</p>
                                 <div class="mt-1.5 h-1 w-full bg-white rounded-full overflow-hidden">
@@ -363,7 +364,7 @@
                                          th:style="|width: ${metrics != null ? (metrics.schoolXp > 1000 ? 100 : metrics.schoolXp / 10) : 0}%|"></div>
                                 </div>
                             </div>
-                            <div class="bg-[#F7F9FC]/60 rounded-xl p-3 border border-slate-200/60">
+                            <div class="bg-[#F4F6FB]/60 rounded-xl p-3 border border-slate-200/60">
                                 <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Parent XP</p>
                                 <p class="text-xl font-black text-emerald-600" th:text="${metrics?.parentXp ?: 0}">0</p>
                                 <div class="mt-1.5 h-1 w-full bg-white rounded-full overflow-hidden">
@@ -371,13 +372,13 @@
                                          th:style="|width: ${metrics != null ? (metrics.parentXp > 1000 ? 100 : metrics.parentXp / 10) : 0}%|"></div>
                                 </div>
                             </div>
-                            <div class="bg-[#F7F9FC]/60 rounded-xl p-3 border border-slate-200/60">
+                            <div class="bg-[#F4F6FB]/60 rounded-xl p-3 border border-slate-200/60">
                                 <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Active Streak</p>
                                 <p class="text-base font-black text-amber-600 flex items-center gap-1">
                                     🔥 <span th:text="${(metrics?.activeStreak ?: 0) + ' Days'}">0 Days</span>
                                 </p>
                             </div>
-                            <div class="bg-[#F7F9FC]/60 rounded-xl p-3 border border-slate-200/60">
+                            <div class="bg-[#F4F6FB]/60 rounded-xl p-3 border border-slate-200/60">
                                 <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Pending Review</p>
                                 <p class="text-base font-black text-pink-400">
                                     📋 <span th:text="${pendingQuestCounts[student.id.toString()] ?: 0}">0</span>
@@ -446,17 +447,17 @@
 
                     <!-- Skeleton -->
                     <div th:id="'progress-skeleton-' + ${student.id}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="bg-[#F7F9FC]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
+                        <div class="bg-[#F4F6FB]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
                             <div class="h-4 bg-slate-700/50 rounded w-1/3"></div>
                             <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
                             <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
                         </div>
-                        <div class="bg-[#F7F9FC]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
+                        <div class="bg-[#F4F6FB]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
                             <div class="h-4 bg-slate-700/50 rounded w-1/3"></div>
                             <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
                             <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
                         </div>
-                        <div class="bg-[#F7F9FC]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
+                        <div class="bg-[#F4F6FB]/40 border border-slate-200/40 rounded-2xl p-5 animate-pulse space-y-3">
                             <div class="h-4 bg-slate-700/50 rounded w-1/3"></div>
                             <div class="h-2 bg-slate-700/30 rounded-full w-full"></div>
                             <div class="h-3 bg-slate-700/30 rounded w-1/4"></div>
@@ -583,7 +584,7 @@
                         <h3 class="text-sm font-bold text-slate-900 tracking-tight">Announcements</h3>
                     </div>
 
-                    <div class="p-4 bg-[#F7F9FC]/50">
+                    <div class="p-4 bg-[#F4F6FB]/50">
                         <div th:if="${#lists.isEmpty(announcements)}"
                              class="glass-dark rounded-2xl py-4 px-6 text-center border border-dashed border-slate-200/50" style="max-height:100px;">
                             <p class="text-slate-500 font-medium text-sm">No active announcements for your child's grade.</p>
@@ -649,33 +650,33 @@
                     <!-- Compose new message -->
                     <div th:if="${students != null and !#lists.isEmpty(students)}" class="flex flex-wrap gap-2">
                         <select id="msgStudentSelect"
-                                class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 flex-1 min-w-[160px] focus:outline-none focus:border-indigo-500/60 transition-all">
+                                class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 flex-1 min-w-[160px] focus:outline-none focus:border-indigo-500/60 transition-all">
                             <option th:each="student : ${students}"
                                     th:value="${student.id}"
                                     th:text="${student.firstName} + ' ' + ${student.lastName}"></option>
                         </select>
                         <select id="msgTeacherSelect"
-                                class="bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 flex-1 min-w-[160px] focus:outline-none focus:border-indigo-500/60 transition-all"></select>
+                                class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-3 py-2 flex-1 min-w-[160px] focus:outline-none focus:border-indigo-500/60 transition-all"></select>
                     </div>
                     <div th:if="${students != null and !#lists.isEmpty(students)}" class="flex gap-2">
                         <input id="msgNewBody" placeholder="Type a message…"
-                               class="flex-1 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 placeholder-slate-500 px-3 py-2 focus:outline-none focus:border-indigo-500/60 transition-all">
+                               class="flex-1 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 placeholder-slate-500 px-3 py-2 focus:outline-none focus:border-indigo-500/60 transition-all">
                         <button id="msgSendNewBtn"
                                 class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors cursor-pointer">Send</button>
                     </div>
 
                     <!-- Conversations + thread -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-                        <div class="bg-[#F7F9FC]/60 border border-slate-200/60 rounded-2xl p-4">
+                        <div class="bg-[#F4F6FB]/60 border border-slate-200/60 rounded-2xl p-4">
                             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Conversations</h4>
                             <div id="msgConversationList" class="space-y-2"></div>
                         </div>
-                        <div class="bg-[#F7F9FC]/60 border border-slate-200/60 rounded-2xl p-4">
+                        <div class="bg-[#F4F6FB]/60 border border-slate-200/60 rounded-2xl p-4">
                             <h4 id="msgThreadTitle" class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Select a conversation</h4>
                             <div id="msgThreadMessages" class="space-y-2 mb-3" style="min-height:80px"></div>
                             <div id="msgReplyBox" class="flex gap-2" style="display:none">
                                 <input id="msgReplyBody" placeholder="Type a reply…"
-                                       class="flex-1 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 placeholder-slate-500 px-3 py-2 focus:outline-none focus:border-indigo-500/60 transition-all">
+                                       class="flex-1 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 placeholder-slate-500 px-3 py-2 focus:outline-none focus:border-indigo-500/60 transition-all">
                                 <button id="msgSendReplyBtn"
                                         class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors cursor-pointer">Send</button>
                             </div>
@@ -703,7 +704,7 @@
                             <div th:if="${students != null and !#lists.isEmpty(students)}">
                                 <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Select Child</label>
                                 <select id="profile-assignStudentId" name="studentId" required
-                                        class="w-full px-3 py-2 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm focus:outline-none focus:border-emerald-500/60 transition-all">
+                                        class="w-full px-3 py-2 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm focus:outline-none focus:border-emerald-500/60 transition-all">
                                     <option value="" disabled selected>Choose a child...</option>
                                     <option th:each="student : ${students}"
                                             th:value="${student.id}"
@@ -714,19 +715,19 @@
                                 <label for="profile-taskTitle" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Task Title</label>
                                 <input type="text" id="profile-taskTitle" name="taskDescription" required
                                        placeholder="e.g. Wash the dishes"
-                                       class="w-full px-3 py-2 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                                       class="w-full px-3 py-2 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
                             </div>
                             <div>
                                 <label for="profile-taskDesc" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Description (optional)</label>
                                 <textarea id="profile-taskDesc" name="taskNotes" rows="2"
                                           placeholder="Describe the instructions..."
-                                          class="w-full px-3 py-2 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all resize-none"></textarea>
+                                          class="w-full px-3 py-2 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all resize-none"></textarea>
                             </div>
                             <div>
                                 <label for="profile-xpBounty" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">XP Bounty</label>
                                 <input type="number" id="profile-xpBounty" name="xpBounty" required min="1"
                                        placeholder="e.g. 150"
-                                       class="w-full px-3 py-2 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                                       class="w-full px-3 py-2 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
                             </div>
                             <button type="submit"
                                     class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 cursor-pointer uppercase tracking-wider">
@@ -748,7 +749,7 @@
                             <div th:if="${students != null and !#lists.isEmpty(students)}">
                                 <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Select Child</label>
                                 <select name="studentId" id="rewardStudentId" required
-                                        class="w-full px-3 py-2 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm focus:outline-none focus:border-emerald-500/60 transition-all">
+                                        class="w-full px-3 py-2 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm focus:outline-none focus:border-emerald-500/60 transition-all">
                                     <option value="" disabled selected>Choose a child...</option>
                                     <option th:each="student : ${students}"
                                             th:value="${student.id}"
@@ -759,13 +760,13 @@
                                 <label for="rewardTitle" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Reward Title</label>
                                 <input type="text" id="rewardTitle" name="rewardTitle" required
                                        placeholder="e.g. Weekend Movie Night"
-                                       class="w-full px-3 py-2 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                                       class="w-full px-3 py-2 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
                             </div>
                             <div>
                                 <label for="xpCost" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">XP Cost</label>
                                 <input type="number" id="xpCost" name="xpCost" required min="1"
                                        placeholder="e.g. 150"
-                                       class="w-full px-3 py-2 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                                       class="w-full px-3 py-2 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
                             </div>
                             <button type="submit"
                                     class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 cursor-pointer uppercase tracking-wider">
@@ -809,7 +810,7 @@
     <!-- ══ ASSIGN TASK MODAL (legacy modal kept for quest tab button) ══ -->
     <div id="assignTaskModal"
          class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4 hidden">
-        <div class="bg-[#F7F9FC] border border-slate-200/60 rounded-2xl p-4 max-w-md w-full shadow-2xl shadow-black/60 relative">
+        <div class="bg-[#F4F6FB] border border-slate-200/60 rounded-2xl p-4 max-w-md w-full shadow-2xl shadow-black/60 relative">
             <div class="flex items-center justify-between mb-5">
                 <div class="flex items-center gap-2.5">
                     <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
@@ -828,7 +829,7 @@
                 <div>
                     <label for="assignStudentId" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Select Child</label>
                     <select id="assignStudentId" required
-                            class="w-full px-4 py-2.5 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm focus:outline-none focus:border-emerald-500/60 transition-all">
+                            class="w-full px-4 py-2.5 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm focus:outline-none focus:border-emerald-500/60 transition-all">
                         <option value="" disabled selected>Choose a child...</option>
                         <option th:each="student : ${students}"
                                 th:value="${student.id}"
@@ -838,17 +839,17 @@
                 <div>
                     <label for="taskTitle" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Task Title</label>
                     <input type="text" id="taskTitle" required placeholder="e.g. Wash the dishes"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                           class="w-full px-4 py-2.5 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
                 </div>
                 <div>
                     <label for="taskDesc" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Description</label>
                     <textarea id="taskDesc" rows="3" placeholder="Describe the instructions clearly..."
-                              class="w-full px-4 py-2.5 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all resize-none"></textarea>
+                              class="w-full px-4 py-2.5 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all resize-none"></textarea>
                 </div>
                 <div>
                     <label for="xpBounty" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">XP Bounty</label>
                     <input type="number" id="xpBounty" required min="1" placeholder="e.g. 150"
-                           class="w-full px-4 py-2.5 bg-[#F7F9FC]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
+                           class="w-full px-4 py-2.5 bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-slate-800 text-sm placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 transition-all">
                 </div>
                 <div class="flex justify-end gap-3 pt-1">
                     <button type="button" id="cancel-assign-modal-btn"
@@ -1112,7 +1113,7 @@
                         <span class="text-[10px] font-bold ${colors.text} ${colors.bg} border ${colors.border} px-2 py-0.5 rounded-full">${pct}% done</span>
                     </div>
                     <div class="space-y-1">
-                        <div class="w-full h-2 bg-[#F7F9FC] rounded-full overflow-hidden border border-slate-200/50">
+                        <div class="w-full h-2 bg-[#F4F6FB] rounded-full overflow-hidden border border-slate-200/50">
                             <div class="h-full bg-gradient-to-r ${colors.bar} rounded-full" style="width:${pct}%"></div>
                         </div>
                         <p class="text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">${subjectData.completed} / ${subjectData.total} chapters</p>

@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/design-system.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
         
         body { 
             font-family: 'Outfit', 'Inter', sans-serif; 
-            background-color: #F7F9FC; 
+            background-color: #F4F6FB; 
             color: #0F172A; 
         }
 
@@ -34,7 +35,7 @@
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #F7F9FC;
+            background: #F4F6FB;
         }
         ::-webkit-scrollbar-thumb {
             background: #FFFFFF;
@@ -62,14 +63,14 @@
                 btnPresent.querySelector('.indicator-dot').className = 'indicator-dot w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,1)]';
                 
                 // Style Absent button inactive
-                btnAbsent.className = 'px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 flex items-center gap-1.5 bg-[#F7F9FC]/40 text-slate-500 border-slate-200 hover:text-slate-600 hover:bg-white/50';
+                btnAbsent.className = 'px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 flex items-center gap-1.5 bg-[#F4F6FB]/40 text-slate-500 border-slate-200 hover:text-slate-600 hover:bg-white/50';
                 btnAbsent.querySelector('.indicator-dot').className = 'indicator-dot w-1.5 h-1.5 rounded-full bg-slate-600';
                 
                 // Dynamic row edge highlight
-                row.className = 'hover:bg-[#F7F9FC]/25 transition-all border-b border-slate-200/40 bg-emerald-950/5';
+                row.className = 'hover:bg-[#F4F6FB]/25 transition-all border-b border-slate-200/40 bg-emerald-950/5';
             } else if (status === 'ABSENT') {
                 // Style Present button inactive
-                btnPresent.className = 'px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 flex items-center gap-1.5 bg-[#F7F9FC]/40 text-slate-500 border-slate-200 hover:text-slate-600 hover:bg-white/50';
+                btnPresent.className = 'px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 flex items-center gap-1.5 bg-[#F4F6FB]/40 text-slate-500 border-slate-200 hover:text-slate-600 hover:bg-white/50';
                 btnPresent.querySelector('.indicator-dot').className = 'indicator-dot w-1.5 h-1.5 rounded-full bg-slate-600';
                 
                 // Style Absent button active
@@ -77,7 +78,7 @@
                 btnAbsent.querySelector('.indicator-dot').className = 'indicator-dot w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(251,113,133,1)]';
                 
                 // Dynamic row edge highlight
-                row.className = 'hover:bg-[#F7F9FC]/25 transition-all border-b border-slate-200/40 bg-rose-950/5';
+                row.className = 'hover:bg-[#F4F6FB]/25 transition-all border-b border-slate-200/40 bg-rose-950/5';
             }
         }
 
@@ -142,14 +143,14 @@
 
 
     <!-- Success Toast Notification -->
-    <div th:if="${param.success}" id="toast" class="toast-enter fixed top-6 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F7F9FC]/95 rounded-2xl shadow-2xl border border-emerald-500/30">
+    <div th:if="${param.success}" id="toast" class="toast-enter fixed top-6 right-6 z-50 flex items-center w-full max-w-xs p-4 bg-[#F4F6FB]/95 rounded-2xl shadow-2xl border border-emerald-500/30">
         <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-emerald-700 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
             <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
             </svg>
         </div>
         <div class="ms-3 text-sm font-bold text-slate-100">Attendance Ledger Saved Successfully.</div>
-        <button type="button" onclick="closeToast()" class="ms-auto -mx-1.5 -my-1.5 bg-[#F7F9FC] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
+        <button type="button" onclick="closeToast()" class="ms-auto -mx-1.5 -my-1.5 bg-[#F4F6FB] text-slate-500 hover:text-slate-100 rounded-lg p-1.5 hover:bg-white inline-flex items-center justify-center h-8 w-8 transition-colors">
             <span class="sr-only">Close</span>
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
@@ -233,10 +234,10 @@
                         
                         <!-- Header Class & Date Tags -->
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#F7F9FC]/80 text-indigo-700 border border-indigo-500/20" th:text="${currentClassLabel != null ? currentClassLabel : 'All Classes'}">
+                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#F4F6FB]/80 text-indigo-700 border border-indigo-500/20" th:text="${currentClassLabel != null ? currentClassLabel : 'All Classes'}">
                                 Grade 6 - A
                             </span>
-                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#F7F9FC]/80 text-emerald-700 border border-emerald-500/20" th:text="${#temporals.format(currentDate, 'MMMM dd, yyyy')}">
+                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#F4F6FB]/80 text-emerald-700 border border-emerald-500/20" th:text="${#temporals.format(currentDate, 'MMMM dd, yyyy')}">
                                 May 21, 2026
                             </span>
                         </div>
@@ -249,7 +250,7 @@
                 <div class="flex items-center gap-3">
                     <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Roster Scope:</label>
                     <div class="relative">
-                        <select onchange="location = this.value;" class="bg-[#F7F9FC]/80 border border-slate-200 text-slate-800 text-sm font-semibold rounded-xl px-4 py-2.5 pr-10 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer">
+                        <select onchange="location = this.value;" class="bg-[#F4F6FB]/80 border border-slate-200 text-slate-800 text-sm font-semibold rounded-xl px-4 py-2.5 pr-10 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer">
                             <option th:each="cls : ${classList}" 
                                     th:value="@{/web/teacher/attendance(classId=${cls.id})}"
                                     th:text="${cls.label}"
@@ -271,7 +272,7 @@
 
             <!-- Attendance Roll Call Table Panel -->
             <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
-                <div class="p-6 border-b border-slate-200/60 bg-[#F7F9FC]/90 flex justify-between items-center">
+                <div class="p-6 border-b border-slate-200/60 bg-[#F4F6FB]/90 flex justify-between items-center">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900 tracking-tight">Student Roll Call Ledger</h2>
                         <p class="text-xs text-slate-500 mt-0.5">Toggle markers to switch student attendance state natively</p>
@@ -285,14 +286,14 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-[#F7F9FC]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
+                                <tr class="bg-[#F4F6FB]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
                                     <th class="py-4 px-6 w-1/4">Roll Number</th>
                                     <th class="py-4 px-6 w-1/2">Student Name</th>
                                     <th class="py-4 px-6 w-1/4 text-center">Attendance Status</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800/40 text-sm">
-                                <tr th:each="student : ${studentList}" th:id="|row_${student.id}|" class="hover:bg-[#F7F9FC]/20 transition-all border-b border-slate-200/40 bg-emerald-950/5">
+                                <tr th:each="student : ${studentList}" th:id="|row_${student.id}|" class="hover:bg-[#F4F6FB]/20 transition-all border-b border-slate-200/40 bg-emerald-950/5">
                                     
                                     <!-- Roll Number Column -->
                                     <td class="py-4 px-6 font-mono text-xs text-indigo-600 font-bold" th:text="${student.rollNumber != null ? student.rollNumber : '--'}">
@@ -328,7 +329,7 @@
                                                     th:data-student-id="${student.id}"
                                                     data-status="ABSENT"
                                                     onclick="updateStatus(this)"
-                                                    class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 flex items-center gap-1.5 bg-[#F7F9FC]/40 text-slate-500 border-slate-200 hover:text-slate-600 hover:bg-white/50">
+                                                    class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 flex items-center gap-1.5 bg-[#F4F6FB]/40 text-slate-500 border-slate-200 hover:text-slate-600 hover:bg-white/50">
                                                 <span class="indicator-dot w-1.5 h-1.5 rounded-full bg-slate-600"></span>
                                                 Absent
                                             </button>
@@ -359,7 +360,7 @@
 
     <!-- Confirm Modal Backdrop Dialog -->
     <div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
-        <div class="bg-[#F7F9FC] rounded-3xl shadow-2xl border border-slate-200/50 p-8 max-w-md w-full mx-4 transform transition-all">
+        <div class="bg-[#F4F6FB] rounded-3xl shadow-2xl border border-slate-200/50 p-8 max-w-md w-full mx-4 transform transition-all">
             <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-700 mb-5 mx-auto border border-emerald-500/20">
                 <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -370,7 +371,7 @@
                 This action is final. Parent alerts and WhatsApp notifications will be immediately dispatched for any students marked <strong class="text-rose-400">ABSENT</strong>. Are you sure you want to save this attendance log?
             </p>
             <div class="flex gap-4">
-                <button type="button" onclick="closeModal()" class="flex-1 bg-[#F7F9FC] text-slate-600 hover:bg-white font-bold py-3 border border-slate-200/60 rounded-xl transition-colors cursor-pointer text-sm">
+                <button type="button" onclick="closeModal()" class="flex-1 bg-[#F4F6FB] text-slate-600 hover:bg-white font-bold py-3 border border-slate-200/60 rounded-xl transition-colors cursor-pointer text-sm">
                     Review Again
                 </button>
                 <button type="button" onclick="submitForm()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl shadow-lg shadow-emerald-500/20 transition-all border border-emerald-500/30 cursor-pointer text-sm">

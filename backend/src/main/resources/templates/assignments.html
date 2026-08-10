@@ -6,12 +6,13 @@
     <meta name="description" content="Assign subjects and class sections to teachers in the ACADIA admin console.">
     <title>Teacher Assignments &middot; ACADIA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/design-system.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
         body {
             font-family: 'Outfit', 'Inter', sans-serif;
-            background-color: #F7F9FC;
+            background-color: #F4F6FB;
             color: #0F172A;
         }
 
@@ -23,7 +24,7 @@
         }
 
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #F7F9FC; }
+        ::-webkit-scrollbar-track { background: #F4F6FB; }
         ::-webkit-scrollbar-thumb { background: #FFFFFF; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #E2E8F0; }
 
@@ -93,7 +94,7 @@
 
                 <!-- ── Sidebar ─────────────────────────────────────────────── -->
                 <aside class="space-y-6 lg:col-span-1">
-                    <div class="bg-[#F7F9FC]/80 border border-slate-200/50 rounded-2xl p-4 shadow-xl shadow-slate-300/40 space-y-4">
+                    <div class="bg-[#F4F6FB]/80 border border-slate-200/50 rounded-2xl p-4 shadow-xl shadow-slate-300/40 space-y-4">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 px-2">Navigation Scope</h3>
                         <nav class="space-y-1">
                             <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management"
@@ -116,7 +117,7 @@
                         </nav>
                     </div>
 
-                    <div class="bg-[#F7F9FC]/90 border border-slate-200/60 rounded-2xl p-5 text-sm text-slate-600 space-y-3 leading-relaxed shadow-xl shadow-slate-300/40">
+                    <div class="bg-[#F4F6FB]/90 border border-slate-200/60 rounded-2xl p-5 text-sm text-slate-600 space-y-3 leading-relaxed shadow-xl shadow-slate-300/40">
                         <p class="font-bold uppercase tracking-wider flex items-center gap-1.5 text-emerald-600">
                             <span>&#9889;</span> Guidance
                         </p>
@@ -159,7 +160,7 @@
 
                     <!-- ── Assign form card ──────────────────────────────── -->
                     <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
-                        <div class="p-4 border-b border-slate-200/60 flex items-center justify-between bg-[#F7F9FC]/90">
+                        <div class="p-4 border-b border-slate-200/60 flex items-center justify-between bg-[#F4F6FB]/90">
                             <div>
                                 <h2 class="text-base font-bold text-slate-900 tracking-tight">Assign Subject to Teacher</h2>
                                 <p class="text-xs text-slate-500 mt-0.5">Link a teacher to a class section with a specific subject.</p>
@@ -171,7 +172,7 @@
                                 <div class="space-y-1">
                                     <label for="teacherId" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Teacher</label>
                                     <select id="teacherId" name="teacherId" required
-                                            class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all cursor-pointer">
+                                            class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all cursor-pointer">
                                         <option value="" disabled>Select teacher...</option>
                                         <option th:each="t : ${teachers}"
                                                 th:value="${t.id}"
@@ -182,7 +183,7 @@
                                 <div class="space-y-1">
                                     <label for="classSectionId" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Class Section</label>
                                     <select id="classSectionId" name="classSectionId" required
-                                            class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all cursor-pointer">
+                                            class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all cursor-pointer">
                                         <option value="" disabled selected>Select section...</option>
                                         <option th:each="sec : ${sections}"
                                                 th:value="${sec.id}"
@@ -195,12 +196,12 @@
                                     <label for="subjectName" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Subject Name</label>
                                     <input type="text" id="subjectName" name="subjectName" required
                                            placeholder="e.g. Mathematics"
-                                           class="w-full px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                                           class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                                 </div>
                                 <div class="flex items-end pb-1">
                                     <label for="isHomeClass" class="flex items-center gap-3 cursor-pointer group">
                                         <input type="checkbox" id="isHomeClass" name="isHomeClass" value="true"
-                                               class="w-5 h-5 rounded border-slate-200 bg-[#F7F9FC]/60 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0 cursor-pointer">
+                                               class="w-5 h-5 rounded border-slate-200 bg-[#F4F6FB]/60 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0 cursor-pointer">
                                         <div>
                                             <p class="text-sm font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">Home Class Teacher</p>
                                             <p class="text-[10px] text-slate-500">Primary classroom contact</p>
@@ -219,14 +220,14 @@
 
                     <!-- ── Current assignments table ──────────────────────── -->
                     <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
-                        <div class="p-4 border-b border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F7F9FC]/90">
+                        <div class="p-4 border-b border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F4F6FB]/90">
                             <div>
                                 <h2 class="text-base font-bold text-slate-900 tracking-tight">Current Assignments</h2>
                                 <p class="text-xs text-slate-500 mt-0.5">Filter by teacher to view and manage assigned classes.</p>
                             </div>
                             <div class="shrink-0" th:if="${not #lists.isEmpty(teachers)}">
                                 <select id="teacherFilter"
-                                        class="px-4 py-2 bg-[#F7F9FC]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
+                                        class="px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
                                         onchange="window.location.href='/web/admin/assignments?teacher=' + this.value">
                                     <option th:each="t : ${teachers}"
                                             th:value="${t.id}"
@@ -251,7 +252,7 @@
                         <div th:unless="${#lists.isEmpty(assignments)}" class="overflow-x-auto" style="max-height:320px; overflow-y:auto;">
                             <table class="w-full text-left border-collapse">
                                 <thead class="sticky top-0 z-10">
-                                    <tr class="bg-[#F7F9FC]/80 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
+                                    <tr class="bg-[#F4F6FB]/80 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
                                         <th class="py-3 px-4">Class</th>
                                         <th class="py-3 px-4">Subject</th>
                                         <th class="py-3 px-4">Role</th>
@@ -259,7 +260,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-800/40 text-sm">
-                                    <tr th:each="a : ${assignments}" class="hover:bg-[#F7F9FC]/30 transition-colors group">
+                                    <tr th:each="a : ${assignments}" class="hover:bg-[#F4F6FB]/30 transition-colors group">
                                         <td class="py-2 px-4 font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors"
                                             th:text="${a.className}">Grade 6 – A</td>
                                         <td class="py-2 px-4 text-slate-600" th:text="${a.subjectName}">Mathematics</td>
@@ -289,10 +290,10 @@
                     </div>
 
                     <!-- Footer back-link -->
-                    <div class="flex justify-between items-center bg-[#F7F9FC]/60 border border-slate-200/50 rounded-2xl p-5 shadow-lg">
+                    <div class="flex justify-between items-center bg-[#F4F6FB]/60 border border-slate-200/50 rounded-2xl p-5 shadow-lg">
                         <p class="text-xs text-slate-500">Manage teacher subject portfolios and home class responsibilities.</p>
                         <a href="/web/admin/dashboard"
-                           class="px-5 py-2.5 bg-[#F7F9FC] hover:bg-white text-indigo-700 hover:text-indigo-200 border border-slate-200 hover:border-indigo-500/25 rounded-xl text-xs font-bold transition-all shadow-inner">
+                           class="px-5 py-2.5 bg-[#F4F6FB] hover:bg-white text-indigo-700 hover:text-indigo-200 border border-slate-200 hover:border-indigo-500/25 rounded-xl text-xs font-bold transition-all shadow-inner">
                             &larr; Back to Roster Hub
                         </a>
                     </div>
