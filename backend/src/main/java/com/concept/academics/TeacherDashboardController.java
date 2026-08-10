@@ -25,12 +25,12 @@ public class TeacherDashboardController {
     // public String viewTeacherDashboard(Model model) {
     //     UUID currentTenantId = UUID.fromString("00000000-0000-0000-0000-000000000000"); 
     // 
-    //     List<AcademicSubmission> rawSubmissions = submissionRepo
+    //     List<TeacherVerification> rawSubmissions = submissionRepo
     //             .findByTenantIdAndStatusOrderBySubmittedAtDesc(currentTenantId, "PENDING");
     // 
     //     List<SubmissionQueueDto> enrichedQueue = new ArrayList<>();
     // 
-    //     for (AcademicSubmission sub : rawSubmissions) {
+    //     for (TeacherVerification sub : rawSubmissions) {
     //         String dynamicSkillName = mathSkillRepo.findById(sub.getSkillId())
     //                 .map(MathSkill::getSkillName)
     //                 .orElse("Unknown Math Assignment");
