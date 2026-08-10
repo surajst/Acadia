@@ -69,6 +69,21 @@ body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(
 .btn-security { background:var(--surface); color:var(--text); border-color:var(--line-strong); }
 .btn-security:hover { border-color:var(--brand); color:var(--brand); background:var(--brand-50); }
 
+/* ── Shape modifier: pill-radius buttons (gamified portal actions) ───────── */
+.btn-pill { border-radius:999px; }
+
+/* ── Portal action variants ──────────────────────────────────────────────────
+   The parent/student portals colour-code actions (approve=emerald, reward=pink,
+   message=indigo). These inherit the shared .btn base — one shape, focus-ring,
+   and transition — while preserving that semantic colour system. Use with .btn
+   (and usually .btn-pill .btn-xs). */
+.btn-emerald { background:#059669; color:#fff; }
+.btn-emerald:hover { background:#047857; }
+.btn-pink { background:#DB2777; color:#fff; }
+.btn-pink:hover { background:#BE185D; }
+.btn-indigo { background:var(--brand); color:#fff; }
+.btn-indigo:hover { background:var(--brand-700); }
+
 /* ── Sidebar nav links ───────────────────────────────────────────────────── */
 .navlink { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--r-sm); font-size:14px; font-weight:500; color:var(--text-2); transition:.15s; }
 .navlink:hover { background:var(--surface-2); color:var(--text); }

@@ -638,7 +638,7 @@
                                     <input type="hidden" name="rewardId" th:value="${reward.id}"/>
                                     <button type="submit"
                                             th:disabled="${isPending or totalXp < reward.xpCost}"
-                                            class="w-full py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-300"
+                                            class="btn w-full py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-300"
                                             th:classappend="${isPending} ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 cursor-not-allowed' : (${totalXp >= reward.xpCost} ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white cursor-pointer shadow-lg shadow-emerald-600/20' : 'bg-white/40 text-slate-500 border border-slate-200/30 cursor-not-allowed')">
                                         <span th:text="${isPending} ? '⏳ AWAITING PARENT CO-SIGN' : (${totalXp >= reward.xpCost} ? 'Redeem Reward' : 'Insufficient XP (Locked)')">Redeem Reward</span>
                                     </button>
@@ -1158,7 +1158,7 @@
                             </div>
                         </div>
                         <div class="mt-4">
-                            <button class="open-task-modal-btn w-full py-2 bg-white hover:bg-indigo-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-colors"
+                            <button class="open-task-modal-btn btn w-full py-2 bg-white hover:bg-indigo-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-colors"
                                     data-task-id="${task.id}" data-task-title="${task.title}" data-task-type="${task.taskType}" data-task-xp="${task.xpReward}">
                                 Submit Completion
                             </button>
