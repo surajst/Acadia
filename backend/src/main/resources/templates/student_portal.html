@@ -313,7 +313,7 @@
             <div id="tab-home" class="tab-panel active space-y-6">
 
                 <!-- Info Card -->
-                <div class="rounded-xl p-4 bg-gradient-to-r from-orange-500/10 to-rose-500/10 border border-orange-500/20 shadow-lg shadow-slate-300/40 flex justify-between items-center mb-6">
+                <div class="card p-4 shadow-sm flex justify-between items-center mb-6">
                     <div>
                         <h2 class="text-base font-bold text-slate-900" th:text="${student != null ? student.firstName + ' ' + student.lastName : 'Arjun Sharma'}">Arjun Sharma</h2>
                         <p class="text-xs text-slate-500 mt-1 font-medium" th:text="${student != null ? student.className : 'Grade 6 - A'}">Grade 6 - A</p>
