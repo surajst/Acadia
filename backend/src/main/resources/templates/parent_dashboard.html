@@ -25,10 +25,10 @@
 
         /* ── Glass ── */
         .glass-dark {
-            background: #FFFFFF;
+            background: var(--surface, #FFFFFF);
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--line, #E7EAF2);
         }
 
         /* ── Sidebar ── */
@@ -316,7 +316,7 @@
                 </div>
 
                 <!-- Parent Info Card -->
-                <div th:if="${parent != null}" class="rounded-xl p-4 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 shadow-lg shadow-slate-300/40 flex justify-between items-center mt-2 mb-2">
+                <div th:if="${parent != null}" class="rounded-xl p-4 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 shadow-sm flex justify-between items-center mt-2 mb-2">
                     <div>
                         <h2 class="text-base font-bold text-slate-900" th:text="${parent.firstName} + ' ' + ${parent.lastName}">Parent Name</h2>
                         <p class="text-xs text-slate-500 mt-1 font-medium">Guardian Workspace</p>
