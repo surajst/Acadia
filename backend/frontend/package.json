@@ -1,0 +1,12 @@
+{
+  "name": "concept-tailwind-build",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Compiles the Tailwind CSS used by the Thymeleaf templates. Invoked by the Maven build (frontend-maven-plugin) so it runs automatically during `mvn package` / the Docker build, replacing the dev-only cdn.tailwindcss.com script.",
+  "scripts": {
+    "build": "tailwindcss -c tailwind.config.js -i input.css -o ../target/classes/static/css/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.13"
+  }
+}
