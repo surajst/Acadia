@@ -1,0 +1,65 @@
+-- V1 baseline schema for Concept/Acadia.
+-- ENTITY-DERIVED: generated offline from the JPA @Entity model via Hibernate
+-- schema export (see harden/flyway-migrations). This is the intended schema.
+--
+-- RECONCILIATION GATE (before first prod deploy): diff this against the live
+-- database (pg_dump --schema-only) and patch any drift accreted by the old
+-- ddl-auto=update, otherwise Hibernate ddl-auto=validate will fail on startup.
+-- Existing databases adopt this via flyway baseline-on-migrate (no DDL re-run).
+
+create table academic_submissions (xp_bounty integer not null, submitted_at timestamp(6), id uuid not null, student_id uuid not null, teacher_task_id uuid, answer_1 varchar(1000), answer_2 varchar(1000), answer_3 varchar(1000), proof_of_work_notes varchar(2000), rejection_reason varchar(255), skill_name varchar(255) not null, status varchar(255), primary key (id));
+create table academic_years (end_date date not null, is_current boolean not null, start_date date not null, id uuid not null, tenant_id uuid not null, name varchar(255) not null, primary key (id));
+create table announcements (created_at timestamp(6) not null, academic_year_id uuid not null, created_by uuid not null, id uuid not null, tenant_id uuid not null, content TEXT not null, target_grade varchar(255) not null, title varchar(255) not null, primary key (id));
+create table assessments (assessment_date date not null, max_score integer not null, academic_year_id uuid not null, class_section_id uuid not null, created_by_teacher_id uuid not null, id uuid not null, tenant_id uuid not null, subject_type varchar(255) not null, term varchar(255) not null check (term in ('TERM1','TERM2','FINAL')), title varchar(255) not null, primary key (id));
+create table attendance (attendance_date date not null, academic_year_id uuid not null, class_section_id uuid not null, id uuid not null, student_id uuid not null, tenant_id uuid not null, remarks varchar(255), status varchar(255) not null check (status in ('PRESENT','ABSENT','TARDY','EXCUSED')), primary key (id));
+create table audit_logs (created_at timestamp(6) not null, academic_year_id uuid not null, actor_user_id uuid, entity_id uuid, id uuid not null, tenant_id uuid not null, summary varchar(500) not null, action varchar(255) not null, actor_email varchar(255), entity_type varchar(255), primary key (id));
+create table bus_routes (current_latitude float(53), current_longitude float(53), last_ping_at timestamp(6) with time zone, academic_year_id uuid not null, driver_id uuid, id uuid not null, tenant_id uuid not null, name varchar(255) not null, primary key (id));
+create table class_sections (academic_year_id uuid not null, bus_route_id uuid, id uuid not null, teacher_id uuid, tenant_id uuid not null, grade_name varchar(255) not null, room_number varchar(255), section_name varchar(255) not null, primary key (id));
+create table conversations (created_at timestamp(6) not null, last_message_at timestamp(6) not null, academic_year_id uuid not null, id uuid not null, student_id uuid not null, teacher_id uuid not null, tenant_id uuid not null, primary key (id));
+create table curriculums (standard integer not null, topic_order integer not null, xp_reward integer not null, academic_year_id uuid not null, id uuid not null, tenant_id uuid not null, subject_type varchar(255) not null, syllabus_type varchar(255) not null check (syllabus_type in ('CBSE','ICSE','CAMBRIDGE')), topic_name varchar(255) not null, primary key (id));
+create table fee_invoices (amount_due numeric(19,2) not null, amount_paid numeric(19,2) not null, total_amount numeric(19,2) not null, waiver_amount numeric(19,2), academic_year_id uuid not null, id uuid not null, student_id uuid not null, tenant_id uuid not null, waiver_status varchar(20) check (waiver_status in ('NONE','PENDING','APPROVED','REJECTED')), status varchar(50) not null check (status in ('UNPAID','PARTIALLY_PAID','PAID')), waiver_reason varchar(500), primary key (id));
+create table fee_structures (term_fee numeric(19,2) not null, tuition_fee numeric(19,2) not null, academic_year_id uuid not null, id uuid not null, tenant_id uuid not null, grade_level varchar(255) not null unique, primary key (id));
+create table fee_transactions (amount_paid numeric(19,2) not null, paid_at timestamp(6) not null, academic_year_id uuid not null, id uuid not null, invoice_id uuid not null, tenant_id uuid not null, payment_mode varchar(50) not null, primary key (id));
+create table grade_subjects (academic_year_id uuid not null, id uuid not null, subject_id uuid not null, tenant_id uuid not null, grade_name varchar(255) not null, primary key (id));
+create table math_chapters (sequence_number integer, academic_year_id uuid not null, id uuid not null, tenant_id uuid not null, title varchar(255), primary key (id));
+create table math_skills (max_xp_reward integer, academic_year_id uuid not null, chapter_id uuid not null, id uuid not null, tenant_id uuid not null, skill_name varchar(255), primary key (id));
+create table messages (created_at timestamp(6) not null, conversation_id uuid not null, id uuid not null, sender_id uuid not null, body varchar(2000) not null, sender_role varchar(255) not null, primary key (id));
+create table notifications (read boolean not null, created_at timestamp(6) not null, academic_year_id uuid not null, id uuid not null, recipient_id uuid not null, related_entity_id uuid, tenant_id uuid not null, body varchar(1000), recipient_role varchar(255) not null, title varchar(255) not null, type varchar(255) not null, primary key (id));
+create table parent_quests (xp_bounty integer, academic_year_id uuid not null, id uuid not null, parent_id uuid, student_id uuid not null, tenant_id uuid not null, status varchar(255), task_description varchar(255), primary key (id));
+create table parent_rewards (xp_cost integer, academic_year_id uuid not null, id uuid not null, parent_id uuid, student_id uuid not null, tenant_id uuid not null, reward_title varchar(255), status varchar(255), primary key (id));
+create table parents (academic_year_id uuid not null, id uuid not null, tenant_id uuid not null, user_id uuid, email varchar(255), first_name varchar(255) not null, last_name varchar(255) not null, phone_number varchar(255), preferred_language varchar(255), primary key (id));
+create table reward_items (inventory_count integer not null, xp_cost integer not null, academic_year_id uuid not null, id uuid not null, tenant_id uuid not null, description varchar(1000), display_emoji varchar(255), title varchar(255) not null, primary key (id));
+create table school_classes (total_capacity integer not null, academic_year_id uuid not null, id uuid not null, tenant_id uuid not null, grade_level varchar(255) not null, room_number varchar(255), section_name varchar(255) not null, primary key (id));
+create table student_assessment_scores (score integer not null, graded_at timestamp(6) not null, assessment_id uuid not null, graded_by_teacher_id uuid not null, id uuid not null, student_id uuid not null, primary key (id));
+create table student_metrics (active_streak integer, parent_xp integer, school_xp integer, academic_year_id uuid not null, id uuid not null, student_id uuid not null unique, tenant_id uuid not null, primary key (id));
+create table student_parents (parent_id uuid not null, student_id uuid not null, primary key (parent_id, student_id));
+create table student_progress (completed boolean not null, completed_at timestamp(6), curriculum_id uuid not null, id uuid not null, student_id uuid not null, status varchar(20) not null, rejection_reason varchar(255), primary key (id));
+create table students (academic_year_id uuid not null, class_section_id uuid not null, id uuid not null, school_class_id uuid, tenant_id uuid not null, user_id uuid, first_name varchar(255) not null, last_name varchar(255) not null, roll_number varchar(255), primary key (id));
+create table subject_assignments (is_home_class boolean not null, academic_year_id uuid not null, class_section_id uuid not null, id uuid not null, teacher_id uuid not null, tenant_id uuid not null, subject_name varchar(255) not null, primary key (id));
+create table subjects (active boolean not null, sort_order integer not null, academic_year_id uuid not null, id uuid not null, tenant_id uuid not null, code varchar(255) not null, color_hex varchar(255), display_name varchar(255) not null, primary key (id));
+create table teacher_tasks (assigned_to_class boolean not null, due_date date, standard integer not null, xp_reward integer not null, created_at timestamp(6) not null, academic_year_id uuid, created_by_teacher_id uuid not null, id uuid not null, student_id uuid, tenant_id uuid, question_1 varchar(500), question_2 varchar(500), question_3 varchar(500), description TEXT, subject_type varchar(255) not null, task_status varchar(255) not null, task_type varchar(255) not null check (task_type in ('HOMEWORK','PRACTICE','PROJECT','READING')), title varchar(255) not null, primary key (id));
+create table teacher_verifications (evaluated_at timestamp(6), submitted_at timestamp(6) not null, evaluated_by uuid, id uuid not null, skill_id uuid not null, student_id uuid not null, tenant_id uuid not null, status varchar(20) not null, primary key (id));
+create table tenants (is_active boolean not null, onboarding_completed boolean, created_at timestamp(6) with time zone not null, id uuid not null, name varchar(255) not null, subdomain varchar(255) not null unique, tier varchar(255) check (tier in ('FULL_SMS','PARENT_APP_ONLY')), primary key (id));
+create table timetable_entries (day_of_week varchar(3) not null, period_number integer not null, end_time varchar(5) not null, start_time varchar(5) not null, academic_year_id uuid not null, class_section_id uuid not null, id uuid not null, teacher_id uuid not null, tenant_id uuid not null, room_number varchar(255), subject_name varchar(255) not null, primary key (id));
+create table users (is_active boolean not null, academic_year_id uuid not null, id uuid not null, tenant_id uuid not null, approval_status varchar(20) check (approval_status in ('PENDING','APPROVED','REJECTED')), email varchar(255) not null unique, full_name varchar(255) not null, password_hash varchar(255) not null, role varchar(255) not null check (role in ('ADMIN','PRINCIPAL','TEACHER','PARENT','STUDENT','DRIVER')), primary key (id));
+alter table if exists assessments add constraint FK4q12s84jp53hclk5uy53mj9po foreign key (class_section_id) references class_sections;
+alter table if exists attendance add constraint FKq3gmvwa0njej7yuab4iatfl5c foreign key (class_section_id) references class_sections;
+alter table if exists attendance add constraint FK7121lveuhtmu9wa6m90ayd5yg foreign key (student_id) references students;
+alter table if exists grade_subjects add constraint FKoh3xj8fy175046rjmux81u23q foreign key (subject_id) references subjects;
+alter table if exists math_skills add constraint FKn4rxw4onkrl812n21uatr57tj foreign key (chapter_id) references math_chapters;
+alter table if exists parent_quests add constraint FKagk11miye13opl0y5w1unj1ap foreign key (parent_id) references parents;
+alter table if exists parent_quests add constraint FKrg3ult05l7d9s85w7vli0agt2 foreign key (student_id) references students;
+alter table if exists parent_rewards add constraint FKdohxf2t0pcyvo3he0ru7j8qyi foreign key (parent_id) references parents;
+alter table if exists parent_rewards add constraint FKq40px7ynavfils962fwqjv6j9 foreign key (student_id) references students;
+alter table if exists student_assessment_scores add constraint FKnko1a0ari1wj1kwjsnhkcc70b foreign key (assessment_id) references assessments;
+alter table if exists student_assessment_scores add constraint FKa3rvr8gi2mubh02ewe4sf9l3w foreign key (student_id) references students;
+alter table if exists student_metrics add constraint FKmkcpcsact4jboflor9p3v5nyp foreign key (student_id) references students;
+alter table if exists student_parents add constraint FKh8yi0uy8nbnfqhtsnw3kv158v foreign key (parent_id) references parents;
+alter table if exists student_parents add constraint FKeamoo6ghyb022owmr29yqha3v foreign key (student_id) references students;
+alter table if exists student_progress add constraint FKqlgs2du7cglosa8t19lagjs8m foreign key (curriculum_id) references curriculums;
+alter table if exists student_progress add constraint FKo0ptk24xm7njb9nbhsjldncrl foreign key (student_id) references students;
+alter table if exists students add constraint FKsi1sa580rjsyreh5f67si6kpl foreign key (class_section_id) references class_sections;
+alter table if exists students add constraint FK9y2p8c5ajb3uoypn39eiragjw foreign key (school_class_id) references school_classes;
+alter table if exists subject_assignments add constraint FK9fjwnmi6jxjo6mkf5bfrd47 foreign key (class_section_id) references class_sections;
+alter table if exists subject_assignments add constraint FKk9qq0y3xdxwe0dyvrvddlvm9a foreign key (teacher_id) references users;
+alter table if exists timetable_entries add constraint FKg91nwufnfo4ltakuy150lo37k foreign key (class_section_id) references class_sections;
