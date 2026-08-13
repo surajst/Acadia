@@ -120,8 +120,10 @@ public class AssignmentService {
             resp.put("count", existing.size());
             return resp;
         }
+        // Same null-tenant trap as the test harness: assignSubject resolves the
+        // teacher with findByIdAndTenantId, which fails closed on a null tenant.
         SubjectAssignment assignment = assignmentService.assignSubject(
-                teacher.getId(), PILOT_SECTION_ID, "Mathematics", true, null);
+                teacher.getId(), PILOT_SECTION_ID, "Mathematics", true, teacher.getTenantId());
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("status", "seeded");
         resp.put("count", 1);

@@ -8,7 +8,9 @@ module.exports = defineConfig({
   workers: 1,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:8080',
+    // Overridable so the suite can be pointed at a server on another port —
+    // e.g. when 8080 is already taken by a local dev instance.
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: 'on-first-retry',
     actionTimeout: 30000,
   },
