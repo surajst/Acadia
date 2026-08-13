@@ -36,3 +36,6 @@ Thumbs.db
 backend/frontend/node_modules/
 backend/frontend/node/
 backend/target/
+
+# Local production schema dumps pulled for migration reconciliation.
+prod-schema.sql
