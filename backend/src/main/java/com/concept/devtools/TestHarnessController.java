@@ -293,8 +293,12 @@ public class TestHarnessController {
                         .stream()
                         .anyMatch(a -> a.getClassSection().getId().equals(PILOT_SECTION_ID) && a.isHomeClass());
                     if (!hasHomeClassAssignment) {
+                        // The tenant id is required, not optional: assignSubject resolves the
+                        // teacher with findByIdAndTenantId, which fails closed on a null tenant.
+                        // Passing null here silently seeded nothing and left the pilot teacher
+                        // with zero classes, failing every downstream assignment test.
                         subjectAssignmentService.assignSubject(
-                                pilotTeacher.getId(), PILOT_SECTION_ID, "Mathematics", true, null);
+                                pilotTeacher.getId(), PILOT_SECTION_ID, "Mathematics", true, activeTenantId);
                         System.err.println("--- TEST RESET: pilot SubjectAssignment seeded ---");
                     } else {
                         System.err.println("--- TEST RESET: pilot SubjectAssignment already present ---");
