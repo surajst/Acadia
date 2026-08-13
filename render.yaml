@@ -21,7 +21,11 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
-    healthCheckPath: /login
+    # Real health check: /login returns 200 even when the database is
+    # unreachable, so a dead DB looked healthy. /actuator/health reports DOWN
+    # when the DB connection fails, so Render stops routing to a broken
+    # instance instead of serving errors.
+    healthCheckPath: /actuator/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: postgres

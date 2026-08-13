@@ -91,6 +91,15 @@ public class SecurityConfig {
                         .requestMatchers("/web/parent/**").hasAnyRole("PARENT", "ADMIN")
                         .requestMatchers("/feed").authenticated() // announcement feed leaked cross-tenant data while public
                         .requestMatchers("/login", "/logout").permitAll()
+                        // Liveness/readiness probe: Render calls this unauthenticated, so it
+                        // must be public. It returns only {"status":"UP"|"DOWN"} to anonymous
+                        // callers — component detail is gated by
+                        // management.endpoint.health.show-details=when-authorized.
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        // Everything else under /actuator (metrics, prometheus, info) describes
+                        // internals and must never be public — this chain ends in permitAll(),
+                        // so without this line the scrape endpoint would be world-readable.
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
