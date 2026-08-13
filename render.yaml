@@ -33,6 +33,11 @@ services:
         value: "false"
       - key: JWT_SECRET
         generateValue: true
+      # Error tracking. sync:false means Render prompts for the value in the
+      # dashboard rather than storing it here. Leave it unset and the Sentry
+      # SDK stays a no-op — the app runs exactly as before.
+      - key: SENTRY_DSN
+        sync: false
       - key: DB_HOST
         fromDatabase:
           name: acadia-postgres
