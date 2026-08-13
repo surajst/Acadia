@@ -14,19 +14,19 @@ const pagesToTest = [
 test.describe('Viewport Architecture Standards', () => {
     test.beforeAll(async ({ browser }) => {
         const page = await browser.newPage();
-        await page.goto('http://localhost:8080/test/reset');
+        await page.goto('/test/reset');
         await page.close();
     });
 
     for (const p of pagesToTest) {
         test(`Assert zero-scroll layout on ${p.path} (${p.role})`, async ({ page }) => {
-            await page.goto('http://localhost:8080/login');
+            await page.goto('/login');
             await page.fill('#username', p.role);
             await page.fill('#password', 'PilotLaunchSecure2026!');
             await page.click('button[type="submit"]');
             await page.waitForLoadState('load');
 
-            await page.goto(`http://localhost:8080${p.path}`);
+            await page.goto(p.path);
             await page.waitForLoadState('load');
 
             const hasNoOuterScroll = await page.evaluate(() => {
