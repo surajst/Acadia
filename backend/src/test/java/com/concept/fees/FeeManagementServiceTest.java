@@ -49,10 +49,12 @@ public class FeeManagementServiceTest {
     private com.concept.tenant.AcademicYearRepository academicYearRepository;
 
     private UUID testInvoiceId;
+    private UUID testTenantId;
 
     @BeforeEach
     public void setup() {
         UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        this.testTenantId = tenantId;
         UUID academicYearId = UUID.fromString("00000000-0000-0000-0000-111111111111");
 
         ClassSection classSection = new ClassSection();
@@ -90,7 +92,7 @@ public class FeeManagementServiceTest {
     @Test
     public void testRecordPayment_UnpaidToPartiallyPaid() {
         // Record a partial payment of 5000 INR
-        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "ONLINE", null, null);
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "ONLINE", testTenantId, null);
 
         FeeInvoice updated = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
         assertEquals(new BigDecimal("5000.00"), updated.getAmountPaid());
@@ -106,7 +108,7 @@ public class FeeManagementServiceTest {
     @Test
     public void testRecordPayment_FullyPaid() {
         // Record a payment of 20000 INR
-        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("20000.00"), "CASH", null, null);
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("20000.00"), "CASH", testTenantId, null);
 
         FeeInvoice updated = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
         assertEquals(new BigDecimal("20000.00"), updated.getAmountPaid());

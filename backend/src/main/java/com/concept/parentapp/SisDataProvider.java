@@ -19,7 +19,7 @@ import java.util.UUID;
  */
 public interface SisDataProvider {
 
-    Optional<StudentSummary> getStudent(UUID studentId);
+    Optional<StudentSummary> getStudent(UUID studentId, UUID tenantId);
 
     List<AttendanceRecord> getAttendance(UUID studentId, DateRange range);
 

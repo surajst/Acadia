@@ -118,7 +118,7 @@ public class OversightService {
                 ? feeInvoiceRepository.findByTenantIdAndWaiverStatus(tenantId, FeeInvoice.FeeWaiverStatus.PENDING)
                 : List.of();
         return pending.stream().map(invoice -> {
-            Student student = studentRepository.findById(invoice.getStudentId()).orElse(null);
+            Student student = studentRepository.findByIdAndTenantId(invoice.getStudentId(), tenantId).orElse(null);
             Map<String, Object> row = new HashMap<>();
             row.put("invoiceId", invoice.getId());
             row.put("studentName", student != null ? student.getFirstName() + " " + student.getLastName() : "Unknown");
@@ -168,9 +168,8 @@ public class OversightService {
     @Transactional
     public Map<String, Object> decideStaff(UUID userId, boolean approve, Authentication authentication) {
         UUID callerTenantId = tenant(authentication);
-        User staff = userRepository.findById(userId).orElse(null);
-        if (staff == null || callerTenantId == null || !callerTenantId.equals(staff.getTenantId())) {
-            // Same message whether the user doesn't exist or belongs to another tenant.
+        User staff = userRepository.findByIdAndTenantId(userId, callerTenantId).orElse(null);
+        if (staff == null) {
             throw OversightException.badRequest("Staff member not found");
         }
         if (staff.getApprovalStatus() != User.ApprovalStatus.PENDING) {
@@ -238,7 +237,7 @@ public class OversightService {
     // ─── Teacher milestone approvals ────────────────────────────────────────
 
     @Transactional
-    public Map<String, Object> approveMilestone(UUID submissionId) {
+    public Map<String, Object> approveMilestone(UUID submissionId, Authentication authentication) {
         try {
             AcademicSubmission submission = academicSubmissionRepository.findById(submissionId)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid submission ID"));
@@ -248,7 +247,7 @@ public class OversightService {
             submission.setStatus("APPROVED");
             academicSubmissionRepository.saveAndFlush(submission);
 
-            Student student = studentRepository.findById(submission.getStudentId())
+            Student student = studentRepository.findByIdAndTenantId(submission.getStudentId(), tenant(authentication))
                     .orElseThrow(() -> new IllegalArgumentException("Student not found"));
             StudentMetric metric = ensureMetric(student);
             metric.setSchoolXp((metric.getSchoolXp() != null ? metric.getSchoolXp() : 0) + submission.getXpBounty());

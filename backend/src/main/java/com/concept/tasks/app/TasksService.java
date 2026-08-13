@@ -187,7 +187,9 @@ public class TasksService {
 
     public List<Map<String, Object>> todayAttendance(UUID sectionId, Authentication authentication) {
         User teacher = userRepository.findByEmail(authentication.getName()).orElse(null);
-        ClassSection section = classSectionRepository.findById(sectionId).orElse(null);
+        ClassSection section = teacher != null
+                ? classSectionRepository.findByIdAndTenantId(sectionId, teacher.getTenantId()).orElse(null)
+                : null;
         if (teacher == null || section == null || !teacherOwnsSection(teacher, section)) {
             // Same message whether the section doesn't exist or isn't the caller's.
             throw TasksException.badRequest("Section not found");
@@ -217,7 +219,7 @@ public class TasksService {
         int skipped = 0;
 
         for (AttendancePayload.AttendanceEntry entry : payload.attendance()) {
-            Student student = studentRepository.findById(entry.studentId()).orElse(null);
+            Student student = studentRepository.findByIdAndTenantId(entry.studentId(), teacher.getTenantId()).orElse(null);
             if (student == null) { skipped++; continue; }
             ClassSection section = student.getClassSection();
             if (section == null || !teacherOwnsSection(teacher, section)) { skipped++; continue; }

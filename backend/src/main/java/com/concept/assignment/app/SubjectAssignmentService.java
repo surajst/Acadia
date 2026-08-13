@@ -41,17 +41,11 @@ public class SubjectAssignmentService {
                                            String subjectName,
                                            boolean isHomeClass,
                                            UUID currentTenantId) {
-        User teacher = userRepository.findById(teacherId)
+        User teacher = userRepository.findByIdAndTenantId(teacherId, currentTenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Teacher not found: " + teacherId));
-        if (currentTenantId != null && !currentTenantId.equals(teacher.getTenantId())) {
-            throw new IllegalArgumentException("Teacher not found: " + teacherId);
-        }
 
-        ClassSection section = classSectionRepository.findById(classSectionId)
+        ClassSection section = classSectionRepository.findByIdAndTenantId(classSectionId, currentTenantId)
                 .orElseThrow(() -> new IllegalArgumentException("ClassSection not found: " + classSectionId));
-        if (currentTenantId != null && !currentTenantId.equals(section.getTenantId())) {
-            throw new IllegalArgumentException("ClassSection not found: " + classSectionId);
-        }
 
         if (assignmentRepository.existsByTeacherAndClassSection(teacher, section)) {
             throw new IllegalStateException(
@@ -77,13 +71,9 @@ public class SubjectAssignmentService {
      * @param assignmentId UUID of the SubjectAssignment to remove
      */
     public void removeAssignment(UUID assignmentId, UUID currentTenantId) {
-        SubjectAssignment assignment = assignmentRepository.findById(assignmentId).orElse(null);
+        SubjectAssignment assignment = assignmentRepository.findByIdAndTenantId(assignmentId, currentTenantId).orElse(null);
         if (assignment == null) {
             return; // preserves prior silent no-op behavior for "not found"
-        }
-        if (currentTenantId != null && !currentTenantId.equals(assignment.getTenantId())) {
-            // Same silent no-op as "not found" — don't reveal a cross-tenant ID exists.
-            return;
         }
         assignmentRepository.deleteById(assignmentId);
     }
@@ -95,11 +85,8 @@ public class SubjectAssignmentService {
      * @return list of assignments (may be empty)
      */
     public List<SubjectAssignment> getAssignmentsForTeacher(UUID teacherId, UUID currentTenantId) {
-        User teacher = userRepository.findById(teacherId)
+        User teacher = userRepository.findByIdAndTenantId(teacherId, currentTenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Teacher not found: " + teacherId));
-        if (currentTenantId != null && !currentTenantId.equals(teacher.getTenantId())) {
-            throw new IllegalArgumentException("Teacher not found: " + teacherId);
-        }
         return assignmentRepository.findByTeacher(teacher);
     }
 
@@ -110,11 +97,8 @@ public class SubjectAssignmentService {
      * @return list of assignments (may be empty)
      */
     public List<SubjectAssignment> getAssignmentsForClass(UUID classSectionId, UUID currentTenantId) {
-        ClassSection section = classSectionRepository.findById(classSectionId)
+        ClassSection section = classSectionRepository.findByIdAndTenantId(classSectionId, currentTenantId)
                 .orElseThrow(() -> new IllegalArgumentException("ClassSection not found: " + classSectionId));
-        if (currentTenantId != null && !currentTenantId.equals(section.getTenantId())) {
-            throw new IllegalArgumentException("ClassSection not found: " + classSectionId);
-        }
         return assignmentRepository.findByClassSection(section);
     }
 }

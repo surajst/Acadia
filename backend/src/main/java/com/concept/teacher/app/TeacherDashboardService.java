@@ -91,7 +91,7 @@ public class TeacherDashboardService {
 
         List<MilestoneSubmissionDto> pendingSubmissions = rawSubmissions.stream()
                 .map(sub -> {
-                    Student student = studentRepository.findById(sub.getStudentId()).orElse(null);
+                    Student student = studentRepository.findByIdAndTenantId(sub.getStudentId(), tenantId).orElse(null);
                     String studentName = student != null ? student.getFirstName() + " " + student.getLastName() : "Unknown Student";
                     return new MilestoneSubmissionDto(sub.getId(), studentName, sub.getSkillName(), sub.getXpBounty(),
                             sub.getSubmittedAt(), sub.getProofOfWorkNotes(), sub.getAnswer1(), sub.getAnswer2(), sub.getAnswer3());

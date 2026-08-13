@@ -40,8 +40,8 @@ public class ReportCardService {
     @Autowired
     private SubjectService subjectService;
 
-    public byte[] generateReportCardPdf(UUID studentId, AssessmentTerm term) {
-        Student student = studentRepository.findById(studentId)
+    public byte[] generateReportCardPdf(UUID studentId, AssessmentTerm term, UUID tenantId) {
+        Student student = studentRepository.findByIdAndTenantId(studentId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
 
         List<StudentAssessmentScore> termScores = scoreRepository.findByStudentId(studentId).stream()

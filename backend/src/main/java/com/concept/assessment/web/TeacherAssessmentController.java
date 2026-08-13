@@ -41,14 +41,14 @@ public class TeacherAssessmentController {
 
     @GetMapping("/class/{classSectionId}")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getAssessmentsForClass(@PathVariable UUID classSectionId) {
-        return ResponseEntity.ok(assessmentService.assessmentsForClass(classSectionId));
+    public ResponseEntity<?> getAssessmentsForClass(@PathVariable UUID classSectionId, Authentication authentication) {
+        return ResponseEntity.ok(assessmentService.assessmentsForClass(classSectionId, authentication));
     }
 
     @GetMapping("/{assessmentId}")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getAssessmentDetail(@PathVariable UUID assessmentId) {
-        return ResponseEntity.ok(assessmentService.assessmentDetail(assessmentId));
+    public ResponseEntity<?> getAssessmentDetail(@PathVariable UUID assessmentId, Authentication authentication) {
+        return ResponseEntity.ok(assessmentService.assessmentDetail(assessmentId, authentication));
     }
 
     @PostMapping("/{assessmentId}/scores")

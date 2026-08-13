@@ -125,7 +125,8 @@ public class StudentProgressServiceTenantTest {
 
     @Test
     public void getProgressByStudent_onlyReturnsOwnTenantTopics() {
-        Map<String, SubjectProgressDto> progress = studentProgressService.getProgressByStudent(studentA.getId());
+        Map<String, SubjectProgressDto> progress =
+                studentProgressService.getProgressByStudent(studentA.getId(), studentA.getTenantId());
 
         assertTrue(progress.containsKey("MATH"));
         long topicCount = progress.get("MATH").topics().size();

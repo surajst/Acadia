@@ -170,7 +170,7 @@ public class ParentService {
         parentInfo.put("preferredLanguage", parent.getPreferredLanguage());
         response.put("parent", parentInfo);
 
-        StudentSummary studentSummary = sisDataProvider.getStudent(studentId).orElse(null);
+        StudentSummary studentSummary = sisDataProvider.getStudent(studentId, student.getTenantId()).orElse(null);
         Map<String, Object> studentInfo = new HashMap<>();
         if (studentSummary != null) {
             studentInfo.put("id", studentSummary.id());
@@ -242,18 +242,19 @@ public class ParentService {
     }
 
     public Map<String, Object> busLocation(UUID studentId, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         UUID resolvedId = resolveStudentId(studentId, authentication);
         if (resolvedId == null) {
             throw ParentException.badRequest("No student found");
         }
-        Student student = studentRepository.findById(resolvedId).orElse(null);
+        Student student = studentRepository.findByIdAndTenantId(resolvedId, tenantId).orElse(null);
         UUID busRouteId = (student != null && student.getClassSection() != null)
                 ? student.getClassSection().getBusRouteId()
                 : null;
         if (busRouteId == null) {
             return Map.of("assigned", false);
         }
-        BusRoute route = busRouteRepository.findById(busRouteId).orElse(null);
+        BusRoute route = busRouteRepository.findByIdAndTenantId(busRouteId, tenantId).orElse(null);
         if (route == null) {
             return Map.of("assigned", false);
         }
@@ -343,8 +344,8 @@ public class ParentService {
     private Announcement resolveOwnAnnouncement(UUID id, Authentication authentication) {
         Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
         if (parent == null) return null;
-        Announcement announcement = announcementRepository.findById(id).orElse(null);
-        if (announcement == null || !announcement.getTenantId().equals(parent.getTenantId())) return null;
+        Announcement announcement = announcementRepository.findByIdAndTenantId(id, parent.getTenantId()).orElse(null);
+        if (announcement == null) return null;
         return announcement;
     }
 
@@ -352,7 +353,8 @@ public class ParentService {
 
     @Transactional
     public Map<String, Object> approveQuestApi(UUID id, Authentication authentication) {
-        ParentQuest quest = parentQuestRepository.findById(id).orElse(null);
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        ParentQuest quest = parentQuestRepository.findByIdAndTenantId(id, tenantId).orElse(null);
         if (quest == null) {
             throw ParentException.badRequest("Quest not found");
         }
@@ -372,7 +374,8 @@ public class ParentService {
 
     @Transactional
     public Map<String, Object> assignQuestApi(AssignQuestRequest dto, Authentication authentication) {
-        Student student = studentRepository.findById(dto.getStudentId()).orElse(null);
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        Student student = studentRepository.findByIdAndTenantId(dto.getStudentId(), tenantId).orElse(null);
         if (student == null) {
             throw ParentException.badRequest("Student not found");
         }
@@ -422,7 +425,7 @@ public class ParentService {
         if (child == null) {
             return Map.of();
         }
-        return studentProgressService.getProgressByStudent(child.getId());
+        return studentProgressService.getProgressByStudent(child.getId(), child.getTenantId());
     }
 
     public Object childProgress(UUID studentId, Authentication authentication) {
@@ -431,10 +434,9 @@ public class ParentService {
             throw ParentException.forbidden("No parent record found");
         }
         List<Student> linkedStudents = studentRepository.findByParentsContaining(parent);
-        if (linkedStudents.stream().noneMatch(s -> s.getId().equals(studentId))) {
-            throw ParentException.forbidden("Not authorized to view this student's progress");
-        }
-        return studentProgressService.getProgressByStudent(studentId);
+        Student targetStudent = linkedStudents.stream().filter(s -> s.getId().equals(studentId)).findFirst()
+                .orElseThrow(() -> ParentException.forbidden("Not authorized to view this student's progress"));
+        return studentProgressService.getProgressByStudent(studentId, targetStudent.getTenantId());
     }
 
     // ─── /web/parent form-post actions ──────────────────────────────────────
@@ -463,7 +465,7 @@ public class ParentService {
     @Transactional
     public void assignTask(UUID studentId, String taskDescription, Integer xpBounty, Authentication authentication) {
         Parent parent = requireParent(authentication);
-        Student student = studentRepository.findById(studentId)
+        Student student = studentRepository.findByIdAndTenantId(studentId, parent.getTenantId())
                 .orElseThrow(() -> ParentException.badRequest("Invalid student ID"));
         if (!student.getParents().contains(parent)) {
             throw ParentException.forbidden("Not authorized for this student");
@@ -483,7 +485,7 @@ public class ParentService {
     @Transactional
     public void addReward(UUID studentId, String rewardTitle, Integer xpCost, Authentication authentication) {
         Parent parent = requireParent(authentication);
-        Student student = studentRepository.findById(studentId)
+        Student student = studentRepository.findByIdAndTenantId(studentId, parent.getTenantId())
                 .orElseThrow(() -> ParentException.badRequest("Invalid student ID"));
         if (!student.getParents().contains(parent)) {
             throw ParentException.forbidden("Not authorized for this student");
@@ -502,7 +504,8 @@ public class ParentService {
 
     @Transactional
     public void approveQuestWeb(UUID id, Authentication authentication) {
-        ParentQuest quest = parentQuestRepository.findById(id)
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        ParentQuest quest = parentQuestRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> ParentException.badRequest("Invalid parent quest ID: " + id));
         Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
         if (parent == null || !quest.getStudent().getParents().contains(parent)) {
@@ -529,7 +532,8 @@ public class ParentService {
     }
 
     private ParentReward requireOwnedReward(UUID id, Authentication authentication) {
-        ParentReward reward = parentRewardRepository.findById(id)
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        ParentReward reward = parentRewardRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> ParentException.badRequest("Invalid parent reward ID: " + id));
         Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
         if (parent == null || !reward.getStudent().getParents().contains(parent)) {

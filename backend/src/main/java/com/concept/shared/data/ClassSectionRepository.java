@@ -1,13 +1,14 @@
 package com.concept.shared.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.concept.common.TenantScopedRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface ClassSectionRepository extends JpaRepository<ClassSection, UUID> {
+public interface ClassSectionRepository extends TenantScopedRepository<ClassSection, UUID> {
     List<ClassSection> findByTenantId(UUID tenantId);
     List<ClassSection> findByTeacherIdAndTenantId(UUID teacherId, UUID tenantId);
     

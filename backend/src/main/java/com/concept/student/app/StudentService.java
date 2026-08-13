@@ -198,7 +198,7 @@ public class StudentService {
     @Transactional
     public Map<String, Object> completeSkill(UUID skillId, Authentication authentication) {
         Student student = requireStudent(authentication);
-        MathSkill skill = mathSkillRepository.findById(skillId)
+        MathSkill skill = mathSkillRepository.findByIdAndTenantId(skillId, student.getTenantId())
                 .orElseThrow(() -> StudentException.badRequest("Skill not found"));
         StudentMetric metric = studentMetricRepository.findByStudentId(student.getId()).orElseThrow();
         metric.setSchoolXp(metric.getSchoolXp() + skill.getMaxXpReward());
@@ -209,7 +209,7 @@ public class StudentService {
     @Transactional
     public Map<String, Object> claimQuestApi(UUID questId, Authentication authentication) {
         Student student = requireStudent(authentication);
-        ParentQuest quest = parentQuestRepository.findById(questId)
+        ParentQuest quest = parentQuestRepository.findByIdAndTenantId(questId, student.getTenantId())
                 .orElseThrow(() -> StudentException.badRequest("Quest not found"));
         if (quest.getStudent() == null || !student.getId().equals(quest.getStudent().getId())) {
             throw StudentException.forbidden("Not authorized for this quest");
@@ -222,7 +222,7 @@ public class StudentService {
     @Transactional
     public Map<String, Object> confirmRewardReceived(UUID rewardId, Authentication authentication) {
         Student student = requireStudent(authentication);
-        ParentReward reward = parentRewardRepository.findById(rewardId)
+        ParentReward reward = parentRewardRepository.findByIdAndTenantId(rewardId, student.getTenantId())
                 .orElseThrow(() -> StudentException.badRequest("Reward not found"));
         if (reward.getStudent() == null || !student.getId().equals(reward.getStudent().getId())) {
             throw StudentException.forbidden("Not authorized for this reward");
@@ -236,7 +236,7 @@ public class StudentService {
 
     public Object progress(Authentication authentication) {
         Student student = requireStudent(authentication);
-        return studentProgressService.getProgressByStudent(student.getId());
+        return studentProgressService.getProgressByStudent(student.getId(), student.getTenantId());
     }
 
     @Transactional
@@ -251,7 +251,7 @@ public class StudentService {
             throw StudentException.badRequest("Invalid curriculumId format");
         }
         Student student = requireStudent(authentication);
-        return studentProgressService.markTopicComplete(student.getId(), curriculumId);
+        return studentProgressService.markTopicComplete(student.getId(), curriculumId, student.getTenantId());
     }
 
     // ─── helpers ────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import com.concept.oversight.app.OversightException;
 import com.concept.oversight.app.OversightService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,8 +30,8 @@ public class TeacherMilestoneController {
 
     @PostMapping("/approve")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
-    public ResponseEntity<?> approve(@RequestParam("submissionId") UUID submissionId) {
-        return ResponseEntity.ok(oversightService.approveMilestone(submissionId));
+    public ResponseEntity<?> approve(@RequestParam("submissionId") UUID submissionId, Authentication authentication) {
+        return ResponseEntity.ok(oversightService.approveMilestone(submissionId, authentication));
     }
 
     @PostMapping("/reject")

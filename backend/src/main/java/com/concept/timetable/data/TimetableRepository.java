@@ -1,13 +1,14 @@
 package com.concept.timetable.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.concept.common.TenantScopedRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface TimetableRepository extends JpaRepository<TimetableEntry, UUID> {
+public interface TimetableRepository extends TenantScopedRepository<TimetableEntry, UUID> {
 
     List<TimetableEntry> findByTeacherIdAndDayOfWeekOrderByPeriodNumber(UUID teacherId, String dayOfWeek);
 

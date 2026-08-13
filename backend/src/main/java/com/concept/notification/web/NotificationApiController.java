@@ -36,8 +36,8 @@ public class NotificationApiController {
     }
 
     @PostMapping("/{id}/read")
-    public ResponseEntity<?> markAsRead(@PathVariable UUID id) {
-        return ResponseEntity.ok(notificationService.markAsRead(id));
+    public ResponseEntity<?> markAsRead(@PathVariable UUID id, Authentication authentication) {
+        return ResponseEntity.ok(notificationService.markAsRead(id, authentication));
     }
 
     @PostMapping("/read-all")

@@ -1,12 +1,13 @@
 package com.concept.notification.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.concept.common.TenantScopedRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+public interface NotificationRepository extends TenantScopedRepository<Notification, UUID> {
     List<Notification> findByRecipientIdOrderByCreatedAtDesc(UUID recipientId);
     List<Notification> findByRecipientIdAndReadFalseOrderByCreatedAtDesc(UUID recipientId);
     long countByRecipientIdAndReadFalse(UUID recipientId);

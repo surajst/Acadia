@@ -39,8 +39,12 @@ public class NotificationService {
         return Map.of("count", notificationRepository.countByRecipientIdAndReadFalse(user.getId()));
     }
 
-    public Map<String, Object> markAsRead(UUID id) {
-        Notification n = notificationRepository.findById(id).orElseThrow();
+    public Map<String, Object> markAsRead(UUID id, Authentication authentication) {
+        User user = requireUser(authentication);
+        Notification n = notificationRepository.findByIdAndTenantId(id, user.getTenantId()).orElseThrow();
+        if (!n.getRecipientId().equals(user.getId())) {
+            throw new IllegalArgumentException("Notification not found: " + id);
+        }
         n.setRead(true);
         notificationRepository.save(n);
         return Map.of("status", "ok");
