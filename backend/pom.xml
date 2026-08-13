@@ -103,6 +103,12 @@
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.2.5</version>
 		</dependency>
+		<!-- Sentry: unhandled-exception reporting. Inert unless SENTRY_DSN is set. -->
+		<dependency>
+			<groupId>io.sentry</groupId>
+			<artifactId>sentry-spring-boot-starter-jakarta</artifactId>
+			<version>7.14.0</version>
+		</dependency>
 		<!-- ArchUnit: enforces the interface/application/data layering (see ADR 0001) -->
 		<dependency>
 			<groupId>com.tngtech.archunit</groupId>
