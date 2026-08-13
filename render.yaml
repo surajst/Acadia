@@ -20,7 +20,11 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    plan: free
+    # Starter, not free: the free tier spins the instance down when idle and
+    # the next request pays a 50-120s cold start (measured at 121s). This must
+    # match the plan set in the dashboard -- if the blueprint is ever re-synced
+    # with 'free' here, Render silently downgrades and the cold starts return.
+    plan: starter
     # Real health check: /login returns 200 even when the database is
     # unreachable, so a dead DB looked healthy. /actuator/health reports DOWN
     # when the DB connection fails, so Render stops routing to a broken
