@@ -1,8 +1,14 @@
 package com.concept.arch;
 
+import com.concept.common.TenantScopedRepository;
+import com.tngtech.archunit.core.domain.JavaCall;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.lang.ArchCondition;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
@@ -127,5 +133,47 @@ class LayeringArchitectureTest {
                 .should().dependOnClassesThat().resideInAPackage("com.concept.management..")
                 .allowEmptyShould(true)
                 .check(WHOLE_CODEBASE);
+    }
+
+    @Test
+    void tenantScopedRepositoriesAreNeverLookedUpByBareId() {
+        // findById(ID) on a repository for a BaseTenantEntity subclass returns
+        // a row from ANY school, regardless of the caller's tenant -- exactly
+        // the shape of the cross-tenant IDOR bugs fixed repeatedly across this
+        // codebase's history. Every such repository extends
+        // TenantScopedRepository, which declares findByIdAndTenantId; this
+        // rule makes forgetting it a test failure instead of a silent leak.
+        //
+        // Dev-only seed/harness code is exempt (root com.concept package and
+        // devtools/): it runs only under app.dev-mode=true, seeds a fixed set
+        // of demo IDs, and is never attacker-reachable.
+        noClasses()
+                .that().resideOutsideOfPackages("com.concept.devtools..", "com.concept")
+                .should(callBareFindByIdOnATenantScopedRepository())
+                .allowEmptyShould(true)
+                .check(WHOLE_CODEBASE);
+    }
+
+    private static ArchCondition<JavaClass> callBareFindByIdOnATenantScopedRepository() {
+        // Used only inside noClasses().should(...), which wraps this condition in
+        // ArchUnit's NeverCondition -- it relays our events through an inverting
+        // decorator. So we must report the bad behaviour as SATISFIED (not
+        // violated): NeverCondition flips that into the real, outer violation.
+        return new ArchCondition<JavaClass>("call findById(ID) on a tenant-scoped repository") {
+            @Override
+            public void check(JavaClass javaClass, ConditionEvents events) {
+                for (JavaCall<?> call : javaClass.getCodeUnitCallsFromSelf()) {
+                    JavaClass owner = call.getTarget().getOwner();
+                    boolean isTenantScopedRepo = owner.isAssignableTo(TenantScopedRepository.class);
+                    boolean isBareFindById = call.getTarget().getName().equals("findById");
+                    if (isTenantScopedRepo && isBareFindById) {
+                        String message = String.format(
+                                "%s calls findById(ID) on %s (use findByIdAndTenantId instead) at %s",
+                                javaClass.getSimpleName(), owner.getSimpleName(), call.getSourceCodeLocation());
+                        events.add(SimpleConditionEvent.satisfied(call, message));
+                    }
+                }
+            }
+        };
     }
 }

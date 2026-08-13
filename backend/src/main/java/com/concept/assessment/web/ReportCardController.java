@@ -34,8 +34,8 @@ public class ReportCardController {
 
     @GetMapping("/api/teacher/students/{studentId}/report-card")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> teacherReportCard(@PathVariable UUID studentId, @RequestParam String term) {
-        return pdfResponse(assessmentService.teacherReportCard(studentId, term), term);
+    public ResponseEntity<?> teacherReportCard(@PathVariable UUID studentId, @RequestParam String term, Authentication authentication) {
+        return pdfResponse(assessmentService.teacherReportCard(studentId, term, authentication), term);
     }
 
     @GetMapping("/api/mobile/parent/report-card")

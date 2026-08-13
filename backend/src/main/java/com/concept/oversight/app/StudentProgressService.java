@@ -39,7 +39,7 @@ public class StudentProgressService {
      * Returns all curriculum topics for a student grouped by subject,
      * with completion status merged from student_progress records.
      */
-    public Map<String, SubjectProgressDto> getProgressByStudent(UUID studentId) {
+    public Map<String, SubjectProgressDto> getProgressByStudent(UUID studentId, UUID tenantId) {
         // Load all existing progress records for this student
         List<StudentProgress> progressRecords = studentProgressRepository.findByStudentId(studentId);
         Map<UUID, StudentProgress> progressByTopic = progressRecords.stream()
@@ -51,7 +51,7 @@ public class StudentProgressService {
 
         // Load this student's own tenant's curriculum topics only — never
         // every tenant's, which would mix another school's syllabus in.
-        Student student = studentRepository.findById(studentId).orElse(null);
+        Student student = studentRepository.findByIdAndTenantId(studentId, tenantId).orElse(null);
         List<Curriculum> allTopics = student != null
                 ? curriculumRepository.findByTenantId(student.getTenantId())
                 : List.of();
@@ -103,8 +103,8 @@ public class StudentProgressService {
      * awards XP, and returns the updated progress map.
      */
     @Transactional
-    public Map<String, SubjectProgressDto> markTopicComplete(UUID studentId, UUID curriculumId) {
-        Student student = studentRepository.findById(studentId)
+    public Map<String, SubjectProgressDto> markTopicComplete(UUID studentId, UUID curriculumId, UUID tenantId) {
+        Student student = studentRepository.findByIdAndTenantId(studentId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
 
         Curriculum curriculum = curriculumRepository.findById(curriculumId)
@@ -129,6 +129,6 @@ public class StudentProgressService {
             studentProgressRepository.saveAndFlush(progress);
         }
 
-        return getProgressByStudent(studentId);
+        return getProgressByStudent(studentId, tenantId);
     }
 }

@@ -1,13 +1,14 @@
 package com.concept.shared.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.concept.common.TenantScopedRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface ParentRepository extends JpaRepository<Parent, UUID> {
+public interface ParentRepository extends TenantScopedRepository<Parent, UUID> {
     Optional<Parent> findByFirstNameIgnoreCase(String firstName);
     Optional<Parent> findByUserId(UUID userId);
     Optional<Parent> findByTenantIdAndPhoneNumber(UUID tenantId, String phoneNumber);

@@ -68,7 +68,8 @@ public class AssessmentService {
     // ─── Teacher assessments ────────────────────────────────────────────────
 
     public Object createAssessment(CreateAssessmentRequest request, Authentication authentication) {
-        ClassSection classSection = classSectionRepository.findById(request.getClassSectionId()).orElse(null);
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        ClassSection classSection = classSectionRepository.findByIdAndTenantId(request.getClassSectionId(), tenantId).orElse(null);
         if (classSection == null) {
             throw AssessmentException.badRequest("Class section not found");
         }
@@ -91,16 +92,18 @@ public class AssessmentService {
         return assessment;
     }
 
-    public Object assessmentsForClass(UUID classSectionId) {
-        ClassSection classSection = classSectionRepository.findById(classSectionId).orElse(null);
+    public Object assessmentsForClass(UUID classSectionId, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        ClassSection classSection = classSectionRepository.findByIdAndTenantId(classSectionId, tenantId).orElse(null);
         if (classSection == null) {
             throw AssessmentException.badRequest("Class section not found");
         }
         return assessmentRepository.findByClassSection(classSection);
     }
 
-    public Map<String, Object> assessmentDetail(UUID assessmentId) {
-        Assessment assessment = assessmentRepository.findById(assessmentId).orElse(null);
+    public Map<String, Object> assessmentDetail(UUID assessmentId, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        Assessment assessment = assessmentRepository.findByIdAndTenantId(assessmentId, tenantId).orElse(null);
         if (assessment == null) {
             throw AssessmentException.badRequest("Assessment not found");
         }
@@ -130,14 +133,15 @@ public class AssessmentService {
 
     public List<Map<String, Object>> enterScores(UUID assessmentId, BulkScoreEntryRequest request,
                                                  Authentication authentication) {
-        Assessment assessment = assessmentRepository.findById(assessmentId).orElse(null);
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        Assessment assessment = assessmentRepository.findByIdAndTenantId(assessmentId, tenantId).orElse(null);
         if (assessment == null) {
             throw AssessmentException.badRequest("Assessment not found");
         }
         UUID teacherId = resolveTeacherId(authentication != null ? authentication.getName() : null);
 
         List<Map<String, Object>> saved = request.getScores().stream().map(entry -> {
-            Student student = studentRepository.findById(entry.getStudentId()).orElse(null);
+            Student student = studentRepository.findByIdAndTenantId(entry.getStudentId(), tenantId).orElse(null);
             if (student == null) return null;
             StudentAssessmentScore score = scoreRepository
                     .findByStudentIdAndAssessmentId(entry.getStudentId(), assessmentId)
@@ -161,11 +165,12 @@ public class AssessmentService {
 
     // ─── Report cards ───────────────────────────────────────────────────────
 
-    public byte[] teacherReportCard(UUID studentId, String term) {
-        if (studentRepository.findById(studentId).isEmpty()) {
+    public byte[] teacherReportCard(UUID studentId, String term, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        if (studentRepository.findByIdAndTenantId(studentId, tenantId).isEmpty()) {
             throw AssessmentException.badRequest("Student not found");
         }
-        return reportCardService.generateReportCardPdf(studentId, parseTerm(term));
+        return reportCardService.generateReportCardPdf(studentId, parseTerm(term), tenantId);
     }
 
     public byte[] parentReportCard(UUID studentId, String term, Authentication authentication) {
@@ -180,7 +185,7 @@ public class AssessmentService {
         if (target == null) {
             throw AssessmentException.forbidden("Not authorized for this student");
         }
-        return reportCardService.generateReportCardPdf(target.getId(), parseTerm(term));
+        return reportCardService.generateReportCardPdf(target.getId(), parseTerm(term), target.getTenantId());
     }
 
     public byte[] studentReportCard(String term, Authentication authentication) {
@@ -188,7 +193,7 @@ public class AssessmentService {
         if (student == null) {
             throw AssessmentException.badRequest("Student not found");
         }
-        return reportCardService.generateReportCardPdf(student.getId(), parseTerm(term));
+        return reportCardService.generateReportCardPdf(student.getId(), parseTerm(term), student.getTenantId());
     }
 
     // ─── helpers ────────────────────────────────────────────────────────────

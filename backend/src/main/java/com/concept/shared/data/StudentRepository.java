@@ -1,6 +1,7 @@
 package com.concept.shared.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.concept.common.TenantScopedRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface StudentRepository extends JpaRepository<Student, UUID> {
+public interface StudentRepository extends TenantScopedRepository<Student, UUID> {
     // Used by Admins/Principals to get everyone in the school tenant
     List<Student> findByTenantId(UUID tenantId);
     long countByTenantId(UUID tenantId);

@@ -53,7 +53,7 @@ public class StudentRewardService {
      */
     @Transactional
     public void claimQuest(UUID questId, Student caller) {
-        ParentQuest quest = parentQuestRepository.findById(questId)
+        ParentQuest quest = parentQuestRepository.findByIdAndTenantId(questId, caller != null ? caller.getTenantId() : null)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid parent quest ID: " + questId));
 
         if (caller == null || quest.getStudent() == null || !quest.getStudent().getId().equals(caller.getId())) {
@@ -73,7 +73,7 @@ public class StudentRewardService {
      */
     @Transactional
     public RedeemOutcome redeemReward(UUID rewardId, Student student) {
-        RewardItem reward = rewardItemRepository.findById(rewardId)
+        RewardItem reward = rewardItemRepository.findByIdAndTenantId(rewardId, student.getTenantId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid reward item ID: " + rewardId));
 
         // A school-XP reward becomes a pending ParentReward that a linked parent
@@ -132,12 +132,11 @@ public class StudentRewardService {
      */
     @Transactional
     public RedeemOutcome redeemParentReward(UUID rewardId, Student student) {
-        ParentReward reward = parentRewardRepository.findById(rewardId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid parent reward ID: " + rewardId));
-
         if (student == null) {
             throw new IllegalArgumentException("No student found");
         }
+        ParentReward reward = parentRewardRepository.findByIdAndTenantId(rewardId, student.getTenantId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid parent reward ID: " + rewardId));
         if (reward.getStudent() == null || !reward.getStudent().getId().equals(student.getId())) {
             throw new IllegalArgumentException("Not authorized for this reward");
         }

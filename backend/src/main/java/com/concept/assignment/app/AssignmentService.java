@@ -110,7 +110,7 @@ public class AssignmentService {
         }
         User teacher = userRepository.findByEmail(PILOT_TEACHER_EMAIL)
                 .orElseThrow(() -> new IllegalStateException("Pilot teacher not found: " + PILOT_TEACHER_EMAIL));
-        classSectionRepository.findById(PILOT_SECTION_ID)
+        classSectionRepository.findByIdAndTenantId(PILOT_SECTION_ID, teacher.getTenantId())
                 .orElseThrow(() -> new IllegalStateException("Pilot section not found: " + PILOT_SECTION_ID));
 
         List<SubjectAssignment> existing = assignmentRepository.findByTeacher(teacher);

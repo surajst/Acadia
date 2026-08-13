@@ -133,7 +133,7 @@ public class TimetableService {
             timetableRepository.deleteAll(existing);
         }
 
-        ClassSection section = classSectionRepository.findById(PILOT_SECTION_ID)
+        ClassSection section = classSectionRepository.findByIdAndTenantId(PILOT_SECTION_ID, teacher.getTenantId())
                 .orElseThrow(() -> new IllegalStateException("Pilot section not found: " + PILOT_SECTION_ID));
 
         List<TimetableEntry> toSave = new ArrayList<>();
@@ -175,11 +175,12 @@ public class TimetableService {
     }
 
     public Map<String, Object> adminCreate(TimetableEntryRequest request, Authentication authentication) {
-        ClassSection classSection = classSectionRepository.findById(request.getClassSectionId()).orElse(null);
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        ClassSection classSection = classSectionRepository.findByIdAndTenantId(request.getClassSectionId(), tenantId).orElse(null);
         if (classSection == null) {
             throw TimetableException.badRequest("Class section not found");
         }
-        User teacher = validateTeacher(request.getTeacherId());
+        User teacher = validateTeacher(request.getTeacherId(), tenantId);
         if (teacher == null) {
             throw TimetableException.badRequest("Teacher not found or not a TEACHER");
         }
@@ -208,19 +209,20 @@ public class TimetableService {
     }
 
     public Map<String, Object> adminUpdate(UUID id, TimetableEntryRequest request, Authentication authentication) {
-        TimetableEntry entry = timetableRepository.findById(id).orElse(null);
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        TimetableEntry entry = timetableRepository.findByIdAndTenantId(id, tenantId).orElse(null);
         if (entry == null) {
             throw TimetableException.badRequest("Timetable entry not found");
         }
         if (request.getClassSectionId() != null) {
-            ClassSection classSection = classSectionRepository.findById(request.getClassSectionId()).orElse(null);
+            ClassSection classSection = classSectionRepository.findByIdAndTenantId(request.getClassSectionId(), tenantId).orElse(null);
             if (classSection == null) {
                 throw TimetableException.badRequest("Class section not found");
             }
             entry.setClassSection(classSection);
         }
         if (request.getTeacherId() != null) {
-            User teacher = validateTeacher(request.getTeacherId());
+            User teacher = validateTeacher(request.getTeacherId(), tenantId);
             if (teacher == null) {
                 throw TimetableException.badRequest("Teacher not found or not a TEACHER");
             }
@@ -245,7 +247,8 @@ public class TimetableService {
     }
 
     public Map<String, Object> adminDelete(UUID id, Authentication authentication) {
-        TimetableEntry entry = timetableRepository.findById(id).orElse(null);
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        TimetableEntry entry = timetableRepository.findByIdAndTenantId(id, tenantId).orElse(null);
         if (entry == null) {
             throw TimetableException.badRequest("Timetable entry not found");
         }
@@ -257,9 +260,9 @@ public class TimetableService {
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
-    private User validateTeacher(UUID teacherId) {
+    private User validateTeacher(UUID teacherId, UUID tenantId) {
         if (teacherId == null) return null;
-        User teacher = userRepository.findById(teacherId).orElse(null);
+        User teacher = userRepository.findByIdAndTenantId(teacherId, tenantId).orElse(null);
         if (teacher == null || teacher.getRole() != UserRole.TEACHER) return null;
         return teacher;
     }

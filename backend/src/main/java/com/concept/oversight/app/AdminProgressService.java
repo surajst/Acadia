@@ -153,7 +153,7 @@ public class AdminProgressService {
                 .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
                 .limit(5)
                 .map(e -> {
-                    Student s = studentRepository.findById(e.getKey()).orElse(null);
+                    Student s = studentRepository.findByIdAndTenantId(e.getKey(), tenantId).orElse(null);
                     Map<String, Object> map = new HashMap<>();
                     map.put("studentId", e.getKey());
                     map.put("name", s != null ? s.getFirstName() + " " + s.getLastName() : "Unknown");

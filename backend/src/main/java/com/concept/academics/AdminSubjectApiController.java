@@ -61,19 +61,22 @@ public class AdminSubjectApiController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> renameSubject(@PathVariable UUID id, @RequestBody RenameSubjectDto dto) {
-        return ResponseEntity.ok(subjectService.renameSubject(id, dto.displayName));
+    public ResponseEntity<?> renameSubject(@PathVariable UUID id, @RequestBody RenameSubjectDto dto, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        return ResponseEntity.ok(subjectService.renameSubject(id, dto.displayName, tenantId));
     }
 
     @PostMapping("/{id}/deactivate")
-    public ResponseEntity<?> deactivateSubject(@PathVariable UUID id) {
-        subjectService.setActive(id, false);
+    public ResponseEntity<?> deactivateSubject(@PathVariable UUID id, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        subjectService.setActive(id, false, tenantId);
         return ResponseEntity.ok(Map.of("status", "deactivated"));
     }
 
     @PostMapping("/{id}/activate")
-    public ResponseEntity<?> activateSubject(@PathVariable UUID id) {
-        subjectService.setActive(id, true);
+    public ResponseEntity<?> activateSubject(@PathVariable UUID id, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        subjectService.setActive(id, true, tenantId);
         return ResponseEntity.ok(Map.of("status", "activated"));
     }
 

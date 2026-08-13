@@ -69,16 +69,16 @@ public class SubjectService {
     }
 
     @Transactional
-    public Subject renameSubject(UUID subjectId, String newDisplayName) {
-        Subject subject = subjectRepository.findById(subjectId)
+    public Subject renameSubject(UUID subjectId, String newDisplayName, UUID tenantId) {
+        Subject subject = subjectRepository.findByIdAndTenantId(subjectId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Subject not found: " + subjectId));
         subject.setDisplayName(newDisplayName);
         return subjectRepository.save(subject);
     }
 
     @Transactional
-    public void setActive(UUID subjectId, boolean active) {
-        Subject subject = subjectRepository.findById(subjectId)
+    public void setActive(UUID subjectId, boolean active, UUID tenantId) {
+        Subject subject = subjectRepository.findByIdAndTenantId(subjectId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Subject not found: " + subjectId));
         subject.setActive(active);
         subjectRepository.save(subject);
@@ -94,7 +94,7 @@ public class SubjectService {
     public void assignSubjectsToGrade(UUID tenantId, UUID academicYearId, String gradeName, List<UUID> subjectIds) {
         gradeSubjectRepository.deleteByTenantIdAndGradeName(tenantId, gradeName);
         for (UUID subjectId : subjectIds) {
-            Subject subject = subjectRepository.findById(subjectId)
+            Subject subject = subjectRepository.findByIdAndTenantId(subjectId, tenantId)
                     .orElseThrow(() -> new IllegalArgumentException("Subject not found: " + subjectId));
             GradeSubject mapping = new GradeSubject();
             mapping.setId(UUID.randomUUID());

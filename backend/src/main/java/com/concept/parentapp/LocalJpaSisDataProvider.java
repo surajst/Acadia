@@ -34,8 +34,8 @@ public class LocalJpaSisDataProvider implements SisDataProvider {
     private AssessmentService assessmentService;
 
     @Override
-    public Optional<StudentSummary> getStudent(UUID studentId) {
-        return studentRepository.findById(studentId).map(this::toSummary);
+    public Optional<StudentSummary> getStudent(UUID studentId, UUID tenantId) {
+        return studentRepository.findByIdAndTenantId(studentId, tenantId).map(this::toSummary);
     }
 
     @Override
