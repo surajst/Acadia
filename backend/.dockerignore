@@ -1,0 +1,17 @@
+# Build outputs and local tooling must never enter the image.
+target/
+
+# frontend-maven-plugin installs a platform-specific Node into frontend/node
+# and populates frontend/node_modules. On Render the build context comes from
+# git, where neither is tracked, but a local `docker build` would otherwise
+# copy a Windows/macOS node binary into a Linux image and break the build.
+frontend/node/
+frontend/node_modules/
+
+# Test artifacts and e2e tooling — the image builds with -DskipTests.
+src/test/e2e/node_modules/
+src/test/e2e/test-results/
+src/test/e2e/playwright-report/
+
+# Local H2 database files.
+data/
