@@ -27,24 +27,38 @@ entities, which is a feature — it fails loudly instead of silently corrupting.
 
 ## Backup
 
+### Which database is production? Read this first
+
+**Production runs on Neon**, not on a Render database:
+`ep-icy-star-azweqd7y.c-3.ap-southeast-1.aws.neon.tech` (ap-southeast-1). The
+original Render Postgres was on the free plan, expired, was deactivated, and
+crash-looped the backend with `UnknownHostException` on `DB_HOST`; the data moved
+to Neon after that.
+
+A leftover Render `acadia-postgres` instance may still exist in the workspace, and
+its dashboard page shows perfectly healthy connection details. **It is not
+production.** The only authoritative answer is:
+
+    Render -> acadia-backend -> Environment -> DB_HOST
+
+Never the database's own page — that page tells you a database exists, not that
+anything connects to it. Backing up the wrong database is worse than having no
+backup, because it looks like coverage.
+
 ### Managed backups (primary)
 
-Render's **free** Postgres plan has **no automatic backups**, and free instances
-expire and are deleted on a timer. A free instance already expired once on this
-project and crash-looped the backend with `UnknownHostException` on `DB_HOST`.
+Neon restores from **history**, not from dump files: you create a branch at a past
+timestamp and promote it after checking it. That is a good default because it is
+non-destructive — the current state survives while you inspect the candidate.
 
-Paid plans provide automatic daily backups and point-in-time recovery. Confirm
-the current plan and its retention window in the Render dashboard under the
-database's **Recovery** / **Backups** section — do not assume from this document,
-plan features change.
+The retention window depends on the plan and is short on the free tier. Confirm
+the real number in the Neon console under the project's history/restore settings,
+and treat it as the hard limit on how long a data problem can go unnoticed and
+still be fixable. If a bad bulk import is not spotted until the following week, a
+short window means it is simply gone.
 
-To upgrade: Render dashboard -> `acadia-postgres` -> Settings -> change the
-instance plan. This does not require a schema change or an application redeploy;
-`DB_*` env vars keep resolving through `fromDatabase` in `render.yaml`.
-
-Keep `render.yaml` in step with whatever plan is chosen, or a future blueprint
-sync will silently move it back (this exact trap already caught the web service:
-see the `plan: starter` comment there).
+Because that window is the whole safety net, take manual dumps as well (below)
+before anything risky, and keep at least one recent dump outside the provider.
 
 ### Manual dump (before anything risky)
 
@@ -88,11 +102,13 @@ restore rolls back every other school too.
 
 1. **Stop writes.** Render dashboard -> `acadia-backend` -> suspend the service.
    A running app will keep writing into a database you are mid-restore on.
-2. **Restore into a NEW database instance**, never over the live one. If the
-   restore is bad you still have the original to try again from.
-3. Point `DB_HOST` / `DB_NAME` / `DB_USERNAME` / `DB_PASSWORD` at the new
-   instance. If it is a new Render database, update the `fromDatabase` name in
-   `render.yaml` too, or the next blueprint sync will point back at the old one.
+2. **Restore into a NEW database or branch**, never over the live one. If the
+   restore is bad you still have the original to try again from. On Neon this is
+   the default shape: restore creates a branch you promote afterwards.
+3. Point `DB_HOST` / `DB_NAME` / `DB_USERNAME` / `DB_PASSWORD` at the restored
+   target. These are `sync: false` in `render.yaml` precisely so the blueprint
+   cannot overwrite them — set them in the dashboard only, and do **not** add a
+   `databases:` block to the blueprint to "manage" them.
 4. **Verify before resuming traffic** — see [Post-restore verification](#post-restore-verification).
 5. Resume the service.
 
