@@ -8,11 +8,21 @@
 # DEMO_ADMIN_PASSWORD only if you intentionally run with app.dev-mode=true
 # (not recommended once a real school's data is in this database).
 
-databases:
-  - name: acadia-postgres
-    plan: free
-    databaseName: acadia
-    user: acadia
+# NO managed database is declared here on purpose.
+#
+# Production runs on Neon (ap-southeast-1), not on a Render database. The
+# original Render Postgres was on the free plan, expired, was deactivated, and
+# crash-looped the backend with UnknownHostException on DB_HOST -- the data was
+# migrated to Neon after that.
+#
+# A leftover Render 'acadia-postgres' instance may still exist in the workspace.
+# It is NOT production. Do not re-add a databases: block pointing at it: the
+# DB_* variables below would then resolve from it on the next blueprint sync and
+# silently repoint the running application at an empty database. The app would
+# boot cleanly, Flyway would baseline the empty schema, and every school would
+# appear to have lost all of its data.
+#
+# The Neon connection details live only in the dashboard (see sync: false below).
 
 services:
   - type: web
@@ -42,26 +52,21 @@ services:
       # SDK stays a no-op — the app runs exactly as before.
       - key: SENTRY_DSN
         sync: false
+      # Neon connection details. sync:false means Render keeps whatever is set
+      # in the dashboard and this file never overwrites it -- which is the whole
+      # point: these used to resolve fromDatabase: acadia-postgres, so a
+      # blueprint sync would have repointed production at the wrong database.
+      # Set these in the dashboard, never here; DB_PASSWORD is a secret.
       - key: DB_HOST
-        fromDatabase:
-          name: acadia-postgres
-          property: host
+        sync: false
       - key: DB_PORT
-        fromDatabase:
-          name: acadia-postgres
-          property: port
+        sync: false
       - key: DB_NAME
-        fromDatabase:
-          name: acadia-postgres
-          property: database
+        sync: false
       - key: DB_USERNAME
-        fromDatabase:
-          name: acadia-postgres
-          property: user
+        sync: false
       - key: DB_PASSWORD
-        fromDatabase:
-          name: acadia-postgres
-          property: password
+        sync: false
 
   # Static web build of the Expo mobile app — lets parents/students/teachers
   # use it from any browser with zero install, no app-store review needed.
