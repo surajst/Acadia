@@ -9,6 +9,10 @@ from the schema and config as they stand, not from a drill. Do the drill in
 [Restore rehearsal](#restore-rehearsal) before you need it for real. An
 unrehearsed restore is a plan, not a backup.
 
+**Current coverage in one line: a 6-hour history window on Neon's Free plan, and
+nothing else.** No dumps are scheduled. See
+[The history window is 6 hours](#the-history-window-is-6-hours).
+
 ---
 
 ## What is being protected
@@ -51,14 +55,40 @@ Neon restores from **history**, not from dump files: you create a branch at a pa
 timestamp and promote it after checking it. That is a good default because it is
 non-destructive — the current state survives while you inspect the candidate.
 
-The retention window depends on the plan and is short on the free tier. Confirm
-the real number in the Neon console under the project's history/restore settings,
-and treat it as the hard limit on how long a data problem can go unnoticed and
-still be fixable. If a bad bulk import is not spotted until the following week, a
-short window means it is simply gone.
+### The history window is 6 hours
 
-Because that window is the whole safety net, take manual dumps as well (below)
-before anything risky, and keep at least one recent dump outside the provider.
+Measured in the Neon console (Settings -> Storage -> History window) on
+2026-08-13. The slider is already at its **maximum for the Free plan**; there is
+nothing to turn up. Paid plans go to 30 days.
+
+**Read this as a detection deadline, not as a backup.** Restoring requires
+someone to notice the problem within six hours of it happening. Concretely, on
+the current plan:
+
+| When the damage happens | Recoverable? |
+|---|---|
+| Bad import at 10am, spotted by lunch | Yes |
+| Bad import Friday 4pm, spotted Monday | **No. Gone.** |
+| Anything overnight | **No**, unless someone is watching at 2am |
+
+A school office does bulk imports during the working day and nobody looks at the
+data again until the next morning. The overlap between "when damage occurs" and
+"within six hours of someone noticing" is small, which means the effective
+coverage is much weaker than "we have point-in-time restore" suggests.
+
+It also protects against exactly one class of failure: recent bad writes. It does
+nothing for account loss, billing lapse, or the provider going away — the failure
+that already destroyed the previous Render database on this project.
+
+**Therefore, before a real school's data goes in, do both:**
+
+1. **Upgrade the Neon plan.** Six hours to thirty days is the single highest-value
+   change available, and it is a billing decision rather than an engineering one.
+2. **Keep independent dumps** (below). Even a 30-day window lives inside the same
+   account; one recent dump held elsewhere is what survives losing the account.
+
+Neither is urgent while the database holds ~30 MB and no real records. Both become
+urgent the day the first school onboards. Do them before that day, not after.
 
 ### Manual dump (before anything risky)
 
