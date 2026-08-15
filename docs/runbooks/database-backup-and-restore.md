@@ -1,6 +1,6 @@
 # Runbook: database backup and restore
 
-Covers the production Postgres behind `acadia-backend`. Read the whole thing
+Covers the production Postgres behind `acadia-backend-sg`. Read the whole thing
 before a restore — the order of operations matters, and one step (Flyway
 baselining) is easy to get wrong in a way that corrupts a recovered database.
 
@@ -43,7 +43,7 @@ A leftover Render `acadia-postgres` instance may still exist in the workspace, a
 its dashboard page shows perfectly healthy connection details. **It is not
 production.** The only authoritative answer is:
 
-    Render -> acadia-backend -> Environment -> DB_HOST
+    Render -> acadia-backend-sg -> Environment -> DB_HOST
 
 Never the database's own page — that page tells you a database exists, not that
 anything connects to it. Backing up the wrong database is worse than having no
@@ -122,7 +122,7 @@ restore rolls back every other school too.
 
 ### Full restore
 
-1. **Stop writes.** Render dashboard -> `acadia-backend` -> suspend the service.
+1. **Stop writes.** Render dashboard -> `acadia-backend-sg` -> suspend the service.
    A running app will keep writing into a database you are mid-restore on.
 2. **Restore into a NEW database or branch**, never over the live one. If the
    restore is bad you still have the original to try again from. On Neon this is
@@ -177,7 +177,7 @@ Do all of these before letting users back in.
 3. **Health is honest:**
 
    ```bash
-   curl -s https://acadia-backend-rx3l.onrender.com/actuator/health
+   curl -s https://portal.concept-edu.com/actuator/health
    ```
 
    Expect `{"status":"UP"}`. The `db` health indicator is enabled, so `UP` means
