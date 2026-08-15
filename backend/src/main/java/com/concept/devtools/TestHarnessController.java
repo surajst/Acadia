@@ -108,6 +108,28 @@ public class TestHarnessController {
                 .orElse(Map.of("status", "not_found", "subdomain", subdomain));
     }
 
+    /**
+     * Flips a tenant's active flag. Dev-mode only, and it exists so the
+     * enforcement in TenantActiveFilter can be tested end to end -- turning a
+     * school off in production is a product decision that needs an export and an
+     * authorisation story first, not a test hook.
+     */
+    @PostMapping("/test/tenant/{subdomain}/active/{active}")
+    @ResponseBody
+    public Map<String, Object> setTenantActive(@PathVariable("subdomain") String subdomain,
+                                               @PathVariable("active") boolean active) {
+        if (!devMode) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Disabled in production");
+        }
+        return tenantRepositoryForPurge.findBySubdomain(subdomain)
+                .map(tenant -> {
+                    tenant.setActive(active);
+                    tenantRepositoryForPurge.save(tenant);
+                    return Map.<String, Object>of("status", "updated", "subdomain", subdomain, "active", active);
+                })
+                .orElse(Map.of("status", "not_found", "subdomain", subdomain));
+    }
+
     @GetMapping("/test/reset")
     @ResponseBody
     @Transactional
