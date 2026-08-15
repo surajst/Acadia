@@ -25,8 +25,19 @@
 # The Neon connection details live only in the dashboard (see sync: false below).
 
 services:
+  # NOTE: the live backend is 'acadia-backend-sg', created by hand in the
+  # dashboard so it could be placed in Singapore -- Render cannot change a
+  # service's region in place. This entry documents its configuration; it is not
+  # the source of truth for it. Before re-syncing this blueprint, check that
+  # doing so will adopt the existing service rather than create a second one.
   - type: web
-    name: acadia-backend
+    name: acadia-backend-sg
+    # Singapore, not Oregon: the users are in India and the Neon database is in
+    # ap-southeast-1. Running the app in Oregon put it on the wrong continent
+    # from both, costing ~230ms to reach a user and ~170ms on every query.
+    # Measured after the move: the database round trip fell to ~0ms and a plain
+    # page render went from 0.30s to 0.09s.
+    region: singapore
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
@@ -71,8 +82,9 @@ services:
   # Static web build of the Expo mobile app — lets parents/students/teachers
   # use it from any browser with zero install, no app-store review needed.
   # EXPO_PUBLIC_API_HOST below points it at the deployed backend above; if
-  # you ever recreate acadia-backend and get a different onrender.com
-  # subdomain, update this value to match.
+  # the backend is ever recreated and gets a different onrender.com subdomain,
+  # update this value to match -- the mobile web build bakes it in at build
+  # time, so it also needs a redeploy, not just an edit here.
   - type: web
     name: acadia-mobile-web
     runtime: static
@@ -81,4 +93,4 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: EXPO_PUBLIC_API_HOST
-        value: https://acadia-backend-rx3l.onrender.com
+        value: https://acadia-backend-sg.onrender.com
