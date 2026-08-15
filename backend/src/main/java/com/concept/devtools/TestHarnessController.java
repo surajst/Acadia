@@ -36,11 +36,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -76,6 +79,34 @@ public class TestHarnessController {
 
     @Value("${app.dev-mode:false}")
     private boolean devMode;
+
+    @Autowired private TenantPurgeService tenantPurgeService;
+    @Autowired private com.concept.tenant.TenantRepository tenantRepositoryForPurge;
+
+    /**
+     * Deletes a whole tenant, addressed by subdomain so a test can clean up using
+     * the value it generated at signup without having to learn the tenant id.
+     *
+     * <p>Dev-mode only, like everything else here. This exists so end-to-end
+     * tests that sign up real schools do not leave a permanent tenant behind on
+     * every run; it is not the basis for a product offboarding feature. See
+     * {@link TenantPurgeService} for why that needs its own design.
+     */
+    @PostMapping("/test/tenant/{subdomain}/purge")
+    @ResponseBody
+    public Map<String, Object> purgeTenant(@PathVariable("subdomain") String subdomain) {
+        if (!devMode) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant purge is disabled in production");
+        }
+        return tenantRepositoryForPurge.findBySubdomain(subdomain)
+                .map(tenant -> {
+                    Map<String, Integer> deleted = tenantPurgeService.purge(tenant.getId());
+                    return Map.<String, Object>of("status", "purged", "subdomain", subdomain,
+                            "tables", deleted.size(),
+                            "rows", deleted.values().stream().mapToInt(Integer::intValue).sum());
+                })
+                .orElse(Map.of("status", "not_found", "subdomain", subdomain));
+    }
 
     @GetMapping("/test/reset")
     @ResponseBody
