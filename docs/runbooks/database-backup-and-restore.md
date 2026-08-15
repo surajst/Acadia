@@ -1,6 +1,6 @@
 # Runbook: database backup and restore
 
-Covers the production Postgres behind `acadia-backend`. Read the whole thing
+Covers the production Postgres behind `acadia-backend-sg`. Read the whole thing
 before a restore — the order of operations matters, and one step (Flyway
 baselining) is easy to get wrong in a way that corrupts a recovered database.
 
@@ -8,6 +8,10 @@ baselining) is easy to get wrong in a way that corrupts a recovered database.
 from the schema and config as they stand, not from a drill. Do the drill in
 [Restore rehearsal](#restore-rehearsal) before you need it for real. An
 unrehearsed restore is a plan, not a backup.
+
+**Current coverage in one line: a 7-day history window on Neon's Launch plan, and
+nothing else.** No dumps are scheduled. See
+[The history window](#the-history-window).
 
 ---
 
@@ -39,7 +43,7 @@ A leftover Render `acadia-postgres` instance may still exist in the workspace, a
 its dashboard page shows perfectly healthy connection details. **It is not
 production.** The only authoritative answer is:
 
-    Render -> acadia-backend -> Environment -> DB_HOST
+    Render -> acadia-backend-sg -> Environment -> DB_HOST
 
 Never the database's own page — that page tells you a database exists, not that
 anything connects to it. Backing up the wrong database is worse than having no
@@ -51,14 +55,32 @@ Neon restores from **history**, not from dump files: you create a branch at a pa
 timestamp and promote it after checking it. That is a good default because it is
 non-destructive — the current state survives while you inspect the candidate.
 
-The retention window depends on the plan and is short on the free tier. Confirm
-the real number in the Neon console under the project's history/restore settings,
-and treat it as the hard limit on how long a data problem can go unnoticed and
-still be fixable. If a bad bulk import is not spotted until the following week, a
-short window means it is simply gone.
+### The history window
 
-Because that window is the whole safety net, take manual dumps as well (below)
-before anything risky, and keep at least one recent dump outside the provider.
+**7 days**, set 2026-08-13 in the Neon console (Settings -> Storage -> History
+window). That is the maximum on the Launch plan; the slider stops at 7d.
+
+It was 6 hours on the Free plan, which was close to useless in practice — a bad
+import on a Friday afternoon was unrecoverable by Monday morning, and anything
+happening overnight was gone before anyone looked. Seven days matches how a
+school office actually works: problems get noticed the next time somebody opens
+the data, which is the next working day or the one after.
+
+**Read the window as a detection deadline, not as a backup.** Recovery still
+requires someone to notice within seven days. Nothing here helps with a mistake
+discovered at the end of term.
+
+**It covers exactly one class of failure: recent bad writes.** It does nothing
+about account loss, a billing lapse, or the provider going away — which is the
+failure that already destroyed the previous Render database on this project. The
+history lives inside the same Neon account as the data it protects.
+
+**So one gap remains: independent dumps.** One recent dump held outside the
+provider is what survives losing the account. Not urgent while the database holds
+~30 MB and no real records; do it before the first school onboards, not after.
+
+History storage bills at $0.20/GB-month. At the current size, 7 days of history
+costs cents — this is not a setting to economise on.
 
 ### Manual dump (before anything risky)
 
@@ -100,7 +122,7 @@ restore rolls back every other school too.
 
 ### Full restore
 
-1. **Stop writes.** Render dashboard -> `acadia-backend` -> suspend the service.
+1. **Stop writes.** Render dashboard -> `acadia-backend-sg` -> suspend the service.
    A running app will keep writing into a database you are mid-restore on.
 2. **Restore into a NEW database or branch**, never over the live one. If the
    restore is bad you still have the original to try again from. On Neon this is
@@ -155,7 +177,7 @@ Do all of these before letting users back in.
 3. **Health is honest:**
 
    ```bash
-   curl -s https://acadia-backend-rx3l.onrender.com/actuator/health
+   curl -s https://portal.concept-edu.com/actuator/health
    ```
 
    Expect `{"status":"UP"}`. The `db` health indicator is enabled, so `UP` means
