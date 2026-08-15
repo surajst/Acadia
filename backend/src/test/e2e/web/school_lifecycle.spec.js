@@ -12,8 +12,9 @@ const { test, expect } = require('@playwright/test');
  * This spec signs a brand-new school up through the public form and then drives
  * every role inside that tenant, touching nothing that was seeded.
  *
- * NEVER point this at production. Each run creates a permanent tenant and there
- * is no delete-tenant path. Local or CI only, against a disposable database.
+ * Local or CI only. The schools it creates are removed afterwards through the
+ * dev-mode-gated purge endpoint, which does not exist in production -- so
+ * pointing this at a real deployment would create tenants it cannot clean up.
  */
 
 const PW = 'PilotLaunchSecure2026!';
@@ -82,9 +83,25 @@ function findStudent(roster, needle) {
 
 test.describe.serial('Lifecycle of a self-onboarded school', () => {
   let school;
+  const created = [];
+
+  // Signing up real schools would otherwise leave one behind per run, for ever.
+  test.afterAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    for (const subdomain of created) {
+      const res = await page.request.post(`/test/tenant/${subdomain}/purge`);
+      const body = await res.json();
+      console.log(`purge ${subdomain}: ${JSON.stringify(body)}`);
+      if (body.status !== 'purged') {
+        throw new Error(`cleanup failed for ${subdomain}: ${JSON.stringify(body)}`);
+      }
+    }
+    await page.close();
+  });
 
   test('a new school signs itself up and the admin lands in the console', async ({ page }) => {
     school = await onboardSchool(page, 'alpha');
+    created.push(school.subdomain);
     await page.goto('/web/admin/dashboard');
     await expect(page.locator('body')).not.toContainText('Forbidden');
     await expect(page.locator('body')).not.toContainText('Something went wrong');
@@ -244,6 +261,7 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
 
   test('a second school sees none of the first schools data', async ({ page }) => {
     const other = await onboardSchool(page, 'beta');
+    created.push(other.subdomain);
 
     const roster = await page.evaluate(async () =>
       (await fetch('/api/admin/messages/roster')).json());
@@ -260,5 +278,43 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     const backAgain = await page.evaluate(async () =>
       (await fetch('/api/admin/messages/roster')).json());
     expect(JSON.stringify(backAgain)).not.toContain(other.subdomain);
+  });
+
+  test('purging a school removes it completely enough to sign up again', async ({ page }) => {
+    // The strongest available proof that the purge is complete rather than
+    // merely successful: the subdomain and admin email are unique-constrained,
+    // so reusing both only works if every trace of the school is really gone.
+    const doomed = await onboardSchool(page, 'gamma');
+    await login(page, doomed.adminEmail, PW);
+    await createClassroom(page, `Grade-${doomed.suffix}`, 'A');
+
+    const purge = await page.evaluate(async (subdomain) =>
+      (await fetch(`/test/tenant/${subdomain}/purge`, { method: 'POST' })).json(), doomed.subdomain);
+    expect(purge.status).toBe('purged');
+    expect(purge.rows).toBeGreaterThan(0);
+
+    // The old admin can no longer get in.
+    await page.context().clearCookies();
+    await page.goto('/login');
+    await page.fill('#username', doomed.adminEmail);
+    await page.fill('#password', PW);
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL(/login/, { timeout: 15000 });
+
+    // And the same identifiers are free again.
+    const reuse = await page.evaluate(async ([sub, email]) => {
+      const res = await fetch('/api/onboard/create-school', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          schoolName: 'Reborn School', subdomain: sub, adminEmail: email,
+          adminPassword: 'PilotLaunchSecure2026!', adminFullName: 'Reborn Admin',
+        }),
+      });
+      return { status: res.status, body: await res.json() };
+    }, [doomed.subdomain, doomed.adminEmail]);
+
+    expect(reuse.status, 'subdomain and email are reusable after a purge').toBe(200);
+    created.push(doomed.subdomain);
   });
 });
