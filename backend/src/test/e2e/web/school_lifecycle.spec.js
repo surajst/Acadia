@@ -369,13 +369,13 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     expect(result.quest).toBeLessThan(400);
     expect(result.reward).toBeLessThan(400);
 
-    // Deliberately not asserted on the parent dashboard: its quest panel is
-    // bound to awaitingQuests, meaning quests the child has completed and
-    // submitted for approval. A quest that was only just assigned is correctly
-    // absent from it. The proof that assignment worked is the child seeing it,
-    // which the next test does.
+    // The parent must be able to see the quest they just set. The Approval
+    // Queue cannot show it -- that panel lists work the child has finished --
+    // so this asserts on the "Quests in progress" panel instead.
     await page.goto('/web/parent/dashboard');
     await expect(page.locator('body')).not.toContainText('Something went wrong');
+    await expect(page.locator('[data-active-quest]'))
+      .toContainText(`Read a chapter ${school.suffix}`);
   });
 
   test('the student signs in and sees the quest their parent set', async ({ page }) => {

@@ -32,6 +32,7 @@ public class ParentPortalWebController {
 
         if (view == null) {
             model.addAttribute("errorMessage", "No parent data found. Please seed the database first.");
+            model.addAttribute("activeQuests", List.of());
             model.addAttribute("awaitingQuests", List.of());
             model.addAttribute("awaitingRewards", List.of());
             model.addAttribute("announcements", List.of());
@@ -42,6 +43,7 @@ public class ParentPortalWebController {
         }
 
         model.addAttribute("parent", view.parent());
+        model.addAttribute("activeQuests", view.activeQuests());
         model.addAttribute("awaitingQuests", view.awaitingQuests());
         model.addAttribute("awaitingRewards", view.awaitingRewards());
         model.addAttribute("announcements", view.announcements());
