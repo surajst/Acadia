@@ -60,7 +60,10 @@ test.describe('Student guardian capture & profile display', () => {
     // One-time sign-in credentials are surfaced for both the student (roll number)
     // and the guardian (phone) so the admin can relay them.
     await expect(page.locator('text=Sign-in credentials created')).toBeVisible();
-    await expect(page.locator('body')).toContainText('Student login — 6A-701');
+    // Usernames are firstname + roll number, qualified by the school's
+    // subdomain. The bare roll number was globally unique across every school,
+    // so the second school to register a given roll silently got no login.
+    await expect(page.locator('body')).toContainText('Student login — guardiantest6a-701@');
     await expect(page.locator('body')).toContainText('Guardian login — +91 90000 12345');
 
     await openProfile(page, 'Guardiantest Studentone', 'Guardiantest');
@@ -98,7 +101,7 @@ test.describe('Student guardian capture & profile display', () => {
     await page.click('button:has-text("Reset student password")');
     await page.click('button:has-text("Yes, reset password")');
     await expect(page.locator('text=New sign-in credentials')).toBeVisible();
-    await expect(page.locator('body')).toContainText('Student login — 6A-703');
+    await expect(page.locator('body')).toContainText('Student login — resettest6a-703@');
 
     // Re-issue the guardian's password too (same confirm step).
     await page.click('button:has-text("Reset guardian password")');

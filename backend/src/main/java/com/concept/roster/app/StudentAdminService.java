@@ -48,6 +48,7 @@ public class StudentAdminService {
     private final StudentMetricRepository studentMetricRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
+    private final com.concept.tenant.TenantRepository tenantRepository;
 
     public StudentAdminService(RosterStudentRepository studentRepository,
                                RosterParentRepository parentRepository,
@@ -57,7 +58,8 @@ public class StudentAdminService {
                                RosterStudentPurger studentPurger,
                                StudentMetricRepository studentMetricRepository,
                                PasswordEncoder passwordEncoder,
-                               AuditLogService auditLogService) {
+                               AuditLogService auditLogService,
+                               com.concept.tenant.TenantRepository tenantRepository) {
         this.studentRepository = studentRepository;
         this.parentRepository = parentRepository;
         this.userRepository = userRepository;
@@ -67,6 +69,7 @@ public class StudentAdminService {
         this.studentMetricRepository = studentMetricRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
+        this.tenantRepository = tenantRepository;
     }
 
     // ---------------------------------------------------------------- add
@@ -90,10 +93,9 @@ public class StudentAdminService {
         String studentEmail = loginEmail;
         String studentPassword = loginPassword;
         if ((studentEmail == null || studentEmail.isBlank())
-                && rollNumber != null && !rollNumber.isBlank()
-                && !userRepository.existsByEmail(rollNumber)) {
-            studentEmail = rollNumber;
-            studentPassword = generateTempPassword();
+                && rollNumber != null && !rollNumber.isBlank()) {
+            studentEmail = buildUsername(firstName, rollNumber, tenantId);
+            studentPassword = studentEmail == null ? null : generateTempPassword();
         }
 
         Student student = createStudent(firstName, lastName, rollNumber, schoolClassId,
@@ -125,6 +127,52 @@ public class StudentAdminService {
         }
 
         return creds.length() > 0 ? creds.toString() : null;
+    }
+
+    /**
+     * Builds a student's sign-in username as firstname + roll number, qualified by
+     * the school's subdomain: "asha6a-01@greenwood".
+     *
+     * <p>The subdomain is not decoration. User.email is globally unique across
+     * every school, and the previous version used the bare roll number, so the
+     * first school to register "6A-01" claimed that username for the whole
+     * system. Every later school registering their own 6A-01 fell through the
+     * existence check and silently got no login at all -- no error, no warning,
+     * just a child who could not sign in. Qualifying by tenant removes the shared
+     * namespace; the first name makes the username less guessable from a class
+     * list than a bare roll number.
+     *
+     * @return the username, or null when one cannot be formed or stays taken
+     */
+    private String buildUsername(String firstName, String rollNumber, UUID tenantId) {
+        String subdomain = tenantId == null ? null : tenantRepository.findById(tenantId)
+                .map(com.concept.tenant.Tenant::getSubdomain).orElse(null);
+        if (subdomain == null || subdomain.isBlank()) {
+            return null;
+        }
+        String local = sanitiseForUsername(firstName) + sanitiseForUsername(rollNumber);
+        if (local.isBlank()) {
+            return null;
+        }
+        String candidate = local + "@" + sanitiseForUsername(subdomain);
+        if (!userRepository.existsByEmail(candidate)) {
+            return candidate;
+        }
+        // Same first name and roll within one school should be impossible, but a
+        // clash must not silently mean "no login" the way it used to.
+        for (int i = 2; i <= 20; i++) {
+            String next = local + i + "@" + sanitiseForUsername(subdomain);
+            if (!userRepository.existsByEmail(next)) {
+                return next;
+            }
+        }
+        return null;
+    }
+
+    /** Lowercase, keeping only characters a family can retype without ambiguity. */
+    private String sanitiseForUsername(String raw) {
+        return raw == null ? "" : raw.trim().toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("[^a-z0-9.-]", "");
     }
 
     /**
