@@ -67,6 +67,14 @@ public class ParentDashboardService {
 
     /** Everything the parent_dashboard template needs, all flat. */
     public record ParentDashboardView(ParentView parent,
+                                      /**
+                                       * Quests the parent set that the child has
+                                       * not finished yet. Without these the
+                                       * dashboard showed nothing at all until a
+                                       * child submitted work, so a parent had no
+                                       * confirmation their quest existed.
+                                       */
+                                      List<QuestView> activeQuests,
                                       List<QuestView> awaitingQuests,
                                       List<RewardView> awaitingRewards,
                                       List<AnnouncementView> announcements,
@@ -83,6 +91,9 @@ public class ParentDashboardService {
 
         List<ParentQuest> awaitingQuests =
                 parentQuestRepository.findByParentIdAndStatus(parent.getId(), "COMPLETED_AWAITING_APPROVAL");
+        // PENDING is what assignTask sets: assigned, not yet done.
+        List<ParentQuest> activeQuests =
+                parentQuestRepository.findByParentIdAndStatus(parent.getId(), "PENDING");
         List<ParentReward> awaitingRewards =
                 parentRewardRepository.findByParentIdAndStatus(parent.getId(), "CLAIMED_AWAITING_DELIVERY");
 
@@ -123,6 +134,7 @@ public class ParentDashboardService {
 
         ParentDashboardView view = new ParentDashboardView(
                 new ParentView(parent.getFirstName(), parent.getLastName()),
+                activeQuests.stream().map(this::toQuestView).toList(),
                 awaitingQuests.stream().map(this::toQuestView).toList(),
                 awaitingRewards.stream().map(this::toRewardView).toList(),
                 announcements.stream().map(this::toAnnouncementView).toList(),

@@ -369,13 +369,13 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     expect(result.quest).toBeLessThan(400);
     expect(result.reward).toBeLessThan(400);
 
-    // Deliberately not asserted on the parent dashboard: its quest panel is
-    // bound to awaitingQuests, meaning quests the child has completed and
-    // submitted for approval. A quest that was only just assigned is correctly
-    // absent from it. The proof that assignment worked is the child seeing it,
-    // which the next test does.
+    // The parent must be able to see the quest they just set. The Approval
+    // Queue cannot show it -- that panel lists work the child has finished --
+    // so this asserts on the "Quests in progress" panel instead.
     await page.goto('/web/parent/dashboard');
     await expect(page.locator('body')).not.toContainText('Something went wrong');
+    await expect(page.locator('[data-active-quest]'))
+      .toContainText(`Read a chapter ${school.suffix}`);
   });
 
   test('the student signs in and sees the quest their parent set', async ({ page }) => {
@@ -415,5 +415,46 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await login(page, doomed.adminEmail, PW);
     await page.goto('/web/admin/dashboard');
     await expect(page.locator('body')).not.toContainText('Forbidden');
+  });
+
+  test('the student profile shows the login username and can re-issue a password', async ({ page }) => {
+    await login(page, school.adminEmail, PW);
+    await page.goto(`/web/teacher/student/${school.studentId}`);
+
+    // The username is readable at any time. Before this, an admin who merely
+    // wanted to tell a family how to sign in had to reset the password to see
+    // it, which invalidated a login that was working perfectly well.
+    await expect(page.locator('[data-student-username]')).toHaveText(school.studentEmail);
+    await expect(page.locator('[data-guardian-username]')).toHaveText(school.parentEmail);
+
+    // The password itself is never shown, because it is stored hashed. What the
+    // profile offers instead is re-issuing one, revealed once.
+    await expect(page.locator('body')).not.toContainText(school.studentPassword);
+
+    // Submit the real form rather than fetch()ing the endpoint: the credentials
+    // arrive as a flash attribute, which is consumed by whoever follows the
+    // redirect. A fetch swallows it and the page then renders with nothing.
+    await Promise.all([
+      page.waitForURL(u => u.pathname.includes('/web/teacher/student/'), { timeout: 30000 }),
+      page.evaluate(() => document.getElementById('resetStudentForm').submit()),
+    ]);
+
+    const banner = page.locator('[data-flash]');
+    await expect(banner).toContainText('Student login', { timeout: 15000 });
+    const creds = (await banner.innerText()).match(/Student login\s*[—-]\s*(\S+)\s*\/\s*(\S+)/);
+    expect(creds, 'a fresh password is revealed once').toBeTruthy();
+    expect(creds[2]).not.toBe(school.studentPassword);
+
+    // The re-issued password must actually work, and the old one must not.
+    await page.context().clearCookies();
+    await login(page, creds[1], creds[2]);
+    await expect(page.locator('body')).not.toContainText('Forbidden');
+
+    await page.context().clearCookies();
+    await page.goto('/login');
+    await page.fill('#username', school.studentEmail);
+    await page.fill('#password', school.studentPassword);
+    await page.click('button[type="submit"]');
+    await expect(page, 'the superseded password stops working').toHaveURL(/login/, { timeout: 15000 });
   });
 });

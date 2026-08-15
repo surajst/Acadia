@@ -213,6 +213,26 @@
                         <p class="text-xs text-[var(--text-3)] mt-0.5">Re-issue a temporary sign-in password. The current one stops working immediately.</p>
                     </div>
                 </div>
+                <!-- Usernames are shown permanently; passwords are not, because they are
+                     stored hashed and cannot be read back. An admin who only needs to tell a
+                     family how to sign in can read it here instead of resetting the password
+                     to find out, which used to invalidate a login that was working fine. -->
+                <div class="grid gap-2 mb-3">
+                    <div class="flex items-baseline gap-2 flex-wrap">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-3)]">Student username</span>
+                        <span th:if="${studentLoginUsername != null}" data-student-username
+                              class="text-sm font-mono text-slate-800" th:text="${studentLoginUsername}">6A-41</span>
+                        <span th:if="${studentLoginUsername == null}" data-student-username
+                              class="text-sm text-[var(--text-3)] italic">No sign-in provisioned</span>
+                    </div>
+                    <div th:if="${primaryGuardianId != null}" class="flex items-baseline gap-2 flex-wrap">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-3)]">Guardian username</span>
+                        <span th:if="${guardianLoginUsername != null}" data-guardian-username
+                              class="text-sm font-mono text-slate-800" th:text="${guardianLoginUsername}">parent@example.com</span>
+                        <span th:if="${guardianLoginUsername == null}" data-guardian-username
+                              class="text-sm text-[var(--text-3)] italic">No sign-in provisioned</span>
+                    </div>
+                </div>
                 <div class="flex flex-wrap gap-2.5">
                     <button type="button" class="btn btn-security btn-sm"
                             th:attr="data-reset-name=|${studentFirstName} ${studentLastName}|"

@@ -29,5 +29,13 @@ public record StudentProfileView(
         int guardianCount,
         int householdStreak,
         List<ClassOption> classList,
-        UUID currentSchoolClassId
+        UUID currentSchoolClassId,
+        /**
+         * Sign-in usernames, shown on the profile so an admin can tell a family
+         * how to log in without having to reset the password to find out. Only
+         * the username: passwords are stored hashed and are unrecoverable by
+         * design, which is why the profile offers "reset" rather than "reveal".
+         */
+        String studentLoginUsername,
+        String guardianLoginUsername
 ) {}
