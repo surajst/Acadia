@@ -1,5 +1,20 @@
 # Runbook: move the backend from Oregon to Singapore
 
+**DONE — completed 2026-08-13.** Kept as the record of what was changed and why,
+and as the procedure to follow if the service is ever rebuilt in another region.
+
+Result, measured through `portal.concept-edu.com` after cutover:
+
+| | Oregon (before) | Singapore (after) |
+|---|---|---|
+| Plain page render | ~0.30s | **~0.10s** |
+| App -> database round trip | ~170ms | **~0ms** |
+| Page issuing ~10 queries | ~1.9s | **~0.1s** |
+
+The live service is `acadia-backend-sg`. The Oregon service `acadia-backend`
+(`acadia-backend-rx3l.onrender.com`) is suspended and returns 503, kept briefly
+as rollback before deletion.
+
 One-off migration. Follow the order — the cutover steps are sequenced so that
 the old service keeps serving until the new one is proven, and so the only
 irreversible step (deleting Oregon) happens last.
@@ -129,6 +144,25 @@ so no data decision is involved — this is purely a routing change.
 After step 6, rollback means recreating an Oregon service from the same repo.
 
 ---
+
+## What actually happened
+
+Two things worth knowing if this is ever repeated:
+
+- **Render routes custom domains by Host header.** As soon as
+  `portal.concept-edu.com` was attached to the Singapore service it began
+  serving from there, even though the CNAME still pointed at the Oregon
+  hostname. The site was correct before DNS was.
+- **That made the stale CNAME a hidden trap.** It still resolved *through*
+  `acadia-backend-rx3l.onrender.com`, a name that disappears when the Oregon
+  service is deleted — which would have broken the domain at DNS level, with
+  nothing in Render warning about it. Update the CNAME before deleting the old
+  service, not after.
+
+Also note the `gcp-us-west1-1.origin.onrender.com` suffix that appears in
+Render CNAME chains is shared edge naming and is **not** a region indicator; it
+shows up for the Singapore service too. Only the service hostname identifies
+the service.
 
 ## Afterwards
 
