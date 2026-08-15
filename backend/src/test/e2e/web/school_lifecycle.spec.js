@@ -130,14 +130,21 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await page.fill('#firstName', 'Asha');
     await page.fill('#lastName', `Student${school.suffix}`);
     await page.fill('#rollNumber', school.roll);
-    const loginEmail = page.locator('#loginEmail');
-    if (await loginEmail.count()) {
-      await loginEmail.fill(school.studentEmail);
-      await page.fill('#loginPassword', PW);
-    }
     await page.selectOption('#schoolClassId', { index: 1 });
     await page.click('#registerStudentModal button[type="submit"]');
     await page.waitForURL(u => u.pathname.includes('/web/admin/management'), { timeout: 30000 });
+
+    // The registration form has no password fields: a student login is
+    // provisioned automatically with the roll number as the username and a
+    // generated temporary password, shown once in a flash banner. Scraping it
+    // here is the only way to obtain it -- exactly what a real admin does before
+    // relaying it to the family.
+    const banner = page.locator('[data-flash]');
+    await expect(banner).toContainText('Student login', { timeout: 15000 });
+    const creds = (await banner.innerText()).match(/Student login\s*[—-]\s*(\S+)\s*\/\s*(\S+)/);
+    expect(creds, 'one-time student credentials are shown to the admin').toBeTruthy();
+    school.studentEmail = creds[1];
+    school.studentPassword = creds[2];
 
     // The management page renders counts and classes, not student names, so the
     // roster endpoint is what actually proves the registration landed.
@@ -316,5 +323,97 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
 
     expect(reuse.status, 'subdomain and email are reusable after a purge').toBe(200);
     created.push(doomed.subdomain);
+  });
+
+  test('admin raises a fee invoice and it appears in the invoice table', async ({ page }) => {
+    await login(page, school.adminEmail, PW);
+
+    // A brand-new school has no invoices at all, which makes the record count a
+    // precise assertion. The student name alone is not: the page also renders a
+    // dropdown of every student, so the name is present before any invoice exists.
+    await page.goto('/web/admin/fees');
+    await expect(page.locator('body')).toContainText('0 of 0 records');
+
+    const created = await page.evaluate(async (studentId) => {
+      const res = await fetch('/web/admin/fees/invoice/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ studentId }).toString(),
+      });
+      return res.status;
+    }, school.studentId);
+    expect(created).toBeLessThan(400);
+
+    await page.goto('/web/admin/fees');
+    await expect(page.locator('body')).not.toContainText('Something went wrong');
+    await expect(page.locator('body')).toContainText('1 of 1 records');
+    await expect(page.locator('table')).toContainText(`Student${school.suffix}`);
+  });
+
+  test('parent assigns a quest and a reward to their child', async ({ page }) => {
+    await login(page, school.parentEmail, PW);
+
+    const result = await page.evaluate(async ([studentId, tag]) => {
+      const form = (url, params) => fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(params).toString(),
+      });
+      const quest = await form('/web/parent/assign-task',
+        { studentId, taskDescription: `Read a chapter ${tag}`, xpBounty: '50' });
+      const reward = await form('/web/parent/add-reward',
+        { studentId, rewardTitle: `Ice cream ${tag}`, xpCost: '30' });
+      return { quest: quest.status, reward: reward.status };
+    }, [school.studentId, school.suffix]);
+
+    expect(result.quest).toBeLessThan(400);
+    expect(result.reward).toBeLessThan(400);
+
+    // Deliberately not asserted on the parent dashboard: its quest panel is
+    // bound to awaitingQuests, meaning quests the child has completed and
+    // submitted for approval. A quest that was only just assigned is correctly
+    // absent from it. The proof that assignment worked is the child seeing it,
+    // which the next test does.
+    await page.goto('/web/parent/dashboard');
+    await expect(page.locator('body')).not.toContainText('Something went wrong');
+  });
+
+  test('the student signs in and sees the quest their parent set', async ({ page }) => {
+    await login(page, school.studentEmail, school.studentPassword);
+    await page.goto('/web/student/portal');
+    await expect(page.locator('body')).not.toContainText('Forbidden');
+    await expect(page.locator('body')).not.toContainText('Something went wrong');
+    // End of the chain: something a parent created is visible to the child.
+    await expect(page.locator('body')).toContainText(`Read a chapter ${school.suffix}`);
+  });
+
+  test('deactivating a school locks every one of its users out', async ({ page }) => {
+    const doomed = await onboardSchool(page, 'delta');
+    created.push(doomed.subdomain);
+    await login(page, doomed.adminEmail, PW);
+    await page.goto('/web/admin/dashboard');
+    await expect(page.locator('body')).not.toContainText('Forbidden');
+
+    await page.evaluate(async (subdomain) =>
+      (await fetch(`/test/tenant/${subdomain}/active/false`, { method: 'POST' })).json(),
+      doomed.subdomain);
+
+    // The existing session must stop working immediately, not at next login.
+    await page.goto('/web/admin/dashboard');
+    await expect(page).toHaveURL(/login/, { timeout: 15000 });
+
+    // And logging back in must not resurrect access.
+    await page.goto('/login');
+    await page.fill('#username', doomed.adminEmail);
+    await page.fill('#password', PW);
+    await page.click('button[type="submit"]');
+    await page.goto('/web/admin/dashboard');
+    await expect(page).toHaveURL(/login/, { timeout: 15000 });
+
+    // Reactivating restores it, so this is a switch and not a one-way door.
+    await page.request.post(`/test/tenant/${doomed.subdomain}/active/true`);
+    await login(page, doomed.adminEmail, PW);
+    await page.goto('/web/admin/dashboard');
+    await expect(page.locator('body')).not.toContainText('Forbidden');
   });
 });
