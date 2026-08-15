@@ -70,6 +70,8 @@ public class StudentProfileController {
         model.addAttribute("dispatchLedger", Collections.emptyList());
         model.addAttribute("classList", view.classList());
         model.addAttribute("currentSchoolClassId", view.currentSchoolClassId());
+        model.addAttribute("studentLoginUsername", view.studentLoginUsername());
+        model.addAttribute("guardianLoginUsername", view.guardianLoginUsername());
 
         return "student_profile";
     }

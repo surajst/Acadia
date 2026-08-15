@@ -32,15 +32,18 @@ public class StudentProfileService {
     private final StudentMetricRepository studentMetricRepository;
     private final AttendanceRepository attendanceRepository;
     private final SchoolClassRepository schoolClassRepository;
+    private final com.concept.user.UserRepository userRepository;
 
     public StudentProfileService(RosterStudentRepository studentRepository,
                                  StudentMetricRepository studentMetricRepository,
                                  AttendanceRepository attendanceRepository,
-                                 SchoolClassRepository schoolClassRepository) {
+                                 SchoolClassRepository schoolClassRepository,
+                                 com.concept.user.UserRepository userRepository) {
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.attendanceRepository = attendanceRepository;
         this.schoolClassRepository = schoolClassRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -106,7 +109,23 @@ public class StudentProfileService {
                 guardianCount,
                 activeStreak,
                 classList,
-                currentSchoolClassId);
+                currentSchoolClassId,
+                loginUsername(student.getUserId(), tenantId),
+                primaryGuardian == null ? null : loginUsername(primaryGuardian.getUserId(), tenantId));
+    }
+
+    /**
+     * The username a person signs in with, or null when no login was provisioned.
+     * Scoped by tenant, not a bare findById: the architecture test rejects the
+     * latter on a tenant-scoped repository, and it is right to -- reading a user
+     * row by id alone is how cross-tenant leaks have started here before.
+     */
+    private String loginUsername(java.util.UUID userId, java.util.UUID tenantId) {
+        if (userId == null || tenantId == null) {
+            return null;
+        }
+        return userRepository.findByIdAndTenantId(userId, tenantId)
+                .map(com.concept.user.User::getEmail).orElse(null);
     }
 
     private ClassOption toOption(SchoolClass c) {
