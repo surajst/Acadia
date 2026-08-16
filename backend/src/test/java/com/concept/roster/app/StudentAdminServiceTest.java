@@ -46,6 +46,7 @@ public class StudentAdminServiceTest {
 
     private UUID tenantId;
     private UUID yearId;
+    private String subdomain;
     private SchoolClass schoolClass;
 
     @BeforeEach
@@ -56,7 +57,8 @@ public class StudentAdminServiceTest {
         Tenant tenant = new Tenant();
         tenant.setId(tenantId);
         tenant.setName("Mgmt Tenant");
-        tenant.setSubdomain("mg-" + tenantId.toString().substring(0, 8));
+        subdomain = "mg-" + tenantId.toString().substring(0, 8);
+        tenant.setSubdomain(subdomain);
         tenant.setActive(true);
         tenant.setCreatedAt(Instant.now());
         tenantRepository.saveAndFlush(tenant);
@@ -82,14 +84,23 @@ public class StudentAdminServiceTest {
     }
 
     @Test
-    public void addStudent_autoProvisionsLoginFromRollNumberAndSeedsMetric() {
+    public void addStudent_autoProvisionsLoginQualifiedBySchoolAndSeedsMetric() {
         String roll = "R-" + UUID.randomUUID().toString().substring(0, 8);
         String creds = studentAdminService.addStudent("Aarav", "Mehta", roll, schoolClass.getId(),
                 null, null, null, null, null, tenantId, yearId, NO_AUTH);
 
+        // Usernames are firstname + roll number, qualified by the school's
+        // subdomain and lowercased. The bare roll number used to be the whole
+        // username, which is globally unique across every school -- so the
+        // second school to register a given roll silently got no login at all.
+        String expected = "aarav" + roll.toLowerCase() + "@" + subdomain;
+
         assertNotNull(creds, "auto-provisioned login should be relayed back");
-        assertTrue(creds.contains(roll), "credentials should mention the roll-number username");
-        assertTrue(userRepository.existsByEmail(roll));
+        assertTrue(creds.contains(expected),
+                "credentials should carry the school-qualified username, was: " + creds);
+        assertTrue(userRepository.existsByEmail(expected));
+        assertFalse(userRepository.existsByEmail(roll),
+                "the bare roll number must not be claimed as a global username");
         Student s = studentRepository.findByTenantIdAndRollNumber(tenantId, roll).orElseThrow();
         assertNotNull(s.getUserId());
         assertTrue(studentMetricRepository.findByStudentId(s.getId()).isPresent());
