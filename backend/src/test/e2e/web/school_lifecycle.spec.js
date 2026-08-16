@@ -81,6 +81,28 @@ function findStudent(roster, needle) {
   return (roster || []).find(r => (r.studentName || '').includes(needle));
 }
 
+/**
+ * Registers a student through the real modal and returns the one-time
+ * credentials from the flash banner.
+ */
+async function registerStudent(page, firstName, lastName, roll) {
+  await page.goto('/web/admin/management');
+  await page.click('button:has-text("Classrooms & Students")');
+  await page.click('button:has-text("Register New Student")');
+  await page.fill('#firstName', firstName);
+  await page.fill('#lastName', lastName);
+  await page.fill('#rollNumber', roll);
+  await page.selectOption('#schoolClassId', { index: 1 });
+  await page.click('#registerStudentModal button[type="submit"]');
+  await page.waitForURL(u => u.pathname.includes('/web/admin/management'), { timeout: 30000 });
+
+  const banner = page.locator('[data-flash]');
+  await expect(banner).toContainText('Student login', { timeout: 15000 });
+  const creds = (await banner.innerText()).match(/Student login\s*[—-]\s*(\S+)\s*\/\s*(\S+)/);
+  expect(creds, `credentials shown for roll ${roll}`).toBeTruthy();
+  return { username: creds[1], password: creds[2] };
+}
+
 test.describe.serial('Lifecycle of a self-onboarded school', () => {
   let school;
   const created = [];
@@ -456,5 +478,37 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await page.fill('#password', school.studentPassword);
     await page.click('button[type="submit"]');
     await expect(page, 'the superseded password stops working').toHaveURL(/login/, { timeout: 15000 });
+  });
+
+  test('two schools can use the same roll number and both students get logins', async ({ page }) => {
+    // Usernames used to be the bare roll number, and User.email is globally
+    // unique -- so the first school to register 6A-01 claimed it system-wide and
+    // every later school's 6A-01 silently got no login. Roll numbers repeat
+    // across schools constantly, so this hit roughly the second customer.
+    const roll = 'ZZ-01';
+
+    const first = await onboardSchool(page, 'epsilon');
+    created.push(first.subdomain);
+    await login(page, first.adminEmail, PW);
+    await createClassroom(page, `Grade-${first.suffix}`, 'A');
+    const firstCreds = await registerStudent(page, 'Asha', `One${first.suffix}`, roll);
+
+    await page.context().clearCookies();
+    const second = await onboardSchool(page, 'zeta');
+    created.push(second.subdomain);
+    await login(page, second.adminEmail, PW);
+    await createClassroom(page, `Grade-${second.suffix}`, 'A');
+    const secondCreds = await registerStudent(page, 'Asha', `Two${second.suffix}`, roll);
+
+    // Same first name, same roll, different schools: distinct usernames, both real.
+    expect(secondCreds.username).not.toBe(firstCreds.username);
+    expect(firstCreds.username).toContain(first.subdomain);
+    expect(secondCreds.username).toContain(second.subdomain);
+
+    for (const creds of [firstCreds, secondCreds]) {
+      await page.context().clearCookies();
+      await login(page, creds.username, creds.password);
+      await expect(page.locator('body')).not.toContainText('Forbidden');
+    }
   });
 });
