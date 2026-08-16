@@ -4,10 +4,10 @@ Covers the production Postgres behind `acadia-backend-sg`. Read the whole thing
 before a restore — the order of operations matters, and one step (Flyway
 baselining) is easy to get wrong in a way that corrupts a recovered database.
 
-**Status: the restore procedure below has NOT been rehearsed.** It is written
-from the schema and config as they stand, not from a drill. Do the drill in
-[Restore rehearsal](#restore-rehearsal) before you need it for real. An
-unrehearsed restore is a plan, not a backup.
+**Status: rehearsed end to end on 2026-08-16.** A production dump was restored
+into a scratch database, the application was booted against it, and a real user
+logged in and read their school's roster. Measured numbers and what the drill
+taught are in [Drill results](#drill-results).
 
 **Current coverage in one line: a 7-day history window on Neon's Launch plan, and
 nothing else.** No dumps are scheduled. See
@@ -189,6 +189,55 @@ Do all of these before letting users back in.
    login proves it is coherent.
 
 ---
+
+## Drill results
+
+Rehearsed 2026-08-16 against a real production dump.
+
+| Step | Measured |
+|---|---|
+| `pg_dump` of production (30 MB database, 88 KB custom-format dump) | seconds |
+| `pg_restore` into a scratch local database | **under 1 second** |
+| Application boot against the restored database | **7.3 seconds** |
+| Verified: health UP, real login, tenant roster returned the right student | — |
+
+**Recovery time is dominated by human decisions, not by the machinery.** Every
+mechanical step finished in seconds; what took real time was working out which
+credentials to use. Plan the RTO around people, not `pg_restore`.
+
+### What the drill confirmed
+
+- **Flyway leaves a restored dump alone.** This was the open question. The log
+  read `Current version of schema "public": 1` then `Schema "public" is up to
+  date. No migration necessary.` It did not re-apply the baseline against a
+  schema that already had every table.
+- **`ddl-auto=validate` passing on boot is real evidence.** 36 tables restored
+  and the application started clean, which means the restored schema genuinely
+  matches the entities.
+- **`--no-owner --no-privileges` was required**, as written. The dump's roles do
+  not exist on a different server.
+
+### What the drill changed
+
+- **Use Neon's NON-pooled host for `pg_dump`.** The pooled endpoint
+  (`...-pooler....neon.tech`) runs through PgBouncer, which does not support
+  what `pg_dump` needs. Drop `-pooler` from the hostname.
+- **Restoring the data is not the same as regaining access.** Nobody knew the
+  passwords for the accounts in the dump, so the restore was provably good while
+  still being unusable until a password was reset directly in the restored
+  database. In a real incident the school's own admin password comes from their
+  password manager -- but if it does not, resetting `users.password_hash` to a
+  known bcrypt value is the way back in, and that is a step worth knowing before
+  you need it.
+- **Keep credentials in `pgpass.conf`, not on the command line.** Both the Neon
+  and local entries live there, so no dump or restore command contains a
+  password to leak into shell history.
+
+### Still not covered
+
+The drill restored a dump taken minutes earlier. It did not exercise Neon's
+branch-based point-in-time restore, which is what an actual "bad write two days
+ago" incident would use. Worth a second drill before that matters.
 
 ## Restore rehearsal
 
