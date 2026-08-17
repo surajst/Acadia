@@ -175,11 +175,23 @@ public class FeeManagementService {
                 : student.getClassSection() != null ? student.getClassSection().getGradeName()
                 : null;
 
-        FeeStructure structure = gradeLevel != null
-                ? feeStructureRepository.findByTenantIdAndGradeLevel(currentTenantId, gradeLevel).orElse(null)
-                : null;
-        BigDecimal tuition = structure != null ? structure.getTuitionFee() : new BigDecimal("15000.00");
-        BigDecimal term = structure != null ? structure.getTermFee() : new BigDecimal("5000.00");
+        if (gradeLevel == null) {
+            throw new FeeStructureMissingException(
+                    "This student is not in a class yet, so there is no grade level to price the invoice from.");
+        }
+
+        // Priced from the student's own academic year, not the school's current
+        // one: an invoice raised late for last year must still use last year's
+        // fees.
+        FeeStructure structure = feeStructureRepository
+                .findByTenantIdAndAcademicYearIdAndGradeLevel(
+                        currentTenantId, student.getAcademicYearId(), gradeLevel)
+                .orElseThrow(() -> new FeeStructureMissingException(
+                        "No fee structure is configured for " + gradeLevel
+                                + ". Set it under Fee Settings before invoicing this student."));
+
+        BigDecimal tuition = structure.getTuitionFee();
+        BigDecimal term = structure.getTermFee();
 
         FeeInvoice invoice = new FeeInvoice();
         invoice.setId(UUID.randomUUID());

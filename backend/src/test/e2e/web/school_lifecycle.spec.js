@@ -356,6 +356,31 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await page.goto('/web/admin/fees');
     await expect(page.locator('body')).toContainText('0 of 0 records');
 
+    // Invoicing refuses to price a grade the school has not set fees for, so a
+    // newly onboarded school must configure them first. This used to fall
+    // through to a hardcoded 15000 + 5000, which meant every school on the
+    // platform billed a plausible-looking 20,000 that nobody had chosen.
+    const refused = await page.evaluate(async (studentId) => {
+      const res = await fetch('/web/admin/fees/invoice/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ studentId }).toString(),
+      });
+      return res.status;
+    }, school.studentId);
+    expect(refused).toBeLessThan(400); // redirect, not a 500
+    await page.goto('/web/admin/fees');
+    await expect(page.locator('body')).toContainText('0 of 0 records');
+
+    // Now set the fees for this school's grade and try again.
+    await page.goto('/web/admin/fees/settings');
+    await page.fill('[data-fee-grade]', `Grade-${school.suffix}`);
+    await page.fill('[data-fee-tuition]', '18000');
+    await page.fill('[data-fee-term]', '4000');
+    await page.click('#feeStructureForm button[type="submit"]');
+    await expect(page.locator('[data-fee-row]')).toHaveCount(1);
+    await expect(page.locator('[data-fee-total]')).toContainText('22,000.00');
+
     const created = await page.evaluate(async (studentId) => {
       const res = await fetch('/web/admin/fees/invoice/create', {
         method: 'POST',
@@ -370,6 +395,8 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await expect(page.locator('body')).not.toContainText('Something went wrong');
     await expect(page.locator('body')).toContainText('1 of 1 records');
     await expect(page.locator('table')).toContainText(`Student${school.suffix}`);
+    // Priced from what this school set, not from a platform-wide constant.
+    await expect(page.locator('table')).toContainText('22,000.00');
   });
 
   test('parent assigns a quest and a reward to their child', async ({ page }) => {

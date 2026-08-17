@@ -1,5 +1,6 @@
 package com.concept.fees;
 import com.concept.fees.app.FeeManagementService;
+import com.concept.fees.app.FeeStructureMissingException;
 import com.concept.fees.data.FeeStructureRepository;
 import com.concept.fees.data.FeeStructure;
 import com.concept.fees.data.FeeInvoice;
@@ -105,12 +106,75 @@ public class FeeInvoiceCreationTenantTest {
 
     @Test
     public void createInvoiceForStudent_sameTenant_succeeds() {
+        FeeStructure structure = new FeeStructure();
+        structure.setId(UUID.randomUUID());
+        structure.setTenantId(tenantA);
+        structure.setAcademicYearId(studentA.getAcademicYearId());
+        structure.setGradeLevel(studentA.getClassSection().getGradeName());
+        structure.setTuitionFee(new BigDecimal("15000.00"));
+        structure.setTermFee(new BigDecimal("5000.00"));
+        feeStructureRepository.saveAndFlush(structure);
+
         FeeInvoice invoice = feeManagementService.createInvoiceForStudent(studentA.getId(), tenantA, null);
 
         assertNotNull(invoice.getId());
         assertEquals(tenantA, invoice.getTenantId());
         assertEquals(new BigDecimal("20000.00"), invoice.getTotalAmount());
         assertEquals(0, BigDecimal.ZERO.compareTo(invoice.getAmountPaid()));
+    }
+
+    /**
+     * The behaviour this change is really about. Invoicing used to fall back to
+     * a hardcoded 15000 + 5000 whenever no fee structure matched, so an
+     * unconfigured school silently billed every family 20,000 and looked
+     * correct doing it. Refusing is the honest outcome.
+     */
+    @Test
+    public void createInvoiceForStudent_withoutFeeStructure_refusesInsteadOfGuessing() {
+        FeeStructureMissingException e = assertThrows(FeeStructureMissingException.class, () ->
+                feeManagementService.createInvoiceForStudent(studentA.getId(), tenantA, null));
+
+        // The admin has to be able to act on this, so it names the grade.
+        assertTrue(e.getMessage().contains(studentA.getClassSection().getGradeName()),
+                "message should name the grade level, was: " + e.getMessage());
+    }
+
+    /**
+     * grade_level used to be UNIQUE on its own, which on a multi-tenant table
+     * meant the first school to configure "Grade 6" claimed it platform-wide
+     * and the next school's insert failed. Two schools must be able to price
+     * the same grade differently.
+     */
+    @Test
+    public void twoSchoolsCanPriceTheSameGradeDifferently() {
+        String sharedGrade = "Grade 6";
+
+        studentA.getClassSection().setGradeName(sharedGrade);
+        classSectionRepository.saveAndFlush(studentA.getClassSection());
+
+        FeeStructure forA = new FeeStructure();
+        forA.setId(UUID.randomUUID());
+        forA.setTenantId(tenantA);
+        forA.setAcademicYearId(studentA.getAcademicYearId());
+        forA.setGradeLevel(sharedGrade);
+        forA.setTuitionFee(new BigDecimal("12000.00"));
+        forA.setTermFee(new BigDecimal("3000.00"));
+        feeStructureRepository.saveAndFlush(forA);
+
+        FeeStructure forB = new FeeStructure();
+        forB.setId(UUID.randomUUID());
+        forB.setTenantId(tenantB);
+        forB.setAcademicYearId(UUID.randomUUID());
+        forB.setGradeLevel(sharedGrade);
+        forB.setTuitionFee(new BigDecimal("40000.00"));
+        forB.setTermFee(new BigDecimal("8000.00"));
+        // Before the composite key this line threw a constraint violation.
+        feeStructureRepository.saveAndFlush(forB);
+
+        FeeInvoice invoice = feeManagementService.createInvoiceForStudent(studentA.getId(), tenantA, null);
+
+        assertEquals(new BigDecimal("15000.00"), invoice.getTotalAmount(),
+                "school A must be billed its own fees, not whichever school configured the grade first");
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.concept.fees.web;
 
 import com.concept.fees.app.FeeDashboardService;
+import com.concept.fees.app.FeeStructureMissingException;
 import com.concept.fees.app.FeeDashboardView;
 import com.concept.tenant.TenantContext;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -71,10 +73,19 @@ public class FeeController {
 
     @PostMapping("/web/admin/fees/invoice/create")
     @PreAuthorize("hasRole('ADMIN')")
-    public String createInvoice(@RequestParam("studentId") UUID studentId, Authentication authentication) {
+    public String createInvoice(@RequestParam("studentId") UUID studentId, Authentication authentication,
+                                RedirectAttributes ra) {
         UUID tenantId = tenantContext.getTenantId().orElse(null);
-        feeDashboardService.createInvoice(studentId, tenantId, authentication);
-        return "redirect:/web/admin/fees?success=invoice_created";
+        try {
+            feeDashboardService.createInvoice(studentId, tenantId, authentication);
+            return "redirect:/web/admin/fees?success=invoice_created";
+        } catch (FeeStructureMissingException e) {
+            // Invoicing no longer invents an amount when fees are unset, so this
+            // is now a reachable, expected outcome rather than a server error.
+            // The message names the grade and where to fix it.
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/web/admin/fees";
+        }
     }
 
     @PostMapping("/api/admin/fees/{invoiceId}/waiver/request")
