@@ -24,6 +24,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
+                <a href="/web/admin/fees/settings" class="btn btn-secondary btn-sm" data-fee-settings-link>⚙️ Fee Settings</a>
                 <button onclick="openCreateInvoiceModal()" class="btn btn-primary btn-sm">➕ Create Invoice</button>
                 <span class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Ledger Active</span>
             </div>
@@ -225,7 +226,12 @@
                         <option th:each="s : ${allStudents}" th:value="${s.id}" th:text="|${s.firstName} ${s.lastName}|">Student Name</option>
                     </select>
                 </div>
-                <p class="text-xs text-[var(--text-3)] leading-relaxed">Total is auto-calculated from this school's fee structure for the student's grade (or a default if none is configured).</p>
+                <p class="text-xs text-[var(--text-3)] leading-relaxed">
+                    The total comes from this school's
+                    <a href="/web/admin/fees/settings" class="font-semibold underline" style="color:var(--brand)">fee settings</a>
+                    for the student's grade. If that grade has no fees set, the invoice is
+                    refused rather than priced at a guess.
+                </p>
                 <div class="flex items-center justify-end gap-2.5 border-t pt-4" style="border-color:var(--line)">
                     <button type="button" onclick="closeCreateInvoiceModal()" class="btn btn-secondary btn-sm">Cancel</button>
                     <button type="submit" class="btn btn-primary btn-sm">Create Invoice</button>

@@ -5,17 +5,30 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * What one grade level costs at one school, for one academic year.
+ *
+ * <p>The uniqueness is deliberately the three columns together. grade_level
+ * alone used to carry the constraint, which on a multi-tenant table means the
+ * first school to configure "Grade 6" owns that grade level for everybody --
+ * the same defect class as usernames keyed on a bare roll number. Including
+ * the academic year is what lets a school raise its fees without rewriting the
+ * row that last year's invoices were priced from.
+ */
 @Entity
-@Table(name = "fee_structures")
+@Table(name = "fee_structures", uniqueConstraints = @UniqueConstraint(
+        name = "uk_fee_structures_tenant_year_grade",
+        columnNames = {"tenant_id", "academic_year_id", "grade_level"}))
 public class FeeStructure extends BaseTenantEntity {
 
     @Id
     private UUID id;
 
-    @Column(name = "grade_level", nullable = false, unique = true)
+    @Column(name = "grade_level", nullable = false)
     private String gradeLevel;
 
     @Column(name = "tuition_fee", nullable = false, precision = 19, scale = 2)

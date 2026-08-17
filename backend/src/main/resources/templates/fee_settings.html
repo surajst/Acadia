@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fee Settings &middot; ACADIA</title>
+    <link rel="stylesheet" href="/css/tailwind.css">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class="flex flex-col" style="height:100vh; overflow:hidden; background:var(--bg);">
+
+    <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
+        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <a href="/web/admin/dashboard" class="h-10 w-10 rounded-xl bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand)] font-black text-lg transition hover:bg-[var(--brand-100)]">&Omega;</a>
+                <div>
+                    <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Fee Settings</h1>
+                    <p class="text-xs text-[var(--text-3)] mt-1 flex items-center gap-1.5">
+                        <a href="/web/admin/fees" class="hover:text-[var(--brand)] transition-colors font-medium">Fee Ledger</a>
+                        <span>/</span><span class="text-[var(--text-2)] font-medium">Fee Settings</span>
+                    </p>
+                </div>
+            </div>
+            <a href="/web/admin/fees" class="btn btn-secondary btn-sm">&larr; Back to ledger</a>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto">
+        <div class="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+
+            <div th:if="${successMessage}" data-flash
+                 class="rounded-2xl border px-4 py-3 text-sm font-medium"
+                 style="border-color:var(--success); background:rgba(16,185,129,0.08); color:#047857;"
+                 th:text="${successMessage}">Saved.</div>
+            <div th:if="${errorMessage}" data-flash-error
+                 class="rounded-2xl border px-4 py-3 text-sm font-medium"
+                 style="border-color:var(--danger); background:rgba(239,68,68,0.08); color:#b91c1c;"
+                 th:text="${errorMessage}">Something went wrong.</div>
+
+            <!-- Set / update one grade -->
+            <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
+                <div class="px-6 py-5 border-b" style="border-color:var(--line)">
+                    <h2 class="text-lg font-bold text-slate-900 tracking-tight">Set fees for a grade</h2>
+                    <p class="text-xs text-[var(--text-3)] mt-1">
+                        Invoices are priced from this table. Entering a grade that already
+                        has fees updates it &mdash; invoices already raised keep the amount
+                        they were sent with.
+                    </p>
+                </div>
+                <form method="POST" action="/web/admin/fees/settings/save" id="feeStructureForm"
+                      class="p-6 grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="space-y-1.5">
+                        <label for="gradeLevel" class="field-label block">Grade level</label>
+                        <input type="text" id="gradeLevel" name="gradeLevel" required
+                               placeholder="Grade 6" class="field" data-fee-grade/>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="tuitionFee" class="field-label block">Tuition fee (INR)</label>
+                        <input type="number" id="tuitionFee" name="tuitionFee" step="0.01" min="0" required
+                               placeholder="15000.00" class="field font-mono" data-fee-tuition/>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="termFee" class="field-label block">Term fee (INR)</label>
+                        <input type="number" id="termFee" name="termFee" step="0.01" min="0" required
+                               placeholder="5000.00" class="field font-mono" data-fee-term/>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm h-[42px]">Save fees</button>
+                </form>
+            </div>
+
+            <!-- Current table -->
+            <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
+                <div class="px-6 py-5 border-b flex items-center justify-between" style="border-color:var(--line)">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 tracking-tight">This year's fees</h2>
+                        <p class="text-xs text-[var(--text-3)] mt-1">Applies to the current academic year only.</p>
+                    </div>
+                    <span class="badge" data-fee-count
+                          th:text="|${feeStructures.size()} grades configured|">0 grades configured</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#F4F6FB]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b" style="border-color:var(--line)">
+                                <th class="py-4 px-6">Grade</th>
+                                <th class="py-4 px-6">Tuition</th>
+                                <th class="py-4 px-6">Term</th>
+                                <th class="py-4 px-6">Invoice total</th>
+                                <th class="py-4 px-6 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y text-sm" style="border-color:var(--line)">
+                            <tr th:each="fee : ${feeStructures}" data-fee-row
+                                th:attr="data-fee-grade-row=${fee.gradeLevel}" class="hover:bg-[#F4F6FB]/30 transition-colors">
+                                <td class="py-4 px-6 font-semibold text-slate-900" th:text="${fee.gradeLevel}">Grade 6</td>
+                                <td class="py-4 px-6 font-mono text-slate-600"
+                                    th:text="|₹ ${#numbers.formatDecimal(fee.tuitionFee, 1, 'COMMA', 2, 'POINT')}|">₹ 15,000.00</td>
+                                <td class="py-4 px-6 font-mono text-slate-600"
+                                    th:text="|₹ ${#numbers.formatDecimal(fee.termFee, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
+                                <td class="py-4 px-6 font-mono font-bold text-slate-900" data-fee-total
+                                    th:text="|₹ ${#numbers.formatDecimal(fee.total, 1, 'COMMA', 2, 'POINT')}|">₹ 20,000.00</td>
+                                <td class="py-4 px-6 text-right">
+                                    <form method="POST" th:action="@{/web/admin/fees/settings/{id}/delete(id=${fee.id})}"
+                                          class="inline" onsubmit="return confirm('Remove fees for this grade? New invoices for it will be refused until fees are set again.');">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <button type="submit" class="btn btn-secondary btn-sm">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(feeStructures)}" data-fee-empty>
+                                <td colspan="5" class="py-12 text-center text-slate-500 font-medium">
+                                    No fees configured yet. Invoicing is blocked until at least
+                                    one grade has fees &mdash; that is deliberate, so nobody is
+                                    billed an invented amount.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
