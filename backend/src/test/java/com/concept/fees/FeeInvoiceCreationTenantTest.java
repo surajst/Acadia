@@ -197,6 +197,102 @@ public class FeeInvoiceCreationTenantTest {
         assertEquals(new BigDecimal("32000.00"), invoice.getTotalAmount());
     }
 
+    private void setFees(String tuition, String term) {
+        FeeStructure structure = new FeeStructure();
+        structure.setId(UUID.randomUUID());
+        structure.setTenantId(tenantA);
+        structure.setAcademicYearId(studentA.getAcademicYearId());
+        structure.setGradeLevel(studentA.getClassSection().getGradeName());
+        structure.setTuitionFee(new BigDecimal(tuition));
+        structure.setTermFee(new BigDecimal(term));
+        feeStructureRepository.saveAndFlush(structure);
+    }
+
+    /**
+     * An override keeps what the fee structure said alongside the amount
+     * actually billed. Without that, totalAmount cannot distinguish a sibling
+     * discount from a fee change from a typo -- and a family is being asked to
+     * pay the difference.
+     */
+    @Test
+    public void createInvoiceForStudent_withOverride_recordsWhatTheStructureSaidAndWhy() {
+        setFees("18000.00", "4000.00");
+
+        FeeInvoice invoice = feeManagementService.createInvoiceForStudent(
+                studentA.getId(), tenantA, new BigDecimal("14000.00"),
+                "Sibling discount — 2 children enrolled", null);
+
+        assertEquals(new BigDecimal("14000.00"), invoice.getTotalAmount());
+        assertEquals(new BigDecimal("22000.00"), invoice.getBaseAmount(),
+                "the fee structure's total must survive alongside the billed amount");
+        assertEquals("Sibling discount — 2 children enrolled", invoice.getOverrideReason());
+        assertTrue(invoice.isOverridden());
+        // Balances follow the amount actually billed, not the structure.
+        assertEquals(0, new BigDecimal("14000.00").compareTo(invoice.getAmountDue()));
+    }
+
+    /** A different number with no explanation is not an audit trail. */
+    @Test
+    public void createInvoiceForStudent_overrideWithoutReason_isRefused() {
+        setFees("18000.00", "4000.00");
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
+                feeManagementService.createInvoiceForStudent(
+                        studentA.getId(), tenantA, new BigDecimal("14000.00"), "   ", null));
+        assertTrue(e.getMessage().toLowerCase().contains("reason"),
+                "the refusal should say a reason is required, was: " + e.getMessage());
+    }
+
+    @Test
+    public void createInvoiceForStudent_negativeOverride_isRefused() {
+        setFees("18000.00", "4000.00");
+
+        assertThrows(IllegalArgumentException.class, () ->
+                feeManagementService.createInvoiceForStudent(
+                        studentA.getId(), tenantA, new BigDecimal("-500.00"), "Typo", null));
+    }
+
+    /**
+     * Passing the structure's own total is not an override -- it is the normal
+     * price. Recording it as an adjustment would put a spurious "adjusted from"
+     * note on an ordinary invoice.
+     */
+    @Test
+    public void createInvoiceForStudent_amountEqualToStructure_isNotAnOverride() {
+        setFees("18000.00", "4000.00");
+
+        FeeInvoice invoice = feeManagementService.createInvoiceForStudent(
+                studentA.getId(), tenantA, new BigDecimal("22000.00"), null, null);
+
+        assertFalse(invoice.isOverridden());
+        assertNull(invoice.getBaseAmount());
+        assertEquals(new BigDecimal("22000.00"), invoice.getTotalAmount());
+    }
+
+    /**
+     * Overriding one invoice must not reprice the grade -- that is what fee
+     * settings is for, and confusing the two would silently change what every
+     * other family owes.
+     */
+    @Test
+    public void override_doesNotChangeTheGradesFeeStructure() {
+        setFees("18000.00", "4000.00");
+
+        feeManagementService.createInvoiceForStudent(studentA.getId(), tenantA,
+                new BigDecimal("9000.00"), "Scholarship", null);
+
+        FeeStructure after = feeStructureRepository
+                .findByTenantIdAndAcademicYearIdAndGradeLevel(
+                        tenantA, studentA.getAcademicYearId(), studentA.getClassSection().getGradeName())
+                .orElseThrow();
+        assertEquals(new BigDecimal("18000.00"), after.getTuitionFee());
+        assertEquals(new BigDecimal("4000.00"), after.getTermFee());
+
+        FeeInvoice next = feeManagementService.createInvoiceForStudent(studentA.getId(), tenantA, null, null, null);
+        assertEquals(new BigDecimal("22000.00"), next.getTotalAmount(),
+                "the next invoice must be priced from the structure, not from the previous override");
+    }
+
     @Test
     public void createInvoiceForStudent_crossTenant_throws() {
         assertThrows(IllegalArgumentException.class, () ->

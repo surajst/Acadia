@@ -73,12 +73,20 @@ public class FeeController {
 
     @PostMapping("/web/admin/fees/invoice/create")
     @PreAuthorize("hasRole('ADMIN')")
-    public String createInvoice(@RequestParam("studentId") UUID studentId, Authentication authentication,
+    public String createInvoice(@RequestParam("studentId") UUID studentId,
+                                @RequestParam(value = "overrideAmount", required = false) BigDecimal overrideAmount,
+                                @RequestParam(value = "overrideReason", required = false) String overrideReason,
+                                Authentication authentication,
                                 RedirectAttributes ra) {
         UUID tenantId = tenantContext.getTenantId().orElse(null);
         try {
-            feeDashboardService.createInvoice(studentId, tenantId, authentication);
+            feeDashboardService.createInvoice(studentId, tenantId, overrideAmount, overrideReason, authentication);
             return "redirect:/web/admin/fees?success=invoice_created";
+        } catch (IllegalArgumentException e) {
+            // A rejected override (no reason, negative amount) is user error,
+            // not a server fault -- send the admin back with the reason.
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/web/admin/fees";
         } catch (FeeStructureMissingException e) {
             // Invoicing no longer invents an amount when fees are unset, so this
             // is now a reachable, expected outcome rather than a server error.

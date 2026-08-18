@@ -85,7 +85,12 @@ public class FeeDashboardService {
     }
 
     public void createInvoice(UUID studentId, UUID tenantId, Authentication authentication) {
-        feeManagementService.createInvoiceForStudent(studentId, tenantId, authentication);
+        createInvoice(studentId, tenantId, null, null, authentication);
+    }
+
+    public void createInvoice(UUID studentId, UUID tenantId, java.math.BigDecimal overrideAmount,
+                              String overrideReason, Authentication authentication) {
+        feeManagementService.createInvoiceForStudent(studentId, tenantId, overrideAmount, overrideReason, authentication);
     }
 
     /** @return the resulting waiver status (e.g. PENDING), flattened to a string. */
@@ -107,7 +112,8 @@ public class FeeDashboardService {
         String waiverStatus = inv.getWaiverStatus() != null ? inv.getWaiverStatus().name() : "NONE";
         return new FeeDashboardView.InvoiceRow(
                 inv.getId(), studentName, initials, rollNumber, gradeLevel, status,
-                inv.getTotalAmount(), inv.getAmountPaid(), inv.getAmountDue(), waiverStatus);
+                inv.getTotalAmount(), inv.getAmountPaid(), inv.getAmountDue(), waiverStatus,
+                inv.getBaseAmount(), inv.getOverrideReason(), inv.getOverrideBy());
     }
 
     private String initial(String s) {
