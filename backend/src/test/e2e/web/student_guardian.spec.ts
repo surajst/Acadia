@@ -64,7 +64,11 @@ test.describe('Student guardian capture & profile display', () => {
     // subdomain. The bare roll number was globally unique across every school,
     // so the second school to register a given roll silently got no login.
     await expect(page.locator('body')).toContainText('Student login — guardiantest6a-701@');
-    await expect(page.locator('body')).toContainText('Guardian login — +91 90000 12345');
+    // Guardian usernames are first name + phone, qualified by the school -- the
+    // raw phone number used to be the whole username, and User.email is unique
+    // platform-wide, so the second school to register a number silently got no
+    // guardian login at all.
+    await expect(page.locator('body')).toContainText('Guardian login — gurmeet919000012345@');
 
     await openProfile(page, 'Guardiantest Studentone', 'Guardiantest');
 
@@ -106,7 +110,7 @@ test.describe('Student guardian capture & profile display', () => {
     // Re-issue the guardian's password too (same confirm step).
     await page.click('button:has-text("Reset guardian password")');
     await page.click('button:has-text("Yes, reset password")');
-    await expect(page.locator('body')).toContainText('Guardian login — +91 90000 33333');
+    await expect(page.locator('body')).toContainText('Guardian login — resetguardian919000033333@');
   });
 
   test('admin can edit a student\'s details from the profile', async ({ page }) => {
@@ -136,7 +140,7 @@ test.describe('Student guardian capture & profile display', () => {
     // The newly added guardian now shows, empty state is gone, and its login is surfaced.
     await expect(page.locator('body')).toContainText('Editadded Guardian');
     await expect(page.locator('body')).not.toContainText('No guardian linked yet');
-    await expect(page.locator('body')).toContainText('Guardian login — +91 90000 44444');
+    await expect(page.locator('body')).toContainText('Guardian login — editadded919000044444@');
 
     // Editing again pre-fills the guardian and updates it in place.
     await page.click('button:has-text("Edit")');

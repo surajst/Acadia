@@ -110,10 +110,11 @@ public class StudentAdminService {
         if (guardianFirstName != null && !guardianFirstName.isBlank()) {
             String guardianEmail = null;
             String guardianPassword = null;
-            if (guardianPhone != null && !guardianPhone.isBlank()
-                    && !userRepository.existsByEmail(guardianPhone)) {
-                guardianEmail = guardianPhone;
-                guardianPassword = generateTempPassword();
+            if (guardianPhone != null && !guardianPhone.isBlank()) {
+                guardianEmail = buildGuardianUsername(guardianFirstName, guardianPhone, tenantId);
+                if (guardianEmail != null) {
+                    guardianPassword = generateTempPassword();
+                }
             }
             Parent guardian = addParentInternal(guardianFirstName.trim(),
                     guardianLastName != null ? guardianLastName.trim() : "",
@@ -144,13 +145,37 @@ public class StudentAdminService {
      *
      * @return the username, or null when one cannot be formed or stays taken
      */
+    /** Student login: first name + roll number, qualified by the school. */
     private String buildUsername(String firstName, String rollNumber, UUID tenantId) {
+        return qualifiedUsername(sanitiseForUsername(firstName) + sanitiseForUsername(rollNumber), tenantId);
+    }
+
+    /**
+     * Guardian login: first name + phone number, qualified by the school.
+     *
+     * <p>The phone number used to be the whole username. User.email is unique
+     * across the platform, so the first school to register a given number
+     * claimed it globally and every later school silently got no guardian
+     * login at all -- the caller checked existsByEmail and simply skipped
+     * provisioning. Same defect as bare roll numbers, same fix: the school's
+     * subdomain makes the namespace per-school.
+     */
+    private String buildGuardianUsername(String firstName, String phoneNumber, UUID tenantId) {
+        return qualifiedUsername(sanitiseForUsername(firstName) + sanitiseForUsername(phoneNumber), tenantId);
+    }
+
+    /**
+     * Turns a local part into a school-qualified username, or null when one
+     * cannot be formed. Null means "no login", and every caller has to treat it
+     * as such rather than falling back to an unqualified value.
+     */
+    private String qualifiedUsername(String localSeed, UUID tenantId) {
         String subdomain = tenantId == null ? null : tenantRepository.findById(tenantId)
                 .map(com.concept.tenant.Tenant::getSubdomain).orElse(null);
         if (subdomain == null || subdomain.isBlank()) {
             return null;
         }
-        String local = sanitiseForUsername(firstName) + sanitiseForUsername(rollNumber);
+        String local = localSeed == null ? "" : localSeed;
         if (local.isBlank()) {
             return null;
         }
@@ -158,8 +183,8 @@ public class StudentAdminService {
         if (!userRepository.existsByEmail(candidate)) {
             return candidate;
         }
-        // Same first name and roll within one school should be impossible, but a
-        // clash must not silently mean "no login" the way it used to.
+        // A clash within one school should be near-impossible, but it must not
+        // silently mean "no login" the way the global namespace did.
         for (int i = 2; i <= 20; i++) {
             String next = local + i + "@" + sanitiseForUsername(subdomain);
             if (!userRepository.existsByEmail(next)) {
@@ -244,9 +269,11 @@ public class StudentAdminService {
             } else {
                 String gEmail = null;
                 String gPass = null;
-                if (guardianPhone != null && !guardianPhone.isBlank() && !userRepository.existsByEmail(guardianPhone)) {
-                    gEmail = guardianPhone;
-                    gPass = generateTempPassword();
+                if (guardianPhone != null && !guardianPhone.isBlank()) {
+                    gEmail = buildGuardianUsername(guardianFirstName, guardianPhone, tenantId);
+                    if (gEmail != null) {
+                        gPass = generateTempPassword();
+                    }
                 }
                 Parent g = addParentInternal(guardianFirstName.trim(),
                         guardianLastName != null ? guardianLastName.trim() : "",
@@ -285,14 +312,19 @@ public class StudentAdminService {
     public String resetStudentLogin(UUID id, UUID tenantId, Authentication authentication) {
         Student student = studentRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new StudentProfileNotFoundException(id));
-        String username = student.getRollNumber();
         String newPassword = generateTempPassword();
         User u = student.getUserId() != null
                 ? userRepository.findByIdAndTenantId(student.getUserId(), tenantId).orElse(null) : null;
         if (u == null) {
-            // No login existed yet — create one keyed by roll number.
-            if (username == null || username.isBlank() || userRepository.existsByEmail(username)) {
-                throw new IllegalArgumentException("Cannot create a student login: roll number is missing or already in use.");
+            // No login existed yet, so one is created here. This used to key it
+            // on the bare roll number, which meant an admin recovering a
+            // locked-out student hit "roll number already in use" because a
+            // DIFFERENT school had that roll -- failing on the one path that
+            // exists to fix the problem.
+            String username = buildUsername(student.getFirstName(), student.getRollNumber(), tenantId);
+            if (username == null) {
+                throw new IllegalArgumentException(
+                        "Cannot create a student login: a roll number and first name are required.");
             }
             u = new User();
             u.setId(UUID.randomUUID());
@@ -325,17 +357,17 @@ public class StudentAdminService {
     public String resetParentLogin(UUID parentId, UUID tenantId, Authentication authentication) {
         Parent parent = parentRepository.findByIdAndTenantId(parentId, tenantId)
                 .orElseThrow(() -> new StudentProfileNotFoundException(parentId));
-        String username = (parent.getEmail() != null && !parent.getEmail().isBlank())
-                ? parent.getEmail() : parent.getPhoneNumber();
-        if (username == null || username.isBlank()) {
-            throw new IllegalArgumentException("Guardian has no phone/email to use as a login username.");
-        }
         String newPassword = generateTempPassword();
         User u = parent.getUserId() != null
                 ? userRepository.findByIdAndTenantId(parent.getUserId(), tenantId).orElse(null) : null;
         if (u == null) {
-            if (userRepository.existsByEmail(username)) {
-                throw new IllegalArgumentException("Cannot create a guardian login: " + username + " is already in use.");
+            // Same story as students: keyed on the raw phone number, this threw
+            // when another school had already registered that number.
+            String username = buildGuardianUsername(
+                    parent.getFirstName(), parent.getPhoneNumber(), tenantId);
+            if (username == null) {
+                throw new IllegalArgumentException(
+                        "Cannot create a guardian login: a phone number and first name are required.");
             }
             u = new User();
             u.setId(UUID.randomUUID());
