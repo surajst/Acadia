@@ -33,8 +33,10 @@ test.describe('Native Web App E2E Tests', () => {
       page.locator('text=/Grade/ >> visible=true').first()
     ).toBeVisible();
 
-    // Click Science chip and assert real CBSE seeded topic appears
-    await page.locator('text="Science" >> visible=true').click();
+    // Click the Science filter chip. .first() is required: "Science" also
+    // matches the section header rendered below the chips, and an unscoped
+    // locator is a strict-mode violation rather than a real failure.
+    await page.locator('text="Science" >> visible=true').first().click();
     await page.waitForLoadState('networkidle');
     // Live API returns Grade 6 Science topics (e.g. "The Wonderful World of Science")
     // Mock fallback shows "Food and Health" — assert either is present
@@ -69,7 +71,15 @@ test.describe('Native Web App E2E Tests', () => {
     await page.locator('text="Challenges" >> visible=true').click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Active Challenges" >> visible=true')).toBeVisible();
-    await expect(page.locator('text="Chapter Summary — Food and Health" >> visible=true')).toBeVisible();
+    // A seeded student has no challenges assigned, and the screen says so. This
+    // used to assert a mock card ("Chapter Summary — Food and Health") that the
+    // real API has never returned, so accept either a real challenge or the
+    // honest empty state -- what matters is that the tab renders rather than
+    // erroring.
+    await expect(
+      page.locator('text=/No challenges assigned yet/ >> visible=true').first()
+        .or(page.locator('text=/Chapter Summary/ >> visible=true').first())
+    ).toBeVisible();
 
     // 8. Navigate to Profile Tab
     await page.locator('text="Profile" >> visible=true').click();
@@ -126,13 +136,18 @@ test.describe('Native Web App E2E Tests', () => {
     await page.locator('text="Syllabus" >> visible=true').click();
     await page.waitForLoadState('networkidle');
     
-    // Assert that the horizontal category filter chips ('All', 'Math', 'Science') render completely
+    // The chips are built from whatever subjects the curriculum actually holds,
+    // which is the point of the data-driven catalog -- so this asserts the
+    // seeded Grade 6 subjects rather than a hardcoded list. It used to expect a
+    // "Math" chip that the seeded CBSE curriculum has never contained.
     await expect(page.locator('text="All" >> visible=true').first()).toBeVisible();
-    await expect(page.locator('text="Math" >> visible=true').first()).toBeVisible();
     await expect(page.locator('text="Science" >> visible=true').first()).toBeVisible();
-    
-    // Simulate clicking the 'Science' chip
-    await page.locator('text="Science" >> visible=true').click();
+    await expect(page.locator('text="Social Science" >> visible=true').first()).toBeVisible();
+    await expect(page.locator('text="English" >> visible=true').first()).toBeVisible();
+
+    // Simulate clicking the 'Science' chip (.first(): the section header below
+    // carries the same text)
+    await page.locator('text="Science" >> visible=true').first().click();
     await page.waitForLoadState('networkidle');
     
     // Assert that the interface dynamically updates to display the backend-seeded Grade 6 CBSE curriculum card: "The Wonderful World of Science"

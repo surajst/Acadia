@@ -1,6 +1,8 @@
 package com.concept.roster.app;
 
 import com.concept.academics.StudentMetricRepository;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.SchoolClass;
 import com.concept.shared.data.SchoolClassRepository;
 import com.concept.shared.data.Student;
@@ -41,6 +43,7 @@ public class StudentAdminServiceTest {
     @Autowired private StudentRepository studentRepository;
     @Autowired private StudentMetricRepository studentMetricRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private ClassSectionRepository classSectionRepository;
 
     private static final Authentication NO_AUTH = null;
 
@@ -48,6 +51,7 @@ public class StudentAdminServiceTest {
     private UUID yearId;
     private String subdomain;
     private SchoolClass schoolClass;
+    private ClassSection classSection;
 
     @BeforeEach
     public void setup() {
@@ -81,6 +85,14 @@ public class StudentAdminServiceTest {
         schoolClass.setRoomNumber("101");
         schoolClass.setTotalCapacity(30);
         schoolClassRepository.saveAndFlush(schoolClass);
+
+        classSection = new ClassSection();
+        classSection.setId(UUID.randomUUID());
+        classSection.setTenantId(tenantId);
+        classSection.setAcademicYearId(yearId);
+        classSection.setGradeName("Grade 5");
+        classSection.setSectionName("A");
+        classSectionRepository.saveAndFlush(classSection);
     }
 
     @Test
@@ -104,6 +116,78 @@ public class StudentAdminServiceTest {
         Student s = studentRepository.findByTenantIdAndRollNumber(tenantId, roll).orElseThrow();
         assertNotNull(s.getUserId());
         assertTrue(studentMetricRepository.findByStudentId(s.getId()).isPresent());
+    }
+
+    /**
+     * The recovery path. resetStudentLogin used to key a new login on the bare
+     * roll number, so an admin trying to restore access for a locked-out
+     * student got "roll number already in use" because a DIFFERENT school
+     * happened to have that roll -- the failure landed on the one path that
+     * exists to fix the problem.
+     */
+    @Test
+    public void resetStudentLogin_issuesSchoolQualifiedUsername_evenWhenAnotherSchoolHasTheRoll() {
+        String roll = "6A-701";
+
+        // Another school already owns a login on the bare roll number.
+        com.concept.user.User squatter = new com.concept.user.User();
+        squatter.setId(UUID.randomUUID());
+        squatter.setTenantId(UUID.randomUUID());
+        squatter.setAcademicYearId(UUID.randomUUID());
+        squatter.setEmail(roll);
+        squatter.setFullName("Other School Student");
+        squatter.setRole(com.concept.user.UserRole.STUDENT);
+        squatter.setActive(true);
+        squatter.setPasswordHash("x");
+        userRepository.saveAndFlush(squatter);
+
+        Student student = new Student();
+        student.setId(UUID.randomUUID());
+        student.setTenantId(tenantId);
+        student.setAcademicYearId(yearId);
+        student.setFirstName("Nisha");
+        student.setLastName("Rao");
+        student.setRollNumber(roll);
+        student.setSchoolClass(schoolClass);
+        student.setClassSection(classSection);
+        studentRepository.saveAndFlush(student);
+
+        String creds = studentAdminService.resetStudentLogin(student.getId(), tenantId, NO_AUTH);
+
+        assertTrue(creds.contains("nisha" + roll.toLowerCase() + "@" + subdomain),
+                "reset should issue a school-qualified username, was: " + creds);
+    }
+
+    /**
+     * Guardian logins had the identical defect with phone numbers: User.email is
+     * globally unique, so the first school to register a number claimed it for
+     * the whole platform and later schools silently got no guardian login --
+     * the caller checked existsByEmail and just skipped provisioning.
+     */
+    @Test
+    public void addStudent_guardianGetsALogin_evenWhenAnotherSchoolHasThePhoneNumber() {
+        String phone = "+91 90000 12345";
+
+        com.concept.user.User squatter = new com.concept.user.User();
+        squatter.setId(UUID.randomUUID());
+        squatter.setTenantId(UUID.randomUUID());
+        squatter.setAcademicYearId(UUID.randomUUID());
+        squatter.setEmail(phone);
+        squatter.setFullName("Other School Guardian");
+        squatter.setRole(com.concept.user.UserRole.PARENT);
+        squatter.setActive(true);
+        squatter.setPasswordHash("x");
+        userRepository.saveAndFlush(squatter);
+
+        String roll = "R-" + UUID.randomUUID().toString().substring(0, 8);
+        String creds = studentAdminService.addStudent("Aarav", "Mehta", roll, schoolClass.getId(),
+                null, null, "Gurmeet", "Singh", phone, tenantId, yearId, NO_AUTH);
+
+        assertNotNull(creds, "credentials should be relayed back");
+        assertTrue(creds.contains("Guardian login"),
+                "the guardian must still get a login when another school holds that phone number, was: " + creds);
+        assertTrue(creds.contains("gurmeet919000012345@" + subdomain),
+                "guardian username should be school-qualified, was: " + creds);
     }
 
     @Test
