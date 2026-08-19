@@ -46,6 +46,26 @@ public class FeeInvoice extends BaseTenantEntity {
     @Column(name = "waiver_status", length = 20)
     private FeeWaiverStatus waiverStatus = FeeWaiverStatus.NONE;
 
+    /**
+     * What the grade's fee structure said at the time this invoice was raised,
+     * kept only when the admin billed something different.
+     *
+     * <p>Without it, totalAmount alone cannot answer "why was this family billed
+     * 14,000 when Grade 6 costs 22,000" -- a deliberate concession, a fee change
+     * since, and a typo all look identical after the fact. Null means the
+     * invoice was priced straight from the fee structure.
+     */
+    @Column(name = "base_amount", precision = 19, scale = 2)
+    private BigDecimal baseAmount;
+
+    /** Required whenever baseAmount is set: a number without a reason is not an audit trail. */
+    @Column(name = "override_reason", length = 500)
+    private String overrideReason;
+
+    /** The admin who made the call, so the decision has a name against it. */
+    @Column(name = "override_by", length = 255)
+    private String overrideBy;
+
     public FeeInvoice() {}
 
     public FeeInvoice(UUID id, UUID studentId, BigDecimal totalAmount, BigDecimal amountPaid) {
@@ -147,5 +167,34 @@ public class FeeInvoice extends BaseTenantEntity {
 
     public void setWaiverStatus(FeeWaiverStatus waiverStatus) {
         this.waiverStatus = waiverStatus;
+    }
+
+    public BigDecimal getBaseAmount() {
+        return baseAmount;
+    }
+
+    public void setBaseAmount(BigDecimal baseAmount) {
+        this.baseAmount = baseAmount;
+    }
+
+    public String getOverrideReason() {
+        return overrideReason;
+    }
+
+    public void setOverrideReason(String overrideReason) {
+        this.overrideReason = overrideReason;
+    }
+
+    public String getOverrideBy() {
+        return overrideBy;
+    }
+
+    public void setOverrideBy(String overrideBy) {
+        this.overrideBy = overrideBy;
+    }
+
+    /** True when this invoice was billed at something other than the grade's fee structure. */
+    public boolean isOverridden() {
+        return baseAmount != null;
     }
 }

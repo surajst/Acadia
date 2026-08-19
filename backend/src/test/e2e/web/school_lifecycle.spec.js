@@ -399,6 +399,52 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await expect(page.locator('table')).toContainText('22,000.00');
   });
 
+  test('admin bills an adjusted amount, and the ledger shows what it was adjusted from', async ({ page }) => {
+    await login(page, school.adminEmail, PW);
+
+    // Fees for this grade were set by the previous test; this one departs from
+    // them for a single invoice. The point of the feature is that the departure
+    // stays visible -- a number alone cannot distinguish a deliberate
+    // concession from a fee change or a typo months later.
+    await page.goto('/web/admin/fees');
+    await page.click('button:has-text("Create Invoice")');
+    await page.selectOption('#invoiceStudentSelect', { label: `Asha Student${school.suffix}` });
+    await page.check('[data-override-toggle]');
+    await page.fill('[data-override-amount]', '9000');
+    await page.fill('[data-override-reason]', 'Sibling discount — 2 children enrolled');
+    await page.click('#createInvoiceModal button[type="submit"]');
+
+    await page.goto('/web/admin/fees');
+    await expect(page.locator('body')).toContainText('2 of 2 records');
+    // The adjusted row carries both numbers and the reason.
+    const badge = page.locator('[data-override-badge]').first();
+    await expect(badge).toBeVisible();
+    await expect(badge).toContainText('22,000.00');
+    await expect(page.locator('[data-override-reason-text]').first())
+      .toContainText('Sibling discount');
+  });
+
+  test('an adjusted amount without a reason is refused', async ({ page }) => {
+    await login(page, school.adminEmail, PW);
+
+    // The form marks the reason required, so post directly: the guard that
+    // matters is the server's, not the browser's.
+    const body = await page.evaluate(async (studentId) => {
+      const res = await fetch('/web/admin/fees/invoice/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ studentId, overrideAmount: '5000', overrideReason: '  ' }).toString(),
+      });
+      return { status: res.status, text: await res.text() };
+    }, school.studentId);
+
+    expect(body.status).toBeLessThan(400);
+    expect(body.text).toContain('reason is required');
+    // And nothing was billed.
+    await page.goto('/web/admin/fees');
+    await expect(page.locator('body')).toContainText('2 of 2 records');
+  });
+
   test('parent assigns a quest and a reward to their child', async ({ page }) => {
     await login(page, school.parentEmail, PW);
 

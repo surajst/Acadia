@@ -168,6 +168,28 @@ public class FeeManagementService {
      */
     @Transactional
     public FeeInvoice createInvoiceForStudent(UUID studentId, UUID currentTenantId, Authentication authentication) {
+        return createInvoiceForStudent(studentId, currentTenantId, null, null, authentication);
+    }
+
+    /**
+     * Raises an invoice, optionally at an amount other than the grade's fee
+     * structure.
+     *
+     * <p>An override is only accepted with a reason. A different number on its
+     * own is not an audit trail: months later nobody can tell a sibling
+     * discount from a fee change from a typo, and the difference matters
+     * because a family is being asked to pay it. What the structure said is
+     * kept alongside, so the departure stays visible rather than being
+     * flattened into a single figure.
+     *
+     * <p>Note this is a one-off amount for THIS invoice. Changing what a grade
+     * costs is a different act with different consequences and lives in fee
+     * settings.
+     */
+    @Transactional
+    public FeeInvoice createInvoiceForStudent(UUID studentId, UUID currentTenantId,
+                                              BigDecimal overrideAmount, String overrideReason,
+                                              Authentication authentication) {
         Student student = studentRepository.findByIdAndTenantId(studentId, currentTenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found with ID: " + studentId));
 
@@ -190,24 +212,53 @@ public class FeeManagementService {
                         "No fee structure is configured for " + gradeLevel
                                 + ". Set it under Fee Settings before invoicing this student."));
 
-        BigDecimal tuition = structure.getTuitionFee();
-        BigDecimal term = structure.getTermFee();
+        BigDecimal structureTotal = structure.getTuitionFee().add(structure.getTermFee());
 
         FeeInvoice invoice = new FeeInvoice();
         invoice.setId(UUID.randomUUID());
         invoice.setStudentId(student.getId());
-        invoice.setTotalAmount(tuition.add(term));
         invoice.setAmountPaid(BigDecimal.ZERO);
         invoice.setTenantId(student.getTenantId());
         invoice.setAcademicYearId(student.getAcademicYearId());
+
+        boolean overridden = overrideAmount != null
+                && overrideAmount.compareTo(structureTotal) != 0;
+        if (overridden) {
+            if (overrideAmount.signum() < 0) {
+                throw new IllegalArgumentException("An invoice amount cannot be negative.");
+            }
+            String reason = overrideReason == null ? "" : overrideReason.trim();
+            if (reason.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "A reason is required when billing an amount other than the grade's fees.");
+            }
+            invoice.setTotalAmount(overrideAmount);
+            invoice.setBaseAmount(structureTotal);
+            invoice.setOverrideReason(reason);
+            invoice.setOverrideBy(actorName(authentication));
+        } else {
+            invoice.setTotalAmount(structureTotal);
+        }
+
         invoice.updateBalances();
         feeInvoiceRepository.saveAndFlush(invoice);
 
-        auditLogService.log(authentication, "FEE_INVOICE_CREATED", "FeeInvoice", invoice.getId(),
-                "Created invoice for " + student.getFirstName() + " " + student.getLastName() +
-                        " (total " + invoice.getTotalAmount() + ")");
+        String who = student.getFirstName() + " " + student.getLastName();
+        if (overridden) {
+            auditLogService.log(authentication, "FEE_INVOICE_OVERRIDDEN", "FeeInvoice", invoice.getId(),
+                    "Created invoice for " + who + " at " + invoice.getTotalAmount()
+                            + " instead of " + structureTotal + " — " + invoice.getOverrideReason());
+        } else {
+            auditLogService.log(authentication, "FEE_INVOICE_CREATED", "FeeInvoice", invoice.getId(),
+                    "Created invoice for " + who + " (total " + invoice.getTotalAmount() + ")");
+        }
 
         return invoice;
+    }
+
+    private String actorName(Authentication authentication) {
+        return authentication != null && authentication.getName() != null
+                ? authentication.getName() : "system";
     }
 
     @Transactional

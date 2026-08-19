@@ -126,7 +126,20 @@
                                     <td class="py-3 px-5">
                                         <span class="badge badge--neutral" th:text="${dto.gradeLevel}">Grade 6</span>
                                     </td>
-                                    <td class="py-3 px-5 font-mono font-medium text-slate-600" th:text="|₹ ${#numbers.formatDecimal(dto.totalAmount, 1, 'COMMA', 2, 'POINT')}|">₹ 20,000.00</td>
+                                    <td class="py-3 px-5 font-mono font-medium text-slate-600">
+                                        <span th:text="|₹ ${#numbers.formatDecimal(dto.totalAmount, 1, 'COMMA', 2, 'POINT')}|">₹ 20,000.00</span>
+                                        <!-- An adjusted invoice says so on the row itself. Recording the
+                                             reason but hiding it would leave the ledger looking like the
+                                             grade's fees had simply changed. -->
+                                        <span th:if="${dto.overridden()}" data-override-badge
+                                              class="block mt-1 text-[10px] font-sans font-semibold text-amber-700"
+                                              th:title="|Fee structure: ₹${#numbers.formatDecimal(dto.baseAmount, 1, 'COMMA', 2, 'POINT')} · set by ${dto.overrideBy}|">
+                                            ✎ Adjusted from
+                                            <span th:text="|₹${#numbers.formatDecimal(dto.baseAmount, 1, 'COMMA', 2, 'POINT')}|">₹22,000.00</span>
+                                            <span class="block font-normal text-[var(--text-3)]"
+                                                  data-override-reason-text th:text="${dto.overrideReason}">Sibling discount</span>
+                                        </span>
+                                    </td>
                                     <td class="py-3 px-5 font-mono font-medium" style="color:var(--success)" th:text="|₹ ${#numbers.formatDecimal(dto.amountPaid, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
                                     <td class="py-3 px-5 font-mono font-medium" style="color:var(--danger)" th:text="|₹ ${#numbers.formatDecimal(dto.amountDue, 1, 'COMMA', 2, 'POINT')}|">₹ 15,000.00</td>
                                     <td class="py-3 px-5">
@@ -232,6 +245,35 @@
                     for the student's grade. If that grade has no fees set, the invoice is
                     refused rather than priced at a guess.
                 </p>
+
+                <div class="rounded-2xl border p-4 space-y-3" style="border-color:var(--line); background:var(--surface-2)">
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" id="overrideToggle" onchange="toggleOverride()" class="h-4 w-4" data-override-toggle/>
+                        <span class="text-sm font-semibold text-slate-800">Bill a different amount</span>
+                    </label>
+                    <p class="text-xs text-[var(--text-3)] leading-relaxed">
+                        For a sibling discount, staff child, scholarship or mid-year joiner.
+                        This changes THIS invoice only &mdash; it does not change what the
+                        grade costs.
+                    </p>
+                    <div id="overrideFields" class="hidden space-y-3">
+                        <div class="space-y-1.5">
+                            <label for="overrideAmount" class="field-label block">Amount to bill (INR)</label>
+                            <input type="number" id="overrideAmount" name="overrideAmount" step="0.01" min="0"
+                                   placeholder="14000.00" class="field font-mono" data-override-amount/>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="overrideReason" class="field-label block">Reason (required)</label>
+                            <input type="text" id="overrideReason" name="overrideReason" maxlength="500"
+                                   placeholder="Sibling discount — 2 children enrolled"
+                                   class="field" data-override-reason/>
+                            <p class="text-[11px] text-[var(--text-3)]">
+                                Recorded against your account. Without it, nobody can later tell a
+                                deliberate concession from a mistake.
+                            </p>
+                        </div>
+                    </div>
+                </div>
                 <div class="flex items-center justify-end gap-2.5 border-t pt-4" style="border-color:var(--line)">
                     <button type="button" onclick="closeCreateInvoiceModal()" class="btn btn-secondary btn-sm">Cancel</button>
                     <button type="submit" class="btn btn-primary btn-sm">Create Invoice</button>
@@ -243,6 +285,19 @@
     <footer class="shrink-0 text-center py-2 text-[11px] text-[var(--text-3)] border-t" style="border-color:var(--line)">ACADIA · Connect | Manage | Empower</footer>
 
     <script>
+        function toggleOverride() {
+            var on = document.getElementById('overrideToggle').checked;
+            var fields = document.getElementById('overrideFields');
+            fields.classList.toggle('hidden', !on);
+            // Required only while the section is open, so a plain invoice is
+            // not blocked by a field the admin never opened.
+            document.getElementById('overrideReason').required = on;
+            document.getElementById('overrideAmount').required = on;
+            if (!on) {
+                document.getElementById('overrideReason').value = '';
+                document.getElementById('overrideAmount').value = '';
+            }
+        }
         function openCreateInvoiceModal() { const m=document.getElementById('createInvoiceModal'); m.classList.remove('hidden'); m.classList.add('flex'); }
         function closeCreateInvoiceModal() { const m=document.getElementById('createInvoiceModal'); m.classList.remove('flex'); m.classList.add('hidden'); }
         function openPaymentModal(invoiceId, studentName, remainingDue) {

@@ -27,8 +27,18 @@ public record FeeDashboardView(
             BigDecimal totalAmount,
             BigDecimal amountPaid,
             BigDecimal amountDue,
-            String waiverStatus   // NONE | PENDING | APPROVED | REJECTED
-    ) {}
+            String waiverStatus,  // NONE | PENDING | APPROVED | REJECTED
+            // Null unless the invoice was billed at something other than the
+            // grade's fees; then it carries what the fee structure said, why it
+            // was departed from, and who decided.
+            BigDecimal baseAmount,
+            String overrideReason,
+            String overrideBy
+    ) {
+        public boolean overridden() {
+            return baseAmount != null;
+        }
+    }
 
     /** A student for the "create invoice" picker. */
     public record StudentOption(UUID id, String firstName, String lastName) {}
