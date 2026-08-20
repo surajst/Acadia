@@ -46,7 +46,7 @@ test.describe('Sprint 4: Audit Trail', () => {
     await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
     const inviteResult = await page.evaluate(async (email) => {
       const params = new URLSearchParams({
-        fullName: 'Audit Principal', email, password: 'PilotLaunchSecure2026!', role: 'PRINCIPAL',
+        fullName: 'Audit Principal', email, role: 'PRINCIPAL',
       });
       const res = await fetch('/web/admin/staff/add', {
         method: 'POST',
@@ -65,7 +65,9 @@ test.describe('Sprint 4: Audit Trail', () => {
     }, principalEmail);
 
     await page.context().clearCookies();
-    await login(page, principalEmail, 'PilotLaunchSecure2026!');
+    // The server issues the temporary password now, so use the one it returned
+    // rather than one the caller chose.
+    await login(page, principalEmail, inviteResult.temporaryPassword);
     const principalResponse = await page.goto('/web/admin/audit-log');
     expect(principalResponse.status()).toBe(200);
   });

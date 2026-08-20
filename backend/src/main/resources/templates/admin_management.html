@@ -90,11 +90,11 @@
 <div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
 
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
 
             <!-- Side Navigation Sidebar -->
-            <aside class="space-y-6 lg:col-span-1">
+            <aside class="space-y-4 lg:col-span-1">
                 <div class="bg-[#F4F6FB]/80 border border-slate-200/50 rounded-2xl p-4 shadow-xl shadow-slate-300/40 space-y-4">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 px-2">Navigation Scope</h3>
                     <nav class="space-y-1">
@@ -158,7 +158,7 @@
             </aside>
 
             <!-- Main Panel Content -->
-            <main class="lg:col-span-3 space-y-6" >
+            <main class="lg:col-span-3 space-y-4" >
 
                 <!-- Error banner: surfaces failures caught by this controller's
                      exception handler (e.g. invalid class assignment) instead
@@ -182,15 +182,15 @@
                 </div>
 
                 <!-- Compact page title -->
-                <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
                     <div>
-                        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">School Structure Management</h2>
-                        <p class="text-sm text-slate-500">Pick a section to configure. Live counts update as you go.</p>
+                        <h2 class="text-xl font-extrabold text-slate-900 tracking-tight leading-tight">School Structure Management</h2>
+                        <p class="text-xs text-slate-500">Pick a section to configure. Live counts update as you go.</p>
                     </div>
                     <div class="flex items-center gap-2 text-xs">
-                        <span class="px-3 py-1.5 rounded-xl bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 font-semibold"><span data-testid="stat-students" th:text="${totalStudents}">0</span> Students</span>
-                        <span class="px-3 py-1.5 rounded-xl bg-emerald-600/10 text-emerald-700 border border-emerald-500/20 font-semibold"><span th:text="${totalStaff}">0</span> Staff</span>
-                        <span class="px-3 py-1.5 rounded-xl bg-amber-600/10 text-amber-700 border border-amber-500/20 font-semibold"><span th:text="${totalClassrooms}">0</span> Classrooms</span>
+                        <span class="px-2.5 py-1 rounded-xl bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 font-semibold"><span data-testid="stat-students" th:text="${totalStudents}">0</span> Students</span>
+                        <span class="px-2.5 py-1 rounded-xl bg-emerald-600/10 text-emerald-700 border border-emerald-500/20 font-semibold"><span th:text="${totalStaff}">0</span> Staff</span>
+                        <span class="px-2.5 py-1 rounded-xl bg-amber-600/10 text-amber-700 border border-amber-500/20 font-semibold"><span th:text="${totalClassrooms}">0</span> Classrooms</span>
                     </div>
                 </div>
 
@@ -285,7 +285,7 @@
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <div class="overflow-auto" style="max-height:calc(100vh - 320px)" data-section-scroll>
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-[#F4F6FB]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
@@ -482,7 +482,7 @@
                         </button>
                     </form>
 
-                    <div class="overflow-x-auto">
+                    <div class="overflow-auto" style="max-height:calc(100vh - 320px)" data-section-scroll>
                         <table class="min-w-full text-sm">
                             <thead>
                                 <tr class="text-left text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200/60">
@@ -867,14 +867,6 @@
             }
         }
 
-        function generateTempPassword() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-            let p = '';
-            const rand = new Uint32Array(10);
-            crypto.getRandomValues(rand);
-            for (let i = 0; i < 10; i++) p += chars[rand[i] % chars.length];
-            return p + '!9';
-        }
 
         document.getElementById('addStaffForm').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -886,9 +878,9 @@
             const fullName = document.getElementById('staffFullName').value.trim();
             const email = document.getElementById('staffEmail').value.trim();
             const role = document.getElementById('staffRole').value;
-            const tempPassword = generateTempPassword();
-
-            const params = new URLSearchParams({ fullName: fullName, email: email, password: tempPassword, role: role });
+            // The password is generated by the server now -- it is a security
+            // property, and it used to be produced here in the browser.
+            const params = new URLSearchParams({ fullName: fullName, email: email, role: role });
             try {
                 const res = await fetch('/web/admin/staff/add', {
                     method: 'POST',
@@ -901,9 +893,17 @@
                     errBox.classList.remove('hidden');
                     return;
                 }
+                // Say plainly whether the email went. Claiming an invite was sent
+                // when it was not is the failure that leaves a teacher waiting
+                // for a message nobody ever sent.
+                var sentLine = data.emailed
+                    ? '<span data-invite-emailed>✉️ Sign-in details emailed to <strong>' + staffEscape(email) + '</strong>.</span>'
+                    : '<span data-invite-not-emailed>⚠️ <strong>Not emailed</strong> (' + staffEscape(data.emailDetail || 'unknown reason') +
+                      '). Share these details yourself.</span>';
                 okBox.innerHTML = 'Invited <strong>' + staffEscape(fullName) + '</strong> as ' + staffEscape(role) +
-                    '. Share these sign-in details — they can log in once approved:<br>' +
-                    'Email: <strong>' + staffEscape(email) + '</strong> &nbsp; Temporary password: <strong>' + staffEscape(tempPassword) + '</strong>';
+                    '. They can log in once approved.<br>' + sentLine + '<br>' +
+                    'Email: <strong>' + staffEscape(email) + '</strong> &nbsp; Temporary password: ' +
+                    '<strong data-invite-password>' + staffEscape(data.temporaryPassword) + '</strong>';
                 okBox.classList.remove('hidden');
                 document.getElementById('addStaffForm').reset();
                 await loadStaff();
