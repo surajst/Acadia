@@ -46,54 +46,54 @@
             📢 <span class="font-semibold">Announcement broadcast successfully.</span>
         </div>
 
-        <main class="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 min-h-0 flex flex-col overflow-hidden gap-4">
+        <main class="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex-1 min-h-0 flex flex-col overflow-hidden gap-3">
 
             <!-- ── KPI strip ────────────────────────────────────────────── -->
             <section class="card overflow-hidden shrink-0">
                 <div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x"
                      th:classappend="${currentUserRole == 'PRINCIPAL'} ? 'lg:grid-cols-5' : ''" style="border-color:var(--line)">
-                    <div class="p-4 flex items-center justify-between" style="border-color:var(--line)">
+                    <div class="p-3 flex items-center justify-between" style="border-color:var(--line)">
                         <div>
                             <p class="eyebrow">Attendance Today</p>
-                            <p class="text-2xl font-extrabold text-slate-900 mt-1" th:text="|${attendancePercentage}%|">100%</p>
+                            <p class="text-xl font-extrabold text-slate-900 mt-0.5" data-kpi-attendance th:text="|${attendancePercentage}%|">100%</p>
                         </div>
-                        <span class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:var(--success-50); color:var(--success);">
+                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--success-50); color:var(--success);">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
                         </span>
                     </div>
-                    <div class="p-4 flex items-center justify-between" style="border-color:var(--line)">
+                    <div class="p-3 flex items-center justify-between" style="border-color:var(--line)">
                         <div>
                             <p class="eyebrow">Active Absences</p>
-                            <p class="text-2xl font-extrabold text-slate-900 mt-1" th:text="|${activeAbsences} / ${totalStudents}|">0 / 5</p>
+                            <p class="text-xl font-extrabold text-slate-900 mt-0.5" data-kpi-absences th:text="|${activeAbsences} / ${totalStudents}|">0 / 5</p>
                         </div>
-                        <span class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:var(--warn-50); color:var(--warn);">
+                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--warn-50); color:var(--warn);">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         </span>
                     </div>
-                    <div class="p-4 flex items-center justify-between" style="border-color:var(--line)">
+                    <div class="p-3 flex items-center justify-between" style="border-color:var(--line)">
                         <div>
                             <p class="eyebrow">System</p>
-                            <p class="text-lg font-bold mt-1.5 flex items-center gap-1.5" style="color:var(--success)">
+                            <p class="text-base font-bold mt-1 flex items-center gap-1.5" style="color:var(--success)">
                                 <span class="dot w-2 h-2 rounded-full" style="background:var(--success)"></span> Secure
                             </p>
                         </div>
-                        <span class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:var(--success-50); color:var(--success);">
+                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--success-50); color:var(--success);">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         </span>
                     </div>
                     <div th:if="${currentUserRole == 'PRINCIPAL'}" class="p-4 flex items-center justify-between" style="border-color:var(--line)">
                         <div>
                             <p class="eyebrow">Curriculum</p>
-                            <p class="text-2xl font-extrabold text-slate-900 mt-1" th:text="|${schoolProgress != null ? schoolProgress.get('overallCompletionPercent') : 0}%|">0%</p>
+                            <p class="text-xl font-extrabold text-slate-900 mt-0.5" th:text="|${schoolProgress != null ? schoolProgress.get('overallCompletionPercent') : 0}%|">0%</p>
                         </div>
-                        <span class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:var(--info-50); color:var(--info);">📊</span>
+                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--info-50); color:var(--info);">📊</span>
                     </div>
                     <div th:if="${currentUserRole == 'PRINCIPAL'}" class="p-4 flex items-center justify-between" style="border-color:var(--line)">
                         <div>
                             <p class="eyebrow">Fee Collection</p>
-                            <p class="text-2xl font-extrabold text-slate-900 mt-1" th:text="|${feeSummary != null ? feeSummary.get('collectionPercent') : 0}%|">0%</p>
+                            <p class="text-xl font-extrabold text-slate-900 mt-0.5" th:text="|${feeSummary != null ? feeSummary.get('collectionPercent') : 0}%|">0%</p>
                         </div>
-                        <span class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:var(--success-50); color:var(--success);">💳</span>
+                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--success-50); color:var(--success);">💳</span>
                     </div>
                 </div>
             </section>

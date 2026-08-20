@@ -17,15 +17,14 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // 2. Navigate to Admin Dashboard
     await page.goto('/web/admin/dashboard');
 
-    // 3. Verify statistics cards
-    // Admin dashboard shows attendance percentage and absences / total students
-    // KPI cards render the figures in <p class="text-2xl …"> (the Slate-mist reskin
-    // moved these off <h3>), e.g. "100%" and "0 / 506".
-    const attendanceEl = page.locator('p.text-2xl:has-text("%")').first();
-    await expect(attendanceEl).toBeVisible();
+    // 3. Verify statistics cards. These select on data markers rather than the
+    // font-size class: the previous selector was p.text-2xl, so tightening the
+    // KPI strip's typography broke a test that has nothing to do with type.
+    await expect(page.locator('[data-kpi-attendance]')).toBeVisible();
+    await expect(page.locator('[data-kpi-attendance]')).toContainText('%');
 
-    const absencesEl = page.locator('p.text-2xl:has-text("/")').first();
-    await expect(absencesEl).toBeVisible();
+    await expect(page.locator('[data-kpi-absences]')).toBeVisible();
+    await expect(page.locator('[data-kpi-absences]')).toContainText('/');
   });
 
   test('Test 2: Teacher Daily Attendance Toggles & Ledger Saving', async ({ page }) => {
