@@ -71,10 +71,15 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     await page.evaluate(() => goToStep(3));
     await page.fill('#staffFullName', 'New Teacher');
     await page.fill('#staffEmail', teacherEmail);
-    await page.fill('#staffPassword', 'PilotLaunchSecure2026!');
     await page.selectOption('#staffRole', 'TEACHER');
     await page.click('#staffForm button[type="submit"]');
     await expect(page.locator('#staffRows')).toContainText(teacherEmail, { timeout: 10000 });
+
+    // The wizard no longer asks the admin to choose someone else's password --
+    // the server issues it and shows it once, alongside whether the invite
+    // email actually went.
+    const teacherPassword = await page.locator('[data-invite-password]').first().innerText();
+    expect(teacherPassword.length).toBeGreaterThan(8);
 
     // New staff invites are PENDING until PRINCIPAL/ADMIN approves — the inviting
     // admin can do that themselves since ADMIN is included in the approval role check.
@@ -88,7 +93,7 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
 
     // The invited teacher can independently log in and reach their own dashboard
     await page.context().clearCookies();
-    await login(page, teacherEmail, 'PilotLaunchSecure2026!');
+    await login(page, teacherEmail, teacherPassword);
     await page.goto('/web/teacher/dashboard');
     await expect(page.locator('body')).not.toContainText('Forbidden');
 

@@ -222,8 +222,10 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
         body: new URLSearchParams(params).toString(),
       });
 
-      await form('/web/admin/staff/add',
-        { fullName: 'Ravi Teacher', email, password: pw, role: 'TEACHER' });
+      // The server issues the teacher's temporary password now; capture it so
+      // the next test can sign in as them.
+      const invite = await (await form('/web/admin/staff/add',
+        { fullName: 'Ravi Teacher', email, role: 'TEACHER' })).json();
 
       // Staff arrive PENDING; an unapproved teacher must not be able to work.
       const staff = await (await fetch('/web/admin/staff')).json();
@@ -244,17 +246,19 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
         }),
       })).json();
 
-      return { approve, assign, sectionId: sections[0].id };
+      return { approve, assign, sectionId: sections[0].id, teacherPassword: invite.temporaryPassword };
     }, [school.teacherEmail, PW]);
 
     expect(result.error).toBeUndefined();
     expect(result.approve.status).toBe('approved');
     expect(result.assign).toBeTruthy();
+    expect(result.teacherPassword, 'the server must issue the staff credential').toBeTruthy();
     school.sectionId = result.sectionId;
+    school.teacherPassword = result.teacherPassword;
   });
 
   test('the teacher sees their own class and marks attendance for the student', async ({ page }) => {
-    await login(page, school.teacherEmail, PW);
+    await login(page, school.teacherEmail, school.teacherPassword);
 
     const classes = await page.evaluate(async () =>
       (await fetch('/api/teacher/classes')).json());

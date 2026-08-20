@@ -1,6 +1,7 @@
 package com.concept.staff.app;
 
 import com.concept.common.AuditLogService;
+import com.concept.common.EmailDeliveryService;
 import com.concept.staff.data.StaffUserRepository;
 import com.concept.user.User;
 import com.concept.user.UserRole;
@@ -31,13 +32,16 @@ public class StaffService {
     private final StaffUserRepository staffUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
+    private final EmailDeliveryService emailDeliveryService;
 
     public StaffService(StaffUserRepository staffUserRepository,
                         PasswordEncoder passwordEncoder,
-                        AuditLogService auditLogService) {
+                        AuditLogService auditLogService,
+                        EmailDeliveryService emailDeliveryService) {
         this.staffUserRepository = staffUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
+        this.emailDeliveryService = emailDeliveryService;
     }
 
     @Transactional(readOnly = true)
@@ -56,6 +60,57 @@ public class StaffService {
      * the web layer maps that to an error response.
      */
     @Transactional
+    /**
+     * Creates a staff account and emails the sign-in details.
+     *
+     * @return the new user id, the generated password, and whether the email
+     *         actually went. The password is returned even on a successful
+     *         send: the account exists either way, and an admin who cannot see
+     *         the credential has no way to recover if the mail never arrives.
+     */
+    public StaffInvite inviteStaff(String fullName, String email, UserRole role, String schoolName,
+                                   UUID tenantId, UUID academicYearId, Authentication authentication) {
+        String password = generateTempPassword();
+        UUID id = addStaff(fullName, email, password, role, tenantId, academicYearId, authentication);
+
+        EmailDeliveryService.EmailResult result = emailDeliveryService.send(
+                email,
+                "Your " + (schoolName == null || schoolName.isBlank() ? "school" : schoolName) + " staff account",
+                inviteBody(fullName, email, password, role, schoolName));
+
+        // Recorded separately from STAFF_INVITED: "the account was created" and
+        // "the person was told" are different facts, and only the second one
+        // determines whether anybody shows up.
+        auditLogService.log(authentication,
+                result.delivered() ? "STAFF_INVITE_EMAILED" : "STAFF_INVITE_EMAIL_FAILED",
+                "User", id, "Invite email to " + email + ": " + result.detail());
+
+        return new StaffInvite(id, password, result.delivered(), result.detail());
+    }
+
+    private String inviteBody(String fullName, String email, String password, UserRole role, String schoolName) {
+        String school = schoolName == null || schoolName.isBlank() ? "your school" : schoolName;
+        return """
+                Hello %s,
+
+                An account has been created for you at %s as %s.
+
+                Username: %s
+                Temporary password: %s
+
+                Please sign in and change your password. Your account needs to be approved
+                by a principal or administrator before you can use it.
+                """.formatted(fullName, school, role.name(), email, password);
+    }
+
+    private String generateTempPassword() {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+        java.security.SecureRandom rnd = new java.security.SecureRandom();
+        StringBuilder p = new StringBuilder();
+        for (int i = 0; i < 10; i++) p.append(chars.charAt(rnd.nextInt(chars.length())));
+        return p.append("!9").toString();
+    }
+
     public UUID addStaff(String fullName, String email, String password, UserRole role,
                          UUID tenantId, UUID academicYearId, Authentication authentication) {
         if (!STAFF_ROLES.contains(role)) {

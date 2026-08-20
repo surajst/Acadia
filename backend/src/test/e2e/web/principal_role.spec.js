@@ -18,7 +18,7 @@ test.describe('Sprint 3: PRINCIPAL role and access boundaries', () => {
     await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
     const inviteResult = await page.evaluate(async (email) => {
       const params = new URLSearchParams({
-        fullName: 'New Principal', email, password: 'PilotLaunchSecure2026!', role: 'PRINCIPAL',
+        fullName: 'New Principal', email, role: 'PRINCIPAL',
       });
       const res = await fetch('/web/admin/staff/add', {
         method: 'POST',
@@ -41,7 +41,7 @@ test.describe('Sprint 3: PRINCIPAL role and access boundaries', () => {
 
     // Log in as the new principal
     await page.context().clearCookies();
-    await login(page, principalEmail, 'PilotLaunchSecure2026!');
+    await login(page, principalEmail, inviteResult.temporaryPassword);
 
     // Dashboard renders the read-only KPI cards. The Slate-mist reskin split the
     // labels into an eyebrow + a percent figure, so the card reads "Curriculum"
