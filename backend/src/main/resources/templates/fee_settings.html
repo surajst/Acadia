@@ -66,11 +66,21 @@
                         <button type="button" onclick="addInstalment()" class="btn btn-secondary btn-xs"
                                 data-add-instalment>+ Add instalment</button>
                     </div>
+                    <!-- The three inputs carried only placeholders, so the last box
+                         read "0" and meant nothing. Column headers name them. -->
+                    <div class="hidden sm:grid sm:grid-cols-12 gap-2 px-1 pb-1">
+                        <span class="sm:col-span-4 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-3)]">Instalment name</span>
+                        <span class="sm:col-span-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-3)]">Amount (₹)</span>
+                        <span class="sm:col-span-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-3)]">Due after (days)</span>
+                        <span class="sm:col-span-2"></span>
+                    </div>
                     <div id="instalmentRows" class="space-y-2"></div>
                     <p class="text-[11px] text-[var(--text-3)] mt-2">
-                        <strong>Due after</strong> is counted in days from when the student's
-                        year starts &mdash; not a fixed calendar date. A student admitted in
-                        September is billed from September rather than inheriting April's dates.
+                        <strong>Due after</strong> counts days from when that student's year
+                        starts, rather than a fixed calendar date. <strong>0</strong> means due
+                        straight away; a three-term year is typically 0, 120 and 240.
+                        Using offsets is what lets a student admitted in September be billed
+                        from September instead of inheriting April's dates.
                     </p>
                 </div>
 
@@ -137,7 +147,8 @@
             row.innerHTML =
                 '<div class="sm:col-span-4"><input type="text" name="label" required placeholder="Term 1" class="field" data-inst-label value="' + (label || '') + '"></div>' +
                 '<div class="sm:col-span-3"><input type="number" name="amount" step="0.01" min="0" required placeholder="8000.00" class="field font-mono" data-inst-amount value="' + (amount || '') + '"></div>' +
-                '<div class="sm:col-span-3"><input type="number" name="dueOffsetDays" min="0" required placeholder="0" class="field font-mono" data-inst-offset value="' + (offset === undefined ? '' : offset) + '"></div>' +
+                '<div class="sm:col-span-3"><div class="relative"><input type="number" name="dueOffsetDays" min="0" required placeholder="0" class="field font-mono pr-12" data-inst-offset value="' + (offset === undefined ? '' : offset) + '">' +
+                '<span class="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-3)] pointer-events-none">days</span></div></div>' +
                 '<div class="sm:col-span-2"><button type="button" class="btn btn-secondary btn-sm w-full" onclick="removeInstalment(this)">Remove</button></div>';
             row.querySelectorAll('[data-inst-amount]').forEach(function (el) {
                 el.addEventListener('input', recalcTotal);
