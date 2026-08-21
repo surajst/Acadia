@@ -40,10 +40,10 @@
     <div id="global-scroll-wrapper" style="flex:1; min-height:0; display:flex; flex-direction:column;">
     <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 min-h-0 flex flex-col w-full">
 
-        <div th:if="${param.success != null}" data-flash data-autohide="6000"
+        <div th:if="${param.success != null or successMessage != null}" data-flash data-autohide="6000"
              class="mb-5 p-3.5 pr-10 rounded-xl text-sm font-medium flex items-center gap-2 border"
              style="background:var(--success-50); border-color:var(--success-200); color:var(--success);">
-            <span>✨</span> Payment transaction recorded successfully! Roster balances updated.
+            <span>✨</span> <span th:text="${successMessage} ?: 'Payment transaction recorded successfully! Roster balances updated.'">Done</span>
         </div>
         <div th:if="${errorMessage != null}" data-flash data-autohide="8000"
              class="mb-5 p-3.5 pr-10 rounded-xl text-sm font-medium flex items-center gap-2 border"
@@ -164,6 +164,15 @@
                                         <button th:if="${dto.status != 'PAID' and (dto.waiverStatus == 'NONE' or dto.waiverStatus == 'REJECTED')}"
                                                 th:data-id="${dto.invoiceId}" onclick="requestWaiver(this.getAttribute('data-id'))"
                                                 class="btn btn-secondary btn-xs w-full">Request Waiver</button>
+                                        <!-- Correcting a counter mistake: offered for the most recent
+                                             payment only, since that is almost always the one mistyped. -->
+                                        <button th:if="${dto.hasReversiblePayment()}"
+                                                th:data-txn="${dto.reversiblePaymentId}"
+                                                th:data-amount="${dto.reversiblePaymentAmount}"
+                                                th:data-name="${dto.studentName}"
+                                                onclick="reversePayment(this.getAttribute('data-txn'), this.getAttribute('data-amount'), this.getAttribute('data-name'))"
+                                                data-reverse-payment
+                                                class="btn btn-secondary btn-xs w-full">Reverse last payment</button>
                                         <span th:if="${dto.waiverStatus == 'PENDING'}" class="badge badge--warn">Waiver Pending</span>
                                         <span th:if="${dto.waiverStatus == 'APPROVED'}" class="badge badge--success">Waiver Applied</span>
                                     </td>
@@ -291,6 +300,27 @@
     <footer class="shrink-0 text-center py-2 text-[11px] text-[var(--text-3)] border-t" style="border-color:var(--line)">ACADIA · Connect | Manage | Empower</footer>
 
     <script>
+        function reversePayment(txnId, amount, studentName) {
+            var reason = prompt('Reversing a payment of \u20b9' + amount + ' for ' + studentName
+                + '.\n\nThe original entry stays on the ledger and this is recorded against your account.'
+                + '\n\nReason:');
+            if (reason === null) return;
+            if (!reason.trim()) { alert('A reason is required to reverse a payment.'); return; }
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/web/admin/fees/payment/' + txnId + '/reverse';
+            var r = document.createElement('input');
+            r.type = 'hidden'; r.name = 'reason'; r.value = reason.trim();
+            form.appendChild(r);
+            var csrfName = document.querySelector('input[name="_csrf"]');
+            if (csrfName) {
+                var c = document.createElement('input');
+                c.type = 'hidden'; c.name = '_csrf'; c.value = csrfName.value;
+                form.appendChild(c);
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
         function toggleOverride() {
             var on = document.getElementById('overrideToggle').checked;
             var fields = document.getElementById('overrideFields');

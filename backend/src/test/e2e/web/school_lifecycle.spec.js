@@ -428,6 +428,50 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
       .toContainText('Sibling discount');
   });
 
+  test('a mistyped payment can be reversed, and both entries stay on the ledger', async ({ page }) => {
+    await login(page, school.adminEmail, PW);
+    await page.goto('/web/admin/fees');
+
+    // Record a payment against the 22,000 invoice raised earlier.
+    const paid = await page.evaluate(async () => {
+      const row = document.querySelector('button[data-id][data-due]');
+      const invoiceId = row.getAttribute('data-id');
+      const res = await fetch('/web/admin/fees/collect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ invoiceId, amount: '5000', paymentMode: 'CASH' }).toString(),
+      });
+      return res.status;
+    });
+    expect(paid).toBeLessThan(400);
+
+    // Overpaying the remainder must be refused by the SERVER, not just by the
+    // form's max attribute.
+    const overpay = await page.evaluate(async () => {
+      const row = document.querySelector('button[data-id][data-due]');
+      const invoiceId = row ? row.getAttribute('data-id') : null;
+      const res = await fetch('/web/admin/fees/collect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ invoiceId, amount: '999999', paymentMode: 'CASH' }).toString(),
+      });
+      return { status: res.status, text: await res.text() };
+    });
+    expect(overpay.text).toContain('more than');
+
+    // Now undo the 5,000 through the ledger's own control.
+    await page.goto('/web/admin/fees');
+    const reverseBtn = page.locator('[data-reverse-payment]').first();
+    await expect(reverseBtn).toBeVisible();
+    page.once('dialog', d => d.accept('Cheque bounced'));
+    await reverseBtn.click();
+
+    await page.goto('/web/admin/fees');
+    await expect(page.locator('body')).not.toContainText('Something went wrong');
+    // The invoice is owed in full again.
+    await expect(page.locator('table')).toContainText('22,000.00');
+  });
+
   test('an adjusted amount without a reason is refused', async ({ page }) => {
     await login(page, school.adminEmail, PW);
 

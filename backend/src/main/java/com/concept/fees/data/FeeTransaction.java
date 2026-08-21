@@ -28,6 +28,19 @@ public class FeeTransaction extends BaseTenantEntity {
     @Column(name = "paid_at", nullable = false)
     private LocalDateTime paidAt;
 
+    /**
+     * Set when this row undoes an earlier payment, pointing at the row it
+     * reverses. A correction is a new transaction rather than an edit: the
+     * mistake and its correction both stay visible, and this is what makes a
+     * second reversal of the same payment detectable.
+     */
+    @Column(name = "reverses_transaction_id")
+    private UUID reversesTransactionId;
+
+    /** Why. Required on a reversal -- an unexplained negative line is not an audit trail. */
+    @Column(name = "note", length = 500)
+    private String note;
+
     public FeeTransaction() {}
 
     public FeeTransaction(UUID id, UUID invoiceId, BigDecimal amountPaid, String paymentMode, LocalDateTime paidAt) {
@@ -76,5 +89,25 @@ public class FeeTransaction extends BaseTenantEntity {
 
     public void setPaidAt(LocalDateTime paidAt) {
         this.paidAt = paidAt;
+    }
+
+    public UUID getReversesTransactionId() {
+        return reversesTransactionId;
+    }
+
+    public void setReversesTransactionId(UUID reversesTransactionId) {
+        this.reversesTransactionId = reversesTransactionId;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public boolean isReversal() {
+        return reversesTransactionId != null;
     }
 }
