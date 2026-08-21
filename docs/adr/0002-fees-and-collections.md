@@ -46,13 +46,31 @@ was the timetable attached to it.
 
 ```
 FeePlan            grade + academic year → annual total
-  └ Instalment     #1 40% due 15 Apr · #2 30% due 15 Aug · #3 30% due 15 Dec
+  └ Instalment     ordinal · share of the total · when it falls due
 ```
 
 Schools bill an **annual fee split into instalments**, not independent term
 charges. An instalment is therefore a scheduled slice of an annual obligation,
 which is what makes arrears, concessions and the year-end position computable
 against a single total instead of being reassembled from parts.
+
+**Due dates are data, never constants.** How many instalments, what share each
+carries and when each falls due are all set by the school when it builds the
+plan. No month, count or split is assumed anywhere in code: three termly
+instalments and twelve monthly ones are the same structure with different rows,
+and a school that collects in two unequal parts is not a special case.
+
+This matters beyond configurability. A student admitted in September cannot owe
+an instalment that fell due in April, so an instalment records **when it falls
+due relative to the plan**, and the concrete date is resolved per student when
+their invoices are generated — from the academic year for a student who starts
+with it, and from their admission date for one who joins mid-year. Hardcoding a
+calendar would have made every mid-year admission a manual correction, which is
+how a school ends up billing a family for a term they were not enrolled in.
+
+Once an invoice is generated its due date is **snapshotted onto the invoice**,
+the same way the amount is. Editing a plan afterwards does not silently move a
+date a family has already been told about.
 
 ### 2. Invoices carry a due date and lines
 
@@ -91,7 +109,7 @@ amounts, so changing a plan never reprices billing already sent.
 
 | Phase | Delivers | Unblocks |
 |---|---|---|
-| 1 | `FeePlan` + instalments + due dates; invoices generated per instalment | Termly billing. The actual complaint. |
+| 1 | `FeePlan` + school-defined instalment schedule; invoices generated per instalment with resolved due dates | Termly billing. The actual complaint. |
 | 2 | `InvoiceLine` + custom invoice builder | Trips, transport, materials |
 | 3 | Numbered receipts; collection and defaulter reports | Counter workflow, chasing arrears |
 | 4 | Late fees, arrears carry-forward between years | Needs 1–3 first |
