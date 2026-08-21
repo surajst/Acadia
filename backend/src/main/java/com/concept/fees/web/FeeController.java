@@ -64,11 +64,39 @@ public class FeeController {
     public String collectPayment(@RequestParam("invoiceId") UUID invoiceId,
                                  @RequestParam("amount") BigDecimal amount,
                                  @RequestParam("paymentMode") String paymentMode,
-                                 Authentication authentication) {
+                                 Authentication authentication,
+                                 RedirectAttributes ra) {
         requireAdmin(authentication, "record dynamic payments");
         UUID tenantId = tenantContext.getTenantId().orElse(null);
-        feeDashboardService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
-        return "redirect:/web/admin/fees?success=payment_recorded";
+        try {
+            feeDashboardService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
+            return "redirect:/web/admin/fees?success=payment_recorded";
+        } catch (IllegalArgumentException e) {
+            // Overpayment and zero amounts are refused server-side now, so this
+            // is a reachable outcome rather than a server fault.
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/web/admin/fees";
+        }
+    }
+
+    /**
+     * Corrects a mistyped or bounced payment by recording its opposite. The
+     * original entry is never edited or deleted -- see FeeManagementService.
+     */
+    @PostMapping("/web/admin/fees/payment/{transactionId}/reverse")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String reversePayment(@PathVariable("transactionId") UUID transactionId,
+                                 @RequestParam("reason") String reason,
+                                 Authentication authentication,
+                                 RedirectAttributes ra) {
+        UUID tenantId = tenantContext.getTenantId().orElse(null);
+        try {
+            feeDashboardService.reversePayment(transactionId, reason, tenantId, authentication);
+            ra.addFlashAttribute("successMessage", "Payment reversed.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/web/admin/fees";
     }
 
     @PostMapping("/web/admin/fees/invoice/create")

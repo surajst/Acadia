@@ -203,4 +203,113 @@ public class FeeManagementServiceTest {
         invoice.updateBalances();
         feeInvoiceRepository.saveAndFlush(invoice);
     }
+
+    /**
+     * The form set max=remainingDue in the browser, which is not validation. A
+     * direct POST used to be accepted, and because updateBalances clamps
+     * amountDue at zero the invoice then looked settled while amountPaid held
+     * money the school could not account for.
+     */
+    @Test
+    public void recordPayment_moreThanOutstanding_isRefused() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
+                feeManagementService.recordPayment(testInvoiceId, new BigDecimal("50000.00"),
+                        "CASH", testTenantId, null));
+        assertTrue(e.getMessage().contains("more than"), e.getMessage());
+
+        FeeInvoice untouched = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
+        assertEquals(0, BigDecimal.ZERO.compareTo(untouched.getAmountPaid()),
+                "a refused payment must not be partially applied");
+        assertTrue(feeTransactionRepository.findByInvoiceId(testInvoiceId).isEmpty(),
+                "a refused payment must leave no transaction behind");
+    }
+
+    @Test
+    public void recordPayment_exactlyTheOutstandingAmount_isAllowed() {
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("20000.00"), "CASH", testTenantId, null);
+        FeeInvoice paid = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
+        assertEquals(FeeInvoice.FeeStatus.PAID, paid.getStatus());
+    }
+
+    /** Two partial payments must still be capped by what remains, not by the total. */
+    @Test
+    public void recordPayment_secondPaymentCannotExceedRemainingBalance() {
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("15000.00"), "CASH", testTenantId, null);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                feeManagementService.recordPayment(testInvoiceId, new BigDecimal("6000.00"),
+                        "CASH", testTenantId, null));
+
+        FeeInvoice invoice = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
+        assertEquals(new BigDecimal("15000.00"), invoice.getAmountPaid());
+    }
+
+    /**
+     * A correction is a new entry, never an edit. Both the mistake and its
+     * reversal have to stay on the invoice -- "we took 200,000 and gave it
+     * back" is a different fact from "we took nothing", and a family querying
+     * their receipt needs the first one to still exist.
+     */
+    @Test
+    public void reversePayment_recordsTheOppositeAndKeepsTheOriginal() {
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "CASH", testTenantId, null);
+        FeeTransaction original = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
+
+        feeManagementService.reversePayment(original.getId(), "Cheque bounced", testTenantId, null);
+
+        FeeInvoice invoice = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
+        assertEquals(0, BigDecimal.ZERO.compareTo(invoice.getAmountPaid()), "the payment is undone");
+        assertEquals(FeeInvoice.FeeStatus.UNPAID, invoice.getStatus());
+
+        List<FeeTransaction> ledger = feeTransactionRepository.findByInvoiceId(testInvoiceId);
+        assertEquals(2, ledger.size(), "the original entry must survive alongside the reversal");
+        FeeTransaction reversal = ledger.stream().filter(FeeTransaction::isReversal).findFirst().orElseThrow();
+        assertEquals(new BigDecimal("5000.00").negate(), reversal.getAmountPaid());
+        assertEquals("Cheque bounced", reversal.getNote());
+        assertEquals(original.getId(), reversal.getReversesTransactionId());
+    }
+
+    @Test
+    public void reversePayment_withoutAReason_isRefused() {
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "CASH", testTenantId, null);
+        FeeTransaction original = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                feeManagementService.reversePayment(original.getId(), "   ", testTenantId, null));
+    }
+
+    @Test
+    public void reversePayment_cannotBeAppliedTwice() {
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "CASH", testTenantId, null);
+        FeeTransaction original = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
+
+        feeManagementService.reversePayment(original.getId(), "Mistyped", testTenantId, null);
+        assertThrows(IllegalArgumentException.class, () ->
+                feeManagementService.reversePayment(original.getId(), "Again", testTenantId, null));
+    }
+
+    /** Reversing frees the balance up again, so the correct amount can be taken. */
+    @Test
+    public void reversePayment_thenRecordingTheCorrectAmount_works() {
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("20000.00"), "CASH", testTenantId, null);
+        FeeTransaction wrong = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
+
+        feeManagementService.reversePayment(wrong.getId(), "Wrong invoice", testTenantId, null);
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("2000.00"), "CASH", testTenantId, null);
+
+        FeeInvoice invoice = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
+        assertEquals(new BigDecimal("2000.00"), invoice.getAmountPaid());
+        assertEquals(new BigDecimal("18000.00"), invoice.getAmountDue());
+        assertEquals(FeeInvoice.FeeStatus.PARTIALLY_PAID, invoice.getStatus());
+    }
+
+    /** A reversal must not be usable to reach into another school's ledger. */
+    @Test
+    public void reversePayment_crossTenant_isRefused() {
+        feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "CASH", testTenantId, null);
+        FeeTransaction original = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                feeManagementService.reversePayment(original.getId(), "Not mine", UUID.randomUUID(), null));
+    }
 }

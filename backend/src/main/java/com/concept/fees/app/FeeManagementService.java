@@ -99,6 +99,18 @@ public class FeeManagementService {
             .orElseThrow(() -> new IllegalArgumentException("FeeInvoice not found with ID: " + invoiceId));
 
         BigDecimal currentPaid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO;
+
+        // Refuse more than is owed. The form sets max=remainingDue in the
+        // browser, but client-side validation is not validation: a direct POST
+        // used to be accepted, and updateBalances clamps amountDue at zero, so
+        // the invoice looked settled while amountPaid quietly held money the
+        // school could not account for.
+        BigDecimal due = invoice.getAmountDue() != null ? invoice.getAmountDue() : BigDecimal.ZERO;
+        if (paymentAmount.compareTo(due) > 0) {
+            throw new IllegalArgumentException(
+                    "Payment of " + paymentAmount + " is more than the " + due + " outstanding on this invoice.");
+        }
+
         invoice.setAmountPaid(currentPaid.add(paymentAmount));
         invoice.updateBalances();
         feeInvoiceRepository.saveAndFlush(invoice);
@@ -350,5 +362,58 @@ public class FeeManagementService {
             feeInvoiceRepository.flush();
             System.out.println(">> FeeManagementService -> Baseline FeeInvoices created successfully.");
         }
+    }
+
+    /**
+     * Undoes a payment by recording its opposite, never by editing or deleting
+     * the original.
+     *
+     * <p>Money handled at a school counter gets mistyped, and until now the only
+     * fix was editing the database directly. A ledger that can be rewritten is
+     * not a ledger, so the mistake and its correction both stay on the invoice:
+     * "we took 200,000 and gave 180,000 back" is a different fact from "we took
+     * 20,000", and a family asking why their receipt does not match needs the
+     * first one to still exist.
+     */
+    @Transactional
+    public void reversePayment(UUID transactionId, String reason, UUID currentTenantId,
+                               Authentication authentication) {
+        String why = reason == null ? "" : reason.trim();
+        if (why.isEmpty()) {
+            throw new IllegalArgumentException("A reason is required to reverse a payment.");
+        }
+
+        FeeTransaction original = feeTransactionRepository.findByIdAndTenantId(transactionId, currentTenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found."));
+
+        if (original.isReversal()) {
+            throw new IllegalArgumentException("That entry is itself a reversal and cannot be reversed.");
+        }
+        if (feeTransactionRepository.existsByReversesTransactionId(transactionId)) {
+            throw new IllegalArgumentException("That payment has already been reversed.");
+        }
+
+        FeeInvoice invoice = feeInvoiceRepository.findByIdAndTenantId(original.getInvoiceId(), currentTenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found."));
+
+        FeeTransaction reversal = new FeeTransaction();
+        reversal.setId(UUID.randomUUID());
+        reversal.setInvoiceId(original.getInvoiceId());
+        reversal.setAmountPaid(original.getAmountPaid().negate());
+        reversal.setPaymentMode("REVERSAL");
+        reversal.setPaidAt(LocalDateTime.now());
+        reversal.setReversesTransactionId(original.getId());
+        reversal.setNote(why);
+        reversal.setTenantId(invoice.getTenantId());
+        reversal.setAcademicYearId(invoice.getAcademicYearId());
+        feeTransactionRepository.saveAndFlush(reversal);
+
+        BigDecimal paid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO;
+        invoice.setAmountPaid(paid.subtract(original.getAmountPaid()).max(BigDecimal.ZERO));
+        invoice.updateBalances();
+        feeInvoiceRepository.saveAndFlush(invoice);
+
+        auditLogService.log(authentication, "FEE_PAYMENT_REVERSED", "FeeInvoice", invoice.getId(),
+                "Reversed a payment of " + original.getAmountPaid() + " — " + why);
     }
 }

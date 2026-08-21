@@ -3,6 +3,8 @@ package com.concept.fees.app;
 import com.concept.fees.data.FeeStudentRepository;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;
+import com.concept.fees.data.FeeTransaction;
+import com.concept.fees.data.FeeTransactionRepository;
 import com.concept.fees.app.FeeManagementService;
 import com.concept.shared.data.Student;
 import org.springframework.data.domain.Page;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -30,13 +33,16 @@ public class FeeDashboardService {
     private final FeeManagementService feeManagementService;
     private final FeeInvoiceRepository feeInvoiceRepository;
     private final FeeStudentRepository studentRepository;
+    private final FeeTransactionRepository feeTransactionRepository;
 
     public FeeDashboardService(FeeManagementService feeManagementService,
                                FeeInvoiceRepository feeInvoiceRepository,
-                               FeeStudentRepository studentRepository) {
+                               FeeStudentRepository studentRepository,
+                               FeeTransactionRepository feeTransactionRepository) {
         this.feeManagementService = feeManagementService;
         this.feeInvoiceRepository = feeInvoiceRepository;
         this.studentRepository = studentRepository;
+        this.feeTransactionRepository = feeTransactionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -58,7 +64,8 @@ public class FeeDashboardService {
                 : Map.of();
 
         List<FeeDashboardView.InvoiceRow> rows = invoicePage.getContent().stream()
-                .map(inv -> toRow(inv, studentMap.get(inv.getStudentId())))
+                .map(inv -> toRow(inv, studentMap.get(inv.getStudentId()),
+                        latestReversiblePayment(inv.getId(), tenantId)))
                 .collect(Collectors.toList());
 
         List<FeeDashboardView.StudentOption> students = tenantId != null
@@ -93,6 +100,11 @@ public class FeeDashboardService {
         feeManagementService.createInvoiceForStudent(studentId, tenantId, overrideAmount, overrideReason, authentication);
     }
 
+    public void reversePayment(java.util.UUID transactionId, String reason, java.util.UUID tenantId,
+                               Authentication authentication) {
+        feeManagementService.reversePayment(transactionId, reason, tenantId, authentication);
+    }
+
     /** @return the resulting waiver status (e.g. PENDING), flattened to a string. */
     public String requestWaiver(UUID invoiceId, BigDecimal waiverAmount, String reason,
                                 UUID tenantId, Authentication authentication) {
@@ -100,7 +112,32 @@ public class FeeDashboardService {
         return invoice.getWaiverStatus() != null ? invoice.getWaiverStatus().name() : "NONE";
     }
 
-    private FeeDashboardView.InvoiceRow toRow(FeeInvoice inv, Student student) {
+    /**
+     * The most recent payment on this invoice that has not already been undone.
+     * Reversal is offered one entry at a time, most recent first: correcting a
+     * counter mistake almost always means the last thing typed, and offering
+     * the whole history invites undoing the wrong one.
+     */
+    private FeeTransaction latestReversiblePayment(UUID invoiceId, UUID tenantId) {
+        if (tenantId == null) {
+            return null;
+        }
+        List<FeeTransaction> ledger =
+                feeTransactionRepository.findByInvoiceIdAndTenantIdOrderByPaidAtAsc(invoiceId, tenantId);
+        Set<UUID> alreadyReversed = ledger.stream()
+                .map(FeeTransaction::getReversesTransactionId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        for (int i = ledger.size() - 1; i >= 0; i--) {
+            FeeTransaction t = ledger.get(i);
+            if (!t.isReversal() && !alreadyReversed.contains(t.getId())) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    private FeeDashboardView.InvoiceRow toRow(FeeInvoice inv, Student student, FeeTransaction reversible) {
         String studentName = student != null
                 ? (student.getFirstName() + " " + student.getLastName()).trim() : "Unknown Student";
         String initials = student != null
@@ -113,7 +150,9 @@ public class FeeDashboardService {
         return new FeeDashboardView.InvoiceRow(
                 inv.getId(), studentName, initials, rollNumber, gradeLevel, status,
                 inv.getTotalAmount(), inv.getAmountPaid(), inv.getAmountDue(), waiverStatus,
-                inv.getBaseAmount(), inv.getOverrideReason(), inv.getOverrideBy());
+                inv.getBaseAmount(), inv.getOverrideReason(), inv.getOverrideBy(),
+                reversible != null ? reversible.getId() : null,
+                reversible != null ? reversible.getAmountPaid() : null);
     }
 
     private String initial(String s) {

@@ -33,10 +33,18 @@ public record FeeDashboardView(
             // was departed from, and who decided.
             BigDecimal baseAmount,
             String overrideReason,
-            String overrideBy
+            String overrideBy,
+            // The most recent payment that has not already been reversed, so the
+            // ledger can offer to undo it. Null when there is nothing to undo.
+            UUID reversiblePaymentId,
+            BigDecimal reversiblePaymentAmount
     ) {
         public boolean overridden() {
             return baseAmount != null;
+        }
+
+        public boolean hasReversiblePayment() {
+            return reversiblePaymentId != null;
         }
     }
 
