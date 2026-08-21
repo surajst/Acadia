@@ -1,8 +1,8 @@
-package com.concept.fees.app;
+package com.concept.billing.app;
 
 /**
- * Raised when an invoice cannot be priced because the school has not configured
- * fees for that grade level and year.
+ * Raised when a student cannot be billed because the school has not configured
+ * a fee plan for that grade level and year.
  *
  * <p>This exists so the failure is loud. Invoicing used to fall back to a
  * hardcoded 15000 + 5000 whenever no fee structure was found, which made an
@@ -14,9 +14,9 @@ package com.concept.fees.app;
  * <p>The message is written to be shown to an admin, so it names the grade level
  * and where to go and fix it.
  */
-public class FeeStructureMissingException extends RuntimeException {
+public class FeePlanMissingException extends RuntimeException {
 
-    public FeeStructureMissingException(String message) {
+    public FeePlanMissingException(String message) {
         super(message);
     }
 }

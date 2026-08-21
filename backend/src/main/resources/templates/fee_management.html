@@ -131,6 +131,16 @@
                                     </td>
                                     <td class="py-3 px-5">
                                         <span class="badge badge--neutral" th:text="${dto.gradeLevel}">Grade 6</span>
+                                        <!-- Which part of the year this is, and when it is due.
+                                             A family now has several rows, so the ledger has to
+                                             say which is which. -->
+                                        <span th:if="${dto.instalmentLabel != null}" data-instalment-label
+                                              class="block mt-1 text-[10px] font-semibold text-slate-600"
+                                              th:text="${dto.instalmentLabel}">Term 1</span>
+                                        <span th:if="${dto.dueDate != null}" data-due-date
+                                              class="block text-[10px] font-mono"
+                                              th:classappend="${dto.overdue} ? 'text-red-600 font-bold' : 'text-[var(--text-3)]'"
+                                              th:text="${dto.overdue} ? 'overdue ' + ${#temporals.format(dto.dueDate, 'dd MMM yyyy')} : 'due ' + ${#temporals.format(dto.dueDate, 'dd MMM yyyy')}">due 01 Apr 2026</span>
                                     </td>
                                     <td class="py-3 px-5 font-mono font-medium text-slate-600">
                                         <span th:text="|₹ ${#numbers.formatDecimal(dto.totalAmount, 1, 'COMMA', 2, 'POINT')}|">₹ 20,000.00</span>

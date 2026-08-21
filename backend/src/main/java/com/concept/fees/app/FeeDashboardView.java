@@ -37,7 +37,12 @@ public record FeeDashboardView(
             // The most recent payment that has not already been reversed, so the
             // ledger can offer to undo it. Null when there is nothing to undo.
             UUID reversiblePaymentId,
-            BigDecimal reversiblePaymentAmount
+            BigDecimal reversiblePaymentAmount,
+            // Which instalment this is and when it falls due. A ledger of three
+            // rows per family is unreadable without them.
+            String instalmentLabel,
+            java.time.LocalDate dueDate,
+            boolean overdue
     ) {
         public boolean overridden() {
             return baseAmount != null;

@@ -66,6 +66,23 @@ public class FeeInvoice extends BaseTenantEntity {
     @Column(name = "override_by", length = 255)
     private String overrideBy;
 
+    /**
+     * When this instalment falls due. Snapshotted at generation, the same way
+     * the amount is: editing a plan afterwards must not silently move a date a
+     * family has already been given.
+     *
+     * <p>Null on an invoice that belongs to no plan.
+     */
+    @Column(name = "due_date")
+    private java.time.LocalDate dueDate;
+
+    @Column(name = "fee_plan_instalment_id")
+    private UUID feePlanInstalmentId;
+
+    /** The school's own name for this instalment, copied so the invoice reads on its own. */
+    @Column(name = "instalment_label")
+    private String instalmentLabel;
+
     public FeeInvoice() {}
 
     public FeeInvoice(UUID id, UUID studentId, BigDecimal totalAmount, BigDecimal amountPaid) {
@@ -196,5 +213,36 @@ public class FeeInvoice extends BaseTenantEntity {
     /** True when this invoice was billed at something other than the grade's fee structure. */
     public boolean isOverridden() {
         return baseAmount != null;
+    }
+
+    public java.time.LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(java.time.LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public UUID getFeePlanInstalmentId() {
+        return feePlanInstalmentId;
+    }
+
+    public void setFeePlanInstalmentId(UUID feePlanInstalmentId) {
+        this.feePlanInstalmentId = feePlanInstalmentId;
+    }
+
+    public String getInstalmentLabel() {
+        return instalmentLabel;
+    }
+
+    public void setInstalmentLabel(String instalmentLabel) {
+        this.instalmentLabel = instalmentLabel;
+    }
+
+    /** Unpaid and past its due date. Nothing could ask this before due dates existed. */
+    public boolean isOverdue(java.time.LocalDate today) {
+        return dueDate != null
+                && status != FeeStatus.PAID
+                && dueDate.isBefore(today);
     }
 }
