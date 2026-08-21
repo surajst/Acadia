@@ -351,7 +351,7 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     created.push(doomed.subdomain);
   });
 
-  test('admin raises a fee invoice and it appears in the invoice table', async ({ page }) => {
+  test('admin sets a termly fee plan and the whole year is billed in instalments', async ({ page }) => {
     await login(page, school.adminEmail, PW);
 
     // A brand-new school has no invoices at all, which makes the record count a
@@ -360,10 +360,7 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await page.goto('/web/admin/fees');
     await expect(page.locator('body')).toContainText('0 of 0 records');
 
-    // Invoicing refuses to price a grade the school has not set fees for, so a
-    // newly onboarded school must configure them first. This used to fall
-    // through to a hardcoded 15000 + 5000, which meant every school on the
-    // platform billed a plausible-looking 20,000 that nobody had chosen.
+    // Billing refuses a grade with no plan, rather than inventing an amount.
     const refused = await page.evaluate(async (studentId) => {
       const res = await fetch('/web/admin/fees/invoice/create', {
         method: 'POST',
@@ -376,14 +373,31 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await page.goto('/web/admin/fees');
     await expect(page.locator('body')).toContainText('0 of 0 records');
 
-    // Now set the fees for this school's grade and try again.
+    // Build a three-instalment plan through the real form. Nobody pays a year
+    // at once, so the plan is what the year costs AND how it is collected.
     await page.goto('/web/admin/fees/settings');
-    await page.fill('[data-fee-grade]', `Grade-${school.suffix}`);
-    await page.fill('[data-fee-tuition]', '18000');
-    await page.fill('[data-fee-term]', '4000');
-    await page.click('#feeStructureForm button[type="submit"]');
-    await expect(page.locator('[data-fee-row]')).toHaveCount(1);
-    await expect(page.locator('[data-fee-total]')).toContainText('22,000.00');
+    await page.fill('[data-plan-grade]', `Grade-${school.suffix}`);
+
+    const terms = [
+      { label: 'Term 1', amount: '10000', offset: '0' },
+      { label: 'Term 2', amount: '6000', offset: '120' },
+      { label: 'Term 3', amount: '6000', offset: '240' },
+    ];
+    for (let i = 1; i < terms.length; i++) {
+      await page.click('[data-add-instalment]');
+    }
+    for (let i = 0; i < terms.length; i++) {
+      await page.locator('[data-inst-label]').nth(i).fill(terms[i].label);
+      await page.locator('[data-inst-amount]').nth(i).fill(terms[i].amount);
+      await page.locator('[data-inst-offset]').nth(i).fill(terms[i].offset);
+    }
+    // The annual total is the sum of the parts, so they always add up.
+    await expect(page.locator('[data-plan-total]')).toContainText('22,000.00');
+    await page.click('#feePlanForm button[type="submit"]');
+
+    await expect(page.locator('[data-plan-row]')).toHaveCount(1);
+    await expect(page.locator('[data-plan-annual]')).toContainText('22,000.00');
+    await expect(page.locator('[data-plan-instalment]')).toHaveCount(3);
 
     const created = await page.evaluate(async (studentId) => {
       const res = await fetch('/web/admin/fees/invoice/create', {
@@ -395,35 +409,42 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     }, school.studentId);
     expect(created).toBeLessThan(400);
 
+    // One invoice per instalment, not one for the year.
     await page.goto('/web/admin/fees');
     await expect(page.locator('body')).not.toContainText('Something went wrong');
-    await expect(page.locator('body')).toContainText('1 of 1 records');
+    await expect(page.locator('body')).toContainText('3 of 3 records');
     await expect(page.locator('table')).toContainText(`Student${school.suffix}`);
-    // Priced from what this school set, not from a platform-wide constant.
-    await expect(page.locator('table')).toContainText('22,000.00');
+    await expect(page.locator('table')).toContainText('10,000.00');
+    await expect(page.locator('table')).toContainText('Term 1');
   });
 
   test('admin bills an adjusted amount, and the ledger shows what it was adjusted from', async ({ page }) => {
     await login(page, school.adminEmail, PW);
 
-    // Fees for this grade were set by the previous test; this one departs from
-    // them for a single invoice. The point of the feature is that the departure
-    // stays visible -- a number alone cannot distinguish a deliberate
-    // concession from a fee change or a typo months later.
+    // A second student, because a student who already has a schedule cannot be
+    // billed again -- doing so would double their family's bill.
+    const sibling = `Sibling${school.suffix}`;
+    await registerStudent(page, 'Ravi', sibling, `${school.roll}B`.slice(0, 12));
+
+    // The plan set earlier applies; this one departs from it. The point of the
+    // feature is that the departure stays visible -- a number alone cannot
+    // distinguish a deliberate concession from a fee change or a typo months
+    // later.
     await page.goto('/web/admin/fees');
     await page.click('button:has-text("Create Invoice")');
-    await page.selectOption('#invoiceStudentSelect', { label: `Asha Student${school.suffix}` });
+    await page.selectOption('#invoiceStudentSelect', { label: `Ravi ${sibling}` });
     await page.check('[data-override-toggle]');
-    await page.fill('[data-override-amount]', '9000');
+    await page.fill('[data-override-amount]', '11000');
     await page.fill('[data-override-reason]', 'Sibling discount — 2 children enrolled');
     await page.click('#createInvoiceModal button[type="submit"]');
 
     await page.goto('/web/admin/fees');
-    await expect(page.locator('body')).toContainText('2 of 2 records');
-    // The adjusted row carries both numbers and the reason.
+    // Overriding scales the whole schedule, so three more invoices are raised.
+    await expect(page.locator('body')).toContainText('6 of 6 records');
+    // The adjusted rows carry both numbers and the reason.
     const badge = page.locator('[data-override-badge]').first();
     await expect(badge).toBeVisible();
-    await expect(badge).toContainText('22,000.00');
+    await expect(badge).toContainText('10,000.00');
     await expect(page.locator('[data-override-reason-text]').first())
       .toContainText('Sibling discount');
   });
@@ -468,8 +489,10 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
 
     await page.goto('/web/admin/fees');
     await expect(page.locator('body')).not.toContainText('Something went wrong');
-    // The invoice is owed in full again.
-    await expect(page.locator('table')).toContainText('22,000.00');
+    // The instalment is owed in full again, and nothing on the ledger is
+    // showing a part payment any more.
+    await expect(page.locator('table')).toContainText('10,000.00');
+    await expect(page.locator('[data-reverse-payment]')).toHaveCount(0);
   });
 
   test('an adjusted amount without a reason is refused', async ({ page }) => {
@@ -487,10 +510,10 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     }, school.studentId);
 
     expect(body.status).toBeLessThan(400);
-    expect(body.text).toContain('reason is required');
-    // And nothing was billed.
+    expect(body.text).toContain('already has a fee schedule');
+    // And nothing extra was billed.
     await page.goto('/web/admin/fees');
-    await expect(page.locator('body')).toContainText('2 of 2 records');
+    await expect(page.locator('body')).toContainText('6 of 6 records');
   });
 
   test('parent assigns a quest and a reward to their child', async ({ page }) => {

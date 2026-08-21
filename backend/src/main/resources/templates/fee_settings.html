@@ -8,18 +8,29 @@
     <link rel="stylesheet" href="/css/design-system.css">
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
+    <style>
+        /* The native disclosure marker sits badly against the custom chevron. */
+        summary::-webkit-details-marker { display: none; }
+        summary { list-style: none; }
+        details[data-plan-row][open] > summary { background: var(--surface-2); }
+        /* The browser hides a closed details' content with display:none from the
+           UA stylesheet, but an author-level utility class (flex here) wins over
+           it -- so collapsed rows still laid out their instalments. This rule is
+           author-level too, so it takes precedence back. */
+        details:not([open]) > *:not(summary) { display: none !important; }
+    </style>
 </head>
 <body class="flex flex-col" style="height:100vh; overflow:hidden; background:var(--bg);">
 
     <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
-        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3.5">
                 <a href="/web/admin/dashboard" class="h-10 w-10 rounded-xl bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand)] font-black text-lg transition hover:bg-[var(--brand-100)]">&Omega;</a>
                 <div>
                     <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Fee Settings</h1>
                     <p class="text-xs text-[var(--text-3)] mt-1 flex items-center gap-1.5">
                         <a href="/web/admin/fees" class="hover:text-[var(--brand)] transition-colors font-medium">Fee Ledger</a>
-                        <span>/</span><span class="text-[var(--text-2)] font-medium">Fee Settings</span>
+                        <span>/</span><span class="text-[var(--text-2)] font-medium">Fee Plans</span>
                     </p>
                 </div>
             </div>
@@ -27,101 +38,187 @@
         </div>
     </header>
 
-    <main class="flex-1 overflow-y-auto">
-        <div class="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+    <!-- The page itself does not scroll. The builder holds still and only the
+         list of existing plans moves, so the form being filled in never slides
+         off the top while you check what is already configured. min-height:0 at
+         each level is what lets the inner list take the overflow instead of the
+         body. -->
+    <div class="flex-1 min-h-0 flex flex-col">
+    <div class="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3 flex-1 min-h-0 flex flex-col w-full">
 
-            <div th:if="${successMessage}" data-flash
-                 class="rounded-2xl border px-4 py-3 text-sm font-medium"
-                 style="border-color:var(--success); background:rgba(16,185,129,0.08); color:#047857;"
-                 th:text="${successMessage}">Saved.</div>
-            <div th:if="${errorMessage}" data-flash-error
-                 class="rounded-2xl border px-4 py-3 text-sm font-medium"
-                 style="border-color:var(--danger); background:rgba(239,68,68,0.08); color:#b91c1c;"
-                 th:text="${errorMessage}">Something went wrong.</div>
+        <div th:if="${successMessage}" data-flash
+             class="rounded-2xl border px-4 py-2.5 text-sm font-medium shrink-0"
+             style="border-color:var(--success); background:rgba(16,185,129,0.08); color:#047857;"
+             th:text="${successMessage}">Saved.</div>
+        <div th:if="${errorMessage}" data-flash-error
+             class="rounded-2xl border px-4 py-2.5 text-sm font-medium shrink-0"
+             style="border-color:var(--danger); background:rgba(239,68,68,0.08); color:#b91c1c;"
+             th:text="${errorMessage}">Something went wrong.</div>
 
-            <!-- Set / update one grade -->
-            <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
-                <div class="px-6 py-5 border-b" style="border-color:var(--line)">
-                    <h2 class="text-lg font-bold text-slate-900 tracking-tight">Set fees for a grade</h2>
-                    <p class="text-xs text-[var(--text-3)] mt-1">
-                        Invoices are priced from this table. Entering a grade that already
-                        has fees updates it &mdash; invoices already raised keep the amount
-                        they were sent with.
-                    </p>
+        <!-- Build a plan. Collapsible so the list below can take the screen once
+             a school has its plans in place and is only checking them. -->
+        <details open data-builder class="glass-panel rounded-3xl shadow-2xl overflow-hidden shrink-0">
+            <summary class="px-6 py-3 cursor-pointer flex items-center justify-between gap-4 hover:bg-[var(--surface-2)]">
+                <div class="flex items-baseline gap-2">
+                    <span class="text-[10px] text-[var(--text-3)]">&#9660;</span>
+                    <h2 class="text-base font-bold text-slate-900 tracking-tight">Set a grade&rsquo;s fees</h2>
                 </div>
-                <form method="POST" action="/web/admin/fees/settings/save" id="feeStructureForm"
-                      class="p-6 grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <span class="text-[11px] text-[var(--text-3)]">click to hide</span>
+            </summary>
+
+            <form method="POST" action="/web/admin/fees/settings/save" id="feePlanForm" class="px-6 pb-5 pt-1 space-y-3">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <p class="text-xs text-[var(--text-3)]">
+                    Enter what the year costs and how it is collected. Add as many
+                    instalments as your school uses &mdash; the annual total is their
+                    sum, so the parts always add up to the whole.
+                </p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="space-y-1.5">
                         <label for="gradeLevel" class="field-label block">Grade level</label>
                         <input type="text" id="gradeLevel" name="gradeLevel" required
-                               placeholder="Grade 6" class="field" data-fee-grade/>
+                               placeholder="Grade 6" class="field" data-plan-grade/>
                     </div>
-                    <div class="space-y-1.5">
-                        <label for="tuitionFee" class="field-label block">Tuition fee (INR)</label>
-                        <input type="number" id="tuitionFee" name="tuitionFee" step="0.01" min="0" required
-                               placeholder="15000.00" class="field font-mono" data-fee-tuition/>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="field-label">Instalments</span>
+                        <button type="button" onclick="addInstalment()" class="btn btn-secondary btn-xs"
+                                data-add-instalment>+ Add instalment</button>
                     </div>
-                    <div class="space-y-1.5">
-                        <label for="termFee" class="field-label block">Term fee (INR)</label>
-                        <input type="number" id="termFee" name="termFee" step="0.01" min="0" required
-                               placeholder="5000.00" class="field font-mono" data-fee-term/>
+                    <!-- The three inputs carried only placeholders, so the last box
+                         read "0" and meant nothing. Column headers name them. -->
+                    <div class="hidden sm:grid sm:grid-cols-12 gap-2 px-1 pb-1">
+                        <span class="sm:col-span-4 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-3)]">Instalment name</span>
+                        <span class="sm:col-span-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-3)]">Amount (&#8377;)</span>
+                        <span class="sm:col-span-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-3)]">Due after (days)</span>
+                        <span class="sm:col-span-2"></span>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-sm h-[42px]">Save fees</button>
-                </form>
+                    <div id="instalmentRows" class="space-y-2"></div>
+                    <p class="text-[11px] text-[var(--text-3)] mt-2">
+                        <strong>Due after</strong> counts days from when that student&rsquo;s year
+                        starts, rather than a fixed calendar date. <strong>0</strong> means due
+                        straight away; a three-term year is typically 0, 120 and 240.
+                        Using offsets is what lets a student admitted in September be billed
+                        from September instead of inheriting April&rsquo;s dates.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between border-t pt-3" style="border-color:var(--line)">
+                    <span class="text-sm font-semibold text-slate-700">
+                        Annual total: <span data-plan-total class="font-mono">&#8377; 0.00</span>
+                    </span>
+                    <button type="submit" class="btn btn-primary btn-sm">Save plan</button>
+                </div>
+            </form>
+        </details>
+
+        <!-- Existing plans -->
+        <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden flex-1 min-h-0 flex flex-col">
+            <div class="px-6 py-3 border-b flex items-center justify-between shrink-0" style="border-color:var(--line)">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 tracking-tight">This year&rsquo;s plans</h2>
+                    <p class="text-xs text-[var(--text-3)] mt-0.5">Applies to the current academic year only.</p>
+                </div>
+                <span class="badge" data-plan-count
+                      th:text="|${feePlans.size()} grades configured|">0 grades configured</span>
             </div>
 
-            <!-- Current table -->
-            <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
-                <div class="px-6 py-5 border-b flex items-center justify-between" style="border-color:var(--line)">
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900 tracking-tight">This year's fees</h2>
-                        <p class="text-xs text-[var(--text-3)] mt-1">Applies to the current academic year only.</p>
+            <div class="overflow-auto flex-1 min-h-0" data-plans-scroll>
+                <div th:if="${#lists.isEmpty(feePlans)}" class="py-12 text-center text-slate-500 font-medium">
+                    No fee plans yet. Billing is blocked until at least one grade has a plan
+                    &mdash; that is deliberate, so nobody is billed an invented amount.
+                </div>
+
+                <!-- Collapsed by default: a school with twelve grades should see
+                     twelve one-line rows, not a wall of instalments. The grade and
+                     the annual total stay in the summary, because those are what
+                     the list is scanned for. -->
+                <details th:each="plan : ${feePlans}" data-plan-row
+                         class="border-b last:border-b-0 group" style="border-color:var(--line)">
+                    <summary class="px-6 py-2.5 cursor-pointer flex items-center justify-between gap-4 hover:bg-[var(--surface-2)]">
+                        <span class="flex items-baseline gap-3 min-w-0">
+                            <span class="text-[10px] text-[var(--text-3)]">&#9654;</span>
+                            <span class="font-bold text-slate-900" th:text="${plan.gradeLevel}">Grade 6</span>
+                            <span class="text-sm font-mono text-slate-600" data-plan-annual
+                                  th:text="|&#8377; ${#numbers.formatDecimal(plan.annualAmount, 1, 'COMMA', 2, 'POINT')} per year|">&#8377; 20,000.00 per year</span>
+                        </span>
+                        <span class="text-[11px] text-[var(--text-3)] shrink-0"
+                              th:text="|${plan.instalments.size()} instalments|">3 instalments</span>
+                    </summary>
+
+                    <div class="px-6 pb-3 pl-14 flex items-start justify-between gap-4">
+                        <ul class="space-y-1">
+                            <li th:each="i : ${plan.instalments}" data-plan-instalment
+                                class="text-xs text-[var(--text-3)]">
+                                <span class="font-semibold text-slate-700" th:text="${i.label}">Term 1</span>
+                                &middot; <span class="font-mono" th:text="|&#8377;${#numbers.formatDecimal(i.amount, 1, 'COMMA', 2, 'POINT')}|">&#8377;8,000.00</span>
+                                &middot; due
+                                <span th:text="${i.dueOffsetDays == 0} ? 'at the start of the year' : ('after ' + ${i.dueOffsetDays} + ' days')">after 120 days</span>
+                            </li>
+                        </ul>
+                        <form method="POST" th:action="@{/web/admin/fees/settings/{id}/delete(id=${plan.id})}"
+                              onsubmit="return confirm('Remove this plan? New billing for the grade will be refused until a plan is set again. Invoices already raised keep their own amounts and dates.');">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-secondary btn-sm">Remove</button>
+                        </form>
                     </div>
-                    <span class="badge" data-fee-count
-                          th:text="|${feeStructures.size()} grades configured|">0 grades configured</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-[#F4F6FB]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b" style="border-color:var(--line)">
-                                <th class="py-4 px-6">Grade</th>
-                                <th class="py-4 px-6">Tuition</th>
-                                <th class="py-4 px-6">Term</th>
-                                <th class="py-4 px-6">Invoice total</th>
-                                <th class="py-4 px-6 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y text-sm" style="border-color:var(--line)">
-                            <tr th:each="fee : ${feeStructures}" data-fee-row
-                                th:attr="data-fee-grade-row=${fee.gradeLevel}" class="hover:bg-[#F4F6FB]/30 transition-colors">
-                                <td class="py-4 px-6 font-semibold text-slate-900" th:text="${fee.gradeLevel}">Grade 6</td>
-                                <td class="py-4 px-6 font-mono text-slate-600"
-                                    th:text="|₹ ${#numbers.formatDecimal(fee.tuitionFee, 1, 'COMMA', 2, 'POINT')}|">₹ 15,000.00</td>
-                                <td class="py-4 px-6 font-mono text-slate-600"
-                                    th:text="|₹ ${#numbers.formatDecimal(fee.termFee, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
-                                <td class="py-4 px-6 font-mono font-bold text-slate-900" data-fee-total
-                                    th:text="|₹ ${#numbers.formatDecimal(fee.total, 1, 'COMMA', 2, 'POINT')}|">₹ 20,000.00</td>
-                                <td class="py-4 px-6 text-right">
-                                    <form method="POST" th:action="@{/web/admin/fees/settings/{id}/delete(id=${fee.id})}"
-                                          class="inline" onsubmit="return confirm('Remove fees for this grade? New invoices for it will be refused until fees are set again.');">
-                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                        <button type="submit" class="btn btn-secondary btn-sm">Remove</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(feeStructures)}" data-fee-empty>
-                                <td colspan="5" class="py-12 text-center text-slate-500 font-medium">
-                                    No fees configured yet. Invoicing is blocked until at least
-                                    one grade has fees &mdash; that is deliberate, so nobody is
-                                    billed an invented amount.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                </details>
             </div>
         </div>
-    </main>
+    </div>
+    </div>
+
+    <script>
+        // Instalment rows are built here rather than rendered fixed, because how
+        // many a plan has is the school's choice: three termly parts and twelve
+        // monthly ones are the same form with a different number of rows.
+        function instalmentRow(label, amount, offset) {
+            var row = document.createElement('div');
+            row.className = 'grid grid-cols-1 sm:grid-cols-12 gap-2 items-end';
+            row.setAttribute('data-instalment-row', '');
+            row.innerHTML =
+                '<div class="sm:col-span-4"><input type="text" name="label" required placeholder="Term 1" class="field" data-inst-label value="' + (label || '') + '"></div>' +
+                '<div class="sm:col-span-3"><input type="number" name="amount" step="0.01" min="0" required placeholder="8000.00" class="field font-mono" data-inst-amount value="' + (amount || '') + '"></div>' +
+                '<div class="sm:col-span-3"><div class="relative"><input type="number" name="dueOffsetDays" min="0" required placeholder="0" class="field font-mono pr-12" data-inst-offset value="' + (offset === undefined ? '' : offset) + '">' +
+                '<span class="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-3)] pointer-events-none">days</span></div></div>' +
+                '<div class="sm:col-span-2"><button type="button" class="btn btn-secondary btn-sm w-full" onclick="removeInstalment(this)">Remove</button></div>';
+            row.querySelectorAll('[data-inst-amount]').forEach(function (el) {
+                el.addEventListener('input', recalcTotal);
+            });
+            return row;
+        }
+
+        function addInstalment(label, amount, offset) {
+            document.getElementById('instalmentRows').appendChild(instalmentRow(label, amount, offset));
+            recalcTotal();
+        }
+
+        function removeInstalment(btn) {
+            if (document.querySelectorAll('[data-instalment-row]').length <= 1) {
+                alert('A plan needs at least one instalment.');
+                return;
+            }
+            btn.closest('[data-instalment-row]').remove();
+            recalcTotal();
+        }
+
+        function recalcTotal() {
+            var total = 0;
+            document.querySelectorAll('[data-inst-amount]').forEach(function (el) {
+                var v = parseFloat(el.value);
+                if (!isNaN(v)) total += v;
+            });
+            document.querySelector('[data-plan-total]').textContent =
+                '₹ ' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Start with one empty row rather than a pre-filled three-term schedule:
+        // suggesting a shape is how a default quietly becomes the only option.
+        addInstalment();
+    </script>
 </body>
 </html>

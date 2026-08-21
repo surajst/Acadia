@@ -34,15 +34,18 @@ public class FeeDashboardService {
     private final FeeInvoiceRepository feeInvoiceRepository;
     private final FeeStudentRepository studentRepository;
     private final FeeTransactionRepository feeTransactionRepository;
+    private final com.concept.billing.app.InvoiceScheduleService invoiceScheduleService;
 
     public FeeDashboardService(FeeManagementService feeManagementService,
                                FeeInvoiceRepository feeInvoiceRepository,
                                FeeStudentRepository studentRepository,
-                               FeeTransactionRepository feeTransactionRepository) {
+                               FeeTransactionRepository feeTransactionRepository,
+                               com.concept.billing.app.InvoiceScheduleService invoiceScheduleService) {
         this.feeManagementService = feeManagementService;
         this.feeInvoiceRepository = feeInvoiceRepository;
         this.studentRepository = studentRepository;
         this.feeTransactionRepository = feeTransactionRepository;
+        this.invoiceScheduleService = invoiceScheduleService;
     }
 
     @Transactional(readOnly = true)
@@ -95,9 +98,13 @@ public class FeeDashboardService {
         createInvoice(studentId, tenantId, null, null, authentication);
     }
 
+    /**
+     * Raises the student's whole year at once now, not a single annual invoice:
+     * one per instalment on the grade's plan, each with its own due date.
+     */
     public void createInvoice(UUID studentId, UUID tenantId, java.math.BigDecimal overrideAmount,
                               String overrideReason, Authentication authentication) {
-        feeManagementService.createInvoiceForStudent(studentId, tenantId, overrideAmount, overrideReason, authentication);
+        invoiceScheduleService.generateForStudent(studentId, tenantId, overrideAmount, overrideReason, authentication);
     }
 
     public void reversePayment(java.util.UUID transactionId, String reason, java.util.UUID tenantId,
@@ -152,7 +159,9 @@ public class FeeDashboardService {
                 inv.getTotalAmount(), inv.getAmountPaid(), inv.getAmountDue(), waiverStatus,
                 inv.getBaseAmount(), inv.getOverrideReason(), inv.getOverrideBy(),
                 reversible != null ? reversible.getId() : null,
-                reversible != null ? reversible.getAmountPaid() : null);
+                reversible != null ? reversible.getAmountPaid() : null,
+                inv.getInstalmentLabel(), inv.getDueDate(),
+                inv.isOverdue(java.time.LocalDate.now()));
     }
 
     private String initial(String s) {

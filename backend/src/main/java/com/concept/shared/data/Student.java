@@ -30,6 +30,14 @@ public class Student extends BaseTenantEntity {
     @Column
     private String rollNumber;
 
+    /**
+     * When the student actually joined. Null means they started with the
+     * academic year, which is the common case; a September admission bills from
+     * September rather than inheriting April's schedule.
+     */
+    @jakarta.persistence.Column(name = "admission_date")
+    private java.time.LocalDate admissionDate;
+
     @Column(name = "user_id")
     private UUID userId;
 
@@ -72,4 +80,12 @@ public class Student extends BaseTenantEntity {
 
     public Set<Parent> getParents() { return parents; }
     public void setParents(Set<Parent> parents) { this.parents = parents; }
+
+    public java.time.LocalDate getAdmissionDate() {
+        return admissionDate;
+    }
+
+    public void setAdmissionDate(java.time.LocalDate admissionDate) {
+        this.admissionDate = admissionDate;
+    }
 }

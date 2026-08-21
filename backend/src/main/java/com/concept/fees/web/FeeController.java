@@ -1,7 +1,7 @@
 package com.concept.fees.web;
 
 import com.concept.fees.app.FeeDashboardService;
-import com.concept.fees.app.FeeStructureMissingException;
+import com.concept.billing.app.FeePlanMissingException;
 import com.concept.fees.app.FeeDashboardView;
 import com.concept.tenant.TenantContext;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -115,7 +115,7 @@ public class FeeController {
             // not a server fault -- send the admin back with the reason.
             ra.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/web/admin/fees";
-        } catch (FeeStructureMissingException e) {
+        } catch (FeePlanMissingException e) {
             // Invoicing no longer invents an amount when fees are unset, so this
             // is now a reachable, expected outcome rather than a server error.
             // The message names the grade and where to fix it.
