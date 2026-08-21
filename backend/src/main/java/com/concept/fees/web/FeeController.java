@@ -1,5 +1,6 @@
 package com.concept.fees.web;
 
+import com.concept.billing.app.CustomInvoiceService;
 import com.concept.fees.app.FeeDashboardService;
 import com.concept.billing.app.FeePlanMissingException;
 import com.concept.fees.app.FeeDashboardView;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,10 +32,14 @@ import java.util.UUID;
 public class FeeController {
 
     private final FeeDashboardService feeDashboardService;
+    private final CustomInvoiceService customInvoiceService;
     private final TenantContext tenantContext;
 
-    public FeeController(FeeDashboardService feeDashboardService, TenantContext tenantContext) {
+    public FeeController(FeeDashboardService feeDashboardService,
+                         CustomInvoiceService customInvoiceService,
+                         TenantContext tenantContext) {
         this.feeDashboardService = feeDashboardService;
+        this.customInvoiceService = customInvoiceService;
         this.tenantContext = tenantContext;
     }
 
@@ -122,6 +128,40 @@ public class FeeController {
             ra.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/web/admin/fees";
         }
+    }
+
+    /**
+     * Raises an invoice the admin composed line by line, optionally for several
+     * students at once. Billing a whole class for a trip is one action to an
+     * admin; making them repeat it forty times is how half a class ends up
+     * uninvoiced.
+     */
+    @PostMapping("/web/admin/fees/invoice/custom")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String createCustomInvoice(@RequestParam(value = "studentIds", required = false) List<UUID> studentIds,
+                                      @RequestParam(value = "description", required = false) List<String> descriptions,
+                                      @RequestParam(value = "amount", required = false) List<BigDecimal> amounts,
+                                      @RequestParam(value = "dueDate", required = false)
+                                      @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+                                      java.time.LocalDate dueDate,
+                                      Authentication authentication,
+                                      RedirectAttributes ra) {
+        UUID tenantId = tenantContext.getTenantId().orElse(null);
+        try {
+            if (descriptions == null || amounts == null || descriptions.size() != amounts.size()) {
+                throw new IllegalArgumentException("Each invoice line needs both a description and an amount.");
+            }
+            List<CustomInvoiceService.LineSpec> lines = new java.util.ArrayList<>();
+            for (int i = 0; i < descriptions.size(); i++) {
+                lines.add(new CustomInvoiceService.LineSpec(descriptions.get(i), amounts.get(i)));
+            }
+            List<?> raised = customInvoiceService.raise(studentIds, lines, dueDate, tenantId, authentication);
+            ra.addFlashAttribute("successMessage",
+                    "Raised " + raised.size() + " invoice" + (raised.size() == 1 ? "" : "s") + ".");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/web/admin/fees";
     }
 
     @PostMapping("/api/admin/fees/{invoiceId}/waiver/request")

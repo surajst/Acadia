@@ -42,7 +42,10 @@ public record FeeDashboardView(
             // rows per family is unreadable without them.
             String instalmentLabel,
             java.time.LocalDate dueDate,
-            boolean overdue
+            boolean overdue,
+            // What the invoice is actually charging for. Empty for a plan
+            // instalment, whose label already says what it is.
+            List<Line> lines
     ) {
         public boolean overridden() {
             return baseAmount != null;
@@ -51,8 +54,15 @@ public record FeeDashboardView(
         public boolean hasReversiblePayment() {
             return reversiblePaymentId != null;
         }
+
+        public boolean hasLines() {
+            return lines != null && !lines.isEmpty();
+        }
     }
 
     /** A student for the "create invoice" picker. */
     public record StudentOption(UUID id, String firstName, String lastName) {}
+
+    /** One charge on an invoice. */
+    public record Line(String description, BigDecimal amount) {}
 }

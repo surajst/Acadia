@@ -34,17 +34,20 @@ public class FeeDashboardService {
     private final FeeInvoiceRepository feeInvoiceRepository;
     private final FeeStudentRepository studentRepository;
     private final FeeTransactionRepository feeTransactionRepository;
+    private final com.concept.billing.data.InvoiceLineRepository invoiceLineRepository;
     private final com.concept.billing.app.InvoiceScheduleService invoiceScheduleService;
 
     public FeeDashboardService(FeeManagementService feeManagementService,
                                FeeInvoiceRepository feeInvoiceRepository,
                                FeeStudentRepository studentRepository,
                                FeeTransactionRepository feeTransactionRepository,
+                               com.concept.billing.data.InvoiceLineRepository invoiceLineRepository,
                                com.concept.billing.app.InvoiceScheduleService invoiceScheduleService) {
         this.feeManagementService = feeManagementService;
         this.feeInvoiceRepository = feeInvoiceRepository;
         this.studentRepository = studentRepository;
         this.feeTransactionRepository = feeTransactionRepository;
+        this.invoiceLineRepository = invoiceLineRepository;
         this.invoiceScheduleService = invoiceScheduleService;
     }
 
@@ -66,9 +69,24 @@ public class FeeDashboardService {
                         .collect(Collectors.toMap(Student::getId, Function.identity()))
                 : Map.of();
 
+        // Lines fetched in one query for the whole page rather than per row.
+        List<UUID> invoiceIds = invoicePage.getContent().stream()
+                .map(FeeInvoice::getId).collect(Collectors.toList());
+        Map<UUID, List<FeeDashboardView.Line>> linesByInvoice =
+                (tenantId != null && !invoiceIds.isEmpty())
+                        ? invoiceLineRepository
+                            .findByInvoiceIdInAndTenantIdOrderBySequenceNumberAsc(invoiceIds, tenantId)
+                            .stream()
+                            .collect(Collectors.groupingBy(
+                                    com.concept.billing.data.InvoiceLine::getInvoiceId,
+                                    Collectors.mapping(l -> new FeeDashboardView.Line(
+                                            l.getDescription(), l.getAmount()), Collectors.toList())))
+                        : Map.of();
+
         List<FeeDashboardView.InvoiceRow> rows = invoicePage.getContent().stream()
                 .map(inv -> toRow(inv, studentMap.get(inv.getStudentId()),
-                        latestReversiblePayment(inv.getId(), tenantId)))
+                        latestReversiblePayment(inv.getId(), tenantId),
+                        linesByInvoice.getOrDefault(inv.getId(), List.of())))
                 .collect(Collectors.toList());
 
         List<FeeDashboardView.StudentOption> students = tenantId != null
@@ -144,7 +162,8 @@ public class FeeDashboardService {
         return null;
     }
 
-    private FeeDashboardView.InvoiceRow toRow(FeeInvoice inv, Student student, FeeTransaction reversible) {
+    private FeeDashboardView.InvoiceRow toRow(FeeInvoice inv, Student student, FeeTransaction reversible,
+                                              List<FeeDashboardView.Line> lines) {
         String studentName = student != null
                 ? (student.getFirstName() + " " + student.getLastName()).trim() : "Unknown Student";
         String initials = student != null
@@ -161,7 +180,8 @@ public class FeeDashboardService {
                 reversible != null ? reversible.getId() : null,
                 reversible != null ? reversible.getAmountPaid() : null,
                 inv.getInstalmentLabel(), inv.getDueDate(),
-                inv.isOverdue(java.time.LocalDate.now()));
+                inv.isOverdue(java.time.LocalDate.now()),
+                lines);
     }
 
     private String initial(String s) {
