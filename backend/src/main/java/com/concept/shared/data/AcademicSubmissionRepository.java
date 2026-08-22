@@ -9,8 +9,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AcademicSubmissionRepository extends JpaRepository<AcademicSubmission, UUID> {
-    // Finds all tasks waiting for teacher validation
-    List<AcademicSubmission> findByStatus(String status);
+    // No findByStatus(status) here on purpose. It existed, it looked harmless,
+    // and it returned every school's pending submissions to whichever teacher
+    // called /api/academic/teacher/pending. A status is not an ownership key --
+    // use findByStatusAndStudentTenantId below.
 
     List<AcademicSubmission> findByStudentId(UUID studentId);
 

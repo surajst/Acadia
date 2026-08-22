@@ -14,6 +14,9 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
+import java.util.TreeSet;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -244,4 +247,76 @@ class LayeringArchitectureTest {
             // Has tenant_id (not null) but no academic_year_id, so it does not
             // fit BaseTenantEntity as written.
             "TeacherVerification");
+
+    /**
+     * Every top-level package under {@code com.concept} is either covered by
+     * the layering rules or listed as a deliberate exception.
+     *
+     * <p>{@link #MIGRATED} is an opt-in list, so a package simply absent from
+     * it is unenforced and silent about it. That is how {@code com.concept
+     * .billing} accumulated a dependency cycle with {@code fees} while the
+     * architecture gate stayed green, and how {@code language} and
+     * {@code parentapp} went unnoticed afterwards.
+     *
+     * <p>This makes the omission itself fail. A new domain package is a
+     * violation until someone either slices it web/app/data and adds it to
+     * MIGRATED, or records here why it does not fit.
+     */
+    @Test
+    void everyTopLevelPackageIsEitherEnforcedOrKnowinglyExcluded() {
+        Set<String> covered = new TreeSet<>();
+        for (String pkg : MIGRATED_PACKAGE_NAMES) {
+            covered.add(pkg);
+        }
+        covered.addAll(NOT_SLICED);
+
+        Set<String> unaccounted = new TreeSet<>();
+        for (JavaClass javaClass : WHOLE_CODEBASE) {
+            String name = javaClass.getPackageName();
+            if (!name.startsWith("com.concept")) {
+                continue;
+            }
+            String rest = name.substring("com.concept".length());
+            if (rest.isEmpty()) {
+                continue; // root: BackendApplication and the dev-only seeders
+            }
+            String remainder = rest.substring(1);
+            int dot = remainder.indexOf('.');
+            String top = dot < 0 ? remainder : remainder.substring(0, dot);
+            if (!covered.contains(top)) {
+                unaccounted.add(top);
+            }
+        }
+
+        assertTrue(unaccounted.isEmpty(),
+                "These packages are covered by no architecture rule and are not listed as "
+                        + "exceptions: " + unaccounted + ". Either slice them into web/app/data "
+                        + "and add them to MIGRATED, or add them to NOT_SLICED with the reason.");
+    }
+
+    /** The bare package names inside {@link #MIGRATED}, for the coverage check above. */
+    private static final Set<String> MIGRATED_PACKAGE_NAMES = Set.of(
+            "roster", "attendance", "fees", "staff", "rewards", "transport", "console",
+            "dashboard", "messaging", "parent", "timetable", "assignment", "student",
+            "tasks", "assessment", "oversight", "curriculum", "teacher", "notification",
+            "export", "shared");
+
+    /**
+     * Packages that do not follow the web/app/data slice template, with the
+     * reason. Being on this list is a statement that the omission is known --
+     * not that the package is exempt from review.
+     */
+    private static final Set<String> NOT_SLICED = Set.of(
+            // Infrastructure that predates the slice template and is shared by
+            // every domain rather than owning one.
+            "user", "tenant", "common", "config", "academics", "announcement",
+
+            // Dev-only, gated on app.dev-mode=true.
+            "devtools",
+
+            // Flat adapter packages around external services (Azure speech and
+            // translation) and a read-only SIS projection. No web/app/data split
+            // because there is no domain here to split -- if either grows domain
+            // logic, slice it and move it into MIGRATED.
+            "language", "parentapp");
 }
