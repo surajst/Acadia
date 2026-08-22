@@ -26,20 +26,25 @@
         main {
             flex: 1;
             min-height: 0;
-            overflow: hidden;
+            /* auto, not hidden. A card taller than the window used to be cut
+               off with no scrollbar to reveal the rest, so the last footer
+               line simply vanished -- which is what a short laptop window or
+               the extra height of the error banner both cause. */
+            overflow-y: auto;
             display: flex;
-            justify-content: center;
-            align-items: center;
             position: relative;
             z-index: 1;
             padding: 16px 20px;
         }
 
         .login-card {
+            /* margin:auto centres on both axes and, unlike align-items:center,
+               keeps the whole card reachable once it is taller than main:
+               flex centring pushes the overflow out of the scrollable area
+               instead of letting you scroll to it. */
+            margin: auto;
             width: 100%;
             max-width: 380px;
-            max-height: 100%;
-            overflow: hidden;
             background: #FFFFFF;
             border: 1px solid #E2E8F0;
             border-radius: 20px;

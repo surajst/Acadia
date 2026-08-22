@@ -71,26 +71,26 @@
 
             <div id="errorMsg" class="error-msg"></div>
 
-            <form id="signupForm">
+            <form id="signupForm" autocomplete="off">
                 <div class="form-group">
                     <label class="form-label">School Name</label>
-                    <input type="text" id="schoolName" class="form-input" placeholder="Enter your school's name" required>
+                    <input type="text" id="schoolName" class="form-input" autocomplete="organization" placeholder="Enter your school's name" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Subdomain</label>
-                    <input type="text" id="subdomain" class="form-input" placeholder="e.g. your-school-name" required>
+                    <input type="text" id="subdomain" class="form-input" autocomplete="off" placeholder="e.g. your-school-name" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Your Full Name</label>
-                    <input type="text" id="adminFullName" class="form-input" placeholder="Enter your full name" required>
+                    <input type="text" id="adminFullName" class="form-input" autocomplete="name" placeholder="Enter your full name" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Your Email</label>
-                    <input type="email" id="adminEmail" class="form-input" placeholder="admin@yourschool.edu" required>
+                    <input type="email" id="adminEmail" class="form-input" autocomplete="off" placeholder="admin@yourschool.edu" required>
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">Password</label>
-                    <input type="password" id="adminPassword" class="form-input" placeholder="Choose a password" required minlength="8">
+                    <input type="password" id="adminPassword" class="form-input" autocomplete="new-password" placeholder="Choose a password" required minlength="8">
                 </div>
                 <button type="submit" id="submitBtn" class="btn-submit">Create School</button>
             </form>
