@@ -1,4 +1,4 @@
-package com.concept.billing.data;
+package com.concept.fees.data;
 
 import com.concept.common.TenantScopedRepository;
 import org.springframework.stereotype.Repository;

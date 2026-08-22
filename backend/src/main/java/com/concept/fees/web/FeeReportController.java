@@ -1,6 +1,6 @@
-package com.concept.billing.web;
+package com.concept.fees.web;
 
-import com.concept.billing.app.FeeReportService;
+import com.concept.fees.app.FeeReportService;
 import com.concept.tenant.TenantContext;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;

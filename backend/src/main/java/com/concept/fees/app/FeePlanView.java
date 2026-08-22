@@ -1,7 +1,7 @@
-package com.concept.billing.app;
+package com.concept.fees.app;
 
-import com.concept.billing.data.FeePlan;
-import com.concept.billing.data.FeePlanInstalment;
+import com.concept.fees.data.FeePlan;
+import com.concept.fees.data.FeePlanInstalment;
 
 import java.math.BigDecimal;
 import java.util.List;

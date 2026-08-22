@@ -1,8 +1,8 @@
 package com.concept.fees.web;
 
-import com.concept.billing.app.CustomInvoiceService;
+import com.concept.fees.app.CustomInvoiceService;
 import com.concept.fees.app.FeeDashboardService;
-import com.concept.billing.app.FeePlanMissingException;
+import com.concept.fees.app.FeePlanMissingException;
 import com.concept.fees.app.FeeDashboardView;
 import com.concept.tenant.TenantContext;
 import org.springframework.security.access.prepost.PreAuthorize;

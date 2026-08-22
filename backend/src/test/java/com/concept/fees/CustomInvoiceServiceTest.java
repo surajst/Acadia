@@ -1,8 +1,8 @@
-package com.concept.billing;
+package com.concept.fees;
 
-import com.concept.billing.app.CustomInvoiceService;
-import com.concept.billing.data.InvoiceLine;
-import com.concept.billing.data.InvoiceLineRepository;
+import com.concept.fees.app.CustomInvoiceService;
+import com.concept.fees.data.InvoiceLine;
+import com.concept.fees.data.InvoiceLineRepository;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;
 import com.concept.shared.data.ClassSection;

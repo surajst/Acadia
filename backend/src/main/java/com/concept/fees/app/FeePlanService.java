@@ -1,9 +1,9 @@
-package com.concept.billing.app;
+package com.concept.fees.app;
 
-import com.concept.billing.data.FeePlan;
-import com.concept.billing.data.FeePlanInstalment;
-import com.concept.billing.data.FeePlanInstalmentRepository;
-import com.concept.billing.data.FeePlanRepository;
+import com.concept.fees.data.FeePlan;
+import com.concept.fees.data.FeePlanInstalment;
+import com.concept.fees.data.FeePlanInstalmentRepository;
+import com.concept.fees.data.FeePlanRepository;
 import com.concept.common.AuditLogService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;

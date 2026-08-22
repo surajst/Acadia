@@ -1,4 +1,4 @@
-package com.concept.billing.app;
+package com.concept.fees.app;
 
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;

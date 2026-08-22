@@ -1,6 +1,6 @@
-package com.concept.billing;
+package com.concept.fees;
 
-import com.concept.billing.app.FeeReportService;
+import com.concept.fees.app.FeeReportService;
 import com.concept.fees.app.FeeManagementService;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;

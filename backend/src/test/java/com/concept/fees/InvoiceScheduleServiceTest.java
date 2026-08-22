@@ -1,8 +1,8 @@
-package com.concept.billing;
+package com.concept.fees;
 
-import com.concept.billing.app.FeePlanMissingException;
-import com.concept.billing.app.FeePlanService;
-import com.concept.billing.app.InvoiceScheduleService;
+import com.concept.fees.app.FeePlanMissingException;
+import com.concept.fees.app.FeePlanService;
+import com.concept.fees.app.InvoiceScheduleService;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
