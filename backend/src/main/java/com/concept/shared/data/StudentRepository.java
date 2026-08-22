@@ -17,6 +17,9 @@ public interface StudentRepository extends TenantScopedRepository<Student, UUID>
     List<Student> findByTenantId(UUID tenantId);
     long countByTenantId(UUID tenantId);
 
+    /** Batch lookup for report screens that resolve many students at once. */
+    List<Student> findByIdInAndTenantId(java.util.Collection<UUID> ids, UUID tenantId);
+
     // Used by Teachers to pull students belonging only to their assigned sections
     List<Student> findByClassSectionIn(List<ClassSection> classSections);
     Page<Student> findByClassSectionIn(List<ClassSection> classSections, Pageable pageable);

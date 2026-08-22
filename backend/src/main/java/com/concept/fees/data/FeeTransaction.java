@@ -41,6 +41,15 @@ public class FeeTransaction extends BaseTenantEntity {
     @Column(name = "note", length = 500)
     private String note;
 
+    /**
+     * Sequential per school per year, starting at 1. Null on a reversal: it is
+     * a correction to a payment already receipted, not a new one collected
+     * across the counter, and giving it its own number would make the
+     * sequence overstate how much money actually changed hands.
+     */
+    @Column(name = "receipt_number")
+    private Integer receiptNumber;
+
     public FeeTransaction() {}
 
     public FeeTransaction(UUID id, UUID invoiceId, BigDecimal amountPaid, String paymentMode, LocalDateTime paidAt) {
@@ -109,5 +118,13 @@ public class FeeTransaction extends BaseTenantEntity {
 
     public boolean isReversal() {
         return reversesTransactionId != null;
+    }
+
+    public Integer getReceiptNumber() {
+        return receiptNumber;
+    }
+
+    public void setReceiptNumber(Integer receiptNumber) {
+        this.receiptNumber = receiptNumber;
     }
 }

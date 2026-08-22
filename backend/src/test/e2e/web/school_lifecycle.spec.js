@@ -589,6 +589,54 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     expect(result.text).toContain('needs a description');
   });
 
+  test('the collections report shows the receipt from the reversed payment, still flagged', async ({ page }) => {
+    await login(page, school.adminEmail, PW);
+    await page.goto('/web/admin/fees/collections');
+
+    // Exactly one payment has ever been recorded for this school -- the 5,000
+    // CASH payment reversed two tests ago. It must still appear here: the
+    // receipt was issued, so the record of it has to survive being undone.
+    await expect(page.locator('body')).not.toContainText('Something went wrong');
+    const row = page.locator('[data-receipt-row]').first();
+    await expect(row).toBeVisible();
+    await expect(row.locator('[data-receipt-number]')).toContainText('#1');
+    await expect(row).toContainText('5,000.00');
+    await expect(row).toContainText('CASH');
+    await expect(row.locator('[data-receipt-reversed]')).toBeVisible();
+  });
+
+  test('an overdue custom invoice appears on the defaulters report, worst first', async ({ page }) => {
+    await login(page, school.adminEmail, PW);
+    await page.goto('/web/admin/fees');
+
+    // A custom invoice with a due date already in the past -- the deliberate
+    // way to get an overdue row without waiting real months for a fee-plan
+    // instalment to age.
+    const csrf = await page.locator('input[name="_csrf"]').first().getAttribute('value');
+    const raised = await page.evaluate(async ([studentId, token]) => {
+      const body = new URLSearchParams();
+      body.append('studentIds', studentId);
+      body.append('description', 'Overdue lab fee');
+      body.append('amount', '750');
+      body.append('dueDate', '2020-01-15');
+      body.append('_csrf', token);
+      const res = await fetch('/web/admin/fees/invoice/custom', { method: 'POST', body });
+      return res.status;
+    }, [school.studentId, csrf]);
+    expect(raised).toBeLessThan(400);
+
+    await page.goto('/web/admin/fees/defaulters');
+    await expect(page.locator('body')).not.toContainText('Something went wrong');
+
+    await expect(page.locator('table')).toContainText(`Student${school.suffix}`);
+    await expect(page.locator('table')).toContainText('750.00');
+    // Sorted worst-overdue-first: due in 2020, this row must be the very
+    // first one on the report, ahead of anything else this school owes.
+    const firstRow = page.locator('[data-defaulter-row]').first();
+    await expect(firstRow).toContainText(`Student${school.suffix}`);
+    await expect(firstRow.locator('[data-days-overdue]')).toBeVisible();
+  });
+
   test('parent assigns a quest and a reward to their child', async ({ page }) => {
     await login(page, school.parentEmail, PW);
 

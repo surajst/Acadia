@@ -107,9 +107,9 @@ public class FeeDashboardService {
                 size);
     }
 
-    public void recordPayment(UUID invoiceId, BigDecimal amount, String paymentMode,
-                              UUID tenantId, Authentication authentication) {
-        feeManagementService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
+    public Integer recordPayment(UUID invoiceId, BigDecimal amount, String paymentMode,
+                                 UUID tenantId, Authentication authentication) {
+        return feeManagementService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
     }
 
     public void createInvoice(UUID studentId, UUID tenantId, Authentication authentication) {

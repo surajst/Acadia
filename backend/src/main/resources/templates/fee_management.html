@@ -87,6 +87,8 @@
                     <nav class="space-y-1">
                         <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="navlink"><span>⚙️</span> School Configuration</a>
                         <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees" class="navlink active"><span>💳</span> Fee Ledger &amp; Billing</a>
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees/defaulters" class="navlink"><span>⚠️</span> Defaulters</a>
+                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees/collections" class="navlink"><span>🧾</span> Collections</a>
                         <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management#staff-registry" class="navlink"><span>💼</span> Staff Registry</a>
                         <a th:if="${currentUserRole == 'TEACHER'}" href="/web/admin/dashboard" class="navlink"><span>📊</span> Student Rosters</a>
                         <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/attendance" class="navlink"><span>📅</span> Daily Attendance</a>
