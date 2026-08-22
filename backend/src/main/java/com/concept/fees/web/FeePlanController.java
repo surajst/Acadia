@@ -1,7 +1,7 @@
-package com.concept.billing.web;
+package com.concept.fees.web;
 
-import com.concept.billing.app.FeePlanService;
-import com.concept.billing.app.FeePlanView;
+import com.concept.fees.app.FeePlanService;
+import com.concept.fees.app.FeePlanView;
 import com.concept.tenant.TenantContext;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;

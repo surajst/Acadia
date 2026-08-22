@@ -55,9 +55,16 @@ test.describe('ACADIA Administrative Fee Management Specs', () => {
     // Submit transaction
     await page.click('button[type="submit"]:has-text("Record Transaction")');
 
-    // 8. Verify redirect and success toast message
+    // 8. Verify redirect and success toast message. The flash now names the
+    // receipt number a payment was actually given -- see recordPayment's new
+    // return value -- so this checks the stable prefix rather than the old
+    // generic wording that receipt numbers made obsolete. A plain substring
+    // match, not a regex: Playwright's text= selector string is parsed as a
+    // JS string literal first, which silently drops single backslashes
+    // before the selector engine ever sees \d or \. -- exactly the class of
+    // bug that made this test fail once already this branch.
     await page.waitForURL((url: URL) => url.pathname.includes('/web/admin/fees'), { timeout: 90000 });
-    await expect(page.locator('text=Payment transaction recorded successfully!')).toBeVisible();
+    await expect(page.locator('text=Payment recorded — Receipt #')).toBeVisible();
 
     // 9. Assert row balance updates dynamically (verify Paid Balance increases and Status changes to Partial)
     const updatedRow = page.locator(`tbody tr:has-text("${studentName}")`).first();

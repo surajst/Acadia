@@ -1,4 +1,4 @@
-package com.concept.billing.data;
+package com.concept.fees.data;
 
 import com.concept.common.BaseTenantEntity;
 import jakarta.persistence.Column;

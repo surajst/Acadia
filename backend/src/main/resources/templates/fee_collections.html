@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collections &middot; ACADIA</title>
+    <link rel="stylesheet" href="/css/tailwind.css">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class="flex flex-col" style="height:100vh; overflow:hidden; background:var(--bg);">
+
+    <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
+        <div class="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <a href="/web/admin/dashboard" class="h-10 w-10 rounded-xl bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand)] font-black text-lg transition hover:bg-[var(--brand-100)]">&Omega;</a>
+                <div>
+                    <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Collections</h1>
+                    <p class="text-xs text-[var(--text-3)] mt-1 flex items-center gap-1.5">
+                        <a href="/web/admin/fees" class="hover:text-[var(--brand)] transition-colors font-medium">Fee Ledger</a>
+                        <span>/</span><span class="text-[var(--text-2)] font-medium">Collections</span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/web/admin/fees/defaulters" class="btn btn-secondary btn-sm">⚠️ Defaulters</a>
+                <a href="/web/admin/fees" class="btn btn-secondary btn-sm">&larr; Back to ledger</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 min-h-0 flex flex-col">
+    <div class="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 min-h-0 flex flex-col w-full">
+
+        <div class="card p-4 mb-3 shrink-0">
+            <p class="text-sm text-slate-700">
+                Every payment collected this academic year, in the order it was
+                receipted &mdash; the school's own day-book. A reversed payment
+                stays on this list rather than disappearing: the receipt was
+                issued, so the record of it has to survive, with the correction
+                shown alongside rather than in place of it.
+            </p>
+        </div>
+
+        <div class="card overflow-hidden flex-1 min-h-0 flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center shrink-0" style="border-color:var(--line)">
+                <h2 class="text-base font-bold text-slate-900 tracking-tight">Receipts issued</h2>
+                <span class="badge badge--neutral font-mono" data-receipt-count
+                      th:text="|${receipts.size()} receipts|">0 receipts</span>
+            </div>
+
+            <div class="overflow-auto flex-1 min-h-0" data-collections-scroll>
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 z-10">
+                        <tr class="text-[var(--text-3)] uppercase text-[10px] tracking-wider font-bold" style="background:var(--surface-2)">
+                            <th class="py-3 px-5">Receipt #</th>
+                            <th class="py-3 px-5">Student</th>
+                            <th class="py-3 px-5">Amount</th>
+                            <th class="py-3 px-5">Mode</th>
+                            <th class="py-3 px-5">Date</th>
+                            <th class="py-3 px-5">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr th:each="r : ${receipts}" data-receipt-row
+                            class="border-b hover:bg-[var(--surface-2)] transition-colors" style="border-color:var(--line)"
+                            th:classappend="${r.reversed()} ? 'opacity-60' : ''">
+                            <td class="py-3 px-5 font-mono font-bold text-slate-900" data-receipt-number
+                                th:text="|#${r.receiptNumber}|">#1</td>
+                            <td class="py-3 px-5 font-semibold text-slate-900">
+                                <span th:text="${r.studentName}">Aarav Sharma</span>
+                                <span class="block text-[10px] font-mono text-[var(--text-3)]" th:text="${r.rollNumber}">6A01</span>
+                            </td>
+                            <td class="py-3 px-5 font-mono font-medium" style="color:var(--success)"
+                                th:text="|₹ ${#numbers.formatDecimal(r.amount, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
+                            <td class="py-3 px-5"><span class="badge badge--neutral" th:text="${r.paymentMode}">CASH</span></td>
+                            <td class="py-3 px-5 font-mono text-slate-600" th:text="${#temporals.format(r.paidAt, 'dd MMM yyyy, HH:mm')}">01 Apr 2026, 10:30</td>
+                            <td class="py-3 px-5">
+                                <span th:if="${r.reversed()}" data-receipt-reversed class="badge badge--warn">Reversed</span>
+                                <span th:unless="${r.reversed()}" class="badge badge--success">Standing</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(receipts)}" data-receipts-empty>
+                            <td colspan="6" class="py-12 text-center text-slate-500 font-medium">
+                                No payments have been receipted for this academic year yet.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    </div>
+</body>
+</html>

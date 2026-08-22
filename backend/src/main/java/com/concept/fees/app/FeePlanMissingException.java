@@ -1,4 +1,4 @@
-package com.concept.billing.app;
+package com.concept.fees.app;
 
 /**
  * Raised when a student cannot be billed because the school has not configured

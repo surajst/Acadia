@@ -1,7 +1,7 @@
-package com.concept.billing.app;
+package com.concept.fees.app;
 
-import com.concept.billing.data.InvoiceLine;
-import com.concept.billing.data.InvoiceLineRepository;
+import com.concept.fees.data.InvoiceLine;
+import com.concept.fees.data.InvoiceLineRepository;
 import com.concept.common.AuditLogService;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;

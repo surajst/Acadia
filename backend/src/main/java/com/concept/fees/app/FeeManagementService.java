@@ -86,7 +86,7 @@ public class FeeManagementService {
     }
 
     @Transactional
-    public void recordPayment(UUID invoiceId, BigDecimal paymentAmount, String mode, UUID currentTenantId, Authentication authentication) {
+    public Integer recordPayment(UUID invoiceId, BigDecimal paymentAmount, String mode, UUID currentTenantId, Authentication authentication) {
         if (paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Payment amount must be greater than zero");
         }
@@ -122,10 +122,24 @@ public class FeeManagementService {
         txn.setTenantId(invoice.getTenantId());
         txn.setAcademicYearId(invoice.getAcademicYearId());
 
+        // Sequential per school per year, starting at 1 -- what a receipt
+        // needs to mean anything at a counter. Computed just before the write
+        // rather than reserved in advance: two admins recording a payment in
+        // the same instant is rare enough here that a lost race can simply
+        // fail the whole write (nothing partially applied, since the invoice
+        // update above shares this transaction) and ask for a retry, rather
+        // than justifying a locking scheme this console does not need.
+        Integer maxSoFar = feeTransactionRepository.findMaxReceiptNumber(
+                invoice.getTenantId(), invoice.getAcademicYearId());
+        txn.setReceiptNumber((maxSoFar == null ? 0 : maxSoFar) + 1);
+
         feeTransactionRepository.saveAndFlush(txn);
 
         auditLogService.log(authentication, "FEE_PAYMENT_RECORDED", "FeeInvoice", invoiceId,
-                "Recorded payment of " + paymentAmount + " (" + mode + ") on invoice " + invoiceId);
+                "Recorded payment of " + paymentAmount + " (" + mode + ") on invoice " + invoiceId
+                        + " — receipt #" + txn.getReceiptNumber());
+
+        return txn.getReceiptNumber();
     }
 
     @Transactional

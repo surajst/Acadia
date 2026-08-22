@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defaulters &middot; ACADIA</title>
+    <link rel="stylesheet" href="/css/tailwind.css">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<body class="flex flex-col" style="height:100vh; overflow:hidden; background:var(--bg);">
+
+    <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
+        <div class="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <a href="/web/admin/dashboard" class="h-10 w-10 rounded-xl bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand)] font-black text-lg transition hover:bg-[var(--brand-100)]">&Omega;</a>
+                <div>
+                    <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Defaulters</h1>
+                    <p class="text-xs text-[var(--text-3)] mt-1 flex items-center gap-1.5">
+                        <a href="/web/admin/fees" class="hover:text-[var(--brand)] transition-colors font-medium">Fee Ledger</a>
+                        <span>/</span><span class="text-[var(--text-2)] font-medium">Defaulters</span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/web/admin/fees/collections" class="btn btn-secondary btn-sm">🧾 Collections</a>
+                <a href="/web/admin/fees" class="btn btn-secondary btn-sm">&larr; Back to ledger</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Same isolated-scrolling shape as the ledger and fee settings: the page
+         itself does not scroll, only the row list does, so the count and the
+         column headers stay in view while reading down a long list of arrears. -->
+    <div class="flex-1 min-h-0 flex flex-col">
+    <div class="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 min-h-0 flex flex-col w-full">
+
+        <div class="card p-4 mb-3 shrink-0">
+            <p class="text-sm text-slate-700">
+                Every invoice already past its due date, worst first &mdash; the
+                order a school actually chases arrears in. This spans every
+                academic year the school has billed: an invoice from last year
+                that was never settled is still owed, and stays on this list
+                until it is paid, waived, or the school decides otherwise.
+            </p>
+        </div>
+
+        <div class="card overflow-hidden flex-1 min-h-0 flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center shrink-0" style="border-color:var(--line)">
+                <h2 class="text-base font-bold text-slate-900 tracking-tight">Overdue invoices</h2>
+                <span class="badge badge--danger font-mono" data-defaulter-count
+                      th:text="|${defaulters.size()} overdue|">0 overdue</span>
+            </div>
+
+            <div class="overflow-auto flex-1 min-h-0" data-defaulters-scroll>
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 z-10">
+                        <tr class="text-[var(--text-3)] uppercase text-[10px] tracking-wider font-bold" style="background:var(--surface-2)">
+                            <th class="py-3 px-5">Student</th>
+                            <th class="py-3 px-5">Grade</th>
+                            <th class="py-3 px-5">Instalment</th>
+                            <th class="py-3 px-5">Due date</th>
+                            <th class="py-3 px-5">Days overdue</th>
+                            <th class="py-3 px-5">Amount due</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr th:each="d : ${defaulters}" data-defaulter-row
+                            class="border-b hover:bg-[var(--surface-2)] transition-colors" style="border-color:var(--line)">
+                            <td class="py-3 px-5 font-semibold text-slate-900">
+                                <span th:text="${d.studentName}">Aarav Sharma</span>
+                                <span class="block text-[10px] font-mono text-[var(--text-3)]" th:text="${d.rollNumber}">6A01</span>
+                            </td>
+                            <td class="py-3 px-5"><span class="badge badge--neutral" th:text="${d.gradeLevel}">Grade 6</span></td>
+                            <td class="py-3 px-5 text-slate-700" th:text="${d.instalmentLabel} ?: '—'">Term 1</td>
+                            <td class="py-3 px-5 font-mono text-slate-600" th:text="${#temporals.format(d.dueDate, 'dd MMM yyyy')}">01 Apr 2026</td>
+                            <td class="py-3 px-5">
+                                <span class="badge badge--danger font-mono" data-days-overdue th:text="|${d.daysOverdue} days|">14 days</span>
+                            </td>
+                            <td class="py-3 px-5 font-mono font-bold" style="color:var(--danger)"
+                                th:text="|₹ ${#numbers.formatDecimal(d.amountDue, 1, 'COMMA', 2, 'POINT')}|">₹ 15,000.00</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(defaulters)}" data-defaulters-empty>
+                            <td colspan="6" class="py-12 text-center text-slate-500 font-medium">
+                                Nothing overdue right now. Every invoice past its due date has been settled.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    </div>
+</body>
+</html>

@@ -3,9 +3,10 @@ package com.concept.fees.app;
 import com.concept.fees.data.FeeStudentRepository;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;
+import com.concept.fees.data.InvoiceLine;
+import com.concept.fees.data.InvoiceLineRepository;
 import com.concept.fees.data.FeeTransaction;
 import com.concept.fees.data.FeeTransactionRepository;
-import com.concept.fees.app.FeeManagementService;
 import com.concept.shared.data.Student;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,15 +35,15 @@ public class FeeDashboardService {
     private final FeeInvoiceRepository feeInvoiceRepository;
     private final FeeStudentRepository studentRepository;
     private final FeeTransactionRepository feeTransactionRepository;
-    private final com.concept.billing.data.InvoiceLineRepository invoiceLineRepository;
-    private final com.concept.billing.app.InvoiceScheduleService invoiceScheduleService;
+    private final InvoiceLineRepository invoiceLineRepository;
+    private final InvoiceScheduleService invoiceScheduleService;
 
     public FeeDashboardService(FeeManagementService feeManagementService,
                                FeeInvoiceRepository feeInvoiceRepository,
                                FeeStudentRepository studentRepository,
                                FeeTransactionRepository feeTransactionRepository,
-                               com.concept.billing.data.InvoiceLineRepository invoiceLineRepository,
-                               com.concept.billing.app.InvoiceScheduleService invoiceScheduleService) {
+                               InvoiceLineRepository invoiceLineRepository,
+                               InvoiceScheduleService invoiceScheduleService) {
         this.feeManagementService = feeManagementService;
         this.feeInvoiceRepository = feeInvoiceRepository;
         this.studentRepository = studentRepository;
@@ -78,7 +79,7 @@ public class FeeDashboardService {
                             .findByInvoiceIdInAndTenantIdOrderBySequenceNumberAsc(invoiceIds, tenantId)
                             .stream()
                             .collect(Collectors.groupingBy(
-                                    com.concept.billing.data.InvoiceLine::getInvoiceId,
+                                    InvoiceLine::getInvoiceId,
                                     Collectors.mapping(l -> new FeeDashboardView.Line(
                                             l.getDescription(), l.getAmount()), Collectors.toList())))
                         : Map.of();
@@ -107,9 +108,9 @@ public class FeeDashboardService {
                 size);
     }
 
-    public void recordPayment(UUID invoiceId, BigDecimal amount, String paymentMode,
-                              UUID tenantId, Authentication authentication) {
-        feeManagementService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
+    public Integer recordPayment(UUID invoiceId, BigDecimal amount, String paymentMode,
+                                 UUID tenantId, Authentication authentication) {
+        return feeManagementService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
     }
 
     public void createInvoice(UUID studentId, UUID tenantId, Authentication authentication) {

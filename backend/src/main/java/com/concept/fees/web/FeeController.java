@@ -1,8 +1,8 @@
 package com.concept.fees.web;
 
-import com.concept.billing.app.CustomInvoiceService;
+import com.concept.fees.app.CustomInvoiceService;
 import com.concept.fees.app.FeeDashboardService;
-import com.concept.billing.app.FeePlanMissingException;
+import com.concept.fees.app.FeePlanMissingException;
 import com.concept.fees.app.FeeDashboardView;
 import com.concept.tenant.TenantContext;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -75,12 +75,23 @@ public class FeeController {
         requireAdmin(authentication, "record dynamic payments");
         UUID tenantId = tenantContext.getTenantId().orElse(null);
         try {
-            feeDashboardService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
+            Integer receiptNumber = feeDashboardService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
+            ra.addFlashAttribute("successMessage", "Payment recorded — Receipt #" + receiptNumber + ".");
             return "redirect:/web/admin/fees?success=payment_recorded";
         } catch (IllegalArgumentException e) {
             // Overpayment and zero amounts are refused server-side now, so this
             // is a reachable outcome rather than a server fault.
             ra.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/web/admin/fees";
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Two admins recording a payment in the exact same instant can
+            // collide on the receipt number, which the unique constraint
+            // catches. Nothing partially applied -- the invoice update shares
+            // this transaction with the receipt write, so a failed write here
+            // rolled both back. Ask for a retry rather than letting this reach
+            // the generic handler, which cannot render this page.
+            ra.addFlashAttribute("errorMessage",
+                    "Another payment was being recorded at the same moment. Please try again.");
             return "redirect:/web/admin/fees";
         }
     }
