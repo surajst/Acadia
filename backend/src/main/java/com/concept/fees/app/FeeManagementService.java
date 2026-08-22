@@ -15,6 +15,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.concept.user.CurrentUserService;
+
 import java.util.UUID;
 
 @Service
@@ -32,6 +34,9 @@ public class FeeManagementService {
 
     @Autowired
     private AuditLogService auditLogService;
+
+    @Autowired
+    private CurrentUserService currentUserService;
 
     /**
      * Read-only school-wide fee rollup — used by the PRINCIPAL oversight
@@ -154,6 +159,7 @@ public class FeeManagementService {
         invoice.setWaiverAmount(waiverAmount);
         invoice.setWaiverReason(reason);
         invoice.setWaiverStatus(FeeInvoice.FeeWaiverStatus.PENDING);
+        invoice.setWaiverRequestedByUserId(currentUserId(authentication));
         feeInvoiceRepository.saveAndFlush(invoice);
 
         auditLogService.log(authentication, "FEE_WAIVER_REQUESTED", "FeeInvoice", invoiceId,
@@ -169,6 +175,17 @@ public class FeeManagementService {
 
         if (invoice.getWaiverStatus() != FeeInvoice.FeeWaiverStatus.PENDING) {
             throw new IllegalArgumentException("This invoice has no pending waiver request");
+        }
+
+        // The approve endpoint is open to ADMIN as well as PRINCIPAL, and the
+        // request endpoint is ADMIN-only -- so without this the requester is
+        // also an eligible approver and the two-step flow decides nothing.
+        // Rejecting your own request is allowed: withdrawing costs the school
+        // nothing, and forbidding it would strand a request its author regrets.
+        UUID actorId = currentUserId(authentication);
+        if (approve && actorId != null && actorId.equals(invoice.getWaiverRequestedByUserId())) {
+            throw new IllegalArgumentException(
+                    "You requested this waiver, so it needs a different admin or the principal to approve it.");
         }
 
         invoice.setWaiverStatus(approve ? FeeInvoice.FeeWaiverStatus.APPROVED : FeeInvoice.FeeWaiverStatus.REJECTED);
@@ -277,5 +294,14 @@ public class FeeManagementService {
 
         auditLogService.log(authentication, "FEE_PAYMENT_REVERSED", "FeeInvoice", invoice.getId(),
                 "Reversed a payment of " + original.getAmountPaid() + " — " + why);
+    }
+
+    /**
+     * The acting user's id, or null when it cannot be resolved. A null here
+     * means the self-approval check cannot fire -- see decideWaiver, where the
+     * comparison is skipped rather than guessed at.
+     */
+    private UUID currentUserId(Authentication authentication) {
+        return currentUserService.getCurrentUser(authentication).map(u -> u.getId()).orElse(null);
     }
 }
