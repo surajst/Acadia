@@ -107,7 +107,7 @@ public class StudentProgressService {
         Student student = studentRepository.findByIdAndTenantId(studentId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
 
-        Curriculum curriculum = curriculumRepository.findById(curriculumId)
+        Curriculum curriculum = curriculumRepository.findByIdAndTenantId(curriculumId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Curriculum topic not found: " + curriculumId));
 
         // Find existing progress record or create a new one

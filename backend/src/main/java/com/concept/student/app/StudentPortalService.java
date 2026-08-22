@@ -140,7 +140,7 @@ public class StudentPortalService {
                                 UUID teacherTaskId, Student student, UUID tenantId) {
         int bounty = 250;
         if (teacherTaskId != null) {
-            TeacherTask task = teacherTaskRepository.findById(teacherTaskId).orElse(null);
+            TeacherTask task = teacherTaskRepository.findByIdAndTenantId(teacherTaskId, tenantId).orElse(null);
             if (task != null && task.getXpReward() != null) {
                 bounty = task.getXpReward();
             }

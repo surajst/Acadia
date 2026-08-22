@@ -1,6 +1,8 @@
 package com.concept.arch;
 
+import com.concept.common.BaseTenantEntity;
 import com.concept.common.TenantScopedRepository;
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaCall;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -10,6 +12,8 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -176,4 +180,68 @@ class LayeringArchitectureTest {
             }
         };
     }
+
+    /**
+     * Every persisted entity must declare how it is scoped to a school.
+     *
+     * <p>The bare-findById rule above only sees repositories whose entity
+     * extends {@link BaseTenantEntity}. An entity that never opted in is
+     * invisible to it -- so the guardrail reported green over exactly the code
+     * that had no tenant boundary at all. That is how
+     * {@code /api/academic/teacher/pending} came to return every school's
+     * submissions to any teacher, and it is the same blindness that let
+     * {@code com.concept.billing} sit outside the layering rules unnoticed.
+     *
+     * <p>So the default is inverted here: an entity is a violation unless it
+     * either extends BaseTenantEntity or is named below with a reason. Adding a
+     * new entity forces the question rather than deferring it.
+     */
+    @Test
+    void everyEntityIsEitherTenantScopedOrExplicitlyExempt() {
+        classes()
+                .that().areAnnotatedWith("jakarta.persistence.Entity")
+                .and(new DescribedPredicate<JavaClass>("are not explicitly exempt") {
+                    @Override
+                    public boolean test(JavaClass javaClass) {
+                        return !SCOPED_WITHOUT_A_TENANT_COLUMN.contains(javaClass.getSimpleName());
+                    }
+                })
+                .should().beAssignableTo(BaseTenantEntity.class)
+                .because("an entity with no tenant column cannot be filtered by school; "
+                        + "extend BaseTenantEntity, or add it to SCOPED_WITHOUT_A_TENANT_COLUMN "
+                        + "with the reason it is safe")
+                .check(WHOLE_CODEBASE);
+    }
+
+    /**
+     * Entities that carry no tenant column of their own and are deliberately
+     * left that way. Each is listed with what scopes it instead; anything added
+     * here without a real answer is a cross-tenant leak waiting to be found.
+     */
+    private static final Set<String> SCOPED_WITHOUT_A_TENANT_COLUMN = Set.of(
+            // These two ARE the tenant dimension -- a tenant column on them
+            // would be a self-reference.
+            "Tenant",
+            "AcademicYear",
+
+            // Scoped through the student they hang off. Their repositories
+            // expose findByIdAndStudentTenantId / findByStatusAndStudentTenantId
+            // and callers must use those; a bare findById returns any school's row.
+            "StudentProgress",
+            "AcademicSubmission",
+            "StudentAssessmentScore",
+
+            // Scoped through its Conversation, the tenant-scoped aggregate root.
+            // MessagingService proves conversation access first, then that the
+            // message belongs to that conversation.
+            "Message",
+
+            // Has tenant_id and academic_year_id, but both nullable, so it
+            // cannot extend BaseTenantEntity without a migration. Callers use
+            // TeacherTaskRepository.findByIdAndTenantId.
+            "TeacherTask",
+
+            // Has tenant_id (not null) but no academic_year_id, so it does not
+            // fit BaseTenantEntity as written.
+            "TeacherVerification");
 }

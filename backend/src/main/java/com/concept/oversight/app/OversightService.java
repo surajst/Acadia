@@ -186,10 +186,9 @@ public class OversightService {
     // ─── Teacher progress approvals ─────────────────────────────────────────
 
     @Transactional
-    public Map<String, Object> approveProgress(UUID studentProgressId) {
+    public Map<String, Object> approveProgress(UUID studentProgressId, UUID tenantId) {
         try {
-            StudentProgress progress = studentProgressRepository.findById(studentProgressId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid student progress ID"));
+            StudentProgress progress = requireProgress(studentProgressId, tenantId);
             if ("APPROVED".equals(progress.getStatus())) {
                 throw new IllegalArgumentException("Progress is already approved");
             }
@@ -214,10 +213,9 @@ public class OversightService {
     }
 
     @Transactional
-    public Map<String, Object> rejectProgress(UUID studentProgressId, String reason) {
+    public Map<String, Object> rejectProgress(UUID studentProgressId, String reason, UUID tenantId) {
         try {
-            StudentProgress progress = studentProgressRepository.findById(studentProgressId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid student progress ID"));
+            StudentProgress progress = requireProgress(studentProgressId, tenantId);
             progress.setStatus("REJECTED");
             progress.setRejectionReason(reason);
             studentProgressRepository.saveAndFlush(progress);
@@ -237,10 +235,9 @@ public class OversightService {
     // ─── Teacher milestone approvals ────────────────────────────────────────
 
     @Transactional
-    public Map<String, Object> approveMilestone(UUID submissionId, Authentication authentication) {
+    public Map<String, Object> approveMilestone(UUID submissionId, UUID tenantId, Authentication authentication) {
         try {
-            AcademicSubmission submission = academicSubmissionRepository.findById(submissionId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid submission ID"));
+            AcademicSubmission submission = requireSubmission(submissionId, tenantId);
             if ("APPROVED".equals(submission.getStatus())) {
                 throw new IllegalArgumentException("Submission is already approved");
             }
@@ -259,10 +256,9 @@ public class OversightService {
     }
 
     @Transactional
-    public Map<String, Object> rejectMilestone(UUID submissionId, String reason) {
+    public Map<String, Object> rejectMilestone(UUID submissionId, String reason, UUID tenantId) {
         try {
-            AcademicSubmission submission = academicSubmissionRepository.findById(submissionId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid submission ID"));
+            AcademicSubmission submission = requireSubmission(submissionId, tenantId);
             submission.setStatus("REJECTED");
             submission.setRejectionReason(reason);
             academicSubmissionRepository.saveAndFlush(submission);
@@ -291,5 +287,22 @@ public class OversightService {
             metric.setActiveStreak(0);
         }
         return metric;
+    }
+
+    /**
+     * Resolves a progress row through the caller's own tenant. Neither
+     * StudentProgress nor AcademicSubmission carries a tenant column -- the
+     * student they hang off does -- so an id arriving in a request has to be
+     * matched against that student's school. An id from another school reads
+     * as invalid rather than being silently approved or rejected.
+     */
+    private StudentProgress requireProgress(UUID studentProgressId, UUID tenantId) {
+        return studentProgressRepository.findByIdAndStudentTenantId(studentProgressId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid student progress ID"));
+    }
+
+    private AcademicSubmission requireSubmission(UUID submissionId, UUID tenantId) {
+        return academicSubmissionRepository.findByIdAndStudentTenantId(submissionId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid submission ID"));
     }
 }

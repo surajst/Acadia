@@ -1,20 +1,18 @@
 package com.concept.curriculum.data;
 
+import com.concept.common.BaseTenantEntity;
+
 import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
 @Table(name = "curriculums")
-public class Curriculum {
+public class Curriculum extends BaseTenantEntity {
 
     @Id
     private UUID id;
     
-    @Column(name = "tenant_id", nullable = false)
-    private UUID tenantId;
     
-    @Column(name = "academic_year_id", nullable = false)
-    private UUID academicYearId;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "syllabus_type", nullable = false)
@@ -45,21 +43,9 @@ public class Curriculum {
         this.id = id;
     }
 
-    public UUID getTenantId() {
-        return tenantId;
-    }
 
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
 
-    public UUID getAcademicYearId() {
-        return academicYearId;
-    }
 
-    public void setAcademicYearId(UUID academicYearId) {
-        this.academicYearId = academicYearId;
-    }
 
     public SyllabusType getSyllabusType() {
         return syllabusType;

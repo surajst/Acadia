@@ -1,12 +1,13 @@
 package com.concept.curriculum.data;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.concept.common.TenantScopedRepository;
+
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface CurriculumRepository extends JpaRepository<Curriculum, UUID> {
+public interface CurriculumRepository extends TenantScopedRepository<Curriculum, UUID> {
 
     List<Curriculum> findByTenantId(UUID tenantId);
 

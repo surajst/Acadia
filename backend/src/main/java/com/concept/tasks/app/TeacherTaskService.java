@@ -90,8 +90,8 @@ public class TeacherTaskService {
         return teacherTaskRepository.findByCreatedByTeacherIdAndTenantId(resolveTeacherId(teacherUsername), tenantId);
     }
 
-    public Map<String, String> getQuestionsForTask(UUID taskId) {
-        TeacherTask task = teacherTaskRepository.findById(taskId)
+    public Map<String, String> getQuestionsForTask(UUID taskId, UUID tenantId) {
+        TeacherTask task = teacherTaskRepository.findByIdAndTenantId(taskId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found"));
         
         Map<String, String> questions = new HashMap<>();
