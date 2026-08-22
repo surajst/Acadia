@@ -83,6 +83,15 @@ public class FeeInvoice extends BaseTenantEntity {
     @Column(name = "instalment_label")
     private String instalmentLabel;
 
+    /**
+     * PLAN for an invoice generated from a fee plan, CUSTOM for one an admin
+     * composed by hand. Recording it keeps the ledger honest about which
+     * figures came from the school's own fee plan and which were chosen for
+     * this family, which is the first thing anyone asks when a bill is queried.
+     */
+    @Column(name = "source", length = 20)
+    private String source;
+
     public FeeInvoice() {}
 
     public FeeInvoice(UUID id, UUID studentId, BigDecimal totalAmount, BigDecimal amountPaid) {
@@ -244,5 +253,17 @@ public class FeeInvoice extends BaseTenantEntity {
         return dueDate != null
                 && status != FeeStatus.PAID
                 && dueDate.isBefore(today);
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public boolean isCustom() {
+        return "CUSTOM".equals(source);
     }
 }

@@ -516,6 +516,79 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await expect(page.locator('body')).toContainText('6 of 6 records');
   });
 
+  test('admin raises a custom invoice through the modal, with two lines and a due date', async ({ page }) => {
+    await login(page, school.adminEmail, PW);
+    await page.goto('/web/admin/fees');
+
+    // Drive the real UI, not the endpoint: this is the only test in the suite
+    // that clicks the custom-invoice button and exercises its JavaScript
+    // (addCustomLine, the running total, the modal open/close), which a raw
+    // POST cannot verify.
+    await page.click('[data-open-custom-invoice]');
+    await expect(page.locator('#customInvoiceModal')).toBeVisible();
+
+    await page.selectOption('#customInvoiceStudents', [school.studentId]);
+    await page.fill('#customInvoiceDueDate', '2026-11-20');
+
+    // First line is pre-filled by openCustomInvoiceModal(); fill it in.
+    const rows = page.locator('[data-custom-line-row]');
+    await rows.nth(0).locator('[data-line-desc]').fill('Annual school trip');
+    await rows.nth(0).locator('[data-line-amount]').fill('1500');
+
+    // Add a second line through the button, exactly as an admin would.
+    await page.click('[data-add-custom-line]');
+    await expect(rows).toHaveCount(2);
+    await rows.nth(1).locator('[data-line-desc]').fill('Activity kit');
+    await rows.nth(1).locator('[data-line-amount]').fill('250');
+
+    // The running total is computed client-side and should reflect both lines
+    // before the form is even submitted.
+    await expect(page.locator('[data-custom-total]')).toContainText('1,750.00');
+
+    await page.click('#customInvoiceForm button[type="submit"]');
+
+    await page.goto('/web/admin/fees');
+    await expect(page.locator('body')).not.toContainText('Something went wrong');
+    await expect(page.locator('body')).toContainText('7 of 7 records');
+
+    // The invoice shows what it is actually for, not just a total -- the
+    // whole point of a custom invoice over an override.
+    const lines = page.locator('[data-invoice-lines]').first();
+    await expect(lines).toContainText('Annual school trip');
+    await expect(lines).toContainText('1,500.00');
+    await expect(lines).toContainText('Activity kit');
+    await expect(lines).toContainText('250.00');
+  });
+
+  test('a custom invoice line with no description is refused, and removing down to one line is blocked', async ({ page }) => {
+    await login(page, school.adminEmail, PW);
+    await page.goto('/web/admin/fees');
+
+    await page.click('[data-open-custom-invoice]');
+    await page.selectOption('#customInvoiceStudents', [school.studentId]);
+    await page.fill('#customInvoiceDueDate', '2026-11-20');
+
+    // A lone line cannot be removed -- the button must refuse, via native
+    // confirm/alert, rather than leaving a line-less form that would submit
+    // as "at least one line" from the server with no visible cause.
+    const rows = page.locator('[data-custom-line-row]');
+    await expect(rows).toHaveCount(1);
+    page.once('dialog', d => d.accept());
+    await rows.nth(0).locator('button:has-text("Remove")').click();
+    await expect(rows).toHaveCount(1);
+
+    // Amount with no description: the server refuses, not just the browser's
+    // required attribute.
+    await rows.nth(0).locator('[data-line-amount]').fill('500');
+    const result = await page.evaluate(async () => {
+      const form = document.getElementById('customInvoiceForm');
+      const res = await fetch(form.action, { method: 'POST', body: new FormData(form) });
+      return { status: res.status, text: await res.text() };
+    });
+    expect(result.status).toBeLessThan(400);
+    expect(result.text).toContain('needs a description');
+  });
+
   test('parent assigns a quest and a reward to their child', async ({ page }) => {
     await login(page, school.parentEmail, PW);
 

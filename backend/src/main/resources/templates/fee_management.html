@@ -25,6 +25,7 @@
             </div>
             <div class="flex items-center gap-3">
                 <a href="/web/admin/fees/settings" class="btn btn-secondary btn-sm" data-fee-settings-link>⚙️ Fee Settings</a>
+                <button onclick="openCustomInvoiceModal()" class="btn btn-secondary btn-sm" data-open-custom-invoice>🧾 Custom Invoice</button>
                 <button onclick="openCreateInvoiceModal()" class="btn btn-primary btn-sm">➕ Create Invoice</button>
                 <span class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Ledger Active</span>
             </div>
@@ -155,6 +156,17 @@
                                             <span class="block font-normal text-[var(--text-3)]"
                                                   data-override-reason-text th:text="${dto.overrideReason}">Sibling discount</span>
                                         </span>
+                                        <!-- A custom invoice's whole reason for existing is answering
+                                             "what is this for" — so its lines are shown, not just its
+                                             total, wherever the invoice appears. -->
+                                        <ul th:if="${dto.hasLines()}" data-invoice-lines
+                                            class="mt-1 space-y-0.5 font-sans">
+                                            <li th:each="line : ${dto.lines}"
+                                                class="text-[10px] font-normal text-[var(--text-3)] flex justify-between gap-2">
+                                                <span th:text="${line.description}">Annual trip</span>
+                                                <span class="font-mono" th:text="|₹${#numbers.formatDecimal(line.amount, 1, 'COMMA', 2, 'POINT')}|">₹1,500.00</span>
+                                            </li>
+                                        </ul>
                                     </td>
                                     <td class="py-3 px-5 font-mono font-medium" style="color:var(--success)" th:text="|₹ ${#numbers.formatDecimal(dto.amountPaid, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
                                     <td class="py-3 px-5 font-mono font-medium" style="color:var(--danger)" th:text="|₹ ${#numbers.formatDecimal(dto.amountDue, 1, 'COMMA', 2, 'POINT')}|">₹ 15,000.00</td>
@@ -307,6 +319,70 @@
         </div>
     </div>
 
+    <!-- Custom invoice: an admin composes the charge line by line, for one
+         student or several. Not every charge fits a fee plan -- a trip, a
+         textbook, a bus fare -- and this is deliberately free-form rather than
+         a fixed catalogue of fee heads, which schools would just work around
+         the moment it did not fit. -->
+    <div id="customInvoiceModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-lg rounded-2xl overflow-hidden max-h-[90vh] flex flex-col" style="box-shadow:var(--sh-2)">
+            <div class="px-5 py-4 flex items-center justify-between border-b shrink-0" style="border-color:var(--line)">
+                <h3 class="text-base font-bold text-slate-900">🧾 Custom invoice</h3>
+                <button onclick="closeCustomInvoiceModal()" class="text-[var(--text-3)] hover:text-slate-700 p-1 rounded-lg hover:bg-[var(--surface-2)]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
+                </button>
+            </div>
+            <form method="POST" action="/web/admin/fees/invoice/custom" id="customInvoiceForm" class="p-5 space-y-4 overflow-y-auto">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="space-y-1.5">
+                    <label for="customInvoiceStudents" class="field-label block">Student(s)</label>
+                    <select id="customInvoiceStudents" name="studentIds" multiple required class="field" style="height:88px" data-custom-students>
+                        <option th:each="s : ${allStudents}" th:value="${s.id}" th:text="|${s.firstName} ${s.lastName}|">Student Name</option>
+                    </select>
+                    <p class="text-[11px] text-[var(--text-3)]">
+                        Ctrl/Cmd-click to pick several. Billing a whole class for a
+                        trip raises one identical invoice per student chosen &mdash;
+                        not one invoice split between them.
+                    </p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="customInvoiceDueDate" class="field-label block">Due date</label>
+                    <input type="date" id="customInvoiceDueDate" name="dueDate" required class="field" data-custom-due-date/>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="field-label">What this is for</span>
+                        <button type="button" onclick="addCustomLine()" class="btn btn-secondary btn-xs" data-add-custom-line>+ Add line</button>
+                    </div>
+                    <div class="hidden sm:grid sm:grid-cols-12 gap-2 px-1 pb-1">
+                        <span class="sm:col-span-7 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-3)]">Description</span>
+                        <span class="sm:col-span-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-3)]">Amount (₹)</span>
+                        <span class="sm:col-span-2"></span>
+                    </div>
+                    <div id="customLineRows" class="space-y-2"></div>
+                    <p class="text-[11px] text-[var(--text-3)] mt-2">
+                        Every line needs a description &mdash; an amount with no
+                        explanation is exactly the unexplained charge this screen
+                        exists to prevent.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between border-t pt-4" style="border-color:var(--line)">
+                    <span class="text-sm font-semibold text-slate-700">
+                        Total per student: <span data-custom-total class="font-mono">₹ 0.00</span>
+                    </span>
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="closeCustomInvoiceModal()" class="btn btn-secondary btn-sm">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Raise invoice</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <footer class="shrink-0 text-center py-2 text-[11px] text-[var(--text-3)] border-t" style="border-color:var(--line)">ACADIA · Connect | Manage | Empower</footer>
 
     <script>
@@ -346,6 +422,58 @@
         }
         function openCreateInvoiceModal() { const m=document.getElementById('createInvoiceModal'); m.classList.remove('hidden'); m.classList.add('flex'); }
         function closeCreateInvoiceModal() { const m=document.getElementById('createInvoiceModal'); m.classList.remove('flex'); m.classList.add('hidden'); }
+
+        // Custom invoice: lines are built here rather than rendered fixed, the
+        // same reasoning as the fee-plan instalment rows -- how many charges an
+        // invoice needs is decided at the point of billing, not in advance.
+        function customLineRow(description, amount) {
+            var row = document.createElement('div');
+            row.className = 'grid grid-cols-1 sm:grid-cols-12 gap-2 items-end';
+            row.setAttribute('data-custom-line-row', '');
+            row.innerHTML =
+                '<div class="sm:col-span-7"><input type="text" name="description" required placeholder="Annual school trip" class="field" data-line-desc value="' + (description || '') + '"></div>' +
+                '<div class="sm:col-span-3"><input type="number" name="amount" step="0.01" min="0" required placeholder="1500.00" class="field font-mono" data-line-amount value="' + (amount || '') + '"></div>' +
+                '<div class="sm:col-span-2"><button type="button" class="btn btn-secondary btn-sm w-full" onclick="removeCustomLine(this)">Remove</button></div>';
+            row.querySelectorAll('[data-line-amount]').forEach(function (el) {
+                el.addEventListener('input', recalcCustomTotal);
+            });
+            return row;
+        }
+
+        function addCustomLine(description, amount) {
+            document.getElementById('customLineRows').appendChild(customLineRow(description, amount));
+            recalcCustomTotal();
+        }
+
+        function removeCustomLine(btn) {
+            if (document.querySelectorAll('[data-custom-line-row]').length <= 1) {
+                alert('An invoice needs at least one line.');
+                return;
+            }
+            btn.closest('[data-custom-line-row]').remove();
+            recalcCustomTotal();
+        }
+
+        function recalcCustomTotal() {
+            var total = 0;
+            document.querySelectorAll('[data-line-amount]').forEach(function (el) {
+                var v = parseFloat(el.value);
+                if (!isNaN(v)) total += v;
+            });
+            document.querySelector('[data-custom-total]').textContent =
+                '₹ ' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function openCustomInvoiceModal() {
+            var rows = document.getElementById('customLineRows');
+            if (rows.children.length === 0) { addCustomLine(); }
+            var m = document.getElementById('customInvoiceModal');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+        function closeCustomInvoiceModal() {
+            var m = document.getElementById('customInvoiceModal');
+            m.classList.remove('flex'); m.classList.add('hidden');
+        }
         function openPaymentModal(invoiceId, studentName, remainingDue) {
             document.getElementById('invoiceIdInput').value = invoiceId;
             document.getElementById('studentNameDisplay').innerText = studentName;
@@ -356,9 +484,9 @@
         }
         function closePaymentModal() { const m=document.getElementById('paymentModal'); m.classList.remove('flex'); m.classList.add('hidden'); }
         window.addEventListener('click', (e) => {
-            ['createInvoiceModal','paymentModal'].forEach(id => { const m=document.getElementById(id); if (m && e.target === m) { m.classList.add('hidden'); m.classList.remove('flex'); } });
+            ['createInvoiceModal','paymentModal','customInvoiceModal'].forEach(id => { const m=document.getElementById(id); if (m && e.target === m) { m.classList.add('hidden'); m.classList.remove('flex'); } });
         });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ['createInvoiceModal','paymentModal'].forEach(id => { const m=document.getElementById(id); if(m){m.classList.add('hidden'); m.classList.remove('flex');} }); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ['createInvoiceModal','paymentModal','customInvoiceModal'].forEach(id => { const m=document.getElementById(id); if(m){m.classList.add('hidden'); m.classList.remove('flex');} }); });
 
         async function requestWaiver(invoiceId) {
             const amount = prompt('Waiver amount (₹):');
