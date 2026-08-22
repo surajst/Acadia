@@ -97,7 +97,7 @@ public class InvoiceScheduleServiceTest {
     }
 
     private void threeTermPlan() {
-        feePlanService.savePlan(GRADE, List.of(
+        feePlanService.savePlanApproved(GRADE, List.of(
                 new FeePlanService.InstalmentSpec("Term 1", new BigDecimal("120000.00"), 0),
                 new FeePlanService.InstalmentSpec("Term 2", new BigDecimal("90000.00"), 120),
                 new FeePlanService.InstalmentSpec("Term 3", new BigDecimal("90000.00"), 240)
@@ -212,14 +212,14 @@ public class InvoiceScheduleServiceTest {
     @Test
     public void savePlan_withNoInstalments_isRefused() {
         assertThrows(IllegalArgumentException.class, () ->
-                feePlanService.savePlan(GRADE, List.of(), tenantId, yearId, null));
+                feePlanService.savePlanApproved(GRADE, List.of(), tenantId, yearId, null));
     }
 
     /** Editing a plan replaces its schedule rather than accumulating rows. */
     @Test
     public void savePlan_replacesTheScheduleInsteadOfAppending() {
         threeTermPlan();
-        feePlanService.savePlan(GRADE, List.of(
+        feePlanService.savePlanApproved(GRADE, List.of(
                 new FeePlanService.InstalmentSpec("Full year", new BigDecimal("280000.00"), 0)
         ), tenantId, yearId, null);
 
@@ -253,7 +253,7 @@ public class InvoiceScheduleServiceTest {
         y.setCurrent(true);
         academicYearRepository.saveAndFlush(y);
 
-        feePlanService.savePlan(GRADE, List.of(
+        feePlanService.savePlanApproved(GRADE, List.of(
                 new FeePlanService.InstalmentSpec("Annual", new BigDecimal("50000.00"), 0)
         ), otherTenant, otherYear, null);
 

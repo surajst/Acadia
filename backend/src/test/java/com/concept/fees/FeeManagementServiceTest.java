@@ -255,7 +255,7 @@ public class FeeManagementServiceTest {
         feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "CASH", testTenantId, null);
         FeeTransaction original = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
 
-        feeManagementService.reversePayment(original.getId(), "Cheque bounced", testTenantId, null);
+        feeManagementService.reversePaymentApproved(original.getId(), "Cheque bounced", testTenantId, null);
 
         FeeInvoice invoice = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
         assertEquals(0, BigDecimal.ZERO.compareTo(invoice.getAmountPaid()), "the payment is undone");
@@ -275,7 +275,7 @@ public class FeeManagementServiceTest {
         FeeTransaction original = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
 
         assertThrows(IllegalArgumentException.class, () ->
-                feeManagementService.reversePayment(original.getId(), "   ", testTenantId, null));
+                feeManagementService.reversePaymentApproved(original.getId(), "   ", testTenantId, null));
     }
 
     @Test
@@ -283,9 +283,9 @@ public class FeeManagementServiceTest {
         feeManagementService.recordPayment(testInvoiceId, new BigDecimal("5000.00"), "CASH", testTenantId, null);
         FeeTransaction original = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
 
-        feeManagementService.reversePayment(original.getId(), "Mistyped", testTenantId, null);
+        feeManagementService.reversePaymentApproved(original.getId(), "Mistyped", testTenantId, null);
         assertThrows(IllegalArgumentException.class, () ->
-                feeManagementService.reversePayment(original.getId(), "Again", testTenantId, null));
+                feeManagementService.reversePaymentApproved(original.getId(), "Again", testTenantId, null));
     }
 
     /** Reversing frees the balance up again, so the correct amount can be taken. */
@@ -294,7 +294,7 @@ public class FeeManagementServiceTest {
         feeManagementService.recordPayment(testInvoiceId, new BigDecimal("20000.00"), "CASH", testTenantId, null);
         FeeTransaction wrong = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
 
-        feeManagementService.reversePayment(wrong.getId(), "Wrong invoice", testTenantId, null);
+        feeManagementService.reversePaymentApproved(wrong.getId(), "Wrong invoice", testTenantId, null);
         feeManagementService.recordPayment(testInvoiceId, new BigDecimal("2000.00"), "CASH", testTenantId, null);
 
         FeeInvoice invoice = feeInvoiceRepository.findById(testInvoiceId).orElseThrow();
@@ -310,6 +310,6 @@ public class FeeManagementServiceTest {
         FeeTransaction original = feeTransactionRepository.findByInvoiceId(testInvoiceId).get(0);
 
         assertThrows(IllegalArgumentException.class, () ->
-                feeManagementService.reversePayment(original.getId(), "Not mine", UUID.randomUUID(), null));
+                feeManagementService.reversePaymentApproved(original.getId(), "Not mine", UUID.randomUUID(), null));
     }
 }

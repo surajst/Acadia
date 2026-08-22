@@ -12,6 +12,7 @@ import com.concept.shared.data.AttendanceStatus;
 import com.concept.curriculum.data.Curriculum;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;
+import com.concept.fees.app.ApprovalService;
 import com.concept.fees.app.FeeManagementService;
 import com.concept.shared.data.Student;
 import com.concept.oversight.data.StudentProgress;
@@ -55,6 +56,7 @@ public class OversightService {
     private final AcademicSubmissionRepository academicSubmissionRepository;
     private final NotificationDeliveryService notificationDeliveryService;
     private final CurrentUserService currentUserService;
+    private final ApprovalService approvalService;
 
     public OversightService(AdminProgressService adminProgressService,
                             FeeManagementService feeManagementService,
@@ -67,7 +69,8 @@ public class OversightService {
                             StudentMetricRepository studentMetricRepository,
                             AcademicSubmissionRepository academicSubmissionRepository,
                             NotificationDeliveryService notificationDeliveryService,
-                            CurrentUserService currentUserService) {
+                            CurrentUserService currentUserService,
+                            ApprovalService approvalService) {
         this.adminProgressService = adminProgressService;
         this.feeManagementService = feeManagementService;
         this.attendanceRepository = attendanceRepository;
@@ -80,6 +83,7 @@ public class OversightService {
         this.academicSubmissionRepository = academicSubmissionRepository;
         this.notificationDeliveryService = notificationDeliveryService;
         this.currentUserService = currentUserService;
+        this.approvalService = approvalService;
     }
 
     // ─── Progress / summaries ───────────────────────────────────────────────
@@ -304,5 +308,43 @@ public class OversightService {
     private AcademicSubmission requireSubmission(UUID submissionId, UUID tenantId) {
         return academicSubmissionRepository.findByIdAndStudentTenantId(submissionId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid submission ID"));
+    }
+
+    // ─── Approval queue (payment reversals, fee plan changes) ───────────────
+
+    /**
+     * What is waiting for this principal to decide. Each row is a change an
+     * admin has asked for and that has not touched any real data yet.
+     */
+    public List<Map<String, Object>> pendingApprovals(Authentication authentication) {
+        return approvalService.pending(tenant(authentication)).stream().map(request -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("requestId", request.getId());
+            row.put("action", request.getAction().name());
+            row.put("summary", request.getSummary());
+            row.put("requestedBy", request.getRequestedByEmail());
+            row.put("requestedAt", request.getRequestedAt());
+            return row;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public Map<String, Object> approveRequest(UUID requestId, Authentication authentication) {
+        try {
+            approvalService.approve(requestId, tenant(authentication), authentication);
+            return Map.of("status", "approved");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw OversightException.badRequest(e.getMessage());
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> rejectRequest(UUID requestId, String reason, Authentication authentication) {
+        try {
+            approvalService.reject(requestId, reason, tenant(authentication), authentication);
+            return Map.of("status", "rejected");
+        } catch (IllegalArgumentException e) {
+            throw OversightException.badRequest(e.getMessage());
+        }
     }
 }

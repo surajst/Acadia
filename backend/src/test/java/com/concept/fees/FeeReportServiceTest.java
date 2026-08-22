@@ -230,7 +230,7 @@ public class FeeReportServiceTest {
 
         feeManagementService.recordPayment(inv.getId(), new BigDecimal("5000"), "CASH", tenantId, null);
         FeeTransaction original = feeTransactionRepository.findByInvoiceId(inv.getId()).get(0);
-        feeManagementService.reversePayment(original.getId(), "Cheque bounced", tenantId, null);
+        feeManagementService.reversePaymentApproved(original.getId(), "Cheque bounced", tenantId, null);
 
         List<FeeReportService.ReceiptRow> receipts = feeReportService.collectionReport(tenantId, yearId);
 
@@ -246,7 +246,7 @@ public class FeeReportServiceTest {
 
         feeManagementService.recordPayment(inv.getId(), new BigDecimal("1000"), "CASH", tenantId, null);
         FeeTransaction first = feeTransactionRepository.findByInvoiceId(inv.getId()).get(0);
-        feeManagementService.reversePayment(first.getId(), "Mistyped", tenantId, null);
+        feeManagementService.reversePaymentApproved(first.getId(), "Mistyped", tenantId, null);
         feeManagementService.recordPayment(inv.getId(), new BigDecimal("2000"), "CASH", tenantId, null);
 
         List<FeeReportService.ReceiptRow> receipts = feeReportService.collectionReport(tenantId, yearId);

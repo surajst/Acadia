@@ -255,8 +255,17 @@ public class FeeManagementService {
      * first one to still exist.
      */
     @Transactional
-    public void reversePayment(UUID transactionId, String reason, UUID currentTenantId,
-                               Authentication authentication) {
+    /**
+     * Checks a proposed reversal without writing anything.
+     *
+     * <p>Run both when the admin asks and again when the principal approves.
+     * At request time so a hopeless request is refused while someone can still
+     * fix it; at approval time because a payment can be reversed by another
+     * route while this one waits in the queue.
+     *
+     * @return the payment that would be reversed, which the summary quotes
+     */
+    public FeeTransaction validateReversalRequest(UUID transactionId, String reason, UUID currentTenantId) {
         String why = reason == null ? "" : reason.trim();
         if (why.isEmpty()) {
             throw new IllegalArgumentException("A reason is required to reverse a payment.");
@@ -271,6 +280,20 @@ public class FeeManagementService {
         if (feeTransactionRepository.existsByReversesTransactionId(transactionId)) {
             throw new IllegalArgumentException("That payment has already been reversed.");
         }
+        return original;
+    }
+
+    /**
+     * Carries out a reversal. Named "Approved" because reaching it means a
+     * principal has already agreed: the admin-facing route raises an
+     * ApprovalRequest instead of calling this. The guards below run here, at
+     * approval time, so a payment reversed by another route in the meantime is
+     * caught rather than double-reversed.
+     */
+    public void reversePaymentApproved(UUID transactionId, String reason, UUID currentTenantId,
+                                       Authentication authentication) {
+        String why = reason == null ? "" : reason.trim();
+        FeeTransaction original = validateReversalRequest(transactionId, reason, currentTenantId);
 
         FeeInvoice invoice = feeInvoiceRepository.findByIdAndTenantId(original.getInvoiceId(), currentTenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Invoice not found."));
