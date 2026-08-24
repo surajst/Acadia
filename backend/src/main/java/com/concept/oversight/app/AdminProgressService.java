@@ -1,4 +1,5 @@
 package com.concept.oversight.app;
+import com.concept.common.GradeLevel;
 import com.concept.oversight.data.StudentProgressRepository;
 import com.concept.oversight.data.StudentProgress;
 import com.concept.curriculum.data.CurriculumRepository;
@@ -29,15 +30,9 @@ public class AdminProgressService {
         this.classSectionRepository = classSectionRepository;
     }
 
-    /** Parse the numeric grade out of a free-text grade label, e.g. "Grade 6" / "Class 6" -> 6. */
+    /** @see GradeLevel */
     private int parseStandard(String gradeLabel) {
-        if (gradeLabel == null) return -1;
-        try {
-            String digits = gradeLabel.replaceAll("[^0-9]", "");
-            return digits.isEmpty() ? -1 : Integer.parseInt(digits);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
+        return GradeLevel.parse(gradeLabel);
     }
 
     public Map<String, Object> getSchoolWideProgress(UUID tenantId) {
@@ -263,20 +258,20 @@ public class AdminProgressService {
     }
 
     private int extractStandard(Student student) {
-        if (student.getSchoolClass() != null && student.getSchoolClass().getGradeLevel() != null) {
-            try {
-                return Integer.parseInt(student.getSchoolClass().getGradeLevel().replaceAll("[^0-9]", ""));
-            } catch (NumberFormatException e) {
-                // Ignore
+        // schoolClass first, classSection second: a student may carry either,
+        // and the first one that yields a year wins.
+        if (student.getSchoolClass() != null) {
+            int fromClass = GradeLevel.parse(student.getSchoolClass().getGradeLevel());
+            if (GradeLevel.isKnown(fromClass)) {
+                return fromClass;
             }
         }
-        if (student.getClassSection() != null && student.getClassSection().getGradeName() != null) {
-            try {
-                return Integer.parseInt(student.getClassSection().getGradeName().replaceAll("[^0-9]", ""));
-            } catch (NumberFormatException e) {
-                // Ignore
+        if (student.getClassSection() != null) {
+            int fromSection = GradeLevel.parse(student.getClassSection().getGradeName());
+            if (GradeLevel.isKnown(fromSection)) {
+                return fromSection;
             }
         }
-        return -1;
+        return GradeLevel.UNKNOWN;
     }
 }

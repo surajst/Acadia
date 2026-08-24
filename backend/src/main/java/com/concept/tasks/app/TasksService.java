@@ -1,5 +1,6 @@
 package com.concept.tasks.app;
 
+import com.concept.common.GradeLevel;
 import com.concept.common.NotificationDeliveryService;
 import com.concept.shared.data.AcademicSubmission;
 import com.concept.shared.data.AcademicSubmissionRepository;
@@ -304,12 +305,10 @@ public class TasksService {
     }
 
     private int extractStandard(Student student) {
-        try {
-            String grade = student.getClassSection().getGradeName();
-            return Integer.parseInt(grade.replaceAll("[^0-9]", ""));
-        } catch (Exception e) {
-            return 6;
+        if (student.getClassSection() == null) {
+            return GradeLevel.UNKNOWN;
         }
+        return GradeLevel.parse(student.getClassSection().getGradeName());
     }
 
     private TeacherTaskRequest toManagementRequest(CreateTaskRequest req) {
