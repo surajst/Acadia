@@ -14,7 +14,9 @@ async function login(page: any, username: string, password: string) {
 }
 
 // Seeded "Grade 6 - A" class section id (used by the other roster specs).
-const GRADE6A = '11111111-2222-3333-4444-555555555551';
+// The Grade 6 - A class section. Was the SchoolClass id until those were
+// folded into class sections; the dashboard's classId means a section now.
+const GRADE6A = '66666666-6666-6666-6666-666666666666';
 
 async function registerStudent(page: any, opts: {
   first: string; last: string; roll: string;

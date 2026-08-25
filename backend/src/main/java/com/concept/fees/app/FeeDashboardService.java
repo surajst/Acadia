@@ -188,8 +188,8 @@ public class FeeDashboardService {
         String initials = student != null
                 ? initial(student.getFirstName()) + initial(student.getLastName()) : "ST";
         String rollNumber = student != null && student.getRollNumber() != null ? student.getRollNumber() : "--";
-        String gradeLevel = student != null && student.getSchoolClass() != null
-                ? student.getSchoolClass().getGradeLevel() : "—";
+        String gradeLevel = student != null && student.getClassSection() != null
+                ? student.getClassSection().getGradeName() : "—";
         String status = inv.getStatus() != null ? inv.getStatus().name() : "UNPAID";
         String waiverStatus = inv.getWaiverStatus() != null ? inv.getWaiverStatus().name() : "NONE";
         return new FeeDashboardView.InvoiceRow(

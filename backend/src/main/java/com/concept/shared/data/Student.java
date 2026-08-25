@@ -63,12 +63,7 @@ public class Student extends BaseTenantEntity {
     public ClassSection getClassSection() { return classSection; }
     public void setClassSection(ClassSection classSection) { this.classSection = classSection; }
 
-    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "school_class_id")
-    private SchoolClass schoolClass;
 
-    public SchoolClass getSchoolClass() { return schoolClass; }
-    public void setSchoolClass(SchoolClass schoolClass) { this.schoolClass = schoolClass; }
 
     @ManyToMany
     @JoinTable(

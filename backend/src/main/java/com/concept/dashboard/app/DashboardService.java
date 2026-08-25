@@ -98,7 +98,7 @@ public class DashboardService {
                 // Class-specific view with name/grade filters: no dedicated paginated
                 // query exists for this combination, so filter in-memory (bounded by
                 // one class section's roster size, not the whole tenant).
-                List<Student> byClass = studentRepository.findBySchoolClassId(classId);
+                List<Student> byClass = studentRepository.findByClassSectionId(classId);
                 String nameNeedle = effectiveName == null ? null : effectiveName.toLowerCase();
                 conditionalRoster = byClass.stream()
                         .filter(s -> nameNeedle == null
@@ -112,7 +112,7 @@ public class DashboardService {
                 totalRosterItems = conditionalRoster.size();
                 totalRosterPages = 1;
             } else if (classId != null) {
-                Page<Student> classPage = studentRepository.findBySchoolClassId(classId, pageable);
+                Page<Student> classPage = studentRepository.findByClassSectionId(classId, pageable);
                 conditionalRoster = classPage.getContent();
                 totalRosterItems = classPage.getTotalElements();
                 totalRosterPages = classPage.getTotalPages();

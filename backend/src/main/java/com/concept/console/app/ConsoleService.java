@@ -1,6 +1,6 @@
 package com.concept.console.app;
 
-import com.concept.console.data.ConsoleSchoolClassRepository;
+import com.concept.console.data.ConsoleClassSectionRepository;
 import com.concept.console.data.ConsoleStaffRepository;
 import com.concept.console.data.ConsoleStudentRepository;
 import com.concept.rewards.app.RewardsService;
@@ -21,16 +21,16 @@ import java.util.stream.Collectors;
 @Service
 public class ConsoleService {
 
-    private final ConsoleSchoolClassRepository schoolClassRepository;
+    private final ConsoleClassSectionRepository classSectionRepository;
     private final ConsoleStudentRepository studentRepository;
     private final ConsoleStaffRepository staffRepository;
     private final RewardsService rewardsService;
 
-    public ConsoleService(ConsoleSchoolClassRepository schoolClassRepository,
+    public ConsoleService(ConsoleClassSectionRepository classSectionRepository,
                           ConsoleStudentRepository studentRepository,
                           ConsoleStaffRepository staffRepository,
                           RewardsService rewardsService) {
-        this.schoolClassRepository = schoolClassRepository;
+        this.classSectionRepository = classSectionRepository;
         this.studentRepository = studentRepository;
         this.staffRepository = staffRepository;
         this.rewardsService = rewardsService;
@@ -42,9 +42,13 @@ public class ConsoleService {
             return new ConsoleView(Collections.emptyList(), Collections.emptyList(), 0, 0, 0);
         }
 
-        List<ClassroomView> classList = schoolClassRepository.findByTenantId(tenantId).stream()
-                .map(c -> new ClassroomView(c.getId(), c.getGradeLevel(), c.getSectionName(), c.getRoomNumber(),
-                        studentRepository.countBySchoolClassId(c.getId()), c.getTotalCapacity()))
+        List<ClassroomView> classList = classSectionRepository.findByTenantId(tenantId).stream()
+                .map(c -> new ClassroomView(c.getId(), c.getGradeName(), c.getSectionName(), c.getRoomNumber(),
+                        studentRepository.countByClassSectionId(c.getId()),
+                        // Nullable on the section, primitive on the view: most
+                        // sections never had a capacity set, and 0 renders as
+                        // "no limit recorded" rather than throwing.
+                        c.getTotalCapacity() == null ? 0 : c.getTotalCapacity()))
                 .collect(Collectors.toList());
 
         long totalStudents = studentRepository.countByTenantId(tenantId);
@@ -52,7 +56,7 @@ public class ConsoleService {
                 + staffRepository.countByRoleAndTenantId(UserRole.PRINCIPAL, tenantId)
                 + staffRepository.countByRoleAndTenantId(UserRole.TEACHER, tenantId)
                 + staffRepository.countByRoleAndTenantId(UserRole.DRIVER, tenantId);
-        long totalClassrooms = schoolClassRepository.countByTenantId(tenantId);
+        long totalClassrooms = classSectionRepository.countByTenantId(tenantId);
 
         return new ConsoleView(classList, rewardsService.listInventory(tenantId),
                 totalStudents, totalStaff, totalClassrooms);

@@ -69,7 +69,7 @@ public class StudentProfileController {
         model.addAttribute("recentParentNotes", null);
         model.addAttribute("dispatchLedger", Collections.emptyList());
         model.addAttribute("classList", view.classList());
-        model.addAttribute("currentSchoolClassId", view.currentSchoolClassId());
+        model.addAttribute("currentClassSectionId", view.currentClassSectionId());
         model.addAttribute("studentLoginUsername", view.studentLoginUsername());
         model.addAttribute("guardianLoginUsername", view.guardianLoginUsername());
 

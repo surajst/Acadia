@@ -41,9 +41,11 @@ public class ClassStructureController {
     public String addClassSection(@RequestParam("gradeName") String gradeName,
                                   @RequestParam("sectionName") String sectionName,
                                   @RequestParam(value = "roomNumber", required = false) String roomNumber,
+                                  @RequestParam(value = "totalCapacity", required = false) Integer totalCapacity,
                                   Authentication authentication) {
         classStructureService.addSection(tenantContext.getTenantId().orElse(null),
-                tenantContext.getAcademicYearId().orElse(null), gradeName, sectionName, roomNumber, authentication);
+                tenantContext.getAcademicYearId().orElse(null), gradeName, sectionName, roomNumber,
+                totalCapacity, authentication);
         return "redirect:/web/admin/management?success=class_section_added";
     }
 
@@ -74,15 +76,4 @@ public class ClassStructureController {
         }
     }
 
-    @PostMapping("/web/admin/school-classes/add")
-    public String addSchoolClass(@RequestParam("gradeLevel") String gradeLevel,
-                                 @RequestParam("sectionName") String sectionName,
-                                 @RequestParam(value = "roomNumber", required = false) String roomNumber,
-                                 @RequestParam("totalCapacity") Integer totalCapacity,
-                                 Authentication authentication) {
-        classStructureService.addClassroom(tenantContext.getTenantId().orElse(null),
-                tenantContext.getAcademicYearId().orElse(null), gradeLevel, sectionName, roomNumber,
-                totalCapacity, authentication);
-        return "redirect:/web/admin/management?success=school_class_added";
-    }
 }

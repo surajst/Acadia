@@ -29,7 +29,7 @@ public record StudentProfileView(
         int guardianCount,
         int householdStreak,
         List<ClassOption> classList,
-        UUID currentSchoolClassId,
+        UUID currentClassSectionId,
         /**
          * Sign-in usernames, shown on the profile so an admin can tell a family
          * how to log in without having to reset the password to find out. Only

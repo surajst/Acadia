@@ -258,20 +258,9 @@ public class AdminProgressService {
     }
 
     private int extractStandard(Student student) {
-        // schoolClass first, classSection second: a student may carry either,
-        // and the first one that yields a year wins.
-        if (student.getSchoolClass() != null) {
-            int fromClass = GradeLevel.parse(student.getSchoolClass().getGradeLevel());
-            if (GradeLevel.isKnown(fromClass)) {
-                return fromClass;
-            }
+        if (student.getClassSection() == null) {
+            return GradeLevel.UNKNOWN;
         }
-        if (student.getClassSection() != null) {
-            int fromSection = GradeLevel.parse(student.getClassSection().getGradeName());
-            if (GradeLevel.isKnown(fromSection)) {
-                return fromSection;
-            }
-        }
-        return GradeLevel.UNKNOWN;
+        return GradeLevel.parse(student.getClassSection().getGradeName());
     }
 }

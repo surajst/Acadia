@@ -7,8 +7,6 @@ import com.concept.shared.data.Student;
 import com.concept.shared.data.StudentRepository;
 import com.concept.shared.data.AcademicSubmission;
 import com.concept.shared.data.AcademicSubmissionRepository;
-import com.concept.shared.data.SchoolClass;
-import com.concept.shared.data.SchoolClassRepository;
 import com.concept.rewards.data.RewardItem;
 import com.concept.rewards.data.RewardItemRepository;
 import com.concept.shared.data.Parent;
@@ -40,8 +38,6 @@ public class AcademicDataSeeder implements CommandLineRunner {
     @Autowired
     private AcademicSubmissionRepository submissionRepo;
 
-    @Autowired
-    private SchoolClassRepository schoolClassRepo;
 
     @Autowired
     private RewardItemRepository rewardItemRepo;
@@ -194,54 +190,6 @@ public class AcademicDataSeeder implements CommandLineRunner {
                 submissionRepo.save(submission);
                 System.out.println("Automated Seeder -> Injected a pending Arjun Sharma milestone submission!");
             }
-        }
-
-        // 4. Seed SchoolClasses and link Students if empty
-        if (schoolClassRepo.count() == 0) {
-            SchoolClass class1 = new SchoolClass();
-            UUID class1Id = UUID.fromString("11111111-2222-3333-4444-555555555551");
-            class1.setId(class1Id);
-            class1.setTenantId(tenantId);
-            class1.setAcademicYearId(academicYearId);
-            class1.setGradeLevel("Grade 6");
-            class1.setSectionName("A");
-            class1.setRoomNumber("Room 204");
-            class1.setTotalCapacity(30);
-            schoolClassRepo.save(class1);
-
-            SchoolClass class2 = new SchoolClass();
-            UUID class2Id = UUID.fromString("11111111-2222-3333-4444-555555555552");
-            class2.setId(class2Id);
-            class2.setTenantId(tenantId);
-            class2.setAcademicYearId(academicYearId);
-            class2.setGradeLevel("Grade 6");
-            class2.setSectionName("B");
-            class2.setRoomNumber("Room 205");
-            class2.setTotalCapacity(30);
-            schoolClassRepo.save(class2);
-
-            SchoolClass class3 = new SchoolClass();
-            UUID class3Id = UUID.fromString("11111111-2222-3333-4444-555555555553");
-            class3.setId(class3Id);
-            class3.setTenantId(tenantId);
-            class3.setAcademicYearId(academicYearId);
-            class3.setGradeLevel("Grade 5");
-            class3.setSectionName("A");
-            class3.setRoomNumber("Room 102");
-            class3.setTotalCapacity(25);
-            schoolClassRepo.save(class3);
-
-            System.out.println("Automated Seeder -> Synced premium SchoolClass entries!");
-
-            // Link existing students in the database to Class 1 (Grade 6 - A)
-            List<Student> seededStudents = studentRepo.findByTenantId(tenantId);
-            for (Student student : seededStudents) {
-                if ("Arjun".equals(student.getFirstName()) || "Ananya".equals(student.getFirstName())) {
-                    student.setSchoolClass(class1);
-                    studentRepo.save(student);
-                }
-            }
-            System.out.println("Automated Seeder -> Linked Arjun and Ananya to Grade 6 - A SchoolClass!");
         }
 
         // 5. Seed RewardItems if empty

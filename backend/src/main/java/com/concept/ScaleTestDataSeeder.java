@@ -6,8 +6,6 @@ import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.Student;
 import com.concept.shared.data.StudentRepository;
-import com.concept.shared.data.SchoolClass;
-import com.concept.shared.data.SchoolClassRepository;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
 import com.concept.user.UserRole;
@@ -34,8 +32,6 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
     @Autowired
     private StudentMetricRepository studentMetricRepository;
 
-    @Autowired
-    private SchoolClassRepository schoolClassRepository;
 
     @Autowired
     private ClassSectionRepository classSectionRepo;
@@ -99,7 +95,7 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
             );
         }
 
-        // 1. Seed SchoolClass and ClassSection layers from KG to 10th Standard (Sections A and B)
+        // 1. Seed ClassSection layers from KG to 10th Standard (Sections A and B)
         String[] grades = {"KG", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"};
         String[] sections = {"A", "B"};
         int roomCounter = 1;
@@ -124,13 +120,6 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
                     sectionId = UUID.nameUUIDFromBytes(("classsection-" + grade + "-" + section).getBytes());
                 }
 
-                if (!schoolClassRepository.existsById(classId)) {
-                    SchoolClass schoolClass = new SchoolClass(classId, grade, section, "Room " + (100 + roomCounter), 40);
-                    schoolClass.setTenantId(tenantId);
-                    schoolClass.setAcademicYearId(academicYearId);
-                    schoolClassRepository.save(schoolClass);
-                }
-
                 if (!classSectionRepo.existsById(sectionId)) {
                     ClassSection classSection = new ClassSection();
                     classSection.setId(sectionId);
@@ -147,12 +136,11 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
             }
         }
 
-        System.out.println(">> Scale Simulation Seeder -> 22 SchoolClass and ClassSection layers verified.");
+        System.out.println(">> Scale Simulation Seeder -> 22 ClassSection layers verified.");
 
-        // Fetch populated classes/sections to distribute students cleanly
-        List<SchoolClass> allSchoolClasses = schoolClassRepository.findAll();
+        // Fetch populated sections to distribute students cleanly
         List<ClassSection> allClassSections = classSectionRepo.findAll();
-        int numClasses = allSchoolClasses.size();
+        int numClasses = allClassSections.size();
 
         Random random = new Random(42);
         int[] rollCounters = new int[numClasses];
@@ -168,21 +156,18 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
             "Singh", "Gupta", "Sen", "Bose", "Choudhury", "Pillai", "Mishra", "Kumar", "Chawla", "Bhasin"
         };
 
-        // 2. Loop to insert 500 distinct Student entities distributed across SchoolClass instances
+        // 2. Loop to insert 500 distinct Student entities distributed across sections
         for (int i = 1; i <= 500; i++) {
             int classIndex = (i - 1) % numClasses;
-            SchoolClass schoolClass = allSchoolClasses.get(classIndex);
-            
-            ClassSection classSection = allClassSections.stream()
-                .filter(cs -> cs.getGradeName().equals(schoolClass.getGradeLevel()) && cs.getSectionName().equals(schoolClass.getSectionName()))
-                .findFirst()
-                .orElse(allClassSections.get(0));
-                
+            // One structure, so no name-matching between two of them and no
+            // silent fallback to whichever section happened to be first.
+            ClassSection classSection = allClassSections.get(classIndex);
+
             rollCounters[classIndex]++;
             int rollNumIndex = rollCounters[classIndex];
             
-            String gradeShort = schoolClass.getGradeLevel().replace("Grade ", "");
-            String rollNumber = gradeShort + schoolClass.getSectionName() + "-" + String.format("%02d", rollNumIndex);
+            String gradeShort = classSection.getGradeName().replace("Grade ", "");
+            String rollNumber = gradeShort + classSection.getSectionName() + "-" + String.format("%02d", rollNumIndex);
             
             UUID studentId = UUID.nameUUIDFromBytes(("student-scale-" + i).getBytes());
             String firstName = firstNames[(i - 1) % firstNames.length];
@@ -198,7 +183,6 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
                 student.setLastName(lastName);
                 student.setRollNumber(rollNumber);
                 student.setClassSection(classSection);
-                student.setSchoolClass(schoolClass);
                 studentRepository.save(student);
             }
 

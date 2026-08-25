@@ -1,13 +1,13 @@
 package com.concept.attendance.app;
 
+import com.concept.attendance.data.AttendanceClassSectionRepository;
 import com.concept.attendance.data.AttendanceRecordRepository;
 import com.concept.attendance.data.AttendanceStudentRepository;
 import com.concept.common.NotificationDeliveryService;
 import com.concept.shared.data.Attendance;
 import com.concept.shared.data.AttendanceStatus;
 import com.concept.shared.data.Parent;
-import com.concept.shared.data.SchoolClass;
-import com.concept.shared.data.SchoolClassRepository;
+import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.Student;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,16 +28,16 @@ public class AttendanceService {
 
     private final AttendanceStudentRepository studentRepository;
     private final AttendanceRecordRepository attendanceRepository;
-    private final SchoolClassRepository schoolClassRepository;
+    private final AttendanceClassSectionRepository classSectionRepository;
     private final NotificationDeliveryService notificationDeliveryService;
 
     public AttendanceService(AttendanceStudentRepository studentRepository,
                              AttendanceRecordRepository attendanceRepository,
-                             SchoolClassRepository schoolClassRepository,
+                             AttendanceClassSectionRepository classSectionRepository,
                              NotificationDeliveryService notificationDeliveryService) {
         this.studentRepository = studentRepository;
         this.attendanceRepository = attendanceRepository;
-        this.schoolClassRepository = schoolClassRepository;
+        this.classSectionRepository = classSectionRepository;
         this.notificationDeliveryService = notificationDeliveryService;
     }
 
@@ -49,10 +49,10 @@ public class AttendanceService {
      */
     @Transactional(readOnly = true)
     public AttendanceFormView buildForm(UUID tenantId, UUID classId) {
-        List<SchoolClass> classes = tenantId != null
-                ? schoolClassRepository.findByTenantId(tenantId) : Collections.emptyList();
+        List<ClassSection> classes = tenantId != null
+                ? classSectionRepository.findByTenantId(tenantId) : Collections.emptyList();
 
-        SchoolClass selected = null;
+        ClassSection selected = null;
         if (classId != null) {
             selected = classes.stream().filter(c -> c.getId().equals(classId)).findFirst().orElse(null);
         } else if (!classes.isEmpty()) {
@@ -61,7 +61,7 @@ public class AttendanceService {
 
         List<Student> students;
         if (selected != null) {
-            students = studentRepository.findBySchoolClassId(selected.getId());
+            students = studentRepository.findByClassSectionId(selected.getId());
         } else {
             students = tenantId != null ? studentRepository.findByTenantId(tenantId) : Collections.emptyList();
         }
@@ -130,7 +130,7 @@ public class AttendanceService {
         }
     }
 
-    private String label(SchoolClass c) {
-        return (c.getGradeLevel() + " - " + c.getSectionName()).trim();
+    private String label(ClassSection c) {
+        return (c.getGradeName() + " - " + c.getSectionName()).trim();
     }
 }

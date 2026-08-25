@@ -309,7 +309,7 @@
                     <label for="editSchoolClassId" class="field-label block">Class</label>
                     <select id="editSchoolClassId" name="schoolClassId" class="field">
                         <option th:each="cls : ${classList}" th:value="${cls.id}" th:text="${cls.label}"
-                                th:selected="${currentSchoolClassId != null and cls.id == currentSchoolClassId}">Grade 6 - A</option>
+                                th:selected="${currentClassSectionId != null and cls.id == currentClassSectionId}">Grade 6 - A</option>
                     </select>
                 </div>
                 <div class="pt-3 border-t" style="border-color:var(--line)">
