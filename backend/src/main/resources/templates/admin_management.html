@@ -270,7 +270,7 @@
                 <div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
                     <div class="p-6 border-b border-slate-200/60 flex justify-between items-center bg-[#F4F6FB]/90">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900 tracking-tight">Active Classrooms</h2>
+                            <h2 class="text-lg font-bold text-slate-900 tracking-tight" th:text="|Active ${school.levelPlural}|">Active Classrooms</h2>
                             <p class="text-xs text-slate-500 mt-0.5">Real-time enrollment rates and room assignment trackers</p>
                         </div>
                         <div class="flex items-center gap-2">
@@ -289,7 +289,7 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-[#F4F6FB]/40 text-slate-500 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200/40">
-                                    <th class="py-4 px-6">Grade / Section</th>
+                                    <th class="py-4 px-6" th:text="|${school.levelSingular} / Section|">Grade / Section</th>
                                     <th class="py-4 px-6">Room Number</th>
                                     <th class="py-4 px-6">Enrolled / Capacity</th>
                                     <th class="py-4 px-6">Roster Progress</th>
@@ -523,7 +523,7 @@
                     <div id="busRoutesList" class="space-y-3"></div>
 
                     <div class="border-t border-slate-200/60 pt-5">
-                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Assign Route to Classroom</h3>
+                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3" th:text="|Assign Route to ${school.levelSingular}|">Assign Route to Classroom</h3>
                         <div id="classSectionRouteList" class="space-y-2"></div>
                     </div>
                 </div>
@@ -617,7 +617,7 @@
             <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></div>
-                    <h3 class="text-sm font-bold text-white tracking-wider uppercase ml-1">Add Classroom</h3>
+                    <h3 class="text-sm font-bold text-white tracking-wider uppercase ml-1" th:text="|Add ${school.levelSingular}|">Add Classroom</h3>
                 </div>
                 <button onclick="closeAddClassroomModal()" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer p-1 rounded-lg hover:bg-white/50">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
@@ -626,7 +626,7 @@
 
             <form action="/web/admin/school-classes/add" method="POST" class="p-6 space-y-4 overflow-y-auto" onsubmit="showBtnLoading(this, 'Adding…')">
                 <div class="space-y-1">
-                    <label for="gradeLevel" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1">Grade Level</label>
+                    <label for="gradeLevel" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block px-1" th:text="|${school.levelSingular}|">Grade Level</label>
                     <input type="text" id="gradeLevel" name="gradeLevel" required placeholder="e.g. Grade 6"
                            class="w-full px-4 py-2.5 bg-[#F4F6FB]/60 border border-slate-200/80 rounded-xl text-slate-800 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
                 </div>

@@ -77,6 +77,19 @@
                     <input type="text" id="schoolName" class="form-input" autocomplete="organization" placeholder="Enter your school's name" required>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">School Type</label>
+                    <select id="schoolType" class="form-input" required>
+                        <option value="PRESCHOOL">Preschool (Pre-Nursery to UKG)</option>
+                        <option value="PRIMARY">Primary (Class 1 to 5)</option>
+                        <option value="SECONDARY" selected>Secondary (Class 6 to 12)</option>
+                        <option value="K10">K&ndash;10 (Nursery to Class 10)</option>
+                    </select>
+                    <p style="font-size:11px;color:#64748B;margin-top:5px;text-align:left">
+                        Sets what the school is called internally &mdash; levels or classes,
+                        activity areas or subjects &mdash; and which modules you see.
+                    </p>
+                </div>
+                <div class="form-group">
                     <label class="form-label">Subdomain</label>
                     <input type="text" id="subdomain" class="form-input" autocomplete="off" placeholder="e.g. your-school-name" required>
                 </div>
@@ -120,6 +133,7 @@
                 schoolName: document.getElementById('schoolName').value.trim(),
                 subdomain: document.getElementById('subdomain').value.trim().toLowerCase().replace(/\s+/g, '-'),
                 adminFullName: document.getElementById('adminFullName').value.trim(),
+                schoolType: document.getElementById('schoolType').value,
                 adminEmail: document.getElementById('adminEmail').value.trim(),
                 adminPassword: document.getElementById('adminPassword').value,
             };

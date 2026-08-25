@@ -274,10 +274,10 @@
             <div class="sidebar-item active" id="nav-home" data-tab="home">
                 <span class="tab-icon">🏠</span><span>Home</span>
             </div>
-            <div class="sidebar-item" id="nav-progress" data-tab="progress">
+            <div class="sidebar-item" id="nav-progress" data-tab="progress" th:if="${school.hasSyllabus}">
                 <span class="tab-icon">📊</span><span>Progress</span>
             </div>
-            <div class="sidebar-item" id="nav-quests" data-tab="quests">
+            <div class="sidebar-item" id="nav-quests" data-tab="quests" th:if="${school.hasHomeworkAndQuests}">
                 <span class="tab-icon">⚙️</span><span>Quests</span>
                 <span class="sidebar-badge hidden" id="quests-badge-sidebar"
                       th:text="${awaitingQuests != null ? awaitingQuests.size() : 0}"
@@ -399,12 +399,12 @@
 
                 <!-- Quick nav tiles -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="tab-quick-link glass-dark rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="progress">
+                    <div class="tab-quick-link glass-dark rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="progress" th:if="${school.hasSyllabus}">
                         <div class="text-2xl mb-2">📊</div>
                         <p class="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Progress</p>
                         <p class="text-[10px] text-slate-500 mt-0.5">Syllabus view</p>
                     </div>
-                    <div class="tab-quick-link glass-dark rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="quests">
+                    <div class="tab-quick-link glass-dark rounded-2xl p-4 text-center border border-transparent hover:border-indigo-500/25 transition-all cursor-pointer group" data-tab="quests" th:if="${school.hasHomeworkAndQuests}">
                         <div class="text-2xl mb-2">⚙️</div>
                         <p class="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Quests</p>
                         <p class="text-[10px] text-slate-500 mt-0.5">Approve &amp; deliver</p>
@@ -424,7 +424,7 @@
             </div><!-- /tab-home -->
 
             <!-- ████ TAB: PROGRESS ████ -->
-            <div id="tab-progress" class="tab-panel space-y-5">
+            <div id="tab-progress" class="tab-panel space-y-5" th:if="${school.hasSyllabus}">
 
                 <section th:each="student : ${students}"
                          th:id="'child-progress-section-' + ${student.id}"
@@ -477,7 +477,7 @@
             </div><!-- /tab-progress -->
 
             <!-- ████ TAB: QUESTS ████ -->
-            <div id="tab-quests" class="tab-panel space-y-5">
+            <div id="tab-quests" class="tab-panel space-y-5" th:if="${school.hasHomeworkAndQuests}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
@@ -816,10 +816,10 @@
         <div class="mobile-nav-item active" id="mobile-nav-home" data-tab="home">
             <span class="tab-icon">🏠</span><span>Home</span>
         </div>
-        <div class="mobile-nav-item" id="mobile-nav-progress" data-tab="progress">
+        <div class="mobile-nav-item" id="mobile-nav-progress" data-tab="progress" th:if="${school.hasSyllabus}">
             <span class="tab-icon">📊</span><span>Progress</span>
         </div>
-        <div class="mobile-nav-item" id="mobile-nav-quests" data-tab="quests">
+        <div class="mobile-nav-item" id="mobile-nav-quests" data-tab="quests" th:if="${school.hasHomeworkAndQuests}">
             <span class="tab-icon">⚙️</span><span>Quests</span>
             <span class="mobile-badge hidden" id="quests-badge-mobile"
                   th:text="${awaitingQuests != null ? awaitingQuests.size() : 0}"
