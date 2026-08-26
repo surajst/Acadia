@@ -105,6 +105,7 @@ async function registerStudent(page, firstName, lastName, roll) {
 
 test.describe.serial('Lifecycle of a self-onboarded school', () => {
   let school;
+  let principal;
   const created = [];
 
   // Signing up real schools would otherwise leave one behind per run, for ever.
@@ -354,6 +355,24 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
   test('admin sets a termly fee plan and the whole year is billed in instalments', async ({ page }) => {
     await login(page, school.adminEmail, PW);
 
+    // A self-onboarded school starts with one admin and no principal, so the
+    // approval gate has nobody to satisfy it. Appoint one first -- the server
+    // refuses the request outright otherwise, rather than queueing something
+    // that could never be granted.
+    const head = `head${school.suffix}@lifecycle.test`;
+    principal = await page.evaluate(async (email) => {
+      const invite = await (await fetch('/web/admin/staff/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ fullName: 'Head Teacher', email, role: 'PRINCIPAL' }).toString(),
+      })).json();
+      const staff = await (await fetch('/web/admin/staff')).json();
+      const row = staff.find(s => s.email === email);
+      await fetch(`/api/principal/staff/${row.id}/approve`, { method: 'POST' });
+      return { email, password: invite.temporaryPassword || invite.password };
+    }, head);
+    expect(principal.password, 'principal needs a usable password').toBeTruthy();
+
     // A brand-new school has no invoices at all, which makes the record count a
     // precise assertion. The student name alone is not: the page also renders a
     // dropdown of every student, so the name is present before any invoice exists.
@@ -395,6 +414,25 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await expect(page.locator('[data-plan-total]')).toContainText('22,000.00');
     await page.click('#feePlanForm button[type="submit"]');
 
+    // Setting a fee plan re-prices a whole grade, so it is not the admin's to
+    // do alone -- it waits for the principal. Asking must change nothing.
+    await expect(page.locator('body')).toContainText('Sent to the principal for approval');
+    await expect(page.locator('[data-plan-row]')).toHaveCount(0);
+
+    // The principal signs in and agrees. Only now does the plan exist.
+    await login(page, principal.email, principal.password);
+    const decided = await page.evaluate(async () => {
+      const queue = await (await fetch('/api/principal/approvals/pending')).json();
+      const res = await fetch(`/api/principal/approvals/${queue[0].requestId}/approve`,
+        { method: 'POST' });
+      return { queued: queue.length, summary: queue[0].summary, status: res.status };
+    });
+    expect(decided.queued).toBe(1);
+    expect(decided.summary).toContain('22000');
+    expect(decided.status).toBe(200);
+
+    await login(page, school.adminEmail, PW);
+    await page.goto('/web/admin/fees/settings');
     await expect(page.locator('[data-plan-row]')).toHaveCount(1);
     await expect(page.locator('[data-plan-annual]')).toContainText('22,000.00');
     await expect(page.locator('[data-plan-instalment]')).toHaveCount(3);
@@ -480,15 +518,32 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     });
     expect(overpay.text).toContain('more than');
 
-    // Now undo the 5,000 through the ledger's own control.
+    // Ask to undo the 5,000 through the ledger's own control. Reversing
+    // un-records cash the school already receipted, so the admin can only ask.
     await page.goto('/web/admin/fees');
     const reverseBtn = page.locator('[data-reverse-payment]').first();
     await expect(reverseBtn).toBeVisible();
     page.once('dialog', d => d.accept('Cheque bounced'));
     await reverseBtn.click();
 
+    // Asking changes nothing: the payment still stands and is still reversible.
     await page.goto('/web/admin/fees');
     await expect(page.locator('body')).not.toContainText('Something went wrong');
+    await expect(page.locator('[data-reverse-payment]')).toHaveCount(1);
+
+    // The principal agrees, and only then does the money move back.
+    await login(page, principal.email, principal.password);
+    const decided = await page.evaluate(async () => {
+      const queue = await (await fetch('/api/principal/approvals/pending')).json();
+      const res = await fetch(`/api/principal/approvals/${queue[0].requestId}/approve`,
+        { method: 'POST' });
+      return { summary: queue[0].summary, status: res.status };
+    });
+    expect(decided.summary).toContain('Reverse a payment');
+    expect(decided.status).toBe(200);
+
+    await login(page, school.adminEmail, PW);
+    await page.goto('/web/admin/fees');
     // The instalment is owed in full again, and nothing on the ledger is
     // showing a part payment any more.
     await expect(page.locator('table')).toContainText('10,000.00');

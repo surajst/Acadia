@@ -1,6 +1,6 @@
 package com.concept.tenant;
 
-import com.concept.academics.SubjectService;
+import com.concept.academics.app.SubjectService;
 import com.concept.common.AuditLogService;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
@@ -67,7 +67,8 @@ public class TenantOnboardingService {
 
     @Transactional
     public NewSchool createSchool(String schoolName, String subdomain, String adminEmail,
-                                   String adminPassword, String adminFullName) {
+                                   String adminPassword, String adminFullName,
+                                   SchoolType schoolType) {
         if (tenantRepository.existsBySubdomain(subdomain)) {
             throw new DuplicateSubdomainException(subdomain);
         }
@@ -81,6 +82,10 @@ public class TenantOnboardingService {
         tenant.setSubdomain(subdomain);
         tenant.setActive(true);
         tenant.setTier(TenantTier.FULL_SMS);
+        // Null would resolve to SECONDARY anyway, but recording what the school
+        // told us is not the same as falling back -- the difference matters when
+        // asking later why a tenant is set the way it is.
+        tenant.setSchoolType(schoolType == null ? SchoolType.SECONDARY : schoolType);
         tenant.setCreatedAt(Instant.now());
         tenant.setOnboardingCompleted(false);
         tenantRepository.save(tenant);

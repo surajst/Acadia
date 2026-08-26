@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
 @Service
 public class MessagingService {
 
-    private final MsgConversationRepository conversationRepository;
-    private final MsgMessageRepository messageRepository;
+    private final ConversationRepository conversationRepository;
+    private final MessageRepository messageRepository;
     private final MsgNotificationRepository notificationRepository;
     private final MsgStudentRepository studentRepository;
     private final MsgUserRepository userRepository;
@@ -49,8 +49,8 @@ public class MessagingService {
     private final TranslationService translationService;
     private final SpeechService speechService;
 
-    public MessagingService(MsgConversationRepository conversationRepository,
-                            MsgMessageRepository messageRepository,
+    public MessagingService(ConversationRepository conversationRepository,
+                            MessageRepository messageRepository,
                             MsgNotificationRepository notificationRepository,
                             MsgStudentRepository studentRepository,
                             MsgUserRepository userRepository,
@@ -256,6 +256,10 @@ public class MessagingService {
     private Message ownMessage(String email, UUID conversationId, UUID messageId) {
         User me = me(email);
         accessibleConversation(conversationId, me); // throws if not accessible
+        // Safe without a tenant clause, unusually for a findById: the line above
+        // has already proved this caller may read this conversation, and the
+        // check below proves the message belongs to it. Message is scoped
+        // through its conversation, which is the tenant-scoped aggregate root.
         Message message = messageRepository.findById(messageId).orElse(null);
         if (message == null || !message.getConversationId().equals(conversationId)) {
             throw MessagingException.badRequest("Message not found");

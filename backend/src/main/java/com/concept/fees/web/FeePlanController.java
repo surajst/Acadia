@@ -1,5 +1,6 @@
 package com.concept.fees.web;
 
+import com.concept.fees.app.FeePlanChangeRequestService;
 import com.concept.fees.app.FeePlanService;
 import com.concept.fees.app.FeePlanView;
 import com.concept.tenant.TenantContext;
@@ -27,10 +28,14 @@ import java.util.UUID;
 public class FeePlanController {
 
     private final FeePlanService feePlanService;
+    private final FeePlanChangeRequestService changeRequestService;
     private final TenantContext tenantContext;
 
-    public FeePlanController(FeePlanService feePlanService, TenantContext tenantContext) {
+    public FeePlanController(FeePlanService feePlanService,
+                             FeePlanChangeRequestService changeRequestService,
+                             TenantContext tenantContext) {
         this.feePlanService = feePlanService;
+        this.changeRequestService = changeRequestService;
         this.tenantContext = tenantContext;
     }
 
@@ -69,11 +74,13 @@ public class FeePlanController {
             for (int i = 0; i < labels.size(); i++) {
                 specs.add(new FeePlanService.InstalmentSpec(labels.get(i), amounts.get(i), offsets.get(i)));
             }
-            feePlanService.savePlan(gradeLevel, specs,
+            changeRequestService.requestPlanSave(gradeLevel, specs,
                     tenantContext.getTenantId().orElse(null),
                     tenantContext.getAcademicYearId().orElse(null),
                     authentication);
-            ra.addFlashAttribute("successMessage", "Fee plan saved for " + gradeLevel.trim() + ".");
+            ra.addFlashAttribute("successMessage",
+                    "Sent to the principal for approval. The current plan for " + gradeLevel.trim()
+                            + " is unchanged until they agree.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -85,8 +92,9 @@ public class FeePlanController {
     public String deletePlan(@PathVariable("id") UUID id, Authentication authentication,
                              RedirectAttributes ra) {
         try {
-            feePlanService.deletePlan(id, tenantContext.getTenantId().orElse(null), authentication);
-            ra.addFlashAttribute("successMessage", "Fee plan removed.");
+            changeRequestService.requestPlanDelete(id, tenantContext.getTenantId().orElse(null), authentication);
+            ra.addFlashAttribute("successMessage",
+                    "Sent to the principal for approval. The plan is still in place until they agree.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }

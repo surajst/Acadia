@@ -41,6 +41,29 @@ public class Student extends BaseTenantEntity {
     @Column(name = "user_id")
     private UUID userId;
 
+    /**
+     * Date of birth. Optional, because most of the roster predates the column
+     * and a required field would block editing every existing child. A
+     * preschool groups by age band and is usually required to hold this.
+     */
+    @Column(name = "date_of_birth")
+    private java.time.LocalDate dateOfBirth;
+
+    /**
+     * Allergies, dietary needs and anything a teacher must know before handing
+     * this child food or medicine. Free text on purpose: a coded list would be
+     * wrong more often than right, and the cost of a wrong code here is a
+     * child eating something they should not.
+     */
+    @Column(name = "medical_notes", length = 1000)
+    private String medicalNotes;
+
+    @Column(name = "emergency_contact_name")
+    private String emergencyContactName;
+
+    @Column(name = "emergency_contact_phone", length = 32)
+    private String emergencyContactPhone;
+
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
 
@@ -63,12 +86,7 @@ public class Student extends BaseTenantEntity {
     public ClassSection getClassSection() { return classSection; }
     public void setClassSection(ClassSection classSection) { this.classSection = classSection; }
 
-    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "school_class_id")
-    private SchoolClass schoolClass;
 
-    public SchoolClass getSchoolClass() { return schoolClass; }
-    public void setSchoolClass(SchoolClass schoolClass) { this.schoolClass = schoolClass; }
 
     @ManyToMany
     @JoinTable(
@@ -88,4 +106,16 @@ public class Student extends BaseTenantEntity {
     public void setAdmissionDate(java.time.LocalDate admissionDate) {
         this.admissionDate = admissionDate;
     }
+
+    public java.time.LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(java.time.LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+
+    public String getMedicalNotes() { return medicalNotes; }
+    public void setMedicalNotes(String medicalNotes) { this.medicalNotes = medicalNotes; }
+
+    public String getEmergencyContactName() { return emergencyContactName; }
+    public void setEmergencyContactName(String emergencyContactName) { this.emergencyContactName = emergencyContactName; }
+
+    public String getEmergencyContactPhone() { return emergencyContactPhone; }
+    public void setEmergencyContactPhone(String emergencyContactPhone) { this.emergencyContactPhone = emergencyContactPhone; }
 }

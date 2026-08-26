@@ -20,9 +20,9 @@ import java.util.UUID;
 @Repository
 public interface DashboardStudentRepository extends JpaRepository<Student, UUID> {
 
-    List<Student> findBySchoolClassId(UUID schoolClassId);
+    List<Student> findByClassSectionId(UUID schoolClassId);
 
-    Page<Student> findBySchoolClassId(UUID schoolClassId, Pageable pageable);
+    Page<Student> findByClassSectionId(UUID schoolClassId, Pageable pageable);
 
     Page<Student> findByClassSectionIn(List<ClassSection> classSections, Pageable pageable);
 

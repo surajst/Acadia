@@ -47,6 +47,14 @@ public class FeeInvoice extends BaseTenantEntity {
     private FeeWaiverStatus waiverStatus = FeeWaiverStatus.NONE;
 
     /**
+     * Who asked for the waiver. Stored on the invoice, not just in the audit
+     * log, because {@code decideWaiver} has to compare against it -- a trail
+     * nothing reads back cannot stop anyone.
+     */
+    @Column(name = "waiver_requested_by_user_id")
+    private UUID waiverRequestedByUserId;
+
+    /**
      * What the grade's fee structure said at the time this invoice was raised,
      * kept only when the admin billed something different.
      *
@@ -193,6 +201,14 @@ public class FeeInvoice extends BaseTenantEntity {
 
     public void setWaiverStatus(FeeWaiverStatus waiverStatus) {
         this.waiverStatus = waiverStatus;
+    }
+
+    public UUID getWaiverRequestedByUserId() {
+        return waiverRequestedByUserId;
+    }
+
+    public void setWaiverRequestedByUserId(UUID waiverRequestedByUserId) {
+        this.waiverRequestedByUserId = waiverRequestedByUserId;
     }
 
     public BigDecimal getBaseAmount() {

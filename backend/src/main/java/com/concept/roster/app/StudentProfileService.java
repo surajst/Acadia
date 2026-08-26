@@ -1,13 +1,12 @@
 package com.concept.roster.app;
 
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.roster.data.RosterClassSectionRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.shared.data.AttendanceRepository;
 import com.concept.shared.data.AttendanceStatus;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.Parent;
-import com.concept.shared.data.SchoolClass;
-import com.concept.shared.data.SchoolClassRepository;
 import com.concept.shared.data.Student;
 import com.concept.roster.data.RosterStudentRepository;
 import org.springframework.stereotype.Service;
@@ -31,18 +30,21 @@ public class StudentProfileService {
     private final RosterStudentRepository studentRepository;
     private final StudentMetricRepository studentMetricRepository;
     private final AttendanceRepository attendanceRepository;
-    private final SchoolClassRepository schoolClassRepository;
+    private final RosterClassSectionRepository classSectionRepository;
+    private final PickupContactService pickupContactService;
     private final com.concept.user.UserRepository userRepository;
 
     public StudentProfileService(RosterStudentRepository studentRepository,
                                  StudentMetricRepository studentMetricRepository,
                                  AttendanceRepository attendanceRepository,
-                                 SchoolClassRepository schoolClassRepository,
+                                 RosterClassSectionRepository classSectionRepository,
+                                 PickupContactService pickupContactService,
                                  com.concept.user.UserRepository userRepository) {
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.attendanceRepository = attendanceRepository;
-        this.schoolClassRepository = schoolClassRepository;
+        this.classSectionRepository = classSectionRepository;
+        this.pickupContactService = pickupContactService;
         this.userRepository = userRepository;
     }
 
@@ -82,10 +84,10 @@ public class StudentProfileService {
         }
 
         List<ClassOption> classList = tenantId == null ? Collections.emptyList()
-                : schoolClassRepository.findByTenantId(tenantId).stream()
+                : classSectionRepository.findByTenantId(tenantId).stream()
                         .map(this::toOption)
                         .collect(Collectors.toList());
-        UUID currentSchoolClassId = student.getSchoolClass() != null ? student.getSchoolClass().getId() : null;
+        UUID currentClassSectionId = student.getClassSection() != null ? student.getClassSection().getId() : null;
 
         return new StudentProfileView(
                 student.getId(),
@@ -109,9 +111,15 @@ public class StudentProfileService {
                 guardianCount,
                 activeStreak,
                 classList,
-                currentSchoolClassId,
+                currentClassSectionId,
                 loginUsername(student.getUserId(), tenantId),
-                primaryGuardian == null ? null : loginUsername(primaryGuardian.getUserId(), tenantId));
+                primaryGuardian == null ? null : loginUsername(primaryGuardian.getUserId(), tenantId),
+                student.getDateOfBirth(),
+                ageIn(student.getDateOfBirth()),
+                student.getMedicalNotes(),
+                student.getEmergencyContactName(),
+                student.getEmergencyContactPhone(),
+                pickupContactService.forStudent(student.getId(), tenantId));
     }
 
     /**
@@ -128,7 +136,19 @@ public class StudentProfileService {
                 .map(com.concept.user.User::getEmail).orElse(null);
     }
 
-    private ClassOption toOption(SchoolClass c) {
-        return new ClassOption(c.getId(), (c.getGradeLevel() + " - " + c.getSectionName()).trim());
+    private ClassOption toOption(ClassSection c) {
+        return new ClassOption(c.getId(), (c.getGradeName() + " - " + c.getSectionName()).trim());
+    }
+
+    /**
+     * Age in whole years, or null when no date of birth is on file. Computed
+     * rather than stored: an age column is wrong the day after it is written,
+     * and a preschool grouping children by age band needs today's answer.
+     */
+    private static Integer ageIn(java.time.LocalDate dateOfBirth) {
+        if (dateOfBirth == null) {
+            return null;
+        }
+        return (int) java.time.temporal.ChronoUnit.YEARS.between(dateOfBirth, java.time.LocalDate.now());
     }
 }

@@ -31,9 +31,9 @@ public class DemoTestHarness implements CommandLineRunner {
     private final ClassSectionRepository classSectionRepository;
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
-    private final com.concept.academics.MathChapterRepository mathChapterRepository;
-    private final com.concept.academics.MathSkillRepository mathSkillRepository;
-    private final com.concept.academics.StudentMetricRepository studentMetricRepository;
+    private final com.concept.academics.data.MathChapterRepository mathChapterRepository;
+    private final com.concept.academics.data.MathSkillRepository mathSkillRepository;
+    private final com.concept.academics.data.StudentMetricRepository studentMetricRepository;
     private final com.concept.parent.data.ParentQuestRepository parentQuestRepository;
     private final com.concept.parent.data.ParentRewardRepository parentRewardRepository;
     private final JdbcTemplate jdbcTemplate;
@@ -45,9 +45,9 @@ public class DemoTestHarness implements CommandLineRunner {
                            ClassSectionRepository classSectionRepository,
                            StudentRepository studentRepository,
                            ParentRepository parentRepository,
-                           com.concept.academics.MathChapterRepository mathChapterRepository,
-                           com.concept.academics.MathSkillRepository mathSkillRepository,
-                           com.concept.academics.StudentMetricRepository studentMetricRepository,
+                           com.concept.academics.data.MathChapterRepository mathChapterRepository,
+                           com.concept.academics.data.MathSkillRepository mathSkillRepository,
+                           com.concept.academics.data.StudentMetricRepository studentMetricRepository,
                            com.concept.parent.data.ParentQuestRepository parentQuestRepository,
                            com.concept.parent.data.ParentRewardRepository parentRewardRepository,
                            JdbcTemplate jdbcTemplate,
@@ -204,7 +204,7 @@ public class DemoTestHarness implements CommandLineRunner {
             studentRepository.save(s3);
 
             System.out.println(">> Seeding Math Chapters and Skills...");
-            com.concept.academics.MathChapter ch1 = new com.concept.academics.MathChapter();
+            com.concept.academics.data.MathChapter ch1 = new com.concept.academics.data.MathChapter();
             ch1.setId(UUID.randomUUID());
             ch1.setTenantId(activeTenantId);
             ch1.setAcademicYearId(activeAcademicYearId);
@@ -213,7 +213,7 @@ public class DemoTestHarness implements CommandLineRunner {
             mathChapterRepository.save(ch1);
 
             for (int i=1; i<=3; i++) {
-                com.concept.academics.MathSkill skill = new com.concept.academics.MathSkill();
+                com.concept.academics.data.MathSkill skill = new com.concept.academics.data.MathSkill();
                 skill.setId(UUID.randomUUID());
                 skill.setTenantId(activeTenantId);
                 skill.setAcademicYearId(activeAcademicYearId);
@@ -223,7 +223,7 @@ public class DemoTestHarness implements CommandLineRunner {
                 mathSkillRepository.save(skill);
             }
 
-            com.concept.academics.MathChapter ch2 = new com.concept.academics.MathChapter();
+            com.concept.academics.data.MathChapter ch2 = new com.concept.academics.data.MathChapter();
             ch2.setId(UUID.randomUUID());
             ch2.setTenantId(activeTenantId);
             ch2.setAcademicYearId(activeAcademicYearId);
@@ -232,7 +232,7 @@ public class DemoTestHarness implements CommandLineRunner {
             mathChapterRepository.save(ch2);
 
             for (int i=1; i<=3; i++) {
-                com.concept.academics.MathSkill skill = new com.concept.academics.MathSkill();
+                com.concept.academics.data.MathSkill skill = new com.concept.academics.data.MathSkill();
                 skill.setId(UUID.randomUUID());
                 skill.setTenantId(activeTenantId);
                 skill.setAcademicYearId(activeAcademicYearId);
@@ -244,7 +244,7 @@ public class DemoTestHarness implements CommandLineRunner {
 
             System.out.println(">> Seeding Student Metrics, Quests, and Rewards...");
             for (Student s : new Student[]{s1, s2, s3}) {
-                com.concept.academics.StudentMetric sm = new com.concept.academics.StudentMetric();
+                com.concept.academics.data.StudentMetric sm = new com.concept.academics.data.StudentMetric();
                 sm.setId(UUID.randomUUID());
                 sm.setTenantId(activeTenantId);
                 sm.setAcademicYearId(activeAcademicYearId);

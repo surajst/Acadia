@@ -12,5 +12,5 @@ public interface ConsoleStudentRepository extends JpaRepository<Student, UUID> {
 
     long countByTenantId(UUID tenantId);
 
-    long countBySchoolClassId(UUID schoolClassId);
+    long countByClassSectionId(UUID schoolClassId);
 }

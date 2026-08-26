@@ -120,8 +120,8 @@ public class FeeReportService {
     private DefaulterRow toDefaulterRow(FeeInvoice inv, Student student, LocalDate today) {
         String name = student != null ? student.getFirstName() + " " + student.getLastName() : "Unknown Student";
         String roll = student != null && student.getRollNumber() != null ? student.getRollNumber() : "--";
-        String grade = student != null && student.getSchoolClass() != null
-                ? student.getSchoolClass().getGradeLevel() : "--";
+        String grade = student != null && student.getClassSection() != null
+                ? student.getClassSection().getGradeName() : "--";
         long days = java.time.temporal.ChronoUnit.DAYS.between(inv.getDueDate(), today);
         return new DefaulterRow(inv.getStudentId(), name, roll, grade,
                 inv.getInstalmentLabel(), inv.getAmountDue(), inv.getDueDate(), days);

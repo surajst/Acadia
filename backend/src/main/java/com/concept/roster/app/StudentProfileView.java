@@ -29,7 +29,7 @@ public record StudentProfileView(
         int guardianCount,
         int householdStreak,
         List<ClassOption> classList,
-        UUID currentSchoolClassId,
+        UUID currentClassSectionId,
         /**
          * Sign-in usernames, shown on the profile so an admin can tell a family
          * how to log in without having to reset the password to find out. Only
@@ -37,5 +37,11 @@ public record StudentProfileView(
          * design, which is why the profile offers "reset" rather than "reveal".
          */
         String studentLoginUsername,
-        String guardianLoginUsername
+        String guardianLoginUsername,
+        java.time.LocalDate dateOfBirth,
+        Integer ageYears,
+        String medicalNotes,
+        String emergencyContactName,
+        String emergencyContactPhone,
+        java.util.List<PickupContactService.Row> pickupContacts
 ) {}

@@ -1,15 +1,13 @@
 package com.concept.roster.app;
 
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.common.AuditLogService;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.Parent;
-import com.concept.shared.data.SchoolClass;
 import com.concept.shared.data.Student;
 import com.concept.roster.data.RosterClassSectionRepository;
 import com.concept.roster.data.RosterParentRepository;
-import com.concept.roster.data.RosterSchoolClassRepository;
 import com.concept.roster.data.RosterStudentPurger;
 import com.concept.roster.data.RosterStudentRepository;
 import com.concept.roster.data.RosterUserRepository;
@@ -42,7 +40,6 @@ public class StudentAdminService {
     private final RosterStudentRepository studentRepository;
     private final RosterParentRepository parentRepository;
     private final RosterUserRepository userRepository;
-    private final RosterSchoolClassRepository schoolClassRepository;
     private final RosterClassSectionRepository classSectionRepository;
     private final RosterStudentPurger studentPurger;
     private final StudentMetricRepository studentMetricRepository;
@@ -53,7 +50,6 @@ public class StudentAdminService {
     public StudentAdminService(RosterStudentRepository studentRepository,
                                RosterParentRepository parentRepository,
                                RosterUserRepository userRepository,
-                               RosterSchoolClassRepository schoolClassRepository,
                                RosterClassSectionRepository classSectionRepository,
                                RosterStudentPurger studentPurger,
                                StudentMetricRepository studentMetricRepository,
@@ -63,7 +59,6 @@ public class StudentAdminService {
         this.studentRepository = studentRepository;
         this.parentRepository = parentRepository;
         this.userRepository = userRepository;
-        this.schoolClassRepository = schoolClassRepository;
         this.classSectionRepository = classSectionRepository;
         this.studentPurger = studentPurger;
         this.studentMetricRepository = studentMetricRepository;
@@ -228,6 +223,7 @@ public class StudentAdminService {
     public Optional<String> updateStudent(UUID id, UUID tenantId, UUID academicYearId,
                                           String firstName, String lastName, String rollNumber, UUID schoolClassId,
                                           String guardianFirstName, String guardianLastName, String guardianPhone,
+                                          ChildDetails details,
                                           Authentication authentication) {
         Student student = studentRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new StudentProfileNotFoundException(id));
@@ -238,15 +234,14 @@ public class StudentAdminService {
         student.setFirstName(firstName.trim());
         student.setLastName(lastName.trim());
         student.setRollNumber(rollNumber.trim());
-        // Optional class move: re-point the student to another classroom (tenant-scoped),
-        // resolving the matching ClassSection so rosters/profile stay consistent.
+        applyChildDetails(student, details);
+        // Optional class move. One link to set now, so there is no second
+        // structure to keep in step -- and an id belonging to another school
+        // fails rather than leaving the student where they were.
         if (schoolClassId != null) {
-            schoolClassRepository.findByIdAndTenantId(schoolClassId, tenantId).ifPresent(sc -> {
-                student.setSchoolClass(sc);
-                classSectionRepository
-                        .findByTenantIdAndGradeNameAndSectionName(tenantId, sc.getGradeLevel(), sc.getSectionName())
-                        .ifPresent(student::setClassSection);
-            });
+            ClassSection destination = classSectionRepository.findByIdAndTenantId(schoolClassId, tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("Class not found: " + schoolClassId));
+            student.setClassSection(destination);
         }
         studentRepository.save(student);
         auditLogService.log(authentication, "STUDENT_UPDATED", "Student", student.getId(),
@@ -396,25 +391,13 @@ public class StudentAdminService {
     /** Core student creation + zeroed metric seed (tenant-scoped classroom resolve). */
     private Student createStudent(String firstName, String lastName, String rollNumber, UUID schoolClassId,
                                   String loginEmail, String loginPassword, UUID tenantId, UUID academicYearId) {
-        SchoolClass schoolClass = schoolClassRepository.findByIdAndTenantId(schoolClassId, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Classroom not found: " + schoolClassId));
-
-        ClassSection classSection = classSectionRepository
-                .findByTenantIdAndGradeNameAndSectionName(tenantId, schoolClass.getGradeLevel(), schoolClass.getSectionName())
-                .orElseGet(() -> {
-                    List<ClassSection> sections = tenantId != null ? classSectionRepository.findByTenantId(tenantId) : List.of();
-                    if (!sections.isEmpty()) {
-                        return sections.get(0);
-                    }
-                    ClassSection cs = new ClassSection();
-                    cs.setId(UUID.randomUUID());
-                    cs.setTenantId(tenantId);
-                    cs.setAcademicYearId(academicYearId);
-                    cs.setGradeName(schoolClass.getGradeLevel());
-                    cs.setSectionName(schoolClass.getSectionName());
-                    cs.setRoomNumber(schoolClass.getRoomNumber());
-                    return classSectionRepository.save(cs);
-                });
+        // The class the admin picked, and nothing else. This used to resolve a
+        // SchoolClass and then hunt for a ClassSection with a matching name,
+        // falling back to "the tenant's first section" when none matched -- so
+        // a child registered into UKG-A could be filed into Nursery-A, and
+        // attendance, messaging and the timetable all followed them there.
+        ClassSection classSection = classSectionRepository.findByIdAndTenantId(schoolClassId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found: " + schoolClassId));
 
         Student student = new Student();
         student.setId(UUID.randomUUID());
@@ -423,7 +406,6 @@ public class StudentAdminService {
         student.setFirstName(firstName);
         student.setLastName(lastName);
         student.setRollNumber(rollNumber);
-        student.setSchoolClass(schoolClass);
         student.setClassSection(classSection);
 
         if (loginEmail != null && !loginEmail.isBlank() && loginPassword != null && !loginPassword.isBlank()) {
@@ -534,5 +516,25 @@ public class StudentAdminService {
         StringBuilder p = new StringBuilder();
         for (int i = 0; i < 10; i++) p.append(chars.charAt(rnd.nextInt(chars.length())));
         return p.append("!9").toString();
+    }
+
+    /**
+     * Writes the safety record. Blank is stored as null rather than an empty
+     * string so "no allergies recorded" and "" cannot be told apart by accident
+     * -- and a null {@code details} leaves everything as it was, for callers
+     * that are not editing these fields at all.
+     */
+    private void applyChildDetails(Student student, ChildDetails details) {
+        if (details == null) {
+            return;
+        }
+        student.setDateOfBirth(details.dateOfBirth());
+        student.setMedicalNotes(blankToNull(details.medicalNotes()));
+        student.setEmergencyContactName(blankToNull(details.emergencyContactName()));
+        student.setEmergencyContactPhone(blankToNull(details.emergencyContactPhone()));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

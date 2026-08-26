@@ -1,9 +1,10 @@
 package com.concept.student.app;
 
-import com.concept.academics.MathSkill;
-import com.concept.academics.MathSkillRepository;
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.common.GradeLevel;
+import com.concept.academics.data.MathSkill;
+import com.concept.academics.data.MathSkillRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.shared.data.AcademicSubmission;
 import com.concept.shared.data.AcademicSubmissionRepository;
 import com.concept.shared.data.Attendance;
@@ -257,11 +258,9 @@ public class StudentService {
     // ─── helpers ────────────────────────────────────────────────────────────
 
     private int extractStandard(Student student) {
-        try {
-            String grade = student.getClassSection().getGradeName();
-            return Integer.parseInt(grade.replaceAll("[^0-9]", ""));
-        } catch (Exception e) {
-            return 6;
+        if (student.getClassSection() == null) {
+            return GradeLevel.UNKNOWN;
         }
+        return GradeLevel.parse(student.getClassSection().getGradeName());
     }
 }

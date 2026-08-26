@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -64,6 +65,21 @@ public class GlobalExceptionHandler {
      * handler catches every one of them first — verified against a running app
      * pointed at a local collector: without this call, nothing was sent.
      */
+    /**
+     * A refused permission is not a server fault.
+     *
+     * <p>Without this, the catch-all below swallowed AccessDeniedException and
+     * rendered a 500 -- so every method-level {@code @PreAuthorize} denial
+     * looked like a crash, logged a stack trace, and was reported to Sentry as
+     * a defect. Rethrowing lets Spring Security's ExceptionTranslationFilter do
+     * its job: 403 for a signed-in user, a redirect to the login page for an
+     * anonymous one.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public void handleAccessDenied(AccessDeniedException ex) {
+        throw ex;
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public String handleGlobalException(Exception ex, Model model) {

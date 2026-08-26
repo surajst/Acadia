@@ -15,6 +15,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.concept.user.CurrentUserService;
+
 import java.util.UUID;
 
 @Service
@@ -32,6 +34,9 @@ public class FeeManagementService {
 
     @Autowired
     private AuditLogService auditLogService;
+
+    @Autowired
+    private CurrentUserService currentUserService;
 
     /**
      * Read-only school-wide fee rollup — used by the PRINCIPAL oversight
@@ -154,6 +159,7 @@ public class FeeManagementService {
         invoice.setWaiverAmount(waiverAmount);
         invoice.setWaiverReason(reason);
         invoice.setWaiverStatus(FeeInvoice.FeeWaiverStatus.PENDING);
+        invoice.setWaiverRequestedByUserId(currentUserId(authentication));
         feeInvoiceRepository.saveAndFlush(invoice);
 
         auditLogService.log(authentication, "FEE_WAIVER_REQUESTED", "FeeInvoice", invoiceId,
@@ -169,6 +175,17 @@ public class FeeManagementService {
 
         if (invoice.getWaiverStatus() != FeeInvoice.FeeWaiverStatus.PENDING) {
             throw new IllegalArgumentException("This invoice has no pending waiver request");
+        }
+
+        // The approve endpoint is open to ADMIN as well as PRINCIPAL, and the
+        // request endpoint is ADMIN-only -- so without this the requester is
+        // also an eligible approver and the two-step flow decides nothing.
+        // Rejecting your own request is allowed: withdrawing costs the school
+        // nothing, and forbidding it would strand a request its author regrets.
+        UUID actorId = currentUserId(authentication);
+        if (approve && actorId != null && actorId.equals(invoice.getWaiverRequestedByUserId())) {
+            throw new IllegalArgumentException(
+                    "You requested this waiver, so it needs a different admin or the principal to approve it.");
         }
 
         invoice.setWaiverStatus(approve ? FeeInvoice.FeeWaiverStatus.APPROVED : FeeInvoice.FeeWaiverStatus.REJECTED);
@@ -238,8 +255,17 @@ public class FeeManagementService {
      * first one to still exist.
      */
     @Transactional
-    public void reversePayment(UUID transactionId, String reason, UUID currentTenantId,
-                               Authentication authentication) {
+    /**
+     * Checks a proposed reversal without writing anything.
+     *
+     * <p>Run both when the admin asks and again when the principal approves.
+     * At request time so a hopeless request is refused while someone can still
+     * fix it; at approval time because a payment can be reversed by another
+     * route while this one waits in the queue.
+     *
+     * @return the payment that would be reversed, which the summary quotes
+     */
+    public FeeTransaction validateReversalRequest(UUID transactionId, String reason, UUID currentTenantId) {
         String why = reason == null ? "" : reason.trim();
         if (why.isEmpty()) {
             throw new IllegalArgumentException("A reason is required to reverse a payment.");
@@ -254,6 +280,20 @@ public class FeeManagementService {
         if (feeTransactionRepository.existsByReversesTransactionId(transactionId)) {
             throw new IllegalArgumentException("That payment has already been reversed.");
         }
+        return original;
+    }
+
+    /**
+     * Carries out a reversal. Named "Approved" because reaching it means a
+     * principal has already agreed: the admin-facing route raises an
+     * ApprovalRequest instead of calling this. The guards below run here, at
+     * approval time, so a payment reversed by another route in the meantime is
+     * caught rather than double-reversed.
+     */
+    public void reversePaymentApproved(UUID transactionId, String reason, UUID currentTenantId,
+                                       Authentication authentication) {
+        String why = reason == null ? "" : reason.trim();
+        FeeTransaction original = validateReversalRequest(transactionId, reason, currentTenantId);
 
         FeeInvoice invoice = feeInvoiceRepository.findByIdAndTenantId(original.getInvoiceId(), currentTenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Invoice not found."));
@@ -277,5 +317,14 @@ public class FeeManagementService {
 
         auditLogService.log(authentication, "FEE_PAYMENT_REVERSED", "FeeInvoice", invoice.getId(),
                 "Reversed a payment of " + original.getAmountPaid() + " — " + why);
+    }
+
+    /**
+     * The acting user's id, or null when it cannot be resolved. A null here
+     * means the self-approval check cannot fire -- see decideWaiver, where the
+     * comparison is skipped rather than guessed at.
+     */
+    private UUID currentUserId(Authentication authentication) {
+        return currentUserService.getCurrentUser(authentication).map(u -> u.getId()).orElse(null);
     }
 }

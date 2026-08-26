@@ -1,5 +1,6 @@
 package com.concept.tasks.app;
 
+import com.concept.common.GradeLevel;
 import com.concept.common.NotificationDeliveryService;
 import com.concept.shared.data.AcademicSubmission;
 import com.concept.shared.data.AcademicSubmissionRepository;
@@ -179,8 +180,9 @@ public class TasksService {
         return teacherTaskService.getTasksForStudent(student.getId(), extractStandard(student), student.getTenantId());
     }
 
-    public Object taskQuestions(UUID taskId) {
-        return teacherTaskService.getQuestionsForTask(taskId);
+    public Object taskQuestions(UUID taskId, Authentication authentication) {
+        Student student = requireStudent(authentication);
+        return teacherTaskService.getQuestionsForTask(taskId, student.getTenantId());
     }
 
     // ─── Attendance (teacher) ───────────────────────────────────────────────
@@ -268,13 +270,20 @@ public class TasksService {
         submissionRepository.save(new AcademicSubmission(studentId, skillName, xpBounty));
     }
 
-    public Object pendingSubmissions() {
-        return submissionRepository.findByStatus("PENDING");
+    /**
+     * The review queue for one school. Scoped by tenant because this is a
+     * listing: an unscoped findByStatus returns every school's pending
+     * submissions to whichever teacher happens to ask, with no id to guess.
+     */
+    public Object pendingSubmissions(UUID tenantId) {
+        return submissionRepository.findByStatusAndStudentTenantId("PENDING", tenantId);
     }
 
     @Transactional
-    public String approveXp(UUID submissionId) {
-        AcademicSubmission submission = submissionRepository.findById(submissionId)
+    public String approveXp(UUID submissionId, UUID tenantId) {
+        // Resolved through the caller's tenant, so an id belonging to another
+        // school reads as "not found" rather than being approved.
+        AcademicSubmission submission = submissionRepository.findByIdAndStudentTenantId(submissionId, tenantId)
                 .orElseThrow(() -> TasksException.notFound(""));
         if (!"PENDING".equals(submission.getStatus())) {
             throw TasksException.badRequest("This task has already been processed.");
@@ -296,12 +305,10 @@ public class TasksService {
     }
 
     private int extractStandard(Student student) {
-        try {
-            String grade = student.getClassSection().getGradeName();
-            return Integer.parseInt(grade.replaceAll("[^0-9]", ""));
-        } catch (Exception e) {
-            return 6;
+        if (student.getClassSection() == null) {
+            return GradeLevel.UNKNOWN;
         }
+        return GradeLevel.parse(student.getClassSection().getGradeName());
     }
 
     private TeacherTaskRequest toManagementRequest(CreateTaskRequest req) {

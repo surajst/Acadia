@@ -56,10 +56,16 @@ public class FeePlanService {
      * to an admin, and splitting it turns an edit into a duplicate-key error.
      */
     @Transactional
-    public FeePlan savePlan(String gradeLevel, List<InstalmentSpec> instalments,
-                            UUID tenantId, UUID academicYearId, Authentication authentication) {
-        requireScope(tenantId, academicYearId);
-
+    /**
+     * Checks a proposed plan without writing anything.
+     *
+     * <p>Called when the admin submits, not only when the principal approves,
+     * so a plan that could never be saved is refused at the point someone can
+     * still fix it -- rather than sitting in the queue and failing on approval.
+     *
+     * @return the plan total, which the request summary quotes
+     */
+    public BigDecimal validatePlanRequest(String gradeLevel, List<InstalmentSpec> instalments) {
         String grade = gradeLevel == null ? "" : gradeLevel.trim();
         if (grade.isEmpty()) {
             throw new IllegalArgumentException("Grade level is required.");
@@ -84,6 +90,19 @@ public class FeePlanService {
         if (total.signum() <= 0) {
             throw new IllegalArgumentException("The plan total must be more than zero.");
         }
+        return total;
+    }
+
+    /**
+     * Writes the plan. Only reachable once a principal has approved -- the
+     * admin-facing route raises an ApprovalRequest instead. See ApprovalService.
+     */
+    public FeePlan savePlanApproved(String gradeLevel, List<InstalmentSpec> instalments,
+                                    UUID tenantId, UUID academicYearId, Authentication authentication) {
+        requireScope(tenantId, academicYearId);
+
+        String grade = gradeLevel == null ? "" : gradeLevel.trim();
+        BigDecimal total = validatePlanRequest(gradeLevel, instalments);
 
         FeePlan plan = feePlanRepository
                 .findByTenantIdAndAcademicYearIdAndGradeLevel(tenantId, academicYearId, grade)
@@ -132,7 +151,8 @@ public class FeePlanService {
     }
 
     @Transactional
-    public void deletePlan(UUID planId, UUID tenantId, Authentication authentication) {
+    /** Deletes the plan. Approval-gated, same as {@link #savePlanApproved}. */
+    public void deletePlanApproved(UUID planId, UUID tenantId, Authentication authentication) {
         FeePlan plan = feePlanRepository.findByIdAndTenantId(planId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Fee plan not found."));
         instalmentRepository.deleteByFeePlanIdAndTenantId(planId, tenantId);
@@ -146,4 +166,5 @@ public class FeePlanService {
             throw new IllegalArgumentException("Fee plans need a school and an academic year.");
         }
     }
+
 }

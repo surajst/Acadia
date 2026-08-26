@@ -2,6 +2,7 @@ package com.concept.tasks.web;
 
 import com.concept.tasks.app.TasksException;
 import com.concept.tasks.app.TasksService;
+import com.concept.tenant.TenantContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -25,9 +26,11 @@ import java.util.UUID;
 public class AcademicXpController {
 
     private final TasksService tasksService;
+    private final TenantContext tenantContext;
 
-    public AcademicXpController(TasksService tasksService) {
+    public AcademicXpController(TasksService tasksService, TenantContext tenantContext) {
         this.tasksService = tasksService;
+        this.tenantContext = tenantContext;
     }
 
     @PostMapping("/submit-task")
@@ -47,19 +50,23 @@ public class AcademicXpController {
     @GetMapping("/teacher/pending")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
     public ResponseEntity<?> pending() {
-        return ResponseEntity.ok(tasksService.pendingSubmissions());
+        return ResponseEntity.ok(tasksService.pendingSubmissions(tenantId()));
     }
 
     @PostMapping("/teacher/approve-xp")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
     public ResponseEntity<String> approveXp(@RequestParam UUID submissionId) {
         try {
-            return ResponseEntity.ok(tasksService.approveXp(submissionId));
+            return ResponseEntity.ok(tasksService.approveXp(submissionId, tenantId()));
         } catch (TasksException e) {
             if (e.status() == 404) {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.status(e.status()).body(e.getMessage());
         }
+    }
+
+    private UUID tenantId() {
+        return tenantContext.getTenantId().orElse(null);
     }
 }

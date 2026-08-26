@@ -53,7 +53,7 @@ test.describe('ACADIA Student Lifecycle Operations Management Specs', () => {
     //    Driving the name filter via the URL runs a real server query so the
     //    just-added student surfaces regardless of which roster page she lands on
     //    (page.fill alone never triggers a round-trip).
-    await page.goto('/web/admin/dashboard?classId=11111111-2222-3333-4444-555555555551&name=Simran');
+    await page.goto('/web/admin/dashboard?classId=66666666-6666-6666-6666-666666666666&name=Simran');
 
     // 9. Find the row for 'Simran Kaur' and click the quick-action delete trigger (🗑️)
     const studentRow = page.locator('tr:has-text("Simran Kaur")').first();

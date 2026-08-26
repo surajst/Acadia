@@ -8,8 +8,8 @@ import com.concept.rewards.data.RewardItem;
 import com.concept.shared.data.Parent;
 import com.concept.shared.data.Student;
 
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

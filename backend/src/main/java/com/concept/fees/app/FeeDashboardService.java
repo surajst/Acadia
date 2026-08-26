@@ -1,5 +1,6 @@
 package com.concept.fees.app;
 
+import com.concept.fees.data.ApprovalRequest;
 import com.concept.fees.data.FeeStudentRepository;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;
@@ -37,19 +38,22 @@ public class FeeDashboardService {
     private final FeeTransactionRepository feeTransactionRepository;
     private final InvoiceLineRepository invoiceLineRepository;
     private final InvoiceScheduleService invoiceScheduleService;
+    private final ApprovalService approvalService;
 
     public FeeDashboardService(FeeManagementService feeManagementService,
                                FeeInvoiceRepository feeInvoiceRepository,
                                FeeStudentRepository studentRepository,
                                FeeTransactionRepository feeTransactionRepository,
                                InvoiceLineRepository invoiceLineRepository,
-                               InvoiceScheduleService invoiceScheduleService) {
+                               InvoiceScheduleService invoiceScheduleService,
+                               ApprovalService approvalService) {
         this.feeManagementService = feeManagementService;
         this.feeInvoiceRepository = feeInvoiceRepository;
         this.studentRepository = studentRepository;
         this.feeTransactionRepository = feeTransactionRepository;
         this.invoiceLineRepository = invoiceLineRepository;
         this.invoiceScheduleService = invoiceScheduleService;
+        this.approvalService = approvalService;
     }
 
     @Transactional(readOnly = true)
@@ -126,9 +130,23 @@ public class FeeDashboardService {
         invoiceScheduleService.generateForStudent(studentId, tenantId, overrideAmount, overrideReason, authentication);
     }
 
-    public void reversePayment(java.util.UUID transactionId, String reason, java.util.UUID tenantId,
-                               Authentication authentication) {
-        feeManagementService.reversePayment(transactionId, reason, tenantId, authentication);
+    /**
+     * Asks for a reversal rather than performing one. Nothing moves until a
+     * principal approves: this action un-records cash the school has already
+     * receipted, which is the one fee action a single admin should not be able
+     * to complete alone.
+     *
+     * @return the summary the admin is shown, describing what is now pending
+     */
+    public String requestPaymentReversal(java.util.UUID transactionId, String reason, java.util.UUID tenantId,
+                                         Authentication authentication) {
+        FeeTransaction original = feeManagementService.validateReversalRequest(transactionId, reason, tenantId);
+        String summary = "Reverse a payment of " + original.getAmountPaid()
+                + " (receipt #" + original.getReceiptNumber() + ") — " + reason.trim();
+        approvalService.request(ApprovalRequest.Action.PAYMENT_REVERSAL,
+                new PaymentReversalExecutor.Payload(transactionId, reason.trim()),
+                summary, tenantId, authentication);
+        return summary;
     }
 
     /** @return the resulting waiver status (e.g. PENDING), flattened to a string. */
@@ -170,8 +188,8 @@ public class FeeDashboardService {
         String initials = student != null
                 ? initial(student.getFirstName()) + initial(student.getLastName()) : "ST";
         String rollNumber = student != null && student.getRollNumber() != null ? student.getRollNumber() : "--";
-        String gradeLevel = student != null && student.getSchoolClass() != null
-                ? student.getSchoolClass().getGradeLevel() : "—";
+        String gradeLevel = student != null && student.getClassSection() != null
+                ? student.getClassSection().getGradeName() : "—";
         String status = inv.getStatus() != null ? inv.getStatus().name() : "UNPAID";
         String waiverStatus = inv.getWaiverStatus() != null ? inv.getWaiverStatus().name() : "NONE";
         return new FeeDashboardView.InvoiceRow(

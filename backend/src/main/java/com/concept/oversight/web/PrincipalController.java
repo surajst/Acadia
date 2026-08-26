@@ -86,4 +86,31 @@ public class PrincipalController {
     public ResponseEntity<?> handle(OversightException e) {
         return ResponseEntity.status(e.status()).body(Map.of("error", e.getMessage()));
     }
+
+    // ─── Approval queue ─────────────────────────────────────────────────────
+    //
+    // PRINCIPAL only, not the class-level ADMIN-or-PRINCIPAL. The whole point
+    // of these two actions is that an admin cannot complete them alone; leaving
+    // them on the class gate would let any admin approve another admin's
+    // request, which is the mistake the waiver flow made.
+
+    @GetMapping("/approvals/pending")
+    @PreAuthorize("hasRole('PRINCIPAL')")
+    public ResponseEntity<?> pendingApprovals(Authentication authentication) {
+        return ResponseEntity.ok(oversightService.pendingApprovals(authentication));
+    }
+
+    @PostMapping("/approvals/{requestId}/approve")
+    @PreAuthorize("hasRole('PRINCIPAL')")
+    public ResponseEntity<?> approveRequest(@PathVariable UUID requestId, Authentication authentication) {
+        return ResponseEntity.ok(oversightService.approveRequest(requestId, authentication));
+    }
+
+    @PostMapping("/approvals/{requestId}/reject")
+    @PreAuthorize("hasRole('PRINCIPAL')")
+    public ResponseEntity<?> rejectRequest(@PathVariable UUID requestId,
+                                           @RequestParam(value = "reason", required = false) String reason,
+                                           Authentication authentication) {
+        return ResponseEntity.ok(oversightService.rejectRequest(requestId, reason, authentication));
+    }
 }

@@ -1,7 +1,7 @@
 package com.concept.oversight.app;
 
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.common.AuditLogService;
 import com.concept.common.NotificationDeliveryService;
 import com.concept.shared.data.AcademicSubmission;
@@ -12,6 +12,7 @@ import com.concept.shared.data.AttendanceStatus;
 import com.concept.curriculum.data.Curriculum;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;
+import com.concept.fees.app.ApprovalService;
 import com.concept.fees.app.FeeManagementService;
 import com.concept.shared.data.Student;
 import com.concept.oversight.data.StudentProgress;
@@ -55,6 +56,7 @@ public class OversightService {
     private final AcademicSubmissionRepository academicSubmissionRepository;
     private final NotificationDeliveryService notificationDeliveryService;
     private final CurrentUserService currentUserService;
+    private final ApprovalService approvalService;
 
     public OversightService(AdminProgressService adminProgressService,
                             FeeManagementService feeManagementService,
@@ -67,7 +69,8 @@ public class OversightService {
                             StudentMetricRepository studentMetricRepository,
                             AcademicSubmissionRepository academicSubmissionRepository,
                             NotificationDeliveryService notificationDeliveryService,
-                            CurrentUserService currentUserService) {
+                            CurrentUserService currentUserService,
+                            ApprovalService approvalService) {
         this.adminProgressService = adminProgressService;
         this.feeManagementService = feeManagementService;
         this.attendanceRepository = attendanceRepository;
@@ -80,6 +83,7 @@ public class OversightService {
         this.academicSubmissionRepository = academicSubmissionRepository;
         this.notificationDeliveryService = notificationDeliveryService;
         this.currentUserService = currentUserService;
+        this.approvalService = approvalService;
     }
 
     // ─── Progress / summaries ───────────────────────────────────────────────
@@ -186,10 +190,9 @@ public class OversightService {
     // ─── Teacher progress approvals ─────────────────────────────────────────
 
     @Transactional
-    public Map<String, Object> approveProgress(UUID studentProgressId) {
+    public Map<String, Object> approveProgress(UUID studentProgressId, UUID tenantId) {
         try {
-            StudentProgress progress = studentProgressRepository.findById(studentProgressId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid student progress ID"));
+            StudentProgress progress = requireProgress(studentProgressId, tenantId);
             if ("APPROVED".equals(progress.getStatus())) {
                 throw new IllegalArgumentException("Progress is already approved");
             }
@@ -214,10 +217,9 @@ public class OversightService {
     }
 
     @Transactional
-    public Map<String, Object> rejectProgress(UUID studentProgressId, String reason) {
+    public Map<String, Object> rejectProgress(UUID studentProgressId, String reason, UUID tenantId) {
         try {
-            StudentProgress progress = studentProgressRepository.findById(studentProgressId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid student progress ID"));
+            StudentProgress progress = requireProgress(studentProgressId, tenantId);
             progress.setStatus("REJECTED");
             progress.setRejectionReason(reason);
             studentProgressRepository.saveAndFlush(progress);
@@ -237,10 +239,9 @@ public class OversightService {
     // ─── Teacher milestone approvals ────────────────────────────────────────
 
     @Transactional
-    public Map<String, Object> approveMilestone(UUID submissionId, Authentication authentication) {
+    public Map<String, Object> approveMilestone(UUID submissionId, UUID tenantId, Authentication authentication) {
         try {
-            AcademicSubmission submission = academicSubmissionRepository.findById(submissionId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid submission ID"));
+            AcademicSubmission submission = requireSubmission(submissionId, tenantId);
             if ("APPROVED".equals(submission.getStatus())) {
                 throw new IllegalArgumentException("Submission is already approved");
             }
@@ -259,10 +260,9 @@ public class OversightService {
     }
 
     @Transactional
-    public Map<String, Object> rejectMilestone(UUID submissionId, String reason) {
+    public Map<String, Object> rejectMilestone(UUID submissionId, String reason, UUID tenantId) {
         try {
-            AcademicSubmission submission = academicSubmissionRepository.findById(submissionId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid submission ID"));
+            AcademicSubmission submission = requireSubmission(submissionId, tenantId);
             submission.setStatus("REJECTED");
             submission.setRejectionReason(reason);
             academicSubmissionRepository.saveAndFlush(submission);
@@ -291,5 +291,60 @@ public class OversightService {
             metric.setActiveStreak(0);
         }
         return metric;
+    }
+
+    /**
+     * Resolves a progress row through the caller's own tenant. Neither
+     * StudentProgress nor AcademicSubmission carries a tenant column -- the
+     * student they hang off does -- so an id arriving in a request has to be
+     * matched against that student's school. An id from another school reads
+     * as invalid rather than being silently approved or rejected.
+     */
+    private StudentProgress requireProgress(UUID studentProgressId, UUID tenantId) {
+        return studentProgressRepository.findByIdAndStudentTenantId(studentProgressId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid student progress ID"));
+    }
+
+    private AcademicSubmission requireSubmission(UUID submissionId, UUID tenantId) {
+        return academicSubmissionRepository.findByIdAndStudentTenantId(submissionId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid submission ID"));
+    }
+
+    // ─── Approval queue (payment reversals, fee plan changes) ───────────────
+
+    /**
+     * What is waiting for this principal to decide. Each row is a change an
+     * admin has asked for and that has not touched any real data yet.
+     */
+    public List<Map<String, Object>> pendingApprovals(Authentication authentication) {
+        return approvalService.pending(tenant(authentication)).stream().map(request -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("requestId", request.getId());
+            row.put("action", request.getAction().name());
+            row.put("summary", request.getSummary());
+            row.put("requestedBy", request.getRequestedByEmail());
+            row.put("requestedAt", request.getRequestedAt());
+            return row;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public Map<String, Object> approveRequest(UUID requestId, Authentication authentication) {
+        try {
+            approvalService.approve(requestId, tenant(authentication), authentication);
+            return Map.of("status", "approved");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw OversightException.badRequest(e.getMessage());
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> rejectRequest(UUID requestId, String reason, Authentication authentication) {
+        try {
+            approvalService.reject(requestId, reason, tenant(authentication), authentication);
+            return Map.of("status", "rejected");
+        } catch (IllegalArgumentException e) {
+            throw OversightException.badRequest(e.getMessage());
+        }
     }
 }

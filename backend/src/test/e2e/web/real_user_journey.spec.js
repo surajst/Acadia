@@ -40,7 +40,7 @@ test.describe.serial('Real User Journey E2E Specs', () => {
     // students than one page, so the just-added student can sit on a later page;
     // driving the name filter (as the search box does on Enter) re-queries the
     // roster so the new student surfaces regardless of pagination.
-    await page.goto('/web/admin/dashboard?classId=11111111-2222-3333-4444-555555555551&name=Test%20Student%20Playwright');
+    await page.goto('/web/admin/dashboard?classId=66666666-6666-6666-6666-666666666666&name=Test%20Student%20Playwright');
     await expect(page.locator('#rosterSearchInput')).toHaveValue('Test Student Playwright');
 
     // Assert row is visible

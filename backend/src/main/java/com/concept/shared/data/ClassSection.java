@@ -29,6 +29,13 @@ public class ClassSection extends BaseTenantEntity {
     @Column(name = "bus_route_id")
     private UUID busRouteId;
 
+    /**
+     * How many children this section holds. Carried over from the SchoolClass
+     * entity this replaced; nullable because most sections never had one set.
+     */
+    @Column(name = "total_capacity")
+    private Integer totalCapacity;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -46,4 +53,12 @@ public class ClassSection extends BaseTenantEntity {
 
     public UUID getBusRouteId() { return busRouteId; }
     public void setBusRouteId(UUID busRouteId) { this.busRouteId = busRouteId; }
+
+    public Integer getTotalCapacity() {
+        return totalCapacity;
+    }
+
+    public void setTotalCapacity(Integer totalCapacity) {
+        this.totalCapacity = totalCapacity;
+    }
 }

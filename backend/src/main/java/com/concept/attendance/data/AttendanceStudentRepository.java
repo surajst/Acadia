@@ -17,5 +17,5 @@ public interface AttendanceStudentRepository extends TenantScopedRepository<Stud
 
     List<Student> findByTenantId(UUID tenantId);
 
-    List<Student> findBySchoolClassId(UUID schoolClassId);
+    List<Student> findByClassSectionId(UUID schoolClassId);
 }

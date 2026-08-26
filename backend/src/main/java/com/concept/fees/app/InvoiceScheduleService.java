@@ -67,9 +67,11 @@ public class InvoiceScheduleService {
         Student student = studentRepository.findByIdAndTenantId(studentId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found with ID: " + studentId));
 
-        String gradeLevel = student.getSchoolClass() != null ? student.getSchoolClass().getGradeLevel()
-                : student.getClassSection() != null ? student.getClassSection().getGradeName()
-                : null;
+        // One source of truth for a student's grade. This used to prefer a
+        // separate school_class link and fall back to the section, which meant
+        // a child could be billed from one grade and marked present in another.
+        String gradeLevel = student.getClassSection() != null
+                ? student.getClassSection().getGradeName() : null;
         if (gradeLevel == null) {
             throw new FeePlanMissingException(
                     "This student is not in a class yet, so there is no grade level to bill from.");

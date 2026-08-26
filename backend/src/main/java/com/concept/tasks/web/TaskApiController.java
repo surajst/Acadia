@@ -70,8 +70,8 @@ public class TaskApiController {
 
     @GetMapping("/student/tasks/{taskId}/questions")
     @PreAuthorize("hasAnyRole('STUDENT')")
-    public ResponseEntity<?> taskQuestions(@PathVariable UUID taskId) {
-        return ResponseEntity.ok(tasksService.taskQuestions(taskId));
+    public ResponseEntity<?> taskQuestions(@PathVariable UUID taskId, Authentication authentication) {
+        return ResponseEntity.ok(tasksService.taskQuestions(taskId, authentication));
     }
 
     @ExceptionHandler(TasksException.class)

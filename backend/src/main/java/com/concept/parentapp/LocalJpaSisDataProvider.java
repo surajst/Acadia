@@ -1,7 +1,7 @@
 package com.concept.parentapp;
 
-import com.concept.academics.AssessmentService;
-import com.concept.academics.SubjectPerformance;
+import com.concept.academics.app.AssessmentService;
+import com.concept.academics.app.SubjectPerformance;
 import com.concept.shared.data.Attendance;
 import com.concept.shared.data.AttendanceRepository;
 import com.concept.shared.data.ClassSection;

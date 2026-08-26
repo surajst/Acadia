@@ -1,10 +1,8 @@
 package com.concept.roster.app;
 
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
-import com.concept.shared.data.SchoolClass;
-import com.concept.shared.data.SchoolClassRepository;
 import com.concept.shared.data.Student;
 import com.concept.shared.data.StudentRepository;
 import com.concept.tenant.AcademicYear;
@@ -39,7 +37,6 @@ public class StudentAdminServiceTest {
     @Autowired private StudentAdminService studentAdminService;
     @Autowired private TenantRepository tenantRepository;
     @Autowired private AcademicYearRepository academicYearRepository;
-    @Autowired private SchoolClassRepository schoolClassRepository;
     @Autowired private StudentRepository studentRepository;
     @Autowired private StudentMetricRepository studentMetricRepository;
     @Autowired private UserRepository userRepository;
@@ -50,7 +47,7 @@ public class StudentAdminServiceTest {
     private UUID tenantId;
     private UUID yearId;
     private String subdomain;
-    private SchoolClass schoolClass;
+
     private ClassSection classSection;
 
     @BeforeEach
@@ -76,15 +73,6 @@ public class StudentAdminServiceTest {
         year.setCurrent(true);
         academicYearRepository.saveAndFlush(year);
 
-        schoolClass = new SchoolClass();
-        schoolClass.setId(UUID.randomUUID());
-        schoolClass.setTenantId(tenantId);
-        schoolClass.setAcademicYearId(yearId);
-        schoolClass.setGradeLevel("Grade 5");
-        schoolClass.setSectionName("A");
-        schoolClass.setRoomNumber("101");
-        schoolClass.setTotalCapacity(30);
-        schoolClassRepository.saveAndFlush(schoolClass);
 
         classSection = new ClassSection();
         classSection.setId(UUID.randomUUID());
@@ -98,7 +86,7 @@ public class StudentAdminServiceTest {
     @Test
     public void addStudent_autoProvisionsLoginQualifiedBySchoolAndSeedsMetric() {
         String roll = "R-" + UUID.randomUUID().toString().substring(0, 8);
-        String creds = studentAdminService.addStudent("Aarav", "Mehta", roll, schoolClass.getId(),
+        String creds = studentAdminService.addStudent("Aarav", "Mehta", roll, classSection.getId(),
                 null, null, null, null, null, tenantId, yearId, NO_AUTH);
 
         // Usernames are firstname + roll number, qualified by the school's
@@ -148,7 +136,6 @@ public class StudentAdminServiceTest {
         student.setFirstName("Nisha");
         student.setLastName("Rao");
         student.setRollNumber(roll);
-        student.setSchoolClass(schoolClass);
         student.setClassSection(classSection);
         studentRepository.saveAndFlush(student);
 
@@ -180,7 +167,7 @@ public class StudentAdminServiceTest {
         userRepository.saveAndFlush(squatter);
 
         String roll = "R-" + UUID.randomUUID().toString().substring(0, 8);
-        String creds = studentAdminService.addStudent("Aarav", "Mehta", roll, schoolClass.getId(),
+        String creds = studentAdminService.addStudent("Aarav", "Mehta", roll, classSection.getId(),
                 null, null, "Gurmeet", "Singh", phone, tenantId, yearId, NO_AUTH);
 
         assertNotNull(creds, "credentials should be relayed back");
@@ -193,17 +180,17 @@ public class StudentAdminServiceTest {
     @Test
     public void addStudent_explicitDuplicateEmailThrows() {
         String email = "dup-" + UUID.randomUUID() + "@school.edu";
-        studentAdminService.addStudent("First", "Kid", "R3", schoolClass.getId(),
+        studentAdminService.addStudent("First", "Kid", "R3", classSection.getId(),
                 email, "pw12345!", null, null, null, tenantId, yearId, NO_AUTH);
         assertThrows(IllegalArgumentException.class, () ->
-                studentAdminService.addStudent("Second", "Kid", "R4", schoolClass.getId(),
+                studentAdminService.addStudent("Second", "Kid", "R4", classSection.getId(),
                         email, "pw12345!", null, null, null, tenantId, yearId, NO_AUTH));
     }
 
     @Test
     public void addParent_linksToStudentAndProvisionsLogin() {
         String roll = "R5-" + UUID.randomUUID().toString().substring(0, 6);
-        studentAdminService.addStudent("Child", "One", roll, schoolClass.getId(),
+        studentAdminService.addStudent("Child", "One", roll, classSection.getId(),
                 null, null, null, null, null, tenantId, yearId, NO_AUTH);
         Student child = studentRepository.findByTenantIdAndRollNumber(tenantId, roll).orElseThrow();
         String email = "parent-" + UUID.randomUUID() + "@home.com";
@@ -227,9 +214,9 @@ public class StudentAdminServiceTest {
     @Test
     public void addParent_sameParentWithMultipleChildrenReusesOneAccount() {
         String phone = "+91 9812345678";
-        studentAdminService.addStudent("Kid", "One", "M1", schoolClass.getId(),
+        studentAdminService.addStudent("Kid", "One", "M1", classSection.getId(),
                 null, null, null, null, null, tenantId, yearId, NO_AUTH);
-        studentAdminService.addStudent("Kid", "Two", "M2", schoolClass.getId(),
+        studentAdminService.addStudent("Kid", "Two", "M2", classSection.getId(),
                 null, null, null, null, null, tenantId, yearId, NO_AUTH);
         Student kid1 = studentRepository.findByTenantIdAndRollNumber(tenantId, "M1").orElseThrow();
         Student kid2 = studentRepository.findByTenantIdAndRollNumber(tenantId, "M2").orElseThrow();
@@ -247,14 +234,14 @@ public class StudentAdminServiceTest {
     @Test
     public void updateStudent_fromAnotherTenantIsNotFound() {
         String roll = "X-" + UUID.randomUUID().toString().substring(0, 8);
-        studentAdminService.addStudent("Iso", "Late", roll, schoolClass.getId(),
+        studentAdminService.addStudent("Iso", "Late", roll, classSection.getId(),
                 null, null, null, null, null, tenantId, yearId, NO_AUTH);
         Student s = studentRepository.findByTenantIdAndRollNumber(tenantId, roll).orElseThrow();
 
         UUID otherTenant = UUID.randomUUID();
         assertThrows(StudentProfileNotFoundException.class, () ->
                 studentAdminService.updateStudent(s.getId(), otherTenant, yearId,
-                        "Hacked", "Name", "R999", null, null, null, null, NO_AUTH));
+                        "Hacked", "Name", "R999", null, null, null, null, ChildDetails.none(), NO_AUTH));
 
         // The record is untouched.
         Student reloaded = studentRepository.findById(s.getId()).orElseThrow();

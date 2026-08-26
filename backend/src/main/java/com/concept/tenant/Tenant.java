@@ -31,6 +31,16 @@ public class Tenant {
     @Enumerated(EnumType.STRING)
     private TenantTier tier;
 
+    /**
+     * What kind of school this is -- decides vocabulary and visible modules.
+     * Null means SECONDARY: every tenant that predates this column is a
+     * conventional school, and {@link #getSchoolType()} resolves it so callers
+     * never have to null-check.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "school_type", length = 20)
+    private SchoolType schoolType;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -66,5 +76,14 @@ public class Tenant {
 
     public boolean getEffectiveOnboardingCompleted() {
         return onboardingCompleted == null || onboardingCompleted;
+    }
+
+    /** Never null: an unset type means a conventional school. */
+    public SchoolType getSchoolType() {
+        return schoolType == null ? SchoolType.SECONDARY : schoolType;
+    }
+
+    public void setSchoolType(SchoolType schoolType) {
+        this.schoolType = schoolType;
     }
 }

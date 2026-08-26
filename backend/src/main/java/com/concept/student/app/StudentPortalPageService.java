@@ -133,7 +133,7 @@ public class StudentPortalPageService {
                 a.getProofOfWorkNotes(), a.getRejectionReason(), a.getXpBounty());
     }
 
-    private static SkillView toSkillView(com.concept.academics.MathSkill s) {
+    private static SkillView toSkillView(com.concept.academics.data.MathSkill s) {
         return new SkillView(s.getSkillName(), s.getMaxXpReward());
     }
 

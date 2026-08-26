@@ -8,8 +8,8 @@ import com.concept.curriculum.data.Curriculum;
 import com.concept.shared.data.StudentRepository;
 import com.concept.shared.data.Student;
 
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -107,7 +107,7 @@ public class StudentProgressService {
         Student student = studentRepository.findByIdAndTenantId(studentId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
 
-        Curriculum curriculum = curriculumRepository.findById(curriculumId)
+        Curriculum curriculum = curriculumRepository.findByIdAndTenantId(curriculumId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Curriculum topic not found: " + curriculumId));
 
         // Find existing progress record or create a new one

@@ -28,10 +28,10 @@ public interface StudentRepository extends TenantScopedRepository<Student, UUID>
     long countByClassSection(ClassSection classSection);
 
     // Used to filter students by school class ID
-    List<Student> findBySchoolClassId(UUID schoolClassId);
+    List<Student> findByClassSectionId(UUID schoolClassId);
 
     // Dynamic principal resolution and pagination methods
-    Page<Student> findBySchoolClassId(UUID schoolClassId, Pageable pageable);
+    Page<Student> findByClassSectionId(UUID schoolClassId, Pageable pageable);
     Optional<Student> findByFirstNameIgnoreCase(String firstName);
     Optional<Student> findByUserId(UUID userId);
     Optional<Student> findByTenantIdAndRollNumber(UUID tenantId, String rollNumber);

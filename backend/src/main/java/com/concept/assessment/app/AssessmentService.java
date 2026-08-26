@@ -1,11 +1,11 @@
 package com.concept.assessment.app;
 
-import com.concept.academics.Assessment;
-import com.concept.academics.AssessmentRepository;
-import com.concept.academics.AssessmentTerm;
-import com.concept.academics.ReportCardService;
-import com.concept.academics.StudentAssessmentScore;
-import com.concept.academics.StudentAssessmentScoreRepository;
+import com.concept.academics.data.Assessment;
+import com.concept.academics.data.AssessmentRepository;
+import com.concept.academics.data.AssessmentTerm;
+import com.concept.academics.app.ReportCardService;
+import com.concept.academics.data.StudentAssessmentScore;
+import com.concept.academics.data.StudentAssessmentScoreRepository;
 import com.concept.common.AuditLogService;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;

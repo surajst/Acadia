@@ -2,9 +2,7 @@ package com.concept.roster.app;
 
 import com.concept.common.AuditLogService;
 import com.concept.shared.data.ClassSection;
-import com.concept.shared.data.SchoolClass;
 import com.concept.roster.data.RosterClassSectionRepository;
-import com.concept.roster.data.RosterSchoolClassRepository;
 import com.concept.roster.data.RosterStudentRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -24,16 +22,13 @@ import java.util.stream.Collectors;
 public class ClassStructureService {
 
     private final RosterClassSectionRepository classSectionRepository;
-    private final RosterSchoolClassRepository schoolClassRepository;
     private final RosterStudentRepository studentRepository;
     private final AuditLogService auditLogService;
 
     public ClassStructureService(RosterClassSectionRepository classSectionRepository,
-                                 RosterSchoolClassRepository schoolClassRepository,
                                  RosterStudentRepository studentRepository,
                                  AuditLogService auditLogService) {
         this.classSectionRepository = classSectionRepository;
-        this.schoolClassRepository = schoolClassRepository;
         this.studentRepository = studentRepository;
         this.auditLogService = auditLogService;
     }
@@ -50,7 +45,7 @@ public class ClassStructureService {
 
     @Transactional
     public void addSection(UUID tenantId, UUID academicYearId, String gradeName, String sectionName,
-                           String roomNumber, Authentication authentication) {
+                           String roomNumber, Integer totalCapacity, Authentication authentication) {
         ClassSection classSection = new ClassSection();
         classSection.setId(UUID.randomUUID());
         classSection.setTenantId(tenantId);
@@ -58,6 +53,7 @@ public class ClassStructureService {
         classSection.setGradeName(gradeName);
         classSection.setSectionName(sectionName);
         classSection.setRoomNumber(roomNumber);
+        classSection.setTotalCapacity(totalCapacity);
         classSectionRepository.save(classSection);
         auditLogService.log(authentication, "CLASS_SECTION_ADDED", "ClassSection", classSection.getId(),
                 "Added class section " + gradeName + " - " + sectionName);
@@ -94,19 +90,4 @@ public class ClassStructureService {
                 "Removed class section " + section.getGradeName() + " - " + section.getSectionName());
     }
 
-    @Transactional
-    public void addClassroom(UUID tenantId, UUID academicYearId, String gradeLevel, String sectionName,
-                             String roomNumber, Integer totalCapacity, Authentication authentication) {
-        SchoolClass schoolClass = new SchoolClass();
-        schoolClass.setId(UUID.randomUUID());
-        schoolClass.setTenantId(tenantId);
-        schoolClass.setAcademicYearId(academicYearId);
-        schoolClass.setGradeLevel(gradeLevel);
-        schoolClass.setSectionName(sectionName);
-        schoolClass.setRoomNumber(roomNumber);
-        schoolClass.setTotalCapacity(totalCapacity);
-        schoolClassRepository.save(schoolClass);
-        auditLogService.log(authentication, "SCHOOL_CLASS_ADDED", "SchoolClass", schoolClass.getId(),
-                "Added classroom " + gradeLevel + " - " + sectionName);
-    }
 }

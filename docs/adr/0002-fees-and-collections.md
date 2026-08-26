@@ -1,6 +1,9 @@
 # ADR 0002 — Fees & Collections
 
-Status: Proposed · 2026-08-21
+Status: **Accepted** · proposed 2026-08-21 · accepted 2026-08-26
+
+The design below is kept as it was proposed. What actually shipped, and the
+one question it left open, are recorded under **As built** at the end.
 
 ## Context
 
@@ -136,3 +139,65 @@ reversal work got — refuse rather than guess, record why, keep the original.
 principal approval the way waivers do. That is a policy question about how much
 one admin should be able to do alone, and it should be settled before a real
 school is collecting money.
+
+---
+
+## As built
+
+All four phases shipped. Two things are worth recording: the answer to the
+question this ADR left open, and one deviation from it.
+
+### The open question is answered
+
+The proposal ended by leaving "whether large overrides, reversals or concessions
+need principal approval" undecided. The school's answer was **per-action, with
+no threshold**: reversing a payment and changing a fee plan always need a
+principal, whatever the amount. There is no value to configure and no line to
+argue about.
+
+An admin raises a request and it is held as JSON until a principal decides;
+nothing touches an invoice, payment or plan in the meantime. Both actions are
+wholesale replacements, so replaying the request on approval produces exactly
+what was asked for.
+
+Waivers already had a request/approve split, and it decided nothing: the approve
+endpoint was open to ADMIN as well as PRINCIPAL, so the requester was always an
+eligible approver. Only the audit log knew who had asked, and nothing read it
+back. The requester is now recorded on the invoice, which is what the check
+compares against.
+
+One consequence worth knowing: a school with no principal cannot reverse a
+payment or change a fee plan at all. The request is refused up front rather than
+queued for nobody to decide, and a self-onboarded school starts with only an
+admin.
+
+### Rules that are enforced, not documented
+
+- **No invented amounts.** With no plan for a grade, invoicing raises
+  `FeePlanMissingException` naming the grade and where to fix it. It does not
+  fall back to a default. A wrong bill a parent acts on is worse than a blocked
+  action an admin can resolve.
+- **No overpayment.** A payment exceeding the outstanding amount is refused
+  server-side, not merely by the form.
+- **Payments are never edited or deleted.** A correction is its opposite, and
+  the reversed receipt stays on the collections report. The receipt was issued;
+  the record of it has to survive.
+- **Receipt numbers are gapless per school per year**, assigned as `max + 1`
+  inside the payment transaction. A concurrent collision hits the unique
+  constraint and is surfaced as "try again" rather than a 500 -- nothing is
+  partially applied, because the invoice update shares that transaction.
+
+### Still not decided
+
+**Late fees.** Amount, flat versus percentage, grace period and whether they
+compound are all unanswered, and nothing in the schema accrues them. Phase 4
+above lists them; they were deliberately not built without a policy.
+
+### Note on the slice
+
+The proposal named a `com.concept.billing` slice. It was built there and has
+since been folded into `com.concept.fees`: the two formed a dependency cycle,
+and because `billing` was absent from the ArchUnit `MIGRATED` list that cycle
+was invisible to the architecture gate. See ADR 0001 and
+`LayeringArchitectureTest.everyTopLevelPackageIsEitherEnforcedOrKnowinglyExcluded`,
+which now makes an uncovered package fail rather than pass silently.

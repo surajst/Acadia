@@ -38,6 +38,8 @@ public class TenantOnboardingApiController {
         public String adminEmail;
         public String adminPassword;
         public String adminFullName;
+        /** Optional; absent means a conventional school. */
+        public String schoolType;
     }
 
     @PostMapping("/create-school")
@@ -50,7 +52,8 @@ public class TenantOnboardingApiController {
         try {
             TenantOnboardingService.NewSchool school = onboardingService.createSchool(
                     request.schoolName, request.subdomain, request.adminEmail,
-                    request.adminPassword, request.adminFullName);
+                    request.adminPassword, request.adminFullName,
+                    parseSchoolType(request.schoolType));
 
             User admin = school.adminUser;
             UserDetails userDetails = org.springframework.security.core.userdetails.User
@@ -78,5 +81,21 @@ public class TenantOnboardingApiController {
 
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    /**
+     * An unrecognised or absent type is a conventional school rather than an
+     * error: this is the public signup endpoint, and refusing to create a
+     * school over a bad dropdown value would be a worse trade than defaulting.
+     */
+    private static SchoolType parseSchoolType(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return SchoolType.SECONDARY;
+        }
+        try {
+            return SchoolType.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return SchoolType.SECONDARY;
+        }
     }
 }

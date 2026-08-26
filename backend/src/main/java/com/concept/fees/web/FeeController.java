@@ -97,8 +97,11 @@ public class FeeController {
     }
 
     /**
-     * Corrects a mistyped or bounced payment by recording its opposite. The
-     * original entry is never edited or deleted -- see FeeManagementService.
+     * Asks to correct a mistyped or bounced payment. The reversal does not
+     * happen here: it needs a principal's approval, because this is the one fee
+     * action that un-records cash the school already receipted. Once approved,
+     * the original entry is still never edited or deleted -- the correction is
+     * recorded as its opposite. See ApprovalService and FeeManagementService.
      */
     @PostMapping("/web/admin/fees/payment/{transactionId}/reverse")
     @PreAuthorize("hasRole('ADMIN')")
@@ -108,8 +111,9 @@ public class FeeController {
                                  RedirectAttributes ra) {
         UUID tenantId = tenantContext.getTenantId().orElse(null);
         try {
-            feeDashboardService.reversePayment(transactionId, reason, tenantId, authentication);
-            ra.addFlashAttribute("successMessage", "Payment reversed.");
+            String summary = feeDashboardService.requestPaymentReversal(transactionId, reason, tenantId, authentication);
+            ra.addFlashAttribute("successMessage",
+                    "Sent to the principal for approval: " + summary + ". Nothing has changed yet.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }

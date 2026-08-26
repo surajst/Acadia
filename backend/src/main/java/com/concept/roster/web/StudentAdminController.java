@@ -1,5 +1,6 @@
 package com.concept.roster.web;
 
+import com.concept.roster.app.ChildDetails;
 import com.concept.roster.app.StudentAdminService;
 import com.concept.roster.app.StudentProfileNotFoundException;
 import com.concept.tenant.TenantContext;
@@ -89,13 +90,21 @@ public class StudentAdminController {
                                 @RequestParam(value = "guardianFirstName", required = false) String guardianFirstName,
                                 @RequestParam(value = "guardianLastName", required = false) String guardianLastName,
                                 @RequestParam(value = "guardianPhone", required = false) String guardianPhone,
+                                @RequestParam(value = "dateOfBirth", required = false)
+                                @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+                                java.time.LocalDate dateOfBirth,
+                                @RequestParam(value = "medicalNotes", required = false) String medicalNotes,
+                                @RequestParam(value = "emergencyContactName", required = false) String emergencyContactName,
+                                @RequestParam(value = "emergencyContactPhone", required = false) String emergencyContactPhone,
                                 Authentication authentication,
                                 RedirectAttributes ra) {
         try {
             Optional<String> credentials = studentAdminService.updateStudent(id,
                     tenantContext.getTenantId().orElse(null), tenantContext.getAcademicYearId().orElse(null),
                     firstName, lastName, rollNumber, schoolClassId,
-                    guardianFirstName, guardianLastName, guardianPhone, authentication);
+                    guardianFirstName, guardianLastName, guardianPhone,
+                    new ChildDetails(dateOfBirth, medicalNotes, emergencyContactName, emergencyContactPhone),
+                    authentication);
             credentials.ifPresent(c -> ra.addFlashAttribute("newCredentials", c));
             ra.addFlashAttribute("profileMessage", "Student details updated.");
             return "redirect:/web/teacher/student/" + id;
