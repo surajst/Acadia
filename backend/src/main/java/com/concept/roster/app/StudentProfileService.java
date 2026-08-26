@@ -1,8 +1,8 @@
 package com.concept.roster.app;
 
 import com.concept.roster.data.RosterClassSectionRepository;
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.shared.data.AttendanceRepository;
 import com.concept.shared.data.AttendanceStatus;
 import com.concept.shared.data.ClassSection;
@@ -31,17 +31,20 @@ public class StudentProfileService {
     private final StudentMetricRepository studentMetricRepository;
     private final AttendanceRepository attendanceRepository;
     private final RosterClassSectionRepository classSectionRepository;
+    private final PickupContactService pickupContactService;
     private final com.concept.user.UserRepository userRepository;
 
     public StudentProfileService(RosterStudentRepository studentRepository,
                                  StudentMetricRepository studentMetricRepository,
                                  AttendanceRepository attendanceRepository,
                                  RosterClassSectionRepository classSectionRepository,
+                                 PickupContactService pickupContactService,
                                  com.concept.user.UserRepository userRepository) {
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.attendanceRepository = attendanceRepository;
         this.classSectionRepository = classSectionRepository;
+        this.pickupContactService = pickupContactService;
         this.userRepository = userRepository;
     }
 
@@ -110,7 +113,13 @@ public class StudentProfileService {
                 classList,
                 currentClassSectionId,
                 loginUsername(student.getUserId(), tenantId),
-                primaryGuardian == null ? null : loginUsername(primaryGuardian.getUserId(), tenantId));
+                primaryGuardian == null ? null : loginUsername(primaryGuardian.getUserId(), tenantId),
+                student.getDateOfBirth(),
+                ageIn(student.getDateOfBirth()),
+                student.getMedicalNotes(),
+                student.getEmergencyContactName(),
+                student.getEmergencyContactPhone(),
+                pickupContactService.forStudent(student.getId(), tenantId));
     }
 
     /**
@@ -129,5 +138,17 @@ public class StudentProfileService {
 
     private ClassOption toOption(ClassSection c) {
         return new ClassOption(c.getId(), (c.getGradeName() + " - " + c.getSectionName()).trim());
+    }
+
+    /**
+     * Age in whole years, or null when no date of birth is on file. Computed
+     * rather than stored: an age column is wrong the day after it is written,
+     * and a preschool grouping children by age band needs today's answer.
+     */
+    private static Integer ageIn(java.time.LocalDate dateOfBirth) {
+        if (dateOfBirth == null) {
+            return null;
+        }
+        return (int) java.time.temporal.ChronoUnit.YEARS.between(dateOfBirth, java.time.LocalDate.now());
     }
 }

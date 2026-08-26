@@ -1,7 +1,7 @@
 package com.concept.parentapp;
 import com.concept.parent.data.ParentQuest;
 
-import com.concept.academics.SubjectPerformance;
+import com.concept.academics.app.SubjectPerformance;
 
 import java.util.List;
 import java.util.Optional;

@@ -62,6 +62,7 @@ class LayeringArchitectureTest {
                     "com.concept.teacher..",
                     "com.concept.notification..",
                     "com.concept.export..",
+                    "com.concept.academics..",
                     "com.concept.shared.."
             );
 
@@ -98,9 +99,14 @@ class LayeringArchitectureTest {
     void interfaceLayerHandlesNoPersistenceEntities() {
         // The web layer must receive flat view objects from the application layer,
         // never JPA entities — nothing about storage should reach a controller.
+        //
+        // academics.data rather than academics..: the package was flat when this
+        // rule was written, so naming the whole thing was the only way to name
+        // its entities. It now has layers, and banning all of it would ban a
+        // controller from reaching its own service.
         noClasses().that().resideInAPackage("..web..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.concept.academics..", "com.concept.shared.data..")
+                        "com.concept.academics.data..", "com.concept.shared.data..")
                 .allowEmptyShould(true)
                 .check(MIGRATED);
     }
@@ -299,7 +305,7 @@ class LayeringArchitectureTest {
             "roster", "attendance", "fees", "staff", "rewards", "transport", "console",
             "dashboard", "messaging", "parent", "timetable", "assignment", "student",
             "tasks", "assessment", "oversight", "curriculum", "teacher", "notification",
-            "export", "shared");
+            "export", "shared", "academics");
 
     /**
      * Packages that do not follow the web/app/data slice template, with the
@@ -309,7 +315,7 @@ class LayeringArchitectureTest {
     private static final Set<String> NOT_SLICED = Set.of(
             // Infrastructure that predates the slice template and is shared by
             // every domain rather than owning one.
-            "user", "tenant", "common", "config", "academics", "announcement",
+            "user", "tenant", "common", "config", "announcement",
 
             // Dev-only, gated on app.dev-mode=true.
             "devtools",

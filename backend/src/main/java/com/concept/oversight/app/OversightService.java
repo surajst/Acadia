@@ -1,7 +1,7 @@
 package com.concept.oversight.app;
 
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.common.AuditLogService;
 import com.concept.common.NotificationDeliveryService;
 import com.concept.shared.data.AcademicSubmission;

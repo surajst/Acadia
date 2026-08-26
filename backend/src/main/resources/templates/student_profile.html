@@ -117,6 +117,86 @@
             <!-- ── Detail panels (3-up → 2-up → 1-up) ───────────────────── -->
             <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
 
+                <!-- Care & Safety. Sits beside Guardian on purpose: when someone
+                     is at the gate or a child is unwell, these are read together. -->
+                <div class="card p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="eyebrow">Care &amp; Safety</h3>
+                        <span th:if="${ageYears != null}" class="badge badge--neutral"
+                              th:text="|${ageYears} yrs|">4 yrs</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-baseline justify-between gap-3">
+                            <span class="eyebrow">Date of birth</span>
+                            <span class="text-sm font-medium text-slate-900"
+                                  th:text="${dateOfBirth != null} ? ${#temporals.format(dateOfBirth, 'dd MMM yyyy')} : 'Not recorded'"
+                                  th:classappend="${dateOfBirth == null} ? ' text-[var(--text-3)] font-normal' : ''">Not recorded</span>
+                        </div>
+
+                        <div>
+                            <span class="eyebrow block mb-1">Allergies &amp; medical notes</span>
+                            <p th:if="${medicalNotes != null}" class="text-sm text-slate-800 leading-snug"
+                               style="background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:8px 10px"
+                               th:text="${medicalNotes}">Peanut allergy</p>
+                            <!-- Honest empty state: "none recorded" is not the same as
+                                 "no allergies", and a teacher must be able to tell them apart. -->
+                            <p th:if="${medicalNotes == null}" class="text-xs text-[var(--text-3)]">
+                                Nothing recorded &mdash; which is not the same as none.
+                            </p>
+                        </div>
+
+                        <div class="flex items-baseline justify-between gap-3">
+                            <span class="eyebrow">Emergency contact</span>
+                            <span class="text-sm text-right">
+                                <span th:if="${emergencyContactName != null}" class="font-medium text-slate-900"
+                                      th:text="${emergencyContactName}">Meera</span>
+                                <span th:if="${emergencyContactName != null and emergencyContactPhone != null}"
+                                      class="block text-xs text-[var(--text-3)]" th:text="${emergencyContactPhone}">+91 …</span>
+                                <span th:if="${emergencyContactName == null}" class="text-[var(--text-3)]">Not recorded</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3.5 border-t" style="border-color:var(--line)">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="eyebrow">Authorised to collect</span>
+                            <span class="badge badge--neutral"
+                                  th:text="|${pickupContacts.size()}|" data-pickup-count>0</span>
+                        </div>
+
+                        <ul th:if="${!pickupContacts.isEmpty()}" class="space-y-1.5">
+                            <li th:each="c : ${pickupContacts}" data-pickup-row
+                                class="flex items-center justify-between gap-2 text-sm">
+                                <span class="min-w-0">
+                                    <span class="font-medium text-slate-900" th:text="${c.name()}">Anita</span>
+                                    <span class="text-xs text-[var(--text-3)]"
+                                          th:text="${c.relationship() != null ? '· ' + c.relationship() : ''}">· Grandmother</span>
+                                    <span class="block text-xs text-[var(--text-3)]" th:text="${c.phone()}">+91 …</span>
+                                </span>
+                                <form th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}"
+                                      th:action="@{'/web/admin/student/' + ${studentId} + '/pickup/' + ${c.id()} + '/remove'}"
+                                      method="POST" onsubmit="return confirm('Revoke this person’s authorisation to collect this child?')">
+                                    <button type="submit" class="btn btn-secondary btn-sm" data-revoke-pickup>Revoke</button>
+                                </form>
+                            </li>
+                        </ul>
+
+                        <p th:if="${pickupContacts.isEmpty()}" class="text-xs text-[var(--text-3)]" data-pickup-empty>
+                            Nobody besides the guardians on file.
+                        </p>
+
+                        <form th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}"
+                              th:action="@{'/web/admin/student/' + ${studentId} + '/pickup/add'}" method="POST"
+                              class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input type="text" name="name" required placeholder="Name" class="field" data-pickup-name>
+                            <input type="text" name="relationship" placeholder="Relationship" class="field">
+                            <input type="text" name="phone" placeholder="Phone" class="field">
+                            <button type="submit" class="btn btn-secondary btn-sm sm:col-span-3">+ Authorise someone</button>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Guardian & Home -->
                 <div class="card p-5">
                     <div class="flex items-center justify-between mb-4">
@@ -312,6 +392,34 @@
                                 th:selected="${currentClassSectionId != null and cls.id == currentClassSectionId}">Grade 6 - A</option>
                     </select>
                 </div>
+                <div class="pt-3 border-t space-y-3" style="border-color:var(--line)">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-3)]">Care &amp; safety</p>
+                    <div class="space-y-1.5">
+                        <label for="editDateOfBirth" class="field-label block">Date of birth</label>
+                        <input type="date" id="editDateOfBirth" name="dateOfBirth" class="field"
+                               th:value="${dateOfBirth != null} ? ${#temporals.format(dateOfBirth, 'yyyy-MM-dd')} : ''">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="editMedicalNotes" class="field-label block">Allergies &amp; medical notes</label>
+                        <textarea id="editMedicalNotes" name="medicalNotes" rows="2" class="field"
+                                  placeholder="e.g. Peanut allergy — EpiPen in the office"
+                                  th:text="${medicalNotes}"></textarea>
+                        <p class="text-[11px] text-[var(--text-3)]">Shown to anyone who can open this profile.</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1.5">
+                            <label for="editEmergencyName" class="field-label block">Emergency contact</label>
+                            <input type="text" id="editEmergencyName" name="emergencyContactName" class="field"
+                                   th:value="${emergencyContactName}">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="editEmergencyPhone" class="field-label block">Emergency phone</label>
+                            <input type="text" id="editEmergencyPhone" name="emergencyContactPhone" class="field"
+                                   th:value="${emergencyContactPhone}">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="pt-3 border-t" style="border-color:var(--line)">
                     <p class="field-label mb-2.5">Guardian / Parent</p>
                     <div class="grid grid-cols-2 gap-3">

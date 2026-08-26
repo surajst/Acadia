@@ -26,8 +26,8 @@ import com.concept.shared.data.Parent;
 import com.concept.shared.data.StudentRepository;
 import com.concept.shared.data.Student;
 
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

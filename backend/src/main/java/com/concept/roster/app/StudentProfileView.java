@@ -37,5 +37,11 @@ public record StudentProfileView(
          * design, which is why the profile offers "reset" rather than "reveal".
          */
         String studentLoginUsername,
-        String guardianLoginUsername
+        String guardianLoginUsername,
+        java.time.LocalDate dateOfBirth,
+        Integer ageYears,
+        String medicalNotes,
+        String emergencyContactName,
+        String emergencyContactPhone,
+        java.util.List<PickupContactService.Row> pickupContacts
 ) {}

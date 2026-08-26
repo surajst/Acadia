@@ -1,6 +1,6 @@
 package com.concept;
 
-import com.concept.academics.SubjectService;
+import com.concept.academics.app.SubjectService;
 import com.concept.shared.data.Parent;
 import com.concept.shared.data.ParentRepository;
 import com.concept.shared.data.Student;

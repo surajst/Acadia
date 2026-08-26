@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
 @Service
 public class MessagingService {
 
-    private final MsgConversationRepository conversationRepository;
-    private final MsgMessageRepository messageRepository;
+    private final ConversationRepository conversationRepository;
+    private final MessageRepository messageRepository;
     private final MsgNotificationRepository notificationRepository;
     private final MsgStudentRepository studentRepository;
     private final MsgUserRepository userRepository;
@@ -49,8 +49,8 @@ public class MessagingService {
     private final TranslationService translationService;
     private final SpeechService speechService;
 
-    public MessagingService(MsgConversationRepository conversationRepository,
-                            MsgMessageRepository messageRepository,
+    public MessagingService(ConversationRepository conversationRepository,
+                            MessageRepository messageRepository,
                             MsgNotificationRepository notificationRepository,
                             MsgStudentRepository studentRepository,
                             MsgUserRepository userRepository,

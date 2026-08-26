@@ -11,10 +11,10 @@ import com.concept.tasks.data.TeacherTaskRepository;
 import com.concept.tasks.data.TeacherTask;
 import com.concept.shared.data.Student;
 
-import com.concept.academics.MathSkill;
-import com.concept.academics.MathSkillRepository;
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.MathSkill;
+import com.concept.academics.data.MathSkillRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

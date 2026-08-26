@@ -1,6 +1,6 @@
 package com.concept.tenant;
 
-import com.concept.academics.SubjectService;
+import com.concept.academics.app.SubjectService;
 import com.concept.common.AuditLogService;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;

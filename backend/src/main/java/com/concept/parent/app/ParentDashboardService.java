@@ -1,7 +1,7 @@
 package com.concept.parent.app;
 
-import com.concept.academics.StudentMetric;
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.announcement.Announcement;
 import com.concept.announcement.AnnouncementRepository;
 import com.concept.shared.data.Parent;

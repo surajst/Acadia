@@ -1,5 +1,10 @@
 package com.concept.roster.web;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import com.concept.roster.app.PickupContactService;
 import com.concept.roster.app.StudentProfileNotFoundException;
 import com.concept.roster.app.StudentProfileService;
 import com.concept.roster.app.StudentProfileView;
@@ -24,10 +29,14 @@ import java.util.UUID;
 public class StudentProfileController {
 
     private final StudentProfileService studentProfileService;
+    private final PickupContactService pickupContactService;
     private final TenantContext tenantContext;
 
-    public StudentProfileController(StudentProfileService studentProfileService, TenantContext tenantContext) {
+    public StudentProfileController(StudentProfileService studentProfileService,
+                                    PickupContactService pickupContactService,
+                                    TenantContext tenantContext) {
         this.studentProfileService = studentProfileService;
+        this.pickupContactService = pickupContactService;
         this.tenantContext = tenantContext;
     }
 
@@ -72,6 +81,12 @@ public class StudentProfileController {
         model.addAttribute("currentClassSectionId", view.currentClassSectionId());
         model.addAttribute("studentLoginUsername", view.studentLoginUsername());
         model.addAttribute("guardianLoginUsername", view.guardianLoginUsername());
+        model.addAttribute("dateOfBirth", view.dateOfBirth());
+        model.addAttribute("ageYears", view.ageYears());
+        model.addAttribute("medicalNotes", view.medicalNotes());
+        model.addAttribute("emergencyContactName", view.emergencyContactName());
+        model.addAttribute("emergencyContactPhone", view.emergencyContactPhone());
+        model.addAttribute("pickupContacts", view.pickupContacts());
 
         return "student_profile";
     }
@@ -85,5 +100,43 @@ public class StudentProfileController {
             }
         }
         return "TEACHER";
+    }
+
+    /**
+     * Adds someone to the list of people allowed to collect this child.
+     * ADMIN-only: a teacher may read the list, but authorising a new person to
+     * take a child home is not a classroom decision.
+     */
+    @PostMapping("/web/admin/student/{id}/pickup/add")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    public String addPickupContact(@PathVariable("id") UUID id,
+                                   @RequestParam("name") String name,
+                                   @RequestParam(value = "relationship", required = false) String relationship,
+                                   @RequestParam(value = "phone", required = false) String phone,
+                                   Authentication authentication,
+                                   RedirectAttributes ra) {
+        try {
+            pickupContactService.add(id, name, relationship, phone,
+                    tenantContext.getTenantId().orElse(null), authentication);
+            ra.addFlashAttribute("profileMessage", name.trim() + " may now collect this child.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/web/teacher/student/" + id;
+    }
+
+    @PostMapping("/web/admin/student/{id}/pickup/{contactId}/remove")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    public String removePickupContact(@PathVariable("id") UUID id,
+                                      @PathVariable("contactId") UUID contactId,
+                                      Authentication authentication,
+                                      RedirectAttributes ra) {
+        try {
+            pickupContactService.remove(contactId, tenantContext.getTenantId().orElse(null), authentication);
+            ra.addFlashAttribute("profileMessage", "Authorisation revoked.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/web/teacher/student/" + id;
     }
 }

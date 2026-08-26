@@ -1,6 +1,6 @@
 package com.concept.roster.app;
 
-import com.concept.academics.StudentMetricRepository;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.Student;
@@ -241,7 +241,7 @@ public class StudentAdminServiceTest {
         UUID otherTenant = UUID.randomUUID();
         assertThrows(StudentProfileNotFoundException.class, () ->
                 studentAdminService.updateStudent(s.getId(), otherTenant, yearId,
-                        "Hacked", "Name", "R999", null, null, null, null, NO_AUTH));
+                        "Hacked", "Name", "R999", null, null, null, null, ChildDetails.none(), NO_AUTH));
 
         // The record is untouched.
         Student reloaded = studentRepository.findById(s.getId()).orElseThrow();
