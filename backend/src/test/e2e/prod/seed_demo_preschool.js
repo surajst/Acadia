@@ -278,6 +278,13 @@ async function main() {
       await page.fill('[data-plan-grade]', l.grade);
       const labels = ['Term 1', 'Term 2', 'Term 3'];
       const share = Math.round(l.fee / 3);
+      // The form starts with fewer rows than a three-term year needs, and the
+      // rows are built by script rather than rendered -- so ask for them the
+      // way the page does, then wait until they are actually in the DOM.
+      while (await page.locator('[data-inst-label]').count() < labels.length) {
+        await page.click('[data-add-instalment]');
+      }
+      await page.locator('[data-inst-label]').nth(labels.length - 1).waitFor();
       for (let i = 0; i < 3; i++) {
         await page.locator('[data-inst-label]').nth(i).fill(labels[i]);
         await page.locator('[data-inst-amount]').nth(i).fill(String(share));
@@ -313,30 +320,60 @@ async function main() {
     log('invoices raised for the whole roster');
 
     // -- 10. Payments -------------------------------------------------------
-    // Not everyone pays, and not everyone who pays pays in full. A fee page
-    // where every row is settled has nothing to demonstrate: the collections
-    // report and the defaulters list both need something to show.
+    // One invoice per child per instalment, so the roster of 22 becomes 66
+    // rows across four pages -- collecting only what the first page happens to
+    // show would leave fifty untouched and a defaulters list the length of the
+    // school.
+    //
+    // Payment follows the term rather than a flat percentage, because that is
+    // how a school actually looks partway through a year: Term 1 is behind you
+    // and nearly settled, Term 2 is in progress, Term 3 is barely begun. That
+    // gives the collections report real receipts and the defaulters list a
+    // short, plausible set of genuinely overdue names.
     step(10, 'Collecting some of it');
-    const invoices = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('button[data-id][data-due]'))
-        .map(el => ({ id: el.getAttribute('data-id'), due: parseFloat(el.getAttribute('data-due')) })));
+    const invoices = [];
+    for (let p = 0; ; p++) {
+      await page.goto(`${BASE}/web/admin/fees?page=${p}`);
+      const got = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('button[data-id][data-due]')).map(el => {
+          const row = el.closest('tr');
+          const text = row ? row.innerText : '';
+          const term = (text.match(/Term\s*\d/) || ['Term 1'])[0].replace(/\s+/g, ' ');
+          return { id: el.getAttribute('data-id'), due: parseFloat(el.getAttribute('data-due')), term };
+        }));
+      if (!got.length) break;
+      invoices.push(...got);
+      const more = await page.evaluate(p2 =>
+        !!document.querySelector(`a[href*="page=${p2 + 1}"]`), p);
+      if (!more) break;
+    }
+    log(`${invoices.length} invoices across the year`);
 
+    // full / partial / leave alone, per term.
+    const POLICY = { 'Term 1': [0.85, 0.10], 'Term 2': [0.50, 0.25], 'Term 3': [0.10, 0.10] };
     const modes = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE'];
     let paidFull = 0, paidPart = 0, unpaid = 0;
+    const seen = {};
+
+    await page.goto(`${BASE}/web/admin/fees`);
     for (let i = 0; i < invoices.length; i++) {
       const inv = invoices[i];
-      if (!inv.due || inv.due <= 0) continue;
-      const bucket = i % 10;
-      let amount;
-      if (bucket < 6) { amount = inv.due; paidFull++; }            // 60% settled
-      else if (bucket < 8) { amount = Math.round(inv.due / 2); paidPart++; } // 20% part-paid
-      else { unpaid++; continue; }                                  // 20% outstanding
+      if (!inv.due || inv.due <= 0) { unpaid++; continue; }
+      const [fullTo, partTo] = POLICY[inv.term] || POLICY['Term 3'];
+      // Deterministic within a term, so a re-run tells the same story.
+      const n = (seen[inv.term] = (seen[inv.term] || 0) + 1);
+      const r = ((n * 7) % 20) / 20;
 
-      await page.goto(`${BASE}/web/admin/fees`);
-      await form('/web/admin/fees/collect',
+      let amount;
+      if (r < fullTo) { amount = inv.due; paidFull++; }
+      else if (r < fullTo + partTo) { amount = Math.round(inv.due / 2); paidPart++; }
+      else { unpaid++; continue; }
+
+      const res = await form('/web/admin/fees/collect',
         { invoiceId: inv.id, amount: String(amount), paymentMode: modes[i % modes.length] });
+      if (res.status >= 400) log(`! payment rejected for invoice ${inv.id} (HTTP ${res.status})`);
     }
-    log(`${paidFull} settled, ${paidPart} part-paid, ${unpaid} outstanding`);
+    log(`${paidFull} settled, ${paidPart} part-paid, ${unpaid} left outstanding`);
 
     // -- 11. A parent who can log in ---------------------------------------
     step(11, 'Giving one parent a login');
@@ -352,28 +389,38 @@ async function main() {
     // Only today. There is no backdating endpoint, and inventing one for a
     // demo would mean shipping a way to rewrite the attendance record.
     step(12, "Marking today's attendance");
+    // The page opens on one room, so marking it once leaves the other three
+    // blank -- and a demo that opens on LKG should not find an empty register.
     const t0 = TEACHERS[0];
     await as(t0.email, ctx.teacherPw[t0.email]);
-    await page.goto(`${BASE}/web/teacher/attendance`);
-    const marked = await page.evaluate(async () => {
-      const boxes = Array.from(document.querySelectorAll('input[name="studentIds"]'));
-      if (!boxes.length) return 0;
-      const token = document.querySelector('input[name="_csrf"]');
-      const body = new URLSearchParams();
-      boxes.forEach((b, i) => {
-        body.append('studentIds', b.value);
-        // A couple absent, the rest present -- a full house every day reads as fake.
-        body.append('statuses', (i === 2 || i === 5) ? 'ABSENT' : 'PRESENT');
-      });
-      if (token) body.append(token.getAttribute('name'), token.getAttribute('value'));
-      await fetch('/web/teacher/attendance/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
-      });
-      return boxes.length;
-    });
-    log(marked ? `${marked} children marked in ${t0.name}'s room` : '! no attendance list rendered');
+    let totalMarked = 0;
+    for (const l of LEVELS) {
+      const classId = ctx.sections[l.grade];
+      if (!classId) continue;
+      await page.goto(`${BASE}/web/teacher/attendance?classId=${classId}`);
+      const marked = await page.evaluate(async (cid) => {
+        const ids = Array.from(document.querySelectorAll('input[name="studentIds"]'));
+        if (!ids.length) return 0;
+        const token = document.querySelector('input[name="_csrf"]');
+        const body = new URLSearchParams();
+        ids.forEach((el, i) => {
+          body.append('studentIds', el.value);
+          // One away per room. A full house in every room every day reads as fake.
+          body.append('statuses', i === 2 ? 'ABSENT' : 'PRESENT');
+        });
+        body.append('classId', cid);
+        if (token) body.append(token.getAttribute('name'), token.getAttribute('value'));
+        await fetch('/web/teacher/attendance/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString(),
+        });
+        return ids.length;
+      }, classId);
+      totalMarked += marked;
+      log(marked ? `${l.grade}: ${marked} marked` : `! ${l.grade}: no register rendered`);
+    }
+    log(`${totalMarked} children marked in total`);
 
     // -- Done ---------------------------------------------------------------
     console.log(`\n${'='.repeat(64)}\nReady. ${BASE}/login\n${'='.repeat(64)}`);
