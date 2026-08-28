@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -36,6 +37,7 @@ type AttendanceStatus = 'PRESENT' | 'ABSENT';
 
 export default function ClassRosterModal({ isVisible, onClose, sectionId, className }: ClassRosterModalProps) {
   const { schoolName } = useAuth();
+  const router = useRouter();
   const [students, setStudents] = useState<RosterStudent[]>([]);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, AttendanceStatus>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -122,15 +124,26 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
     const status = attendanceMap[item.id] || 'PRESENT';
     return (
       <View style={styles.studentRow}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
-        </View>
-        <View style={styles.studentInfo}>
-          <Text style={styles.studentName}>{item.name}</Text>
-          {item.className && (
-            <Text style={styles.rollNumber}>{item.className}</Text>
-          )}
-        </View>
+        {/* Tapping the child opens their profile -- allergies, emergency
+            contact, who may collect them. The register is where a teacher
+            already is when they need that, so it is the way in. The
+            present/absent toggles stay outside the touchable so marking
+            attendance never navigates away by accident. */}
+        <TouchableOpacity
+          style={styles.studentTap}
+          activeOpacity={0.7}
+          onPress={() => { onClose(); router.push({ pathname: '/student/[id]', params: { id: item.id } }); }}
+        >
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
+          </View>
+          <View style={styles.studentInfo}>
+            <Text style={styles.studentName}>{item.name}</Text>
+            {item.className && (
+              <Text style={styles.rollNumber}>{item.className}</Text>
+            )}
+          </View>
+        </TouchableOpacity>
         <View style={styles.toggleGroup}>
           <TouchableOpacity
             style={[styles.toggleBtn, status === 'PRESENT' && styles.presentActive]}
@@ -290,6 +303,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     flexGrow: 1,
   },
+  studentTap: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12, minHeight: 44 },
   studentRow: {
     flexDirection: 'row',
     alignItems: 'center',
