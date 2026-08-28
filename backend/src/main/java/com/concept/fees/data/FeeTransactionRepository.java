@@ -12,6 +12,16 @@ public interface FeeTransactionRepository extends TenantScopedRepository<FeeTran
 
     List<FeeTransaction> findByInvoiceIdAndTenantIdOrderByPaidAtAsc(UUID invoiceId, UUID tenantId);
 
+    /**
+     * Every payment against a set of invoices, newest first, confined to one
+     * tenant. The parent portal reads this to show a family their own receipt
+     * history; {@link #findByInvoiceId} takes no tenant and is not safe for
+     * that. Reversals come back too -- a parent who saw a receipt appear and
+     * then vanish is owed the row that explains it.
+     */
+    List<FeeTransaction> findByInvoiceIdInAndTenantIdOrderByPaidAtDesc(
+            java.util.Collection<UUID> invoiceIds, UUID tenantId);
+
     /** A payment already undone must not be undone twice. */
     boolean existsByReversesTransactionId(UUID reversesTransactionId);
 

@@ -45,6 +45,7 @@ class LayeringArchitectureTest {
                     "com.concept.roster..",
                     "com.concept.attendance..",
                     "com.concept.fees..",
+                    "com.concept.recognition..",
                     "com.concept.staff..",
                     "com.concept.rewards..",
                     "com.concept.transport.admin..",
@@ -305,7 +306,7 @@ class LayeringArchitectureTest {
             "roster", "attendance", "fees", "staff", "rewards", "transport", "console",
             "dashboard", "messaging", "parent", "timetable", "assignment", "student",
             "tasks", "assessment", "oversight", "curriculum", "teacher", "notification",
-            "export", "shared", "academics");
+            "export", "shared", "academics", "recognition");
 
     /**
      * Packages that do not follow the web/app/data slice template, with the

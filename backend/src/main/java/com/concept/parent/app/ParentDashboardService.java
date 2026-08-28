@@ -4,6 +4,9 @@ import com.concept.academics.data.StudentMetric;
 import com.concept.academics.data.StudentMetricRepository;
 import com.concept.announcement.Announcement;
 import com.concept.announcement.AnnouncementRepository;
+import com.concept.fees.app.StudentFeeSummary;
+import com.concept.fees.app.StudentFeeSummaryService;
+import com.concept.recognition.app.RecognitionService;
 import com.concept.shared.data.Parent;
 import com.concept.parent.data.ParentQuest;
 import com.concept.parent.data.ParentQuestRepository;
@@ -15,6 +18,8 @@ import com.concept.user.CurrentUserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,6 +42,8 @@ public class ParentDashboardService {
     private final StudentRepository studentRepository;
     private final AnnouncementRepository announcementRepository;
     private final StudentMetricRepository studentMetricRepository;
+    private final StudentFeeSummaryService studentFeeSummaryService;
+    private final RecognitionService recognitionService;
     private final CurrentUserService currentUserService;
 
     public ParentDashboardService(ParentQuestRepository parentQuestRepository,
@@ -44,12 +51,16 @@ public class ParentDashboardService {
                                   StudentRepository studentRepository,
                                   AnnouncementRepository announcementRepository,
                                   StudentMetricRepository studentMetricRepository,
+                                  StudentFeeSummaryService studentFeeSummaryService,
+                                  RecognitionService recognitionService,
                                   CurrentUserService currentUserService) {
         this.parentQuestRepository = parentQuestRepository;
         this.parentRewardRepository = parentRewardRepository;
         this.studentRepository = studentRepository;
         this.announcementRepository = announcementRepository;
         this.studentMetricRepository = studentMetricRepository;
+        this.studentFeeSummaryService = studentFeeSummaryService;
+        this.recognitionService = recognitionService;
         this.currentUserService = currentUserService;
     }
 
@@ -80,7 +91,25 @@ public class ParentDashboardService {
                                       List<AnnouncementView> announcements,
                                       List<StudentView> students,
                                       Map<String, MetricView> studentMetrics,
-                                      Map<String, Long> pendingQuestCounts) {}
+                                      Map<String, Long> pendingQuestCounts,
+                                      /**
+                                       * Fees per child, keyed by student id as a
+                                       * String so the template can index it the
+                                       * same way it indexes studentMetrics.
+                                       * A child with no invoices raised yet is
+                                       * absent from the map rather than present
+                                       * with zeroes -- "nothing billed" and
+                                       * "billed and settled" are different things
+                                       * to say to a parent.
+                                       */
+                                      Map<String, StudentFeeSummary> studentFees,
+                                      /**
+                                       * What each child has been recognised for,
+                                       * newest first. The XP number alone tells a
+                                       * parent nothing; the reason is what gets
+                                       * talked about at home.
+                                       */
+                                      Map<String, List<RecognitionService.AwardView>> studentAwards) {}
 
     /** Empty when the caller has no linked parent record. */
     public Optional<ParentDashboardView> dashboard(Authentication authentication) {
@@ -132,6 +161,20 @@ public class ParentDashboardService {
             pendingQuestCounts.put(studentIdStr, pendingCount);
         }
 
+        Map<String, StudentFeeSummary> studentFees = feesFor(students, tenantId);
+
+        Map<String, List<RecognitionService.AwardView>> studentAwards = new LinkedHashMap<>();
+        if (!students.isEmpty() && tenantId != null) {
+            Map<UUID, List<RecognitionService.AwardView>> byId = recognitionService.historyFor(
+                    students.stream().map(Student::getId).toList(), tenantId);
+            for (Student s : students) {
+                List<RecognitionService.AwardView> own = byId.get(s.getId());
+                if (own != null && !own.isEmpty()) {
+                    studentAwards.put(s.getId().toString(), own);
+                }
+            }
+        }
+
         ParentDashboardView view = new ParentDashboardView(
                 new ParentView(parent.getFirstName(), parent.getLastName()),
                 activeQuests.stream().map(this::toQuestView).toList(),
@@ -140,8 +183,36 @@ public class ParentDashboardService {
                 announcements.stream().map(this::toAnnouncementView).toList(),
                 students.stream().map(ParentDashboardService::toStudentView).toList(),
                 studentMetrics,
-                pendingQuestCounts);
+                pendingQuestCounts,
+                studentFees,
+                studentAwards);
         return Optional.of(view);
+    }
+
+    /**
+     * Fee position per child, keyed by student id as a String so the template
+     * indexes it the way it indexes studentMetrics.
+     *
+     * <p>The sums live in {@link StudentFeeSummaryService} because the mobile
+     * app shows the same figures; two copies of "what does this family owe"
+     * would drift. The children come from findByParentsContaining, so they are
+     * this parent's by construction, and that service confines its queries to
+     * the tenant on top of that.
+     */
+    private Map<String, StudentFeeSummary> feesFor(List<Student> students, UUID tenantId) {
+        Map<String, StudentFeeSummary> fees = new LinkedHashMap<>();
+        if (students.isEmpty() || tenantId == null) {
+            return fees;
+        }
+        Map<UUID, StudentFeeSummary> byId = studentFeeSummaryService.forStudents(
+                students.stream().map(Student::getId).toList(), tenantId);
+        for (Student s : students) {
+            StudentFeeSummary summary = byId.get(s.getId());
+            if (summary != null) {
+                fees.put(s.getId().toString(), summary);
+            }
+        }
+        return fees;
     }
 
     private static StudentView toStudentView(Student s) {

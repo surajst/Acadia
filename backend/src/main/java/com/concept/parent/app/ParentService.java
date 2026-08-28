@@ -25,6 +25,9 @@ import com.concept.parentapp.SisDataProvider;
 import com.concept.parentapp.StudentSummary;
 import com.concept.transport.BusRoute;
 import com.concept.transport.BusRouteRepository;
+import com.concept.fees.app.StudentFeeSummary;
+import com.concept.recognition.app.RecognitionService;
+import com.concept.fees.app.StudentFeeSummaryService;
 import com.concept.user.CurrentUserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -65,6 +68,8 @@ public class ParentService {
     private final SisDataProvider sisDataProvider;
     private final TranslationService translationService;
     private final SpeechService speechService;
+    private final StudentFeeSummaryService studentFeeSummaryService;
+    private final RecognitionService recognitionService;
     private final CurrentUserService currentUserService;
 
     public ParentService(StudentRepository studentRepository,
@@ -79,6 +84,8 @@ public class ParentService {
                          SisDataProvider sisDataProvider,
                          TranslationService translationService,
                          SpeechService speechService,
+                         StudentFeeSummaryService studentFeeSummaryService,
+                         RecognitionService recognitionService,
                          CurrentUserService currentUserService) {
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
@@ -92,6 +99,8 @@ public class ParentService {
         this.sisDataProvider = sisDataProvider;
         this.translationService = translationService;
         this.speechService = speechService;
+        this.studentFeeSummaryService = studentFeeSummaryService;
+        this.recognitionService = recognitionService;
         this.currentUserService = currentUserService;
     }
 
@@ -212,6 +221,20 @@ public class ParentService {
         response.put("parentQuests", parentQuests);
         response.put("parentRewards", parentRewards);
         response.put("subjectPerformance", sisDataProvider.getSubjectPerformance(studentId));
+
+        // Fees for the selected child only. `student` was resolved from this
+        // parent's own children above, so the id is already theirs, and the
+        // summary service confines its queries to the tenant as well. Null
+        // when nothing has been billed -- the app shows no fee card at all
+        // rather than a card full of zeroes.
+        // What the child has been recognised for. The XP number alone tells a
+        // parent nothing; "Shared the blue crayons with Zoya" is the thing that
+        // gets talked about at home, which is the whole point of the tile.
+        response.put("awards", recognitionService.history(studentId, student.getTenantId()));
+
+        response.put("fees", studentFeeSummaryService
+                .forStudents(List.of(studentId), student.getTenantId())
+                .get(studentId));
 
         return response;
     }

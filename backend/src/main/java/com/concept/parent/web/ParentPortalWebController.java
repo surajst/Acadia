@@ -39,6 +39,8 @@ public class ParentPortalWebController {
             model.addAttribute("students", List.of());
             model.addAttribute("studentMetrics", Map.of());
             model.addAttribute("pendingQuestCounts", Map.of());
+            model.addAttribute("studentFees", Map.of());
+            model.addAttribute("studentAwards", Map.of());
             return "parent_dashboard";
         }
 
@@ -50,6 +52,8 @@ public class ParentPortalWebController {
         model.addAttribute("students", view.students());
         model.addAttribute("studentMetrics", view.studentMetrics());
         model.addAttribute("pendingQuestCounts", view.pendingQuestCounts());
+        model.addAttribute("studentFees", view.studentFees());
+        model.addAttribute("studentAwards", view.studentAwards());
         return "parent_dashboard";
     }
 }

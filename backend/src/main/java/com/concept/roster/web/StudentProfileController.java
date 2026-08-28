@@ -1,5 +1,6 @@
 package com.concept.roster.web;
 
+import com.concept.recognition.app.RecognitionService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,13 +31,16 @@ public class StudentProfileController {
 
     private final StudentProfileService studentProfileService;
     private final PickupContactService pickupContactService;
+    private final RecognitionService recognitionService;
     private final TenantContext tenantContext;
 
     public StudentProfileController(StudentProfileService studentProfileService,
                                     PickupContactService pickupContactService,
+                                    RecognitionService recognitionService,
                                     TenantContext tenantContext) {
         this.studentProfileService = studentProfileService;
         this.pickupContactService = pickupContactService;
+        this.recognitionService = recognitionService;
         this.tenantContext = tenantContext;
     }
 
@@ -77,6 +81,10 @@ public class StudentProfileController {
         model.addAttribute("householdStreak", view.householdStreak());
         model.addAttribute("recentParentNotes", null);
         model.addAttribute("dispatchLedger", Collections.emptyList());
+        // Recognising a child happens while looking at that child, so the
+        // picker and their history both live on this page.
+        model.addAttribute("badges", recognitionService.catalogue());
+        model.addAttribute("awards", recognitionService.history(id, tenantId));
         model.addAttribute("classList", view.classList());
         model.addAttribute("currentClassSectionId", view.currentClassSectionId());
         model.addAttribute("studentLoginUsername", view.studentLoginUsername());

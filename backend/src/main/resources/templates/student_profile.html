@@ -115,13 +115,13 @@
             </section>
 
             <!-- ── Detail panels (3-up → 2-up → 1-up) ───────────────────── -->
-            <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
+            <section class="panel-columns">
 
                 <!-- Care & Safety. Sits beside Guardian on purpose: when someone
                      is at the gate or a child is unwell, these are read together. -->
                 <div class="card p-5">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="eyebrow">Care &amp; Safety</h3>
+                        <h3 class="card-title">Care &amp; Safety</h3>
                         <span th:if="${ageYears != null}" class="badge badge--neutral"
                               th:text="|${ageYears} yrs|">4 yrs</span>
                     </div>
@@ -200,7 +200,7 @@
                 <!-- Guardian & Home -->
                 <div class="card p-5">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="eyebrow">Guardian &amp; Home</h3>
+                        <h3 class="card-title">Guardian &amp; Home</h3>
                         <span class="badge badge--neutral" th:text="|${guardianCount} linked|">1 linked</span>
                     </div>
                     <div th:if="${primaryGuardian != null}" class="flex items-center gap-3">
@@ -228,7 +228,7 @@
                 <!-- Attendance -->
                 <div class="card p-5">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="eyebrow">Attendance</h3>
+                        <h3 class="card-title">Attendance</h3>
                         <span class="badge badge--info"><span class="dot bg-[var(--info)]"></span> Live</span>
                     </div>
                     <div th:if="${(presentCount + absentCount) > 0}">
@@ -254,8 +254,57 @@
                     </div>
                 </div>
 
-                <!-- Recent Activity -->
-                <div class="card p-5">
+                <!-- Recognition. Sits on the profile rather than behind its own
+                     screen: the moment a teacher wants to record "she shared
+                     without being asked" is while they are looking at that
+                     child, and a flow that starts by finding the child again
+                     does not get used. -->
+                <div class="card p-5" data-recognition>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="card-title">Recognition</h3>
+                        <span th:if="${schoolXp != null}" class="badge badge--brand"
+                              th:text="|${schoolXp} XP|">0 XP</span>
+                    </div>
+
+                    <form th:action="@{/web/teacher/student/{id}/award(id=${studentId})}" method="post"
+                          class="mb-4" data-award-form>
+                        <p class="eyebrow mb-2">Award something</p>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <label th:each="b, bs : ${badges}"
+                                   class="cursor-pointer" data-badge-option>
+                                <input type="radio" name="badgeCode" class="sr-only peer"
+                                       th:value="${b.code}" th:checked="${bs.index == 0}" required>
+                                <span class="btn btn-secondary btn-xs peer-checked:!bg-[var(--brand)] peer-checked:!text-white peer-checked:!border-[var(--brand)]"
+                                      th:text="${b.emoji} + ' ' + ${b.label} + ' +' + ${b.points}">🤝 Kind Hands +10</span>
+                            </label>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" name="reason" class="field" maxlength="500"
+                                   placeholder="What happened? (optional — we'll fill something in)">
+                            <button type="submit" class="btn btn-primary btn-sm whitespace-nowrap">Award</button>
+                        </div>
+                    </form>
+
+                    <div th:if="${!#lists.isEmpty(awards)}" class="mb-4">
+                        <p class="eyebrow mb-2">Recently recognised</p>
+                        <div th:each="a : ${awards}" data-award-row
+                             class="flex items-start gap-3 py-2 border-b last:border-0" style="border-color:var(--line)">
+                            <span class="text-lg leading-none mt-0.5" th:text="${a.emoji()}">🤝</span>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-semibold text-slate-900">
+                                    <span th:text="${a.label()}">Kind Hands</span>
+                                    <span class="text-[var(--brand)] font-bold" th:text="'+' + ${a.points()}">+10</span>
+                                </p>
+                                <p class="text-xs text-slate-600" th:text="${a.reason()}">Helped a friend</p>
+                                <p class="text-[11px] text-[var(--text-3)]"
+                                   th:text="${(a.awardedByName() != null ? a.awardedByName() + ' · ' : '') + #temporals.format(a.createdAt(), 'dd MMM yyyy')}">Anita · 28 Aug 2026</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p th:if="${#lists.isEmpty(awards)}" class="text-sm text-[var(--text-3)] mb-4">
+                        Nothing recognised yet — the first one means the most.
+                    </p>
+
                     <h3 class="eyebrow mb-4">Recent Activity</h3>
                     <p th:if="${recentParentNotes != null}" class="text-sm italic text-slate-600 leading-relaxed pl-3 mb-3" style="border-left:2px solid var(--brand)" th:text="${recentParentNotes}"></p>
                     <div th:unless="${#lists.isEmpty(dispatchLedger)}" class="overflow-x-auto rounded-xl border" style="border-color:var(--line)">

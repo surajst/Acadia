@@ -233,6 +233,20 @@ export default function TabLayout() {
           }}
         />
 
+        {/* Parents only. Fee collection is the school's job and lives on the
+            web dashboard; this tab is the family's own read-only view of what
+            they owe and what they have paid. */}
+        <Tabs.Screen
+          name="fees"
+          options={{
+            title: 'Fees',
+            href: isParent ? undefined : null,
+            tabBarIcon: ({ color }) => (
+              <SymbolView name={{ ios: 'creditcard', android: 'payments', web: 'payments' }} tintColor={color} size={28} />
+            ),
+          }}
+        />
+
         <Tabs.Screen
           name="bus"
           options={{

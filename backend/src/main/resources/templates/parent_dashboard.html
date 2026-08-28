@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<!-- 100dvh, with 100vh left in front of it as the fallback for browsers that
+     lack it. On mobile Chrome 100vh is the viewport with the address bar
+     hidden, so while that bar is showing the last ~60px of the page sits below
+     the fold -- and overflow:hidden means you cannot scroll down to it. That
+     put the bottom tab bar off-screen on a phone. -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; height:100dvh; overflow:hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -10,7 +15,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
         html, body {
-            height: 100vh;
+            height: 100vh;   /* fallback */
+            height: 100dvh;  /* the viewport actually visible right now */
             overflow: hidden;
             margin: 0;
             padding: 0;
@@ -18,7 +24,7 @@
         body {
             font-family: 'Outfit', 'Inter', sans-serif;
             background-color: #F4F6FB;
-            color: #0F172A;
+            color: #fff;
             display: flex;
             flex-direction: column;
         }
@@ -83,8 +89,8 @@
         .sidebar-item .tab-icon { font-size: 15px; flex-shrink: 0; }
         .sidebar-badge {
             margin-left: auto;
-            background: #6366F1;
-            color: #0F172A;
+            background: var(--brand);
+            color: #fff;
             font-size: 10px;
             font-weight: 700;
             border-radius: 9999px;
@@ -114,11 +120,15 @@
         @keyframes tabFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
         /* ── Mobile bottom nav ── */
+        /* Light, like the rest of the portal. This bar kept its pre-migration
+           dark palette (#0d1120 with white-at-35% labels), which read as a
+           black strip under a white page on a phone. */
         #parent-mobile-nav {
             display: none;
             height: 68px;
-            background: #0d1120;
-            border-top: 1px solid rgba(99,102,241,0.15);
+            background: var(--surface);
+            border-top: 1px solid var(--line-strong);
+            box-shadow: 0 -2px 12px rgba(16,24,40,.06);
             align-items: stretch;
             flex-shrink: 0;
             width: 100%;
@@ -132,14 +142,14 @@
             gap: 3px;
             font-size: 10px;
             font-weight: 600;
-            color: rgba(255,255,255,0.35);
+            color: var(--text-3);
             cursor: pointer;
             transition: color 0.15s;
             position: relative;
             padding: 8px 4px 10px;
         }
         .mobile-nav-item .tab-icon { font-size: 22px; transition: transform 0.15s; }
-        .mobile-nav-item.active { color: #818CF8; }
+        .mobile-nav-item.active { color: var(--brand); }
         .mobile-nav-item.active .tab-icon { transform: scale(1.1); }
         .mobile-nav-item.active::before {
             content: '';
@@ -149,14 +159,14 @@
             transform: translateX(-50%);
             width: 42px;
             height: 32px;
-            background: rgba(99,102,241,0.15);
+            background: var(--brand-50);
             border-radius: 20px;
         }
         .mobile-badge {
             position: absolute;
             top: 4px; right: 14px;
-            background: #6366F1;
-            color: #0F172A;
+            background: var(--brand);
+            color: #fff;
             font-size: 9px; font-weight: 700;
             border-radius: 9999px;
             padding: 0 5px; line-height: 14px;
@@ -385,6 +395,107 @@
                                     <span class="text-xs font-medium text-slate-500 ml-0.5">quests</span>
                                 </p>
                             </div>
+                        </div>
+
+                        <!-- School fees. The school wants a parent to know where
+                             they stand without having to ask the office, so this
+                             sits on the child's own card rather than behind a tab.
+                             Absent entirely when no invoice has been raised: an
+                             empty fee panel invites a phone call.
+
+                             Every expression here is one ${...} on one line.
+                             Thymeleaf will not parse an expression split across
+                             lines, and ${} cannot be nested inside ${}. -->
+                        <!-- What their teacher recognised them for. Above fees on
+                             purpose: this is the part a parent wants to read, and
+                             the XP tiles above are a number with no story until
+                             these lines sit under them. -->
+                        <div th:with="awards=${studentAwards[student.id.toString()]}">
+                        <div th:if="${awards != null and !#lists.isEmpty(awards)}" data-award-panel
+                             class="mt-3 rounded-xl p-3 border bg-indigo-50 border-indigo-200 relative z-10">
+                            <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Recognised by their teacher</p>
+                            <div th:each="a, st : ${awards}" th:if="${st.index < 3}" data-parent-award-row
+                                 class="flex items-start gap-2 py-1">
+                                <span class="text-base leading-none mt-0.5" th:text="${a.emoji()}">🫶</span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[12px] font-semibold text-slate-900">
+                                        <span th:text="${a.label()}">Great Sharing</span>
+                                        <span class="text-indigo-600 font-bold" th:text="${'+' + a.points()}">+10</span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-600" th:text="${a.reason()}">Shared with a friend</p>
+                                    <p class="text-[10px] text-slate-400"
+                                       th:text="${(a.awardedByName() != null ? a.awardedByName() + ' · ' : '') + #temporals.format(a.createdAt(), 'dd MMM')}">Anita · 28 Aug</p>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div th:with="fee=${studentFees[student.id.toString()]}">
+                        <div th:if="${fee != null}" data-fee-panel class="mt-3 rounded-xl p-3 border relative z-10"
+                             th:classappend="${fee.settled() ? 'bg-emerald-50 border-emerald-200' : (fee.overdueCount() > 0 ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200')}">
+
+                            <div class="flex items-baseline justify-between gap-2">
+                                <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500">School Fees</p>
+                                <span th:if="${fee.overdueCount() > 0}" data-fee-overdue
+                                      class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-600 text-white"
+                                      th:text="${fee.overdueCount() + (fee.overdueCount() == 1 ? ' instalment overdue' : ' instalments overdue')}">1 overdue</span>
+                            </div>
+
+                            <p th:if="${fee.settled()}" class="mt-1 text-sm font-bold text-emerald-700">&#10003; All paid &mdash; nothing due</p>
+
+                            <div th:unless="${fee.settled()}" class="mt-1">
+                                <p class="text-xl font-black" data-fee-due
+                                   th:classappend="${fee.overdueCount() > 0 ? 'text-red-700' : 'text-amber-700'}"
+                                   th:text="${'&#8377; ' + #numbers.formatDecimal(fee.totalDue(), 1, 'COMMA', 2, 'POINT')}">0.00</p>
+                                <p class="text-[11px] text-slate-600 mt-0.5" th:if="${fee.nextDueLabel() != null}"
+                                   th:text="${'Next: ' + fee.nextDueLabel() + (fee.nextDueAmount() != null ? ' &#183; &#8377; ' + #numbers.formatDecimal(fee.nextDueAmount(), 1, 'COMMA', 2, 'POINT') : '') + (fee.nextDueDate() != null ? ' &#183; due ' + #temporals.format(fee.nextDueDate(), 'dd MMM yyyy') : '')}">Next: Term 2</p>
+                            </div>
+
+                            <p class="text-[10px] text-slate-500 mt-1.5"
+                               th:text="${fee.paidCount() + ' of ' + fee.instalmentCount() + ' instalments paid &#183; &#8377; ' + #numbers.formatDecimal(fee.totalPaid(), 1, 'COMMA', 2, 'POINT') + ' of &#8377; ' + #numbers.formatDecimal(fee.totalBilled(), 1, 'COMMA', 2, 'POINT')}">0 of 3 instalments paid</p>
+
+                            <!-- The detail sits behind a disclosure rather than on
+                                 the card: the summary above answers the everyday
+                                 question, and a parent checking whether a specific
+                                 payment landed is the rarer case. -->
+                            <details class="mt-2 group">
+                                <summary class="text-[11px] font-semibold text-slate-600 cursor-pointer select-none hover:text-slate-900">
+                                    Dues &amp; payment history
+                                </summary>
+
+                                <div th:if="${!#lists.isEmpty(fee.dues())}" class="mt-2">
+                                    <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Still due</p>
+                                    <div th:each="d : ${fee.dues()}" data-due-row
+                                         class="flex items-baseline justify-between gap-2 text-[11px] py-0.5 border-b border-slate-200/70 last:border-0">
+                                        <span class="font-medium text-slate-700" th:text="${d.label() != null ? d.label() : 'Instalment'}">Term 1</span>
+                                        <span class="text-slate-500 text-[10px] ml-auto mr-2"
+                                              th:text="${d.dueDate() != null ? (d.overdue() ? 'overdue ' : 'due ') + #temporals.format(d.dueDate(), 'dd MMM yyyy') : ''}">due 01 Jun 2026</span>
+                                        <span class="font-bold tabular-nums"
+                                              th:classappend="${d.overdue() ? 'text-red-700' : 'text-slate-900'}"
+                                              th:text="${'&#8377; ' + #numbers.formatDecimal(d.amount(), 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                    </div>
+                                </div>
+
+                                <div th:if="${!#lists.isEmpty(fee.payments())}" class="mt-2">
+                                    <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Payments received</p>
+                                    <div th:each="pmt : ${fee.payments()}" data-payment-row
+                                         class="flex items-baseline justify-between gap-2 text-[11px] py-0.5 border-b border-slate-200/70 last:border-0">
+                                        <span class="font-medium"
+                                              th:classappend="${pmt.reversal() ? 'text-red-700' : 'text-slate-700'}"
+                                              th:text="${pmt.reversal() ? 'Reversed' : (pmt.receiptNumber() != null ? 'Receipt #' + pmt.receiptNumber() : 'Payment')}">Receipt #1</span>
+                                        <span class="text-slate-500 text-[10px] ml-auto mr-2"
+                                              th:text="${(pmt.label() != null ? pmt.label() + ' &#183; ' : '') + (pmt.paidOn() != null ? #temporals.format(pmt.paidOn(), 'dd MMM yyyy') : '')}">Term 1 &#183; 01 Jun 2026</span>
+                                        <span class="font-bold tabular-nums"
+                                              th:classappend="${pmt.reversal() ? 'text-red-700' : 'text-emerald-700'}"
+                                              th:text="${'&#8377; ' + #numbers.formatDecimal(pmt.amount(), 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                    </div>
+                                </div>
+
+                                <p th:if="${#lists.isEmpty(fee.payments())}" class="mt-2 text-[11px] text-slate-500">
+                                    No payments received yet.
+                                </p>
+                            </details>
+                        </div>
                         </div>
                     </div>
                 </div>
