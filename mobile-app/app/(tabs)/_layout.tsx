@@ -50,6 +50,9 @@ export default function TabLayout() {
   const headerShown = useClientOnlyValue(false, true);
 
   const fetchDashboardData = useCallback(async (childId?: string | null) => {
+    // Admins still manage the school from a bigger screen. Principals do not:
+    // their work in the app is deciding what is waiting, and the approvals
+    // screen fetches that itself.
     if (role === ROLE_ADMIN || role === ROLE_PRINCIPAL) {
       setData({});
       setLoading(false);
@@ -122,8 +125,11 @@ export default function TabLayout() {
   const isParent  = role === ROLE_PARENT;
   const isTeacher = role === ROLE_TEACHER;
   const isDriver  = role === ROLE_DRIVER;
+  const isPrincipal = role === ROLE_PRINCIPAL;
 
-  if (role === ROLE_ADMIN || role === ROLE_PRINCIPAL) {
+  // Admins only. Principals now have the approvals queue, which is the work
+  // they actually do from a phone.
+  if (role === ROLE_ADMIN) {
     return <WebOnlyRoleScreen role={role} />;
   }
 
@@ -236,6 +242,19 @@ export default function TabLayout() {
         {/* Parents only. Fee collection is the school's job and lives on the
             web dashboard; this tab is the family's own read-only view of what
             they owe and what they have paid. */}
+        {/* Principals decide things while walking around a school, not at a
+            desk -- which is why this queue used to sit for days. */}
+        <Tabs.Screen
+          name="approvals"
+          options={{
+            title: 'Approvals',
+            href: isPrincipal ? undefined : null,
+            tabBarIcon: ({ color }) => (
+              <SymbolView name={{ ios: 'checkmark.seal', android: 'verified', web: 'verified' }} tintColor={color} size={28} />
+            ),
+          }}
+        />
+
         <Tabs.Screen
           name="fees"
           options={{

@@ -325,7 +325,16 @@ export default function DashboardScreen() {
           has not noticed their child. */}
       {role === 'PARENT' && Array.isArray(data.awards) && data.awards.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recognised by their teacher</Text>
+          {/* The card shows the newest few; the full history answers the other
+              question a parent asks -- what has my child been noticed for. */}
+          <TouchableOpacity
+            style={awardStyles.headerRow}
+            onPress={() => router.push('/recognition')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.sectionTitle}>Recognised by their teacher</Text>
+            <Text style={awardStyles.seeAll}>See all ›</Text>
+          </TouchableOpacity>
           {data.awards.slice(0, 5).map((a: any, i: number) => (
             <View
               key={a.id ?? `award-${i}`}
@@ -439,6 +448,8 @@ const styles = StyleSheet.create({
  * styling stays readable -- these are only used by the parent's award list.
  */
 const awardStyles = StyleSheet.create({
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  seeAll: { fontSize: 12.5, fontWeight: '600', color: '#4F46E5' },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
