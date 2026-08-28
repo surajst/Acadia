@@ -6,6 +6,7 @@ import com.concept.announcement.Announcement;
 import com.concept.announcement.AnnouncementRepository;
 import com.concept.fees.app.StudentFeeSummary;
 import com.concept.fees.app.StudentFeeSummaryService;
+import com.concept.recognition.app.RecognitionService;
 import com.concept.shared.data.Parent;
 import com.concept.parent.data.ParentQuest;
 import com.concept.parent.data.ParentQuestRepository;
@@ -42,6 +43,7 @@ public class ParentDashboardService {
     private final AnnouncementRepository announcementRepository;
     private final StudentMetricRepository studentMetricRepository;
     private final StudentFeeSummaryService studentFeeSummaryService;
+    private final RecognitionService recognitionService;
     private final CurrentUserService currentUserService;
 
     public ParentDashboardService(ParentQuestRepository parentQuestRepository,
@@ -50,6 +52,7 @@ public class ParentDashboardService {
                                   AnnouncementRepository announcementRepository,
                                   StudentMetricRepository studentMetricRepository,
                                   StudentFeeSummaryService studentFeeSummaryService,
+                                  RecognitionService recognitionService,
                                   CurrentUserService currentUserService) {
         this.parentQuestRepository = parentQuestRepository;
         this.parentRewardRepository = parentRewardRepository;
@@ -57,6 +60,7 @@ public class ParentDashboardService {
         this.announcementRepository = announcementRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.studentFeeSummaryService = studentFeeSummaryService;
+        this.recognitionService = recognitionService;
         this.currentUserService = currentUserService;
     }
 
@@ -98,7 +102,14 @@ public class ParentDashboardService {
                                        * "billed and settled" are different things
                                        * to say to a parent.
                                        */
-                                      Map<String, StudentFeeSummary> studentFees) {}
+                                      Map<String, StudentFeeSummary> studentFees,
+                                      /**
+                                       * What each child has been recognised for,
+                                       * newest first. The XP number alone tells a
+                                       * parent nothing; the reason is what gets
+                                       * talked about at home.
+                                       */
+                                      Map<String, List<RecognitionService.AwardView>> studentAwards) {}
 
     /** Empty when the caller has no linked parent record. */
     public Optional<ParentDashboardView> dashboard(Authentication authentication) {
@@ -152,6 +163,18 @@ public class ParentDashboardService {
 
         Map<String, StudentFeeSummary> studentFees = feesFor(students, tenantId);
 
+        Map<String, List<RecognitionService.AwardView>> studentAwards = new LinkedHashMap<>();
+        if (!students.isEmpty() && tenantId != null) {
+            Map<UUID, List<RecognitionService.AwardView>> byId = recognitionService.historyFor(
+                    students.stream().map(Student::getId).toList(), tenantId);
+            for (Student s : students) {
+                List<RecognitionService.AwardView> own = byId.get(s.getId());
+                if (own != null && !own.isEmpty()) {
+                    studentAwards.put(s.getId().toString(), own);
+                }
+            }
+        }
+
         ParentDashboardView view = new ParentDashboardView(
                 new ParentView(parent.getFirstName(), parent.getLastName()),
                 activeQuests.stream().map(this::toQuestView).toList(),
@@ -161,7 +184,8 @@ public class ParentDashboardService {
                 students.stream().map(ParentDashboardService::toStudentView).toList(),
                 studentMetrics,
                 pendingQuestCounts,
-                studentFees);
+                studentFees,
+                studentAwards);
         return Optional.of(view);
     }
 

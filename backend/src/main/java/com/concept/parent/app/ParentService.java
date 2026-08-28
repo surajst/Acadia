@@ -26,6 +26,7 @@ import com.concept.parentapp.StudentSummary;
 import com.concept.transport.BusRoute;
 import com.concept.transport.BusRouteRepository;
 import com.concept.fees.app.StudentFeeSummary;
+import com.concept.recognition.app.RecognitionService;
 import com.concept.fees.app.StudentFeeSummaryService;
 import com.concept.user.CurrentUserService;
 import org.springframework.security.core.Authentication;
@@ -68,6 +69,7 @@ public class ParentService {
     private final TranslationService translationService;
     private final SpeechService speechService;
     private final StudentFeeSummaryService studentFeeSummaryService;
+    private final RecognitionService recognitionService;
     private final CurrentUserService currentUserService;
 
     public ParentService(StudentRepository studentRepository,
@@ -83,6 +85,7 @@ public class ParentService {
                          TranslationService translationService,
                          SpeechService speechService,
                          StudentFeeSummaryService studentFeeSummaryService,
+                         RecognitionService recognitionService,
                          CurrentUserService currentUserService) {
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
@@ -97,6 +100,7 @@ public class ParentService {
         this.translationService = translationService;
         this.speechService = speechService;
         this.studentFeeSummaryService = studentFeeSummaryService;
+        this.recognitionService = recognitionService;
         this.currentUserService = currentUserService;
     }
 
@@ -223,6 +227,11 @@ public class ParentService {
         // summary service confines its queries to the tenant as well. Null
         // when nothing has been billed -- the app shows no fee card at all
         // rather than a card full of zeroes.
+        // What the child has been recognised for. The XP number alone tells a
+        // parent nothing; "Shared the blue crayons with Zoya" is the thing that
+        // gets talked about at home, which is the whole point of the tile.
+        response.put("awards", recognitionService.history(studentId, student.getTenantId()));
+
         response.put("fees", studentFeeSummaryService
                 .forStudents(List.of(studentId), student.getTenantId())
                 .get(studentId));

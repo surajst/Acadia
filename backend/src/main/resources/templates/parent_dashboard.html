@@ -406,6 +406,30 @@
                              Every expression here is one ${...} on one line.
                              Thymeleaf will not parse an expression split across
                              lines, and ${} cannot be nested inside ${}. -->
+                        <!-- What their teacher recognised them for. Above fees on
+                             purpose: this is the part a parent wants to read, and
+                             the XP tiles above are a number with no story until
+                             these lines sit under them. -->
+                        <div th:with="awards=${studentAwards[student.id.toString()]}">
+                        <div th:if="${awards != null and !#lists.isEmpty(awards)}" data-award-panel
+                             class="mt-3 rounded-xl p-3 border bg-indigo-50 border-indigo-200 relative z-10">
+                            <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Recognised by their teacher</p>
+                            <div th:each="a, st : ${awards}" th:if="${st.index < 3}" data-parent-award-row
+                                 class="flex items-start gap-2 py-1">
+                                <span class="text-base leading-none mt-0.5" th:text="${a.emoji()}">🫶</span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[12px] font-semibold text-slate-900">
+                                        <span th:text="${a.label()}">Great Sharing</span>
+                                        <span class="text-indigo-600 font-bold" th:text="${'+' + a.points()}">+10</span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-600" th:text="${a.reason()}">Shared with a friend</p>
+                                    <p class="text-[10px] text-slate-400"
+                                       th:text="${(a.awardedByName() != null ? a.awardedByName() + ' · ' : '') + #temporals.format(a.createdAt(), 'dd MMM')}">Anita · 28 Aug</p>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+
                         <div th:with="fee=${studentFees[student.id.toString()]}">
                         <div th:if="${fee != null}" data-fee-panel class="mt-3 rounded-xl p-3 border relative z-10"
                              th:classappend="${fee.settled() ? 'bg-emerald-50 border-emerald-200' : (fee.overdueCount() > 0 ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200')}">
