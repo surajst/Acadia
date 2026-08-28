@@ -6,6 +6,8 @@ import com.concept.announcement.Announcement;
 import com.concept.announcement.AnnouncementRepository;
 import com.concept.fees.data.FeeInvoice;
 import com.concept.fees.data.FeeInvoiceRepository;
+import com.concept.fees.data.FeeTransaction;
+import com.concept.fees.data.FeeTransactionRepository;
 import com.concept.shared.data.Parent;
 import com.concept.parent.data.ParentQuest;
 import com.concept.parent.data.ParentQuestRepository;
@@ -42,6 +44,7 @@ public class ParentDashboardService {
     private final AnnouncementRepository announcementRepository;
     private final StudentMetricRepository studentMetricRepository;
     private final FeeInvoiceRepository feeInvoiceRepository;
+    private final FeeTransactionRepository feeTransactionRepository;
     private final CurrentUserService currentUserService;
 
     public ParentDashboardService(ParentQuestRepository parentQuestRepository,
@@ -50,6 +53,7 @@ public class ParentDashboardService {
                                   AnnouncementRepository announcementRepository,
                                   StudentMetricRepository studentMetricRepository,
                                   FeeInvoiceRepository feeInvoiceRepository,
+                                  FeeTransactionRepository feeTransactionRepository,
                                   CurrentUserService currentUserService) {
         this.parentQuestRepository = parentQuestRepository;
         this.parentRewardRepository = parentRewardRepository;
@@ -57,6 +61,7 @@ public class ParentDashboardService {
         this.announcementRepository = announcementRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.feeInvoiceRepository = feeInvoiceRepository;
+        this.feeTransactionRepository = feeTransactionRepository;
         this.currentUserService = currentUserService;
     }
 
@@ -66,16 +71,32 @@ public class ParentDashboardService {
 
     public record MetricView(Integer schoolXp, Integer parentXp, Integer activeStreak) {}
 
+    /** One instalment that still owes something. */
+    public record DueLine(String label, BigDecimal amount, LocalDate dueDate, boolean overdue) {}
+
+    /**
+     * One row of the family's receipt history.
+     *
+     * @param reversal true for the negative row written when a payment is
+     *                 undone. Shown rather than filtered: a parent who saw a
+     *                 receipt appear and then disappear is owed the explanation,
+     *                 and hiding it makes the running total look wrong.
+     */
+    public record PaymentLine(LocalDate paidOn, BigDecimal amount, String mode,
+                              Integer receiptNumber, String label, boolean reversal) {}
+
     /**
      * What one child's fees look like to their parent.
      *
-     * <p>Amounts are pre-summed here rather than in the template: a parent
-     * reading this wants "what do I owe and by when", not a ledger. The next
-     * unpaid instalment is called out separately because that is the only row
-     * that asks anything of them today.
+     * <p>Totals are pre-summed here rather than in the template: a parent
+     * reading this wants "what do I owe and by when" first. The per-instalment
+     * dues and the receipt history follow underneath, for the parent who wants
+     * to check a specific payment landed.
      *
      * @param overdueCount instalments already past their due date and not settled
      * @param nextDueLabel e.g. "Term 2", or null when nothing is outstanding
+     * @param dues         only the instalments still owing, soonest first
+     * @param payments     every receipt against this child, newest first
      */
     public record FeeView(BigDecimal totalBilled,
                           BigDecimal totalPaid,
@@ -85,7 +106,9 @@ public class ParentDashboardService {
                           int overdueCount,
                           String nextDueLabel,
                           LocalDate nextDueDate,
-                          BigDecimal nextDueAmount) {
+                          BigDecimal nextDueAmount,
+                          List<DueLine> dues,
+                          List<PaymentLine> payments) {
 
         /** True when there is nothing left to pay -- the template shows a settled state. */
         public boolean settled() {
@@ -217,6 +240,18 @@ public class ParentDashboardService {
             byStudent.computeIfAbsent(inv.getStudentId(), k -> new ArrayList<>()).add(inv);
         }
 
+        // One query for the whole family's receipts, then grouped in memory --
+        // a parent with three children should not cost three round trips.
+        Map<UUID, String> labelByInvoice = new LinkedHashMap<>();
+        for (FeeInvoice inv : invoices) {
+            labelByInvoice.put(inv.getId(), inv.getInstalmentLabel());
+        }
+        Map<UUID, List<FeeTransaction>> txByInvoice = new LinkedHashMap<>();
+        for (FeeTransaction tx : feeTransactionRepository
+                .findByInvoiceIdInAndTenantIdOrderByPaidAtDesc(labelByInvoice.keySet(), tenantId)) {
+            txByInvoice.computeIfAbsent(tx.getInvoiceId(), k -> new ArrayList<>()).add(tx);
+        }
+
         for (Student s : students) {
             List<FeeInvoice> own = byStudent.get(s.getId());
             if (own == null || own.isEmpty()) {
@@ -228,6 +263,8 @@ public class ParentDashboardService {
             int paidCount = 0;
             int overdue = 0;
             FeeInvoice next = null;
+            List<DueLine> dues = new ArrayList<>();
+            List<PaymentLine> payments = new ArrayList<>();
 
             for (FeeInvoice inv : own) {
                 billed = billed.add(nz(inv.getTotalAmount()));
@@ -235,24 +272,46 @@ public class ParentDashboardService {
                 BigDecimal owing = nz(inv.getAmountDue());
                 due = due.add(owing);
 
+                for (FeeTransaction tx : txByInvoice.getOrDefault(inv.getId(), List.of())) {
+                    payments.add(new PaymentLine(
+                            tx.getPaidAt() == null ? null : tx.getPaidAt().toLocalDate(),
+                            tx.getAmountPaid(), tx.getPaymentMode(), tx.getReceiptNumber(),
+                            inv.getInstalmentLabel(), tx.isReversal()));
+                }
+
                 if (owing.signum() <= 0) {
                     paidCount++;
                     continue;
                 }
-                if (inv.getDueDate() != null && inv.getDueDate().isBefore(today)) {
+                boolean isOverdue = inv.getDueDate() != null && inv.getDueDate().isBefore(today);
+                if (isOverdue) {
                     overdue++;
                 }
+                dues.add(new DueLine(inv.getInstalmentLabel(), owing, inv.getDueDate(), isOverdue));
                 // The soonest unsettled instalment is the one worth naming.
                 if (next == null || earlier(inv.getDueDate(), next.getDueDate())) {
                     next = inv;
                 }
             }
 
+            // Soonest first for what is owed; newest first for what has been paid.
+            dues.sort((a, b) -> {
+                if (a.dueDate() == null) return b.dueDate() == null ? 0 : 1;
+                if (b.dueDate() == null) return -1;
+                return a.dueDate().compareTo(b.dueDate());
+            });
+            payments.sort((a, b) -> {
+                if (a.paidOn() == null) return b.paidOn() == null ? 0 : 1;
+                if (b.paidOn() == null) return -1;
+                return b.paidOn().compareTo(a.paidOn());
+            });
+
             fees.put(s.getId().toString(), new FeeView(
                     billed, paid, due, own.size(), paidCount, overdue,
                     next == null ? null : next.getInstalmentLabel(),
                     next == null ? null : next.getDueDate(),
-                    next == null ? null : nz(next.getAmountDue())));
+                    next == null ? null : nz(next.getAmountDue()),
+                    dues, payments));
         }
         return fees;
     }

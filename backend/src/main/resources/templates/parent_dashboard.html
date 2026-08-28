@@ -419,6 +419,48 @@
 
                             <p class="text-[10px] text-slate-500 mt-1.5"
                                th:text="${fee.paidCount() + ' of ' + fee.instalmentCount() + ' instalments paid &#183; &#8377; ' + #numbers.formatDecimal(fee.totalPaid(), 1, 'COMMA', 2, 'POINT') + ' of &#8377; ' + #numbers.formatDecimal(fee.totalBilled(), 1, 'COMMA', 2, 'POINT')}">0 of 3 instalments paid</p>
+
+                            <!-- The detail sits behind a disclosure rather than on
+                                 the card: the summary above answers the everyday
+                                 question, and a parent checking whether a specific
+                                 payment landed is the rarer case. -->
+                            <details class="mt-2 group">
+                                <summary class="text-[11px] font-semibold text-slate-600 cursor-pointer select-none hover:text-slate-900">
+                                    Dues &amp; payment history
+                                </summary>
+
+                                <div th:if="${!#lists.isEmpty(fee.dues())}" class="mt-2">
+                                    <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Still due</p>
+                                    <div th:each="d : ${fee.dues()}" data-due-row
+                                         class="flex items-baseline justify-between gap-2 text-[11px] py-0.5 border-b border-slate-200/70 last:border-0">
+                                        <span class="font-medium text-slate-700" th:text="${d.label() != null ? d.label() : 'Instalment'}">Term 1</span>
+                                        <span class="text-slate-500 text-[10px] ml-auto mr-2"
+                                              th:text="${d.dueDate() != null ? (d.overdue() ? 'overdue ' : 'due ') + #temporals.format(d.dueDate(), 'dd MMM yyyy') : ''}">due 01 Jun 2026</span>
+                                        <span class="font-bold tabular-nums"
+                                              th:classappend="${d.overdue() ? 'text-red-700' : 'text-slate-900'}"
+                                              th:text="${'&#8377; ' + #numbers.formatDecimal(d.amount(), 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                    </div>
+                                </div>
+
+                                <div th:if="${!#lists.isEmpty(fee.payments())}" class="mt-2">
+                                    <p class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Payments received</p>
+                                    <div th:each="pmt : ${fee.payments()}" data-payment-row
+                                         class="flex items-baseline justify-between gap-2 text-[11px] py-0.5 border-b border-slate-200/70 last:border-0">
+                                        <span class="font-medium"
+                                              th:classappend="${pmt.reversal() ? 'text-red-700' : 'text-slate-700'}"
+                                              th:text="${pmt.reversal() ? 'Reversed' : (pmt.receiptNumber() != null ? 'Receipt #' + pmt.receiptNumber() : 'Payment')}">Receipt #1</span>
+                                        <span class="text-slate-500 text-[10px] ml-auto mr-2"
+                                              th:text="${(pmt.label() != null ? pmt.label() + ' &#183; ' : '') + (pmt.paidOn() != null ? #temporals.format(pmt.paidOn(), 'dd MMM yyyy') : '')}">Term 1 &#183; 01 Jun 2026</span>
+                                        <span class="font-bold tabular-nums"
+                                              th:classappend="${pmt.reversal() ? 'text-red-700' : 'text-emerald-700'}"
+                                              th:text="${'&#8377; ' + #numbers.formatDecimal(pmt.amount(), 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                    </div>
+                                </div>
+
+                                <p th:if="${#lists.isEmpty(fee.payments())}" class="mt-2 text-[11px] text-slate-500">
+                                    No payments received yet.
+                                </p>
+                            </details>
                         </div>
                         </div>
                     </div>
