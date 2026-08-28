@@ -4,10 +4,8 @@ import com.concept.academics.data.StudentMetric;
 import com.concept.academics.data.StudentMetricRepository;
 import com.concept.announcement.Announcement;
 import com.concept.announcement.AnnouncementRepository;
-import com.concept.fees.data.FeeInvoice;
-import com.concept.fees.data.FeeInvoiceRepository;
-import com.concept.fees.data.FeeTransaction;
-import com.concept.fees.data.FeeTransactionRepository;
+import com.concept.fees.app.StudentFeeSummary;
+import com.concept.fees.app.StudentFeeSummaryService;
 import com.concept.shared.data.Parent;
 import com.concept.parent.data.ParentQuest;
 import com.concept.parent.data.ParentQuestRepository;
@@ -43,8 +41,7 @@ public class ParentDashboardService {
     private final StudentRepository studentRepository;
     private final AnnouncementRepository announcementRepository;
     private final StudentMetricRepository studentMetricRepository;
-    private final FeeInvoiceRepository feeInvoiceRepository;
-    private final FeeTransactionRepository feeTransactionRepository;
+    private final StudentFeeSummaryService studentFeeSummaryService;
     private final CurrentUserService currentUserService;
 
     public ParentDashboardService(ParentQuestRepository parentQuestRepository,
@@ -52,16 +49,14 @@ public class ParentDashboardService {
                                   StudentRepository studentRepository,
                                   AnnouncementRepository announcementRepository,
                                   StudentMetricRepository studentMetricRepository,
-                                  FeeInvoiceRepository feeInvoiceRepository,
-                                  FeeTransactionRepository feeTransactionRepository,
+                                  StudentFeeSummaryService studentFeeSummaryService,
                                   CurrentUserService currentUserService) {
         this.parentQuestRepository = parentQuestRepository;
         this.parentRewardRepository = parentRewardRepository;
         this.studentRepository = studentRepository;
         this.announcementRepository = announcementRepository;
         this.studentMetricRepository = studentMetricRepository;
-        this.feeInvoiceRepository = feeInvoiceRepository;
-        this.feeTransactionRepository = feeTransactionRepository;
+        this.studentFeeSummaryService = studentFeeSummaryService;
         this.currentUserService = currentUserService;
     }
 
@@ -70,51 +65,6 @@ public class ParentDashboardService {
     public record StudentView(UUID id, String firstName, String lastName, String className) {}
 
     public record MetricView(Integer schoolXp, Integer parentXp, Integer activeStreak) {}
-
-    /** One instalment that still owes something. */
-    public record DueLine(String label, BigDecimal amount, LocalDate dueDate, boolean overdue) {}
-
-    /**
-     * One row of the family's receipt history.
-     *
-     * @param reversal true for the negative row written when a payment is
-     *                 undone. Shown rather than filtered: a parent who saw a
-     *                 receipt appear and then disappear is owed the explanation,
-     *                 and hiding it makes the running total look wrong.
-     */
-    public record PaymentLine(LocalDate paidOn, BigDecimal amount, String mode,
-                              Integer receiptNumber, String label, boolean reversal) {}
-
-    /**
-     * What one child's fees look like to their parent.
-     *
-     * <p>Totals are pre-summed here rather than in the template: a parent
-     * reading this wants "what do I owe and by when" first. The per-instalment
-     * dues and the receipt history follow underneath, for the parent who wants
-     * to check a specific payment landed.
-     *
-     * @param overdueCount instalments already past their due date and not settled
-     * @param nextDueLabel e.g. "Term 2", or null when nothing is outstanding
-     * @param dues         only the instalments still owing, soonest first
-     * @param payments     every receipt against this child, newest first
-     */
-    public record FeeView(BigDecimal totalBilled,
-                          BigDecimal totalPaid,
-                          BigDecimal totalDue,
-                          int instalmentCount,
-                          int paidCount,
-                          int overdueCount,
-                          String nextDueLabel,
-                          LocalDate nextDueDate,
-                          BigDecimal nextDueAmount,
-                          List<DueLine> dues,
-                          List<PaymentLine> payments) {
-
-        /** True when there is nothing left to pay -- the template shows a settled state. */
-        public boolean settled() {
-            return totalDue == null || totalDue.signum() <= 0;
-        }
-    }
 
     public record QuestView(UUID id, String studentFirstName, String taskDescription, Integer xpBounty) {}
 
@@ -148,7 +98,7 @@ public class ParentDashboardService {
                                        * "billed and settled" are different things
                                        * to say to a parent.
                                        */
-                                      Map<String, FeeView> studentFees) {}
+                                      Map<String, StudentFeeSummary> studentFees) {}
 
     /** Empty when the caller has no linked parent record. */
     public Optional<ParentDashboardView> dashboard(Authentication authentication) {
@@ -200,7 +150,7 @@ public class ParentDashboardService {
             pendingQuestCounts.put(studentIdStr, pendingCount);
         }
 
-        Map<String, FeeView> studentFees = feesFor(students, tenantId);
+        Map<String, StudentFeeSummary> studentFees = feesFor(students, tenantId);
 
         ParentDashboardView view = new ParentDashboardView(
                 new ParentView(parent.getFirstName(), parent.getLastName()),
@@ -216,116 +166,29 @@ public class ParentDashboardService {
     }
 
     /**
-     * Sums each child's invoices into one line a parent can act on.
+     * Fee position per child, keyed by student id as a String so the template
+     * indexes it the way it indexes studentMetrics.
      *
-     * <p>Scoped twice on purpose. The children come from
-     * {@code findByParentsContaining}, so they are this parent's by
-     * construction, and the query is still confined to the tenant -- neither
-     * alone is enough if the other is ever refactored away.
+     * <p>The sums live in {@link StudentFeeSummaryService} because the mobile
+     * app shows the same figures; two copies of "what does this family owe"
+     * would drift. The children come from findByParentsContaining, so they are
+     * this parent's by construction, and that service confines its queries to
+     * the tenant on top of that.
      */
-    private Map<String, FeeView> feesFor(List<Student> students, UUID tenantId) {
-        Map<String, FeeView> fees = new LinkedHashMap<>();
+    private Map<String, StudentFeeSummary> feesFor(List<Student> students, UUID tenantId) {
+        Map<String, StudentFeeSummary> fees = new LinkedHashMap<>();
         if (students.isEmpty() || tenantId == null) {
             return fees;
         }
-        List<UUID> ids = students.stream().map(Student::getId).toList();
-        List<FeeInvoice> invoices = feeInvoiceRepository.findByStudentIdInAndTenantId(ids, tenantId);
-        if (invoices.isEmpty()) {
-            return fees;
-        }
-
-        LocalDate today = LocalDate.now();
-        Map<UUID, List<FeeInvoice>> byStudent = new LinkedHashMap<>();
-        for (FeeInvoice inv : invoices) {
-            byStudent.computeIfAbsent(inv.getStudentId(), k -> new ArrayList<>()).add(inv);
-        }
-
-        // One query for the whole family's receipts, then grouped in memory --
-        // a parent with three children should not cost three round trips.
-        Map<UUID, String> labelByInvoice = new LinkedHashMap<>();
-        for (FeeInvoice inv : invoices) {
-            labelByInvoice.put(inv.getId(), inv.getInstalmentLabel());
-        }
-        Map<UUID, List<FeeTransaction>> txByInvoice = new LinkedHashMap<>();
-        for (FeeTransaction tx : feeTransactionRepository
-                .findByInvoiceIdInAndTenantIdOrderByPaidAtDesc(labelByInvoice.keySet(), tenantId)) {
-            txByInvoice.computeIfAbsent(tx.getInvoiceId(), k -> new ArrayList<>()).add(tx);
-        }
-
+        Map<UUID, StudentFeeSummary> byId = studentFeeSummaryService.forStudents(
+                students.stream().map(Student::getId).toList(), tenantId);
         for (Student s : students) {
-            List<FeeInvoice> own = byStudent.get(s.getId());
-            if (own == null || own.isEmpty()) {
-                continue;
+            StudentFeeSummary summary = byId.get(s.getId());
+            if (summary != null) {
+                fees.put(s.getId().toString(), summary);
             }
-            BigDecimal billed = BigDecimal.ZERO;
-            BigDecimal paid = BigDecimal.ZERO;
-            BigDecimal due = BigDecimal.ZERO;
-            int paidCount = 0;
-            int overdue = 0;
-            FeeInvoice next = null;
-            List<DueLine> dues = new ArrayList<>();
-            List<PaymentLine> payments = new ArrayList<>();
-
-            for (FeeInvoice inv : own) {
-                billed = billed.add(nz(inv.getTotalAmount()));
-                paid = paid.add(nz(inv.getAmountPaid()));
-                BigDecimal owing = nz(inv.getAmountDue());
-                due = due.add(owing);
-
-                for (FeeTransaction tx : txByInvoice.getOrDefault(inv.getId(), List.of())) {
-                    payments.add(new PaymentLine(
-                            tx.getPaidAt() == null ? null : tx.getPaidAt().toLocalDate(),
-                            tx.getAmountPaid(), tx.getPaymentMode(), tx.getReceiptNumber(),
-                            inv.getInstalmentLabel(), tx.isReversal()));
-                }
-
-                if (owing.signum() <= 0) {
-                    paidCount++;
-                    continue;
-                }
-                boolean isOverdue = inv.getDueDate() != null && inv.getDueDate().isBefore(today);
-                if (isOverdue) {
-                    overdue++;
-                }
-                dues.add(new DueLine(inv.getInstalmentLabel(), owing, inv.getDueDate(), isOverdue));
-                // The soonest unsettled instalment is the one worth naming.
-                if (next == null || earlier(inv.getDueDate(), next.getDueDate())) {
-                    next = inv;
-                }
-            }
-
-            // Soonest first for what is owed; newest first for what has been paid.
-            dues.sort((a, b) -> {
-                if (a.dueDate() == null) return b.dueDate() == null ? 0 : 1;
-                if (b.dueDate() == null) return -1;
-                return a.dueDate().compareTo(b.dueDate());
-            });
-            payments.sort((a, b) -> {
-                if (a.paidOn() == null) return b.paidOn() == null ? 0 : 1;
-                if (b.paidOn() == null) return -1;
-                return b.paidOn().compareTo(a.paidOn());
-            });
-
-            fees.put(s.getId().toString(), new FeeView(
-                    billed, paid, due, own.size(), paidCount, overdue,
-                    next == null ? null : next.getInstalmentLabel(),
-                    next == null ? null : next.getDueDate(),
-                    next == null ? null : nz(next.getAmountDue()),
-                    dues, payments));
         }
         return fees;
-    }
-
-    private static BigDecimal nz(BigDecimal v) {
-        return v == null ? BigDecimal.ZERO : v;
-    }
-
-    /** A missing due date sorts last, so a dated instalment is always preferred. */
-    private static boolean earlier(LocalDate candidate, LocalDate current) {
-        if (candidate == null) {
-            return false;
-        }
-        return current == null || candidate.isBefore(current);
     }
 
     private static StudentView toStudentView(Student s) {
