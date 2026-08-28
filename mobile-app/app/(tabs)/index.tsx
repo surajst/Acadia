@@ -318,6 +318,36 @@ export default function DashboardScreen() {
         </View>
       )}
 
+      {/* What their teacher recognised them for. Directly under the XP tiles
+          on purpose: the number above is meaningless on its own, and this is
+          the part a parent actually reads. Hidden entirely when there is
+          nothing yet -- an empty "recognition" heading reads as a school that
+          has not noticed their child. */}
+      {role === 'PARENT' && Array.isArray(data.awards) && data.awards.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recognised by their teacher</Text>
+          {data.awards.slice(0, 5).map((a: any, i: number) => (
+            <View
+              key={a.id ?? `award-${i}`}
+              style={[awardStyles.row, i === Math.min(data.awards.length, 5) - 1 && awardStyles.rowLast]}
+            >
+              <Text style={awardStyles.emoji}>{a.emoji || '🏅'}</Text>
+              <View style={awardStyles.body}>
+                <Text style={awardStyles.label}>
+                  {a.label} <Text style={awardStyles.points}>+{a.points}</Text>
+                </Text>
+                {a.reason ? <Text style={awardStyles.reason}>{a.reason}</Text> : null}
+                <Text style={awardStyles.meta}>
+                  {[a.awardedByName, a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : null]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
       {role === 'PARENT' && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
@@ -403,4 +433,25 @@ const styles = StyleSheet.create({
   bellButton: { padding: 8, position: 'relative' },
   badge: { position: 'absolute', top: 2, right: 2, backgroundColor: '#ef4444', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+});
+/**
+ * Recognition rows. Kept separate from `styles` so the shared dashboard
+ * styling stays readable -- these are only used by the parent's award list.
+ */
+const awardStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF1F6',
+  },
+  rowLast: { borderBottomWidth: 0 },
+  emoji: { fontSize: 18, lineHeight: 22 },
+  body: { flex: 1 },
+  label: { fontSize: 13.5, fontWeight: '600', color: '#0F172A' },
+  points: { color: '#4F46E5', fontWeight: '700' },
+  reason: { fontSize: 12.5, color: '#475569', marginTop: 2 },
+  meta: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
 });
