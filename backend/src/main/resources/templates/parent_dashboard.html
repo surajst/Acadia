@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<!-- 100dvh, with 100vh left in front of it as the fallback for browsers that
+     lack it. On mobile Chrome 100vh is the viewport with the address bar
+     hidden, so while that bar is showing the last ~60px of the page sits below
+     the fold -- and overflow:hidden means you cannot scroll down to it. That
+     put the bottom tab bar off-screen on a phone. -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; height:100dvh; overflow:hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -10,7 +15,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
         html, body {
-            height: 100vh;
+            height: 100vh;   /* fallback */
+            height: 100dvh;  /* the viewport actually visible right now */
             overflow: hidden;
             margin: 0;
             padding: 0;
@@ -18,7 +24,7 @@
         body {
             font-family: 'Outfit', 'Inter', sans-serif;
             background-color: #F4F6FB;
-            color: #0F172A;
+            color: #fff;
             display: flex;
             flex-direction: column;
         }
@@ -83,8 +89,8 @@
         .sidebar-item .tab-icon { font-size: 15px; flex-shrink: 0; }
         .sidebar-badge {
             margin-left: auto;
-            background: #6366F1;
-            color: #0F172A;
+            background: var(--brand);
+            color: #fff;
             font-size: 10px;
             font-weight: 700;
             border-radius: 9999px;
@@ -114,11 +120,15 @@
         @keyframes tabFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
         /* ── Mobile bottom nav ── */
+        /* Light, like the rest of the portal. This bar kept its pre-migration
+           dark palette (#0d1120 with white-at-35% labels), which read as a
+           black strip under a white page on a phone. */
         #parent-mobile-nav {
             display: none;
             height: 68px;
-            background: #0d1120;
-            border-top: 1px solid rgba(99,102,241,0.15);
+            background: var(--surface);
+            border-top: 1px solid var(--line-strong);
+            box-shadow: 0 -2px 12px rgba(16,24,40,.06);
             align-items: stretch;
             flex-shrink: 0;
             width: 100%;
@@ -132,14 +142,14 @@
             gap: 3px;
             font-size: 10px;
             font-weight: 600;
-            color: rgba(255,255,255,0.35);
+            color: var(--text-3);
             cursor: pointer;
             transition: color 0.15s;
             position: relative;
             padding: 8px 4px 10px;
         }
         .mobile-nav-item .tab-icon { font-size: 22px; transition: transform 0.15s; }
-        .mobile-nav-item.active { color: #818CF8; }
+        .mobile-nav-item.active { color: var(--brand); }
         .mobile-nav-item.active .tab-icon { transform: scale(1.1); }
         .mobile-nav-item.active::before {
             content: '';
@@ -149,14 +159,14 @@
             transform: translateX(-50%);
             width: 42px;
             height: 32px;
-            background: rgba(99,102,241,0.15);
+            background: var(--brand-50);
             border-radius: 20px;
         }
         .mobile-badge {
             position: absolute;
             top: 4px; right: 14px;
-            background: #6366F1;
-            color: #0F172A;
+            background: var(--brand);
+            color: #fff;
             font-size: 9px; font-weight: 700;
             border-radius: 9999px;
             padding: 0 5px; line-height: 14px;
