@@ -20,8 +20,9 @@ test.describe('ACADIA Role Clearance Specs', () => {
     // 3. Navigate to the Unified Dashboard
     await page.goto('/web/admin/dashboard');
 
-    // 4. Click the "View Profile Data" button for the first student
-    const viewProfileBtn = page.locator('a:has-text("View Profile Data")').first();
+    // 4. Open the first student's profile. The roster row's link reads "Open"
+    // since the dashboard moved onto the app shell.
+    const viewProfileBtn = page.locator('.roster-row a:has-text("Open")').first();
     await expect(viewProfileBtn).toBeVisible();
     await viewProfileBtn.click();
 

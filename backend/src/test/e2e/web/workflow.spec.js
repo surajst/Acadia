@@ -23,8 +23,12 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     await expect(page.locator('[data-kpi-attendance]')).toBeVisible();
     await expect(page.locator('[data-kpi-attendance]')).toContainText('%');
 
+    // The absences card leads with the count and carries the roll size on the
+    // note beneath it, rather than the old "18 / 505" fraction. Assert both
+    // halves so the denominator cannot quietly disappear again.
     await expect(page.locator('[data-kpi-absences]')).toBeVisible();
-    await expect(page.locator('[data-kpi-absences]')).toContainText('/');
+    await expect(page.locator('[data-kpi-absences]')).toHaveText(/^\d+$/);
+    await expect(page.locator('[data-kpi-absences] ~ .kpi-note')).toContainText('on roll today');
   });
 
   test('Test 2: Teacher Daily Attendance Toggles & Ledger Saving', async ({ page }) => {
