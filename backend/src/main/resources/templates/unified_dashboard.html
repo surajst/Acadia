@@ -50,20 +50,25 @@
 
                         <div class="kpi-cell">
                             <p class="eyebrow">Attendance today</p>
-                            <p class="kpi-value" data-kpi-attendance th:text="|${attendancePercentage}%|">96.4%</p>
+                            <!-- Every figure here defaults rather than trusting the model.
+                                 Arithmetic on a null throws inside SpringEL, and a KPI that
+                                 cannot be computed took the whole dashboard down with a 500
+                                 -- which is how a single failed query in the fee summary
+                                 turned into a blank error page instead of a dash. -->
+                            <p class="kpi-value" data-kpi-attendance th:text="|${attendancePercentage ?: 0}%|">96.4%</p>
                             <div class="track track--xs" style="margin-top:7px;">
-                                <div class="fill" th:style="'background:var(--success); width:' + ${attendancePercentage} + '%'"></div>
+                                <div class="fill" th:style="'background:var(--success); width:' + ${attendancePercentage ?: 0} + '%'"></div>
                             </div>
-                            <p class="kpi-note" th:text="|${totalStudents - activeAbsences} of ${totalStudents} present|">487 of 505 present</p>
+                            <p class="kpi-note" th:text="|${(totalStudents ?: 0) - (activeAbsences ?: 0)} of ${totalStudents ?: 0} present|">487 of 505 present</p>
                         </div>
 
                         <div class="kpi-cell">
                             <p class="eyebrow">Active absences</p>
-                            <p class="kpi-value" data-kpi-absences th:text="${activeAbsences}">18</p>
+                            <p class="kpi-value" data-kpi-absences th:text="${activeAbsences ?: 0}">18</p>
                             <div class="track track--xs" style="margin-top:7px;">
-                                <div class="fill" th:style="'background:var(--warn); width:' + (${totalStudents} > 0 ? (${activeAbsences} * 100 / ${totalStudents}) : 0) + '%'"></div>
+                                <div class="fill" th:style="${'background:var(--warn); width:' + ((totalStudents ?: 0) > 0 ? ((activeAbsences ?: 0) * 100 / totalStudents) : 0) + '%'}"></div>
                             </div>
-                            <p class="kpi-note" th:text="|of ${totalStudents} on roll today|">of 505 on roll today</p>
+                            <p class="kpi-note" th:text="|of ${totalStudents ?: 0} on roll today|">of 505 on roll today</p>
                         </div>
 
                         <!-- Rendered only when the figure is actually known. The

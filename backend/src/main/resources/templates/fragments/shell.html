@@ -149,6 +149,16 @@
             </button>
         </form>
     </div>
+
+    <!-- Shown only below 1360px (see .shell-narrow). It lives in the sidebar
+         fragment because that is the one piece every shell page renders, and
+         it is position:fixed, so it sits at the bottom of the viewport rather
+         than inside the rail. -->
+    <div class="shell-narrow" role="status">
+        <span aria-hidden="true">&#9432;</span>
+        <span>This console is built for a desktop screen. Scroll sideways to
+              reach the rest of the page, or open it on a larger display.</span>
+    </div>
 </aside>
 
 <!-- ── Top bar ──────────────────────────────────────────────────────────── -->
