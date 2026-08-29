@@ -36,14 +36,22 @@
         }
 
         /* ── Sidebar ── */
+        /* Light, matching the shell the admin pages now use. This rail kept a
+           dark glass treatment from before the Slate mist migration, so a
+           parent moving between the portal and the rest of the product met two
+           different-looking apps.
+
+           Not the .shell primitive itself: that navigates by route, and this
+           portal switches tabs in the page. Rebuilding working navigation to
+           satisfy a class name would risk the fee and recognition panels for
+           no gain a parent can see. Same vocabulary, same tokens, same
+           behaviour. */
         #parent-sidebar {
-            width: 220px;
-            min-width: 220px;
+            width: 244px;
+            min-width: 244px;
             flex-shrink: 0;
-            background: rgba(10, 14, 26, 0.85);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border-right: 1px solid rgba(255,255,255,0.06);
+            background: var(--surface);
+            border-right: 1px solid var(--line);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -51,11 +59,11 @@
             gap: 2px;
         }
         .sidebar-label {
-            font-size: 9px;
+            font-size: 10.5px;
             font-weight: 700;
-            letter-spacing: 0.14em;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: #475569;
+            color: var(--text-4);
             padding: 0 14px;
             margin-bottom: 6px;
             margin-top: 4px;
@@ -64,27 +72,29 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 13px;
+            padding: 9px 10px;
+            border-radius: var(--r-sm);
+            font-size: 14px;
             font-weight: 500;
-            color: rgba(255,255,255,0.42);
+            color: var(--text-2);
             cursor: pointer;
-            transition: all 0.16s ease;
-            border-left: 3px solid transparent;
+            transition: all 0.15s ease;
+            /* Transparent rather than absent, so nothing shifts on activation. */
+            border: 1px solid transparent;
             user-select: none;
         }
         .sidebar-item:hover {
-            background: rgba(99,102,241,0.07);
-            color: rgba(255,255,255,0.72);
+            background: var(--surface-2);
+            color: var(--text);
         }
         .sidebar-item.active {
-            border-left: 3px solid #6366F1;
-            background: rgba(99,102,241,0.12);
-            color: #ffffff;
+            background: var(--brand-50);
+            border-color: var(--brand-100);
+            color: var(--brand);
             font-weight: 600;
         }
-        .sidebar-item .tab-icon { font-size: 15px; flex-shrink: 0; }
+        .sidebar-item .tab-icon { font-size: 15px; flex-shrink: 0; opacity: .75; }
+        .sidebar-item.active .tab-icon { opacity: 1; }
         .sidebar-badge {
             margin-left: auto;
             background: var(--brand);
@@ -303,9 +313,11 @@
 
             <div class="flex-1"></div>
 
-            <div class="mx-1 mt-4 px-3 py-3 rounded-xl bg-[#F4F6FB]/40 border border-slate-200/50 text-xs text-slate-500 leading-relaxed">
-                <p class="font-bold text-indigo-600/60 text-[9px] uppercase tracking-wider mb-1">Guardian Workspace</p>
-                <p>Review your child's progress, approve quests, and manage rewards from here.</p>
+            <!-- Opacity-dimmed text was legible on the old dark rail and all but
+                 disappeared on the light one. Solid tokens, no alpha. -->
+            <div class="mx-1 mt-4 px-3 py-3 rounded-xl" style="background:var(--surface-2); border:1px solid var(--line);">
+                <p class="eyebrow" style="margin-bottom:4px;">Guardian Workspace</p>
+                <p style="font-size:11.5px; color:var(--text-2); line-height:1.5;">Review your child's progress, approve quests, and manage rewards from here.</p>
             </div>
         </nav>
 
@@ -1003,7 +1015,7 @@
         </div>
     </div>
 
-    <footer style="text-align:center;padding:6px;font-size:11px;color:rgba(255,255,255,0.12);border-top:1px solid rgba(255,255,255,0.04);flex-shrink:0;">
+    <footer style="text-align:center;padding:6px;font-size:11px;color:var(--text-4);border-top:1px solid var(--line);flex-shrink:0;">
         ACADIA &middot; Connect | Manage | Empower
     </footer>
 
