@@ -130,12 +130,17 @@
              CSRF hidden input and all. -->
         <form th:action="@{/logout}" method="post" style="flex-shrink:0;">
             <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}"/>
-            <button type="submit" class="btn btn-secondary" title="Log out" aria-label="Log out"
+            <button type="submit" class="btn btn-secondary" title="Log out"
                     style="width:30px; height:30px; padding:0;">
-                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                 </svg>
+                <!-- A real text node rather than aria-label, matching the pattern
+                     the parent and student portals already use: it names the
+                     button for screen readers and keeps it findable by its
+                     visible-equivalent label. -->
+                <span class="sr-only">Logout</span>
             </button>
         </form>
     </div>

@@ -251,3 +251,12 @@ body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:#D3DAE6; border-radius:6px; }
 ::-webkit-scrollbar-thumb:hover { background:#B9C2D4; }
+
+/* ── Screen-reader-only text ─────────────────────────────────────────────────
+   Icon-only controls (the sidebar logout button) carry their label as a real
+   text node hidden this way. Tailwind also defines .sr-only, but the shell
+   should not depend on that being loaded on every page. */
+.sr-only {
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
