@@ -32,7 +32,7 @@
 
     <nav class="shell-nav">
 
-        <div class="shell-group">
+        <div class="shell-group" th:if="${shell == null or shell.role() != 'TEACHER'}">
             <p class="shell-grouplabel">School</p>
 
             <a class="navlink" href="/web/admin/dashboard"
@@ -54,10 +54,38 @@
             </a>
         </div>
 
+        <!-- A teacher's day. These were an in-page sidebar on the verification
+             queue, which meant they existed on one screen and nowhere else --
+             a teacher on the gradebook had no way back to their register. -->
+        <div class="shell-group" th:if="${shell != null and shell.role() == 'TEACHER'}">
+            <p class="shell-grouplabel">My classroom</p>
+
+            <a class="navlink" href="/web/teacher/attendance"
+               th:classappend="${shell != null and shell.on('/web/teacher/attendance')} ? 'active' : ''">
+                <span class="dot"></span> Daily Attendance
+            </a>
+            <a class="navlink" href="/web/teacher/dashboard"
+               th:classappend="${shell != null and shell.on('/web/teacher/dashboard')} ? 'active' : ''">
+                <span class="dot"></span> Verification Queue
+            </a>
+            <a class="navlink" href="/web/teacher/tasks"
+               th:classappend="${shell != null and shell.on('/web/teacher/tasks')} ? 'active' : ''">
+                <span class="dot"></span> My Tasks
+            </a>
+            <a class="navlink" href="/web/teacher/assessments" th:if="${school == null or school.hasExamScores}"
+               th:classappend="${shell != null and shell.on('/web/teacher/assessments')} ? 'active' : ''">
+                <span class="dot"></span> Gradebook
+            </a>
+            <a class="navlink" href="/web/teacher/messages"
+               th:classappend="${shell != null and shell.on('/web/teacher/messages')} ? 'active' : ''">
+                <span class="dot"></span> Messages
+            </a>
+        </div>
+
         <!-- People and Governance stay behind the same guard the pages
              themselves use; a nav item you are not allowed to open is a
              worse experience than one that is not there. -->
-        <div class="shell-group" th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}">
+        <div class="shell-group" th:if="${shell != null and (shell.role() == 'ADMIN' or shell.role() == 'PRINCIPAL')}">
             <p class="shell-grouplabel">People</p>
 
             <a class="navlink" href="/web/teacher/dashboard"
@@ -72,7 +100,7 @@
             </a>
         </div>
 
-        <div class="shell-group" th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}">
+        <div class="shell-group" th:if="${shell != null and (shell.role() == 'ADMIN' or shell.role() == 'PRINCIPAL')}">
             <p class="shell-grouplabel">Governance</p>
 
             <a class="navlink" href="/web/admin/audit-log"
