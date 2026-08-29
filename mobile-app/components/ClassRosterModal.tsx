@@ -188,7 +188,7 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
           <View style={styles.content}>
             {isLoading ? (
               <View style={styles.centerBox}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#4F46E5" />
                 <Text style={styles.loadingText}>Loading Roster...</Text>
               </View>
             ) : error ? (
@@ -295,9 +295,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E7EAF2',
   },
-  retryText: { color: '#6366f1', fontWeight: '600' },
+  retryText: { color: '#4F46E5', fontWeight: '600' },
   listPadding: {
     paddingHorizontal: 16,
     paddingBottom: 20,
@@ -313,13 +313,13 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#6366f115',
+    backgroundColor: '#4F46E515',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#6366f130',
+    borderColor: '#4F46E530',
   },
-  avatarText: { color: '#818cf8', fontWeight: '700', fontSize: 18 },
+  avatarText: { color: '#4F46E5', fontWeight: '700', fontSize: 18 },
   studentInfo: { flex: 1, marginLeft: 14 },
   studentName: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
   rollNumber: { fontSize: 12, color: '#64748b', marginTop: 2 },
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F9FC',
   },
   submitBtn: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#4F46E5',
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',

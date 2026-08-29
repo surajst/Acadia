@@ -29,7 +29,7 @@ export default function TimetableScreen() {
     <View style={styles.root}>
       <View style={styles.headerBand}>
         <View style={styles.headerIconWrap}>
-          <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor="#6366f1" size={26} />
+          <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor="#4F46E5" size={26} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>Timetable</Text>
@@ -52,9 +52,9 @@ export default function TimetableScreen() {
               <Text style={styles.periodClass}>{p.className} · {p.roomNumber || ''}</Text>
             </View>
             {p.attendanceMarked ? (
-              <View style={[styles.badge, { backgroundColor: '#22c55e22' }]}><Text style={[styles.badgeText, { color: '#22c55e' }]}>Marked</Text></View>
+              <View style={[styles.badge, { backgroundColor: '#05966922' }]}><Text style={[styles.badgeText, { color: '#059669' }]}>Marked</Text></View>
             ) : (
-              <View style={[styles.badge, { backgroundColor: '#f59e0b22' }]}><Text style={[styles.badgeText, { color: '#f59e0b' }]}>Pending</Text></View>
+              <View style={[styles.badge, { backgroundColor: '#D9770622' }]}><Text style={[styles.badgeText, { color: '#D97706' }]}>Pending</Text></View>
             )}
           </View>
         ))
@@ -65,7 +65,7 @@ export default function TimetableScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#6366f1" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
           {DAY_ORDER.map((day) => (
@@ -95,9 +95,9 @@ const styles = StyleSheet.create({
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
+    borderBottomWidth: 1, borderBottomColor: '#E7EAF2',
   },
-  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#6366f120', justifyContent: 'center', alignItems: 'center' },
+  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#4F46E520', justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
   headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
   sectionLabelRow: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8 },
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   periodCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF',
     borderRadius: 12, padding: 12, marginHorizontal: 16, marginBottom: 8,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    borderWidth: 1, borderColor: '#E7EAF2',
   },
   periodTime: { fontSize: 12, color: '#64748B', fontVariant: ['tabular-nums'] },
   periodSubject: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   dayLabel: { fontSize: 13, fontWeight: '700', color: '#0F172A', marginBottom: 6 },
   emptyDayText: { fontSize: 12, color: '#64748b' },
   weekRow: { flexDirection: 'row', gap: 10, paddingVertical: 4 },
-  weekTime: { fontSize: 12, color: '#6366f1', width: 50 },
+  weekTime: { fontSize: 12, color: '#4F46E5', width: 50 },
   weekSubject: { fontSize: 12, color: '#0F172A', flex: 1 },
   weekClass: { fontSize: 11, color: '#64748b' },
 });

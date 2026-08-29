@@ -51,7 +51,7 @@ export default function BusScreen() {
     <View style={styles.root}>
       <View style={styles.headerBand}>
         <View style={styles.headerIconWrap}>
-          <SymbolView name={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }} tintColor="#6366f1" size={26} />
+          <SymbolView name={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }} tintColor="#4F46E5" size={26} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>Bus Tracker</Text>
@@ -60,7 +60,7 @@ export default function BusScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#6366f1" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 40 }} />
       ) : !location?.assigned ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No bus route assigned yet. Ask your school admin to link your child's class to a bus route.</Text>
@@ -114,17 +114,17 @@ const styles = StyleSheet.create({
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
+    borderBottomWidth: 1, borderBottomColor: '#E7EAF2',
   },
-  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#6366f120', justifyContent: 'center', alignItems: 'center' },
+  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#4F46E520', justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
   headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
   emptyState: { padding: 24 },
   emptyText: { color: '#64748b', fontSize: 14, textAlign: 'center' },
-  statusCard: { margin: 16, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+  statusCard: { margin: 16, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#E7EAF2' },
   statusRoute: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
   statusText: { color: '#64748B', fontSize: 14, marginTop: 6 },
   statusCoords: { color: '#64748b', fontSize: 12, marginTop: 6, fontVariant: ['tabular-nums'] },
-  webNotice: { color: '#f59e0b', fontSize: 12, marginTop: 12 },
+  webNotice: { color: '#D97706', fontSize: 12, marginTop: 12 },
   map: { flex: 1 },
 });

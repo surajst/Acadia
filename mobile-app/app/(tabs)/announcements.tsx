@@ -85,7 +85,7 @@ export default function AnnouncementsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -94,7 +94,7 @@ export default function AnnouncementsScreen() {
     <View style={styles.root}>
       <View style={styles.headerBand}>
         <View style={styles.headerIconWrap}>
-          <SymbolView name={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }} tintColor="#6366f1" size={26} />
+          <SymbolView name={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }} tintColor="#4F46E5" size={26} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>Announcements</Text>
@@ -122,13 +122,13 @@ export default function AnnouncementsScreen() {
                 <View style={styles.cardActions}>
                   {selectedLang !== 'en' && !shown && (
                     <TouchableOpacity style={styles.actionBtn} onPress={() => handleTranslate(a.id)} disabled={busy}>
-                      {busy ? <ActivityIndicator size="small" color="#6366f1" /> : <Text style={styles.actionBtnText}>Translate</Text>}
+                      {busy ? <ActivityIndicator size="small" color="#4F46E5" /> : <Text style={styles.actionBtnText}>Translate</Text>}
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity style={styles.actionBtn} onPress={() => handlePlay(a.id)} disabled={busy}>
-                    {busy ? <ActivityIndicator size="small" color="#6366f1" /> : (
+                    {busy ? <ActivityIndicator size="small" color="#4F46E5" /> : (
                       <>
-                        <SymbolView name={{ ios: 'speaker.wave.2', android: 'volume_up', web: 'volume_up' }} tintColor="#6366f1" size={16} />
+                        <SymbolView name={{ ios: 'speaker.wave.2', android: 'volume_up', web: 'volume_up' }} tintColor="#4F46E5" size={16} />
                         <Text style={styles.actionBtnText}>Play</Text>
                       </>
                     )}
@@ -168,26 +168,26 @@ const styles = StyleSheet.create({
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
+    borderBottomWidth: 1, borderBottomColor: '#E7EAF2',
   },
-  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#6366f120', justifyContent: 'center', alignItems: 'center' },
+  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#4F46E520', justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
   headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  langBtn: { backgroundColor: '#6366f120', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#6366f140' },
-  langBtnText: { color: '#6366f1', fontSize: 12, fontWeight: '600' },
+  langBtn: { backgroundColor: '#4F46E520', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#4F46E540' },
+  langBtnText: { color: '#4F46E5', fontSize: 12, fontWeight: '600' },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: '#0F172A', marginTop: 16 },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, gap: 12 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 12 },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E7EAF2', marginBottom: 12 },
   cardTitle: { color: '#0F172A', fontSize: 15, fontWeight: '700', marginBottom: 6 },
   cardBody: { color: '#64748B', fontSize: 13, lineHeight: 19 },
   cardActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#6366f118', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
-  actionBtnText: { color: '#6366f1', fontSize: 12, fontWeight: '600' },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#4F46E518', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  actionBtnText: { color: '#4F46E5', fontSize: 12, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: '#00000090', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
   modalTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 12 },
   langRow: { padding: 12, borderRadius: 10, marginBottom: 4 },
-  langRowActive: { backgroundColor: '#6366f122' },
+  langRowActive: { backgroundColor: '#4F46E522' },
   langRowText: { color: '#0F172A', fontSize: 14 },
 });

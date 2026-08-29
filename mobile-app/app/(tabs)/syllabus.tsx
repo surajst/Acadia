@@ -17,7 +17,7 @@ interface Topic {
 }
 
 // Fallback accent palette, applied in catalog order when a subject has no colorHex set.
-const FALLBACK_ACCENTS = ['#22c55e', '#f59e0b', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
+const FALLBACK_ACCENTS = ['#059669', '#D97706', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
 
 export default function SyllabusScreen() {
   const { role } = useContext(DataContext);
@@ -90,7 +90,7 @@ export default function SyllabusScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -98,7 +98,7 @@ export default function SyllabusScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Curriculum Overview</Text>
@@ -132,7 +132,7 @@ export default function SyllabusScreen() {
           subjectKeys.map(subjectKey => {
             const subjectTopics = grouped[subjectKey];
             const completedCount = subjectTopics.filter(t => t.completed).length;
-            const accent = subjectAccent[subjectKey] ?? '#6366f1';
+            const accent = subjectAccent[subjectKey] ?? '#4F46E5';
 
             return (
               <View key={subjectKey} style={styles.subjectGroup}>
@@ -188,34 +188,34 @@ const styles = StyleSheet.create({
   sectionTitle:       { color: '#0F172A', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
   chipContainer:      { flexDirection: 'row', gap: 8, paddingBottom: 8 },
   chip:               { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-                        backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
-  chipActive:         { backgroundColor: '#6366f1', borderColor: '#6366f1' },
+                        backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E7EAF2' },
+  chipActive:         { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
   chipText:           { color: '#64748B', fontWeight: '600' },
   chipTextActive:     { color: '#ffffff' },
   subjectGroup:       { marginBottom: 20 },
   subjectHeader:      { flexDirection: 'row', justifyContent: 'space-between',
                         alignItems: 'center', paddingLeft: 10,
                         borderLeftWidth: 3, marginBottom: 10 },
-  subjectName:        { color: '#e2e8f0', fontSize: 15, fontWeight: '700' },
+  subjectName:        { color: '#E7EAF2', fontSize: 15, fontWeight: '700' },
   subjectProgress:    { fontSize: 13, fontWeight: '600' },
   card:               { backgroundColor: '#FFFFFF', padding: 14, borderRadius: 12,
-                        marginBottom: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+                        marginBottom: 8, borderWidth: 1, borderColor: '#E7EAF2' },
   topicRow:           { flexDirection: 'row', alignItems: 'center', gap: 12 },
   indicator:          { width: 28, height: 28, borderRadius: 14, borderWidth: 2,
                         borderColor: '#94A3B8', justifyContent: 'center',
                         alignItems: 'center', backgroundColor: '#F7F9FC' },
-  indicatorDone:      { borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)' },
+  indicatorDone:      { borderColor: '#059669', backgroundColor: 'rgba(34,197,94,0.15)' },
   indicatorText:      { color: '#64748B', fontSize: 11, fontWeight: 'bold' },
-  indicatorTextDone:  { color: '#22c55e', fontSize: 14 },
+  indicatorTextDone:  { color: '#059669', fontSize: 14 },
   topicTextContainer: { flex: 1 },
   itemTitle:          { color: '#0F172A', fontSize: 15, fontWeight: '600', marginBottom: 3 },
   itemSubtitle:       { color: '#64748B', fontSize: 13 },
   doneBadge:          { backgroundColor: 'rgba(34,197,94,0.15)', borderRadius: 8,
                         paddingHorizontal: 8, paddingVertical: 3,
                         borderWidth: 1, borderColor: 'rgba(34,197,94,0.3)' },
-  doneBadgeText:      { color: '#22c55e', fontSize: 11, fontWeight: '700' },
+  doneBadgeText:      { color: '#059669', fontSize: 11, fontWeight: '700' },
   emptyCard:          { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 12,
-                        borderWidth: 1, borderColor: '#E2E8F0',
+                        borderWidth: 1, borderColor: '#E7EAF2',
                         justifyContent: 'center', alignItems: 'center', height: 90 },
   emptyText:          { color: '#64748B', fontSize: 14, textAlign: 'center' },
 });

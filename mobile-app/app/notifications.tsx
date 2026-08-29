@@ -13,7 +13,7 @@ interface NotificationItem {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  ATTENDANCE: '#f59e0b',
+  ATTENDANCE: '#D97706',
   TASK: '#3b82f6',
   ANNOUNCEMENT: '#a855f7',
   SYSTEM: '#64748b',
@@ -84,11 +84,11 @@ export default function NotificationsScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator color="#6366f1" size="large" /></View>
+        <View style={styles.center}><ActivityIndicator color="#4F46E5" size="large" /></View>
       ) : (
         <ScrollView
           style={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
         >
           {notifications.length === 0 ? (
             <View style={styles.emptyCard}>
@@ -122,9 +122,9 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7F9FC' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 50, borderBottomWidth: 1, borderBottomColor: '#FFFFFF' },
-  backButton: { color: '#6366f1', fontSize: 16, fontWeight: '600' },
+  backButton: { color: '#4F46E5', fontSize: 16, fontWeight: '600' },
   headerTitle: { color: '#0F172A', fontSize: 18, fontWeight: 'bold' },
-  markAllText: { color: '#6366f1', fontSize: 13, fontWeight: '600' },
+  markAllText: { color: '#4F46E5', fontSize: 13, fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { flex: 1, padding: 16 },
   card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14, marginBottom: 10 },

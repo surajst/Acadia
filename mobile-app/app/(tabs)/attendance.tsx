@@ -50,9 +50,9 @@ const MOCK_RECORDS = buildMockRecords();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const STATUS_COLOR: Record<AttendanceRecord['status'], string> = {
-  PRESENT: '#22c55e',
+  PRESENT: '#059669',
   ABSENT: '#ef4444',
-  LATE: '#f59e0b',
+  LATE: '#D97706',
   HOLIDAY: '#94A3B8',
 };
 
@@ -95,7 +95,7 @@ function AttendanceSummary({ records }: { records: AttendanceRecord[] }) {
 
   return (
     <View style={styles.summaryRow}>
-      <View style={[styles.summaryBox, { borderColor: '#22c55e' }]}>
+      <View style={[styles.summaryBox, { borderColor: '#059669' }]}>
         <Text style={styles.summaryNum}>{present}</Text>
         <Text style={styles.summaryLabel}>Present</Text>
       </View>
@@ -103,7 +103,7 @@ function AttendanceSummary({ records }: { records: AttendanceRecord[] }) {
         <Text style={styles.summaryNum}>{absent}</Text>
         <Text style={styles.summaryLabel}>Absent</Text>
       </View>
-      <View style={[styles.summaryBox, { borderColor: '#6366f1' }]}>
+      <View style={[styles.summaryBox, { borderColor: '#4F46E5' }]}>
         <Text style={styles.summaryNum}>{pct}%</Text>
         <Text style={styles.summaryLabel}>Attendance</Text>
       </View>
@@ -190,7 +190,7 @@ export default function AttendanceScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
     >
       {/* Child Selector Header */}
       <View style={styles.section}>
@@ -211,7 +211,7 @@ export default function AttendanceScreen() {
         <Text style={styles.sectionTitle}>Attendance Calendar</Text>
 
         {loading ? (
-          <ActivityIndicator color="#6366f1" style={{ marginTop: 20 }} />
+          <ActivityIndicator color="#4F46E5" style={{ marginTop: 20 }} />
         ) : (
           Object.entries(byMonth).map(([monthLabel, monthRecords]) => (
             <View key={monthLabel} style={styles.monthBlock}>
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#4F46E5',
     justifyContent: 'center',
     alignItems: 'center',
   },

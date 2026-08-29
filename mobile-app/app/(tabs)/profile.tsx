@@ -128,7 +128,7 @@ export default function ProfileScreen() {
   if (loadingProfile) {
     return (
       <View style={[styles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -236,7 +236,7 @@ export default function ProfileScreen() {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Announcements & messages in</Text>
               {savingLanguage ? (
-                <ActivityIndicator size="small" color="#6366f1" />
+                <ActivityIndicator size="small" color="#4F46E5" />
               ) : (
                 <Text style={styles.detailValue}>
                   {languages.find((l) => l.code === preferredLanguage)?.name ?? 'English'}
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', marginVertical: 32 },
   avatar: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#4F46E5',
     justifyContent: 'center', alignItems: 'center', marginBottom: 16,
   },
   avatarText: { color: '#0F172A', fontSize: 32, fontWeight: 'bold' },
@@ -296,11 +296,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   editBtn: {
-    backgroundColor: '#6366f120', borderRadius: 8,
+    backgroundColor: '#4F46E520', borderRadius: 8,
     paddingHorizontal: 12, paddingVertical: 4,
-    borderWidth: 1, borderColor: '#6366f140',
+    borderWidth: 1, borderColor: '#4F46E540',
   },
-  editBtnText: { color: '#6366f1', fontSize: 13, fontWeight: '600' },
+  editBtnText: { color: '#4F46E5', fontSize: 13, fontWeight: '600' },
   card: { backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden' },
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
   detailLabel: { color: '#64748B', fontSize: 16 },
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   editRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
   editInput: {
     color: '#0F172A', fontSize: 15, fontWeight: '500',
-    borderBottomWidth: 1, borderBottomColor: '#6366f1',
+    borderBottomWidth: 1, borderBottomColor: '#4F46E5',
     minWidth: 160, textAlign: 'right', paddingBottom: 2,
   },
   editActions: {
@@ -317,16 +317,16 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1, padding: 12, borderRadius: 10,
-    backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E7EAF2',
     alignItems: 'center',
   },
   cancelBtnText: { color: '#64748B', fontWeight: '600' },
   saveBtn: {
     flex: 1, padding: 12, borderRadius: 10,
-    backgroundColor: '#6366f1', alignItems: 'center',
+    backgroundColor: '#4F46E5', alignItems: 'center',
   },
   saveBtnText: { color: '#fff', fontWeight: '600' },
-  divider: { height: 1, backgroundColor: '#E2E8F0', marginLeft: 16 },
+  divider: { height: 1, backgroundColor: '#E7EAF2', marginLeft: 16 },
   logoutButton: {
     backgroundColor: '#7f1d1d', padding: 16, borderRadius: 12,
     alignItems: 'center', marginTop: 16,
@@ -336,6 +336,6 @@ const styles = StyleSheet.create({
   modalCard: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
   modalTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 12 },
   langRow: { padding: 12, borderRadius: 10, marginBottom: 4 },
-  langRowActive: { backgroundColor: '#6366f122' },
+  langRowActive: { backgroundColor: '#4F46E522' },
   langRowText: { color: '#0F172A', fontSize: 14 },
 });
