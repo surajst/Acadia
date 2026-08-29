@@ -80,16 +80,23 @@ body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(
 
    A notice, not a blocker. The pages do work below 1360px, they just need
    horizontal scrolling, and locking someone out of their own school because
-   they are holding a phone is worse than letting them scroll. Fixed to the
-   bottom so it never covers the top bar's controls. */
+   they are holding a phone is worse than letting them scroll.
+
+   Two details that are not cosmetic. It starts at 244px, clear of the sidebar
+   rail, and it is pointer-events:none. The first version spanned the full width
+   and sat on top of the sidebar's logout button, so a warning about a cramped
+   screen made it impossible to sign out on a cramped screen. Playwright runs at
+   1280px wide, so the whole suite met this immediately -- three tests failed on
+   "intercepts pointer events" before any user did. */
 .shell-narrow { display:none; }
 @media (max-width:1359px) {
   .shell-narrow {
     display:flex; align-items:center; gap:10px;
-    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    position:fixed; left:244px; right:0; bottom:0; z-index:60;
     padding:10px 16px;
     background:var(--warn-50); border-top:1px solid var(--warn-200);
     font-size:12.5px; color:var(--text-2);
+    pointer-events:none;
   }
 }
 
