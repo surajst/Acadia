@@ -29,14 +29,31 @@
     <aside th:replace="~{fragments/shell :: sidebar}"></aside>
 
     <div class="shell-main">
-        <header th:replace="~{fragments/shell :: topbar('Curriculum', 'School-wide progress')}"></header>
+        <header th:replace="~{fragments/shell :: topbar('Curriculum Progress', 'Where every class stands against the syllabus')}"></header>
 
         <div class="shell-body">
             <div class="shell-content">
 
 
     <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 min-h-0 flex flex-col overflow-y-auto space-y-6" >
-        
+
+        <!-- The class filter used to live in this page's own header, which the
+             shell topbar replaced. Everything on the page is loaded by the
+             change handler bound to it, so losing the select did not just lose
+             the filter: getElementById returned null, the listener threw, and
+             the initial loadData('ALL') below it never ran. -->
+        <div class="flex items-center justify-end">
+            <select id="classFilter" class="input" style="max-width:220px;">
+                <option value="ALL">All Classes</option>
+                <option value="5">Class 5</option>
+                <option value="6">Class 6</option>
+                <option value="7">Class 7</option>
+                <option value="8">Class 8</option>
+                <option value="9">Class 9</option>
+                <option value="10">Class 10</option>
+            </select>
+        </div>
+
         <!-- Loading Skeleton -->
         <div id="loadingSkeleton" class="space-y-6 hidden">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 animate-pulse">
@@ -136,8 +153,13 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const filterDropdown = document.getElementById('classFilter');
-            filterDropdown.addEventListener('change', (e) => loadData(e.target.value));
-            
+            // Guarded so a missing filter costs only the filter. Unguarded, it
+            // threw here and took the initial load with it, leaving the whole
+            // page blank.
+            if (filterDropdown) {
+                filterDropdown.addEventListener('change', (e) => loadData(e.target.value));
+            }
+
             // Initial load
             loadData('ALL');
         });

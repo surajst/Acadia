@@ -68,11 +68,24 @@
              Rendered as a segmented row rather than a second sidebar, so it
              cannot be mistaken for the app's navigation or fight it for the
              active state. -->
-        <div class="segmented" role="group" aria-label="Fee views" style="align-self:flex-start;">
-            <a href="/web/admin/fees" class="is-on" style="text-decoration:none;">Ledger</a>
-            <a href="/web/admin/fees/defaulters" style="text-decoration:none;">Defaulters</a>
-            <a href="/web/admin/fees/collections" style="text-decoration:none;">Collections</a>
-            <a href="/web/admin/fees/settings" style="text-decoration:none;">Fee plans</a>
+        <!-- Raising an invoice is the reason an admin opens this page, so the
+             two actions sit on the view switcher's row. They were lost once,
+             when the old page header was replaced by the shell topbar: the
+             modals and their open* functions survived but nothing called them,
+             and billing became unreachable from the UI. -->
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="segmented" role="group" aria-label="Fee views">
+                <a href="/web/admin/fees" class="is-on" style="text-decoration:none;">Ledger</a>
+                <a href="/web/admin/fees/defaulters" style="text-decoration:none;">Defaulters</a>
+                <a href="/web/admin/fees/collections" style="text-decoration:none;">Collections</a>
+                <a href="/web/admin/fees/settings" style="text-decoration:none;" data-fee-settings-link>Fee plans</a>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="openCustomInvoiceModal()"
+                        class="btn btn-secondary btn-sm" data-open-custom-invoice>Custom Invoice</button>
+                <button type="button" onclick="openCreateInvoiceModal()"
+                        class="btn btn-primary btn-sm">Create Invoice</button>
+            </div>
         </div>
 
         <div class="flex-1 min-h-0">

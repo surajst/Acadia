@@ -645,18 +645,27 @@
     </div>
 </div>
     <script>
+        // The page used to own its scroll container (#global-scroll-wrapper);
+        // under the shell it is .shell-body that scrolls. Guarded, because the
+        // callers below reveal a section first and would otherwise abort on a
+        // throw here and leave the new section scrolled halfway down.
+        function scrollShellToTop() {
+            const pane = document.querySelector('.shell-body');
+            if (pane) pane.scrollTo({ top: 0, behavior: 'auto' });
+        }
+
         // ── Hub navigation: reveal one detail section, hide the card grid ──
         function showSection(id) {
             document.getElementById('hubGrid').classList.add('hidden');
             document.querySelectorAll('[data-detail]').forEach(s => s.classList.add('hidden'));
             const sec = document.getElementById(id);
             if (sec) sec.classList.remove('hidden');
-            document.getElementById('global-scroll-wrapper').scrollTo({ top: 0, behavior: 'auto' });
+            scrollShellToTop();
         }
         function backToHub() {
             document.querySelectorAll('[data-detail]').forEach(s => s.classList.add('hidden'));
             document.getElementById('hubGrid').classList.remove('hidden');
-            document.getElementById('global-scroll-wrapper').scrollTo({ top: 0, behavior: 'auto' });
+            scrollShellToTop();
         }
         // If we arrived via an anchor (e.g. ...#staff-registry), open that section.
         window.addEventListener('DOMContentLoaded', () => {
