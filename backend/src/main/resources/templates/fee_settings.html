@@ -20,23 +20,26 @@
         details:not([open]) > *:not(summary) { display: none !important; }
     </style>
 </head>
-<body class="flex flex-col" style="height:100vh; overflow:hidden; background:var(--bg);">
+<body>
+<div class="shell">
 
-    <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
-        <div class="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3.5">
-                <a href="/web/admin/dashboard" class="h-10 w-10 rounded-xl bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand)] font-black text-lg transition hover:bg-[var(--brand-100)]">&Omega;</a>
-                <div>
-                    <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Fee Settings</h1>
-                    <p class="text-xs text-[var(--text-3)] mt-1 flex items-center gap-1.5">
-                        <a href="/web/admin/fees" class="hover:text-[var(--brand)] transition-colors font-medium">Fee Ledger</a>
-                        <span>/</span><span class="text-[var(--text-2)] font-medium">Fee Plans</span>
-                    </p>
+    <aside th:replace="~{fragments/shell :: sidebar}"></aside>
+
+    <div class="shell-main">
+        <header th:replace="~{fragments/shell :: topbar('Fee plans', 'What each level is billed, and when')}"></header>
+
+        <div class="shell-body">
+            <div class="shell-content">
+
+                <!-- The three views of one ledger, so you can move between
+                     them without going back to Fees first. -->
+                <div class="segmented" role="group" aria-label="Fee views" style="align-self:flex-start;">
+                    <a href="/web/admin/fees" style="text-decoration:none;">Ledger</a>
+                    <a href="/web/admin/fees/defaulters" style="text-decoration:none;">Defaulters</a>
+                    <a href="/web/admin/fees/collections" style="text-decoration:none;">Collections</a>
+                    <a href="/web/admin/fees/settings" class="is-on" style="text-decoration:none;">Fee plans</a>
                 </div>
-            </div>
-            <a href="/web/admin/fees" class="btn btn-secondary btn-sm">&larr; Back to ledger</a>
-        </div>
-    </header>
+
 
     <!-- The page itself does not scroll. The builder holds still and only the
          list of existing plans moves, so the form being filled in never slides
@@ -172,6 +175,10 @@
     </div>
     </div>
 
+            </div>
+        </div>
+    </div>
+</div>
     <script>
         // Instalment rows are built here rather than rendered fixed, because how
         // many a plan has is the school's choice: three termly parts and twelve
