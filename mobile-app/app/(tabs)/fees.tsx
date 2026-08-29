@@ -1,7 +1,8 @@
 import React, { useContext, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { DataContext } from './_layout';
+import { requestFeeWaiver } from '../../services/api';
 
 /**
  * What this family owes the school, and what they have already paid.
@@ -31,6 +32,11 @@ const day = (iso?: string | null) => {
 export default function FeesScreen() {
   const { data, refreshData } = useContext(DataContext);
   const [refreshing, setRefreshing] = useState(false);
+  // Which instalment the parent is asking about, and why. Only one at a time:
+  // asking for help is a considered thing, not a bulk action.
+  const [askingFor, setAskingFor] = useState<any>(null);
+  const [reason, setReason] = useState('');
+  const [sending, setSending] = useState(false);
 
   const fees = data?.fees;
   const childName = data?.student?.firstName ?? 'Your child';
@@ -45,6 +51,26 @@ export default function FeesScreen() {
   };
 
   const refresh = <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />;
+
+  const sendWaiverRequest = async () => {
+    if (!askingFor || sending) return;
+    if (!reason.trim()) {
+      Alert.alert('Tell them why', 'A short reason helps the school consider it fairly.');
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await requestFeeWaiver(askingFor.invoiceId, Number(askingFor.amount), reason.trim());
+      setAskingFor(null);
+      setReason('');
+      await refreshData();
+      Alert.alert('Sent', res?.message ?? 'The school will let you know their decision.');
+    } catch (e: any) {
+      Alert.alert('Could not send', e?.response?.data?.error ?? 'Please try again.');
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (!fees) {
     return (
@@ -111,6 +137,51 @@ export default function FeesScreen() {
               <Text style={[s.rowAmount, d.overdue && { color: '#B91C1C' }]}>{money(d.amount)}</Text>
             </View>
           ))}
+
+          {/* Asking is a request, not a discount: the wording says "ask", and
+              the amount owed does not move until a principal decides. */}
+          {fees.dues.map((d: any, i: number) => (
+            <View key={`ask-${i}`}>
+              {askingFor?.invoiceId === d.invoiceId ? (
+                <View style={s.askBox}>
+                  <Text style={s.askTitle}>
+                    Ask the school about {d.label || 'this instalment'}
+                  </Text>
+                  <TextInput
+                    style={s.askInput}
+                    placeholder="What has changed? A short reason is enough."
+                    placeholderTextColor="#64748B"
+                    value={reason}
+                    onChangeText={setReason}
+                    multiline
+                    maxLength={500}
+                  />
+                  <View style={s.askActions}>
+                    <TouchableOpacity
+                      style={[s.askBtn, s.askCancel]}
+                      onPress={() => { setAskingFor(null); setReason(''); }}
+                    >
+                      <Text style={s.askCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[s.askBtn, s.askSend, sending && { opacity: 0.6 }]}
+                      onPress={sendWaiverRequest}
+                      disabled={sending}
+                    >
+                      <Text style={s.askSendText}>{sending ? 'Sending…' : 'Send request'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={s.askLinkRow}
+                  onPress={() => { setAskingFor(d); setReason(''); }}
+                >
+                  <Text style={s.askLink}>Struggling with {d.label || 'this instalment'}? Ask the school ›</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ))}
         </View>
       ) : null}
 
@@ -174,6 +245,18 @@ const s = StyleSheet.create({
   rowMeta: { fontSize: 11.5, color: '#64748B', marginTop: 2 },
   rowMetaOverdue: { color: '#B91C1C' },
   rowAmount: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+
+  askLinkRow: { minHeight: 44, justifyContent: 'center' },
+  askLink: { fontSize: 12.5, fontWeight: '600', color: '#4F46E5' },
+  askBox: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#D9DFEA', borderRadius: 12, padding: 12, marginTop: 8 },
+  askTitle: { fontSize: 13.5, fontWeight: '700', color: '#0F172A', marginBottom: 8 },
+  askInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#D9DFEA', borderRadius: 10, padding: 10, fontSize: 14, color: '#0F172A', minHeight: 44 },
+  askActions: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  askBtn: { flex: 1, minHeight: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  askCancel: { backgroundColor: '#fff', borderColor: '#D9DFEA' },
+  askCancelText: { fontSize: 13.5, fontWeight: '600', color: '#475569' },
+  askSend: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
+  askSendText: { fontSize: 13.5, fontWeight: '700', color: '#fff' },
 
   emptyRow: { fontSize: 13, color: '#64748B', paddingVertical: 6 },
   emptyWrap: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 10 },

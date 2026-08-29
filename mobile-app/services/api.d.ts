@@ -90,6 +90,11 @@ export interface Award {
 }
 
 /** Someone other than a guardian who may collect a child. */
+export interface WaiverRequestResult {
+  status: string;
+  message: string;
+}
+
 export interface PickupContact {
   id: string;
   name: string;
@@ -183,8 +188,12 @@ export function getStudentProfile(studentId: string): Promise<StudentProfile>;
 export function getBadges(): Promise<Badge[]>;
 export function awardBadge(studentId: string, badgeCode: string, reason?: string): Promise<Award>;
 
+export function requestFeeWaiver(invoiceId: string, amount: number, reason: string): Promise<WaiverRequestResult>;
+
 export function getPendingApprovals(): Promise<ApiObject[]>;
 export function decideApproval(requestId: string, action: 'approve' | 'reject'): Promise<ApiObject>;
+export function getPendingWaivers(): Promise<ApiObject[]>;
+export function decideWaiver(invoiceId: string, action: 'approve' | 'reject'): Promise<ApiObject>;
 export function getPendingStaff(): Promise<ApiObject[]>;
 export function decideStaff(userId: string, action: 'approve' | 'reject'): Promise<ApiObject>;
 

@@ -474,4 +474,38 @@ export const decideStaff = async (userId, action) => {
   return response.data;
 };
 
+/**
+ * Asks the school to reduce one instalment. This is a request: a principal
+ * decides, and nothing owed changes until they do.
+ */
+export const requestFeeWaiver = async (invoiceId, amount, reason) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(
+    `${BASE_HOST}/api/mobile/parent/fees/${invoiceId}/waiver-request`,
+    { amount, reason },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+/* Waivers live in their own queue, separate from approval requests. A
+ * principal's screen has to read both or a parent's request goes unseen. */
+export const getPendingWaivers = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/principal/fees/waivers/pending`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const decideWaiver = async (invoiceId, action) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(
+    `${BASE_HOST}/api/principal/fees/${invoiceId}/waiver/${action}`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
 export default api;

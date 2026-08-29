@@ -4,7 +4,10 @@ import {
   ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { getPendingApprovals, decideApproval, getPendingStaff, decideStaff } from '../../services/api';
+import {
+  getPendingApprovals, decideApproval, getPendingStaff, decideStaff,
+  getPendingWaivers, decideWaiver,
+} from '../../services/api';
 import T from '../../constants/theme';
 
 /**
@@ -21,7 +24,7 @@ import T from '../../constants/theme';
  * seen both.
  */
 
-type Row = { id: string; title: string; sub: string; meta: string; kind: 'approval' | 'staff' };
+type Row = { id: string; title: string; sub: string; meta: string; kind: 'approval' | 'staff' | 'waiver' };
 
 const when = (iso?: string) => {
   if (!iso) return '';
@@ -39,7 +42,9 @@ export default function ApprovalsScreen() {
   const load = useCallback(async () => {
     // Settled independently: a failure fetching staff should not blank the
     // approvals list a principal is halfway through clearing.
-    const [approvals, staff] = await Promise.allSettled([getPendingApprovals(), getPendingStaff()]);
+    const [approvals, staff, waivers] = await Promise.allSettled([
+      getPendingApprovals(), getPendingStaff(), getPendingWaivers(),
+    ]);
 
     const out: Row[] = [];
     if (approvals.status === 'fulfilled' && Array.isArray(approvals.value)) {
@@ -64,6 +69,21 @@ export default function ApprovalsScreen() {
         });
       }
     }
+    // Fee waivers are their own queue. A parent asking for help with a term
+    // is exactly the kind of thing that should not wait for someone to open a
+    // laptop, so it belongs on this screen alongside everything else.
+    if (waivers.status === 'fulfilled' && Array.isArray(waivers.value)) {
+      for (const w of waivers.value) {
+        out.push({
+          id: w.invoiceId,
+          title: `Fee help for ${w.studentName ?? 'a child'}`,
+          sub: w.waiverReason || 'No reason given',
+          meta: w.waiverAmount != null ? `₹ ${Number(w.waiverAmount).toLocaleString('en-IN')} requested` : '',
+          kind: 'waiver',
+        });
+      }
+    }
+
     setRows(out);
   }, []);
 
@@ -85,6 +105,7 @@ export default function ApprovalsScreen() {
     setBusyId(row.id);
     try {
       if (row.kind === 'approval') await decideApproval(row.id, action);
+      else if (row.kind === 'waiver') await decideWaiver(row.id, action);
       else await decideStaff(row.id, action);
       // Refetch rather than removing locally: approving a fee plan can change
       // what else is waiting, and a list that disagrees with the server is
@@ -126,14 +147,14 @@ export default function ApprovalsScreen() {
         <View style={s.card}>
           <Text style={s.emptyTitle}>All clear</Text>
           <Text style={s.emptyBody}>
-            New staff, fee plan changes and payment reversals will appear here for your approval.
+            New staff, fee plan changes, payment reversals and requests for fee help will appear here for your decision.
           </Text>
         </View>
       ) : (
         rows.map((r) => (
           <View key={`${r.kind}-${r.id}`} style={s.card}>
             <View style={s.rowTop}>
-              <View style={[s.kindDot, r.kind === 'staff' ? s.kindStaff : s.kindApproval]} />
+              <View style={[s.kindDot, r.kind === 'staff' ? s.kindStaff : r.kind === 'waiver' ? s.kindWaiver : s.kindApproval]} />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={s.title}>{r.title}</Text>
                 {!!r.sub && <Text style={s.sub}>{r.sub}</Text>}
@@ -185,6 +206,7 @@ const s = StyleSheet.create({
   kindDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
   kindApproval: { backgroundColor: T.warn },
   kindStaff: { backgroundColor: T.info },
+  kindWaiver: { backgroundColor: T.danger },
   title: { fontSize: 14.5, fontWeight: '600', color: T.text, lineHeight: 20 },
   sub: { fontSize: 12.5, color: T.text2, marginTop: 2 },
   meta: { fontSize: 11.5, color: T.text4, marginTop: 3 },
