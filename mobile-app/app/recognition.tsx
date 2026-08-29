@@ -1,7 +1,8 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Stack } from 'expo-router';
 import { DataContext } from './(tabs)/_layout';
+import { getParentDashboard } from '../services/api';
 import T from '../constants/theme';
 
 /**
@@ -38,9 +39,27 @@ const dayLabel = (iso: string) => {
 
 export default function RecognitionScreen() {
   const ctx = useContext(DataContext);
-  const data = ctx?.data ?? {};
-  const refreshData = ctx?.refreshData ?? (async () => {});
   const [refreshing, setRefreshing] = useState(false);
+  // Own copy, for when this screen is reached directly rather than from the
+  // home card: it lives outside the tab group, so on a deep link or a page
+  // refresh the tab layout has not mounted and its context is empty. Reading
+  // only the context meant a bookmarked link showed a child with no history.
+  const [own, setOwn] = useState<any>(null);
+
+  const data = (ctx?.data && Object.keys(ctx.data).length ? ctx.data : own) ?? {};
+
+  const load = async () => {
+    const fresh = await getParentDashboard();
+    setOwn(fresh);
+  };
+
+  useEffect(() => {
+    if (!ctx?.data || !Object.keys(ctx.data).length) {
+      load().catch(() => setOwn({}));
+    }
+  }, [ctx?.data]);
+
+  const refreshData = ctx?.refreshData ?? load;
 
   const awards: Award[] = Array.isArray(data.awards) ? data.awards : [];
   // Two forms because the name appears both at the start of a sentence and
@@ -61,7 +80,8 @@ export default function RecognitionScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    try { await refreshData(); } finally { setRefreshing(false); }
+    try { await refreshData(); await load(); } catch { /* keep what is on screen */ }
+    finally { setRefreshing(false); }
   };
 
   return (
