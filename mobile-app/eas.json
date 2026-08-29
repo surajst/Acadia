@@ -11,8 +11,9 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_HOST": "https://acadia-backend-rx3l.onrender.com"
-      }
+        "EXPO_PUBLIC_API_HOST": "https://acadia-backend-sg.onrender.com"
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
@@ -23,14 +24,16 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_API_HOST": "https://acadia-backend-rx3l.onrender.com"
-      }
+        "EXPO_PUBLIC_API_HOST": "https://acadia-backend-sg.onrender.com"
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_HOST": "https://acadia-backend-rx3l.onrender.com"
-      }
+        "EXPO_PUBLIC_API_HOST": "https://acadia-backend-sg.onrender.com"
+      },
+      "channel": "production"
     }
   },
   "submit": {
