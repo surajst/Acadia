@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -75,6 +76,17 @@ public class MobileParentController {
     @PutMapping("/language")
     public ResponseEntity<?> setLanguage(@RequestBody Map<String, String> body, Authentication authentication) {
         return ResponseEntity.ok(parentService.setPreferredLanguage(body.get("language"), authentication));
+    }
+
+    /** Ask the school to reduce one instalment. A principal decides. */
+    @PostMapping("/fees/{invoiceId}/waiver-request")
+    public ResponseEntity<?> requestWaiver(@PathVariable("invoiceId") UUID invoiceId,
+                                           @RequestBody Map<String, Object> body,
+                                           Authentication authentication) {
+        java.math.BigDecimal amount = body.get("amount") == null
+                ? null : new java.math.BigDecimal(String.valueOf(body.get("amount")));
+        String reason = body.get("reason") == null ? null : String.valueOf(body.get("reason"));
+        return ResponseEntity.ok(parentService.requestWaiver(invoiceId, amount, reason, authentication));
     }
 
     @ExceptionHandler(ParentException.class)

@@ -24,7 +24,7 @@ type Challenge = {
 const TASK_TYPE_COLOR: Record<Challenge['taskType'], string> = {
   HOMEWORK: '#3b82f6',
   READING: '#a855f7',
-  PROJECT: '#f59e0b',
+  PROJECT: '#D97706',
 };
 
 const TASK_TYPE_BG: Record<Challenge['taskType'], string> = {
@@ -66,12 +66,12 @@ export default function ChallengesScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Active Challenges</Text>
         {loading ? (
-          <ActivityIndicator color="#6366f1" style={{ marginTop: 20 }} />
+          <ActivityIndicator color="#4F46E5" style={{ marginTop: 20 }} />
         ) : challenges.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No challenges assigned yet.</Text>
@@ -82,7 +82,7 @@ export default function ChallengesScreen() {
             <View key={item.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{item.title}</Text>
-                <View style={[styles.badge, { backgroundColor: TASK_TYPE_BG[item.taskType] || '#E2E8F0' }]}>
+                <View style={[styles.badge, { backgroundColor: TASK_TYPE_BG[item.taskType] || '#E7EAF2' }]}>
                   <Text style={[styles.badgeText, { color: TASK_TYPE_COLOR[item.taskType] || '#64748B' }]}>
                     {item.taskType}
                   </Text>
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: '#E7EAF2',
   },
   xpText: {
     color: '#4ade80',

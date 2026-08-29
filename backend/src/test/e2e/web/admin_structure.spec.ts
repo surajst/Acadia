@@ -56,9 +56,11 @@ test.describe('ACADIA Student Lifecycle Operations Management Specs', () => {
     await page.goto('/web/admin/dashboard?classId=66666666-6666-6666-6666-666666666666&name=Simran');
 
     // 9. Find the row for 'Simran Kaur' and click the quick-action delete trigger (🗑️)
-    const studentRow = page.locator('tr:has-text("Simran Kaur")').first();
+    const studentRow = page.locator('.roster-row:has-text("Simran Kaur")').first();
     await expect(studentRow).toBeVisible();
-    const deleteTrigger = studentRow.locator('button:has-text("🗑️")');
+    // Selected by title rather than by the emoji: the glyph lost its variation
+    // selector once already, which broke this test without changing behaviour.
+    const deleteTrigger = studentRow.locator('button[title="Remove"]');
     await deleteTrigger.click();
 
     // 10. Verify confirmation modal appears with warning details

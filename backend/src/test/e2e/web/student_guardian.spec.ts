@@ -42,9 +42,13 @@ async function registerStudent(page: any, opts: {
 
 async function openProfile(page: any, fullName: string, firstName: string) {
   await page.goto(`/web/admin/dashboard?classId=${GRADE6A}&name=${encodeURIComponent(firstName)}`);
-  const row = page.locator(`tr:has-text("${fullName}")`).first();
+  // The roster is a grid of .roster-row divs, not a table, and the profile
+  // link reads "Open" -- both changed when the dashboard moved onto the app
+  // shell. Anchoring on the row class keeps this helper off the markup's
+  // internals while still scoping the click to the right child.
+  const row = page.locator(`.roster-row:has-text("${fullName}")`).first();
   await expect(row).toBeVisible();
-  await row.locator('a:has-text("View Profile Data")').click();
+  await row.locator('a:has-text("Open")').click();
   await page.waitForURL((url: URL) => url.pathname.includes('/web/teacher/student/'));
 }
 

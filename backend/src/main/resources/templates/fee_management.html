@@ -9,36 +9,18 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="flex flex-col" style="height:100vh; overflow:hidden; background:var(--bg);">
+<body>
+<!-- The per-page header is replaced by the shared shell, so navigation
+     lives in one place instead of being restated on every screen. -->
+<div class="shell">
 
-    <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
-        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3.5">
-                <a href="/web/admin/dashboard" class="h-10 w-10 rounded-xl bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand)] font-black text-lg transition hover:bg-[var(--brand-100)]">Ω</a>
-                <div>
-                    <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Fee Ledger</h1>
-                    <p class="text-xs text-[var(--text-3)] mt-1 flex items-center gap-1.5">
-                        <a href="/web/admin/dashboard" class="hover:text-[var(--brand)] transition-colors font-medium">Roster Hub</a>
-                        <span>/</span><span class="text-[var(--text-2)] font-medium">Fee Ledger &amp; Billing</span>
-                    </p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="/web/admin/fees/settings" class="btn btn-secondary btn-sm" data-fee-settings-link>⚙️ Fee Settings</a>
-                <button onclick="openCustomInvoiceModal()" class="btn btn-secondary btn-sm" data-open-custom-invoice>🧾 Custom Invoice</button>
-                <button onclick="openCreateInvoiceModal()" class="btn btn-primary btn-sm">➕ Create Invoice</button>
-                <span class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Ledger Active</span>
-            </div>
-        </div>
-    </header>
+    <aside th:replace="~{fragments/shell :: sidebar}"></aside>
 
-    <!-- The page itself does not scroll: the KPI strip and the ledger's own
-         header stay put, and only the invoice rows move. Scrolling the whole
-         page pushed the totals and the column headers off-screen, which is
-         exactly the context you need while reading a row. min-height:0 on every
-         level is what lets the inner list, rather than the body, take the
-         overflow. -->
-    <div id="global-scroll-wrapper" style="flex:1; min-height:0; display:flex; flex-direction:column;">
+    <div class="shell-main">
+        <header th:replace="~{fragments/shell :: topbar('Fees &amp; Billing', 'Invoices, collections and waivers')}"></header>
+
+        <div class="shell-body">
+            <div class="shell-content">
     <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 min-h-0 flex flex-col w-full">
 
         <div th:if="${param.success != null or successMessage != null}" data-flash data-autohide="6000"
@@ -80,22 +62,33 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0 items-stretch">
-            <aside class="lg:col-span-1">
-                <div class="card p-3">
-                    <h3 class="eyebrow px-2 mb-2">Navigation</h3>
-                    <nav class="space-y-1">
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="navlink"><span>⚙️</span> School Configuration</a>
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees" class="navlink active"><span>💳</span> Fee Ledger &amp; Billing</a>
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees/defaulters" class="navlink"><span>⚠️</span> Defaulters</a>
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees/collections" class="navlink"><span>🧾</span> Collections</a>
-                        <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management#staff-registry" class="navlink"><span>💼</span> Staff Registry</a>
-                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/admin/dashboard" class="navlink"><span>📊</span> Student Rosters</a>
-                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/attendance" class="navlink"><span>📅</span> Daily Attendance</a>
-                        <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/dashboard" class="navlink"><span>🎯</span> Milestone Verification</a>
-                    </nav>
-                </div>
-            </aside>
+        <!-- The global links that used to sit here -- School Configuration,
+             Staff Registry, Student Rosters -- are the rail's job now. What is
+             left is genuinely page-level: the three views of the same ledger.
+             Rendered as a segmented row rather than a second sidebar, so it
+             cannot be mistaken for the app's navigation or fight it for the
+             active state. -->
+        <!-- Raising an invoice is the reason an admin opens this page, so the
+             two actions sit on the view switcher's row. They were lost once,
+             when the old page header was replaced by the shell topbar: the
+             modals and their open* functions survived but nothing called them,
+             and billing became unreachable from the UI. -->
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="segmented" role="group" aria-label="Fee views">
+                <a href="/web/admin/fees" class="is-on" style="text-decoration:none;">Ledger</a>
+                <a href="/web/admin/fees/defaulters" style="text-decoration:none;">Defaulters</a>
+                <a href="/web/admin/fees/collections" style="text-decoration:none;">Collections</a>
+                <a href="/web/admin/fees/settings" style="text-decoration:none;" data-fee-settings-link>Fee plans</a>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="openCustomInvoiceModal()"
+                        class="btn btn-secondary btn-sm" data-open-custom-invoice>Custom Invoice</button>
+                <button type="button" onclick="openCreateInvoiceModal()"
+                        class="btn btn-primary btn-sm">Create Invoice</button>
+            </div>
+        </div>
+
+        <div class="flex-1 min-h-0">
 
             <div class="lg:col-span-3 h-full min-h-0 flex flex-col">
                 <div class="card overflow-hidden flex-1 min-h-0 flex flex-col">
@@ -210,7 +203,6 @@
                         <div class="flex items-center gap-2">
                             <a th:href="@{/web/admin/fees(page=${currentPage - 1})}" th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40' : ''" class="btn btn-secondary btn-xs">◀ Previous</a>
                             <a th:href="@{/web/admin/fees(page=${currentPage + 1})}" th:classappend="${currentPage + 1 >= totalPages} ? 'pointer-events-none opacity-40' : ''" class="btn btn-secondary btn-xs">Next ▶</a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -385,8 +377,10 @@
         </div>
     </div>
 
-    <footer class="shrink-0 text-center py-2 text-[11px] text-[var(--text-3)] border-t" style="border-color:var(--line)">ACADIA · Connect | Manage | Empower</footer>
-
+            </div>
+        </div>
+    </div>
+</div>
     <script>
         function reversePayment(txnId, amount, studentName) {
             var reason = prompt('Reversing a payment of \u20b9' + amount + ' for ' + studentName

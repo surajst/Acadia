@@ -103,7 +103,7 @@ export default function GradebookScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -112,7 +112,7 @@ export default function GradebookScreen() {
     <View style={styles.root}>
       <View style={styles.headerBand}>
         <View style={styles.headerIconWrap}>
-          <SymbolView name={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }} tintColor="#6366f1" size={26} />
+          <SymbolView name={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }} tintColor="#4F46E5" size={26} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>Gradebook</Text>
@@ -193,20 +193,20 @@ const styles = StyleSheet.create({
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
+    borderBottomWidth: 1, borderBottomColor: '#E7EAF2',
   },
-  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#6366f120', justifyContent: 'center', alignItems: 'center' },
+  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#4F46E520', justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
   headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
   classChips: { marginTop: 14, maxHeight: 44 },
   assessmentChips: { marginTop: 10, maxHeight: 44 },
-  chip: { backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#E2E8F0' },
-  chipActive: { backgroundColor: '#6366f122', borderColor: '#6366f1' },
+  chip: { backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#E7EAF2' },
+  chipActive: { backgroundColor: '#4F46E522', borderColor: '#4F46E5' },
   chipText: { fontSize: 13, color: '#64748B', fontWeight: '600' },
-  chipTextActive: { color: '#6366f1' },
+  chipTextActive: { color: '#4F46E5' },
   newAssessmentRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: 14 },
-  input: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 12, color: '#0F172A' },
-  createBtn: { backgroundColor: '#6366f1', borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' },
+  input: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 10, borderWidth: 1, borderColor: '#E7EAF2', paddingHorizontal: 12, color: '#0F172A' },
+  createBtn: { backgroundColor: '#4F46E5', borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' },
   createBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   sectionLabelRow: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8 },
   sectionLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', letterSpacing: 1 },
@@ -214,14 +214,14 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 16, paddingBottom: 16, gap: 8 },
   rosterRow: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF',
-    borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E7EAF2',
   },
   rosterName: { fontSize: 14, fontWeight: '600', color: '#0F172A' },
   rosterRoll: { fontSize: 11, color: '#64748b', marginTop: 2 },
   scoreInput: {
-    width: 60, backgroundColor: '#F7F9FC', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0',
+    width: 60, backgroundColor: '#F7F9FC', borderRadius: 8, borderWidth: 1, borderColor: '#E7EAF2',
     color: '#0F172A', textAlign: 'center', paddingVertical: 6,
   },
-  saveBtn: { backgroundColor: '#6366f1', margin: 16, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  saveBtn: { backgroundColor: '#4F46E5', margin: 16, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

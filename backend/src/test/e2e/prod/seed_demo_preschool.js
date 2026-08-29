@@ -271,6 +271,38 @@ async function main() {
     }
     log(`${PRINCIPAL.name} (principal) and ${TEACHERS.length} teachers, all approved`);
 
+    // -- 6b. Give each teacher a room ---------------------------------------
+    // The mobile app is entered through "My Classes", which reads subject
+    // assignments. A teacher with none sees "No classes assigned" and cannot
+    // reach a register, a roster, or a child at all -- so seeding staff without
+    // this step left the entire teacher side of the app looking broken.
+    step('6b', 'Assigning each teacher to a room');
+    await page.goto(`${BASE}/web/admin/management`);
+    const staffList = await getJson('/web/admin/staff');
+    const teacherIds = TEACHERS
+      .map(t => (staffList.find(s => s.email === t.email) || {}).id)
+      .filter(Boolean);
+
+    let assigned = 0;
+    for (let i = 0; i < LEVELS.length; i++) {
+      const level = LEVELS[i];
+      const sectionId = ctx.sections[level.grade];
+      // Three teachers, four rooms: one doubles up, which is what a preschool
+      // of this size actually does.
+      const teacherId = teacherIds[i % teacherIds.length];
+      if (!sectionId || !teacherId) continue;
+      await page.goto(`${BASE}/web/admin/assignments`);
+      const res = await form('/web/admin/assignments/assign', {
+        teacherId, classSectionId: sectionId,
+        // A preschool teaches activities, not subjects. isHomeClass marks them
+        // as this room's own teacher rather than a visiting specialist.
+        subjectName: 'Circle Time', isHomeClass: 'true',
+      });
+      if (res.status >= 400) { log(`! could not assign a teacher to ${level.grade}`); continue; }
+      assigned++;
+    }
+    log(`${assigned} of ${LEVELS.length} rooms have a teacher`);
+
     // -- 7. Fee plans, which need the principal ----------------------------
     step(7, 'Proposing a fee plan per level');
     for (const l of LEVELS) {

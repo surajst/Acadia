@@ -44,11 +44,11 @@ test.describe.serial('Real User Journey E2E Specs', () => {
     await expect(page.locator('#rosterSearchInput')).toHaveValue('Test Student Playwright');
 
     // Assert row is visible
-    const studentRow = page.locator('tr:has-text("Test Student Playwright")').first();
+    const studentRow = page.locator('.roster-row:has-text("Test Student Playwright")').first();
     await expect(studentRow).toBeVisible();
 
     // Delete that student, assert no 500 error and row disappears
-    const deleteTrigger = studentRow.locator('button:has-text("🗑️")');
+    const deleteTrigger = studentRow.locator('button[title="Remove"]');
     await deleteTrigger.click();
     await expect(page.locator('#deleteModal')).toBeVisible();
     await page.click('#deleteForm button[type="submit"]');

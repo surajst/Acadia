@@ -16,10 +16,10 @@ type AttendanceRecord = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  PRESENT: '#22c55e',
+  PRESENT: '#059669',
   ABSENT: '#ef4444',
-  TARDY: '#f59e0b',
-  LATE: '#f59e0b',
+  TARDY: '#D97706',
+  LATE: '#D97706',
 };
 
 const STATUS_BG: Record<string, string> = {
@@ -86,12 +86,12 @@ export default function StudentAttendanceScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Attendance Summary</Text>
         <View style={styles.summaryRow}>
-          <View style={[styles.summaryBox, { borderColor: '#22c55e' }]}>
+          <View style={[styles.summaryBox, { borderColor: '#059669' }]}>
             <Text style={styles.summaryNum}>{present}</Text>
             <Text style={styles.summaryLabel}>Present</Text>
           </View>
@@ -99,11 +99,11 @@ export default function StudentAttendanceScreen() {
             <Text style={styles.summaryNum}>{absent}</Text>
             <Text style={styles.summaryLabel}>Absent</Text>
           </View>
-          <View style={[styles.summaryBox, { borderColor: '#f59e0b' }]}>
+          <View style={[styles.summaryBox, { borderColor: '#D97706' }]}>
             <Text style={styles.summaryNum}>{late}</Text>
             <Text style={styles.summaryLabel}>Late</Text>
           </View>
-          <View style={[styles.summaryBox, { borderColor: '#6366f1' }]}>
+          <View style={[styles.summaryBox, { borderColor: '#4F46E5' }]}>
             <Text style={styles.summaryNum}>{pct}%</Text>
             <Text style={styles.summaryLabel}>Rate</Text>
           </View>
@@ -113,7 +113,7 @@ export default function StudentAttendanceScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Attendance History</Text>
         {loading ? (
-          <ActivityIndicator color="#6366f1" style={{ marginTop: 20 }} />
+          <ActivityIndicator color="#4F46E5" style={{ marginTop: 20 }} />
         ) : records.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No attendance records</Text>

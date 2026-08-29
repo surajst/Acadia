@@ -30,8 +30,8 @@ type Subject = {
 };
 
 function scoreColor(pct: number): string {
-  if (pct >= 80) return '#22c55e';
-  if (pct >= 60) return '#f59e0b';
+  if (pct >= 80) return '#059669';
+  if (pct >= 60) return '#D97706';
   return '#ef4444';
 }
 
@@ -143,7 +143,7 @@ export default function PerformanceScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Report Card</Text>
@@ -177,7 +177,7 @@ export default function PerformanceScreen() {
         <Text style={styles.sectionTitle}>Subject-wise Performance</Text>
 
         {loading ? (
-          <ActivityIndicator color="#6366f1" style={{ marginTop: 20 }} />
+          <ActivityIndicator color="#4F46E5" style={{ marginTop: 20 }} />
         ) : subjects && subjects.length > 0 ? (
           subjects.map((s) => (
             <SubjectCard key={s.subjectCode} subject={s} label={subjectCatalog[s.subjectCode] ?? s.subjectCode} />
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#E7EAF2',
     overflow: 'hidden',
   },
   progressFill: {
@@ -254,14 +254,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E7EAF2',
   },
-  termChipActive: { backgroundColor: '#6366f1', borderColor: '#6366f1' },
+  termChipActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
   termChipText: { color: '#64748B', fontSize: 13, fontWeight: '600' },
   termChipTextActive: { color: '#fff' },
 
   downloadButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#4F46E5',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',

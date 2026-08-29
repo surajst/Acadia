@@ -7,260 +7,302 @@
     <link rel="stylesheet" href="/css/tailwind.css">
     <link rel="stylesheet" href="/css/design-system.css">
     <style>
-        /* Dashboard-only: quick-action tiles */
-        .qa-tile { display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--surface); transition:all .15s; }
+        /* Quick-action tiles: now a 2-up shortcut grid in the right rail rather
+           than the page's navigation, so they stack icon over label. */
+        .qa-tile { display:flex; flex-direction:column; align-items:flex-start; gap:6px; padding:11px;
+                   border-radius:var(--r-sm); border:1px solid var(--line); background:var(--surface); transition:all .15s; }
         .qa-tile:hover { border-color:var(--brand-100); background:var(--brand-50); }
-        .qa-ico { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .qa-label { font-size:12.5px; font-weight:600; color:var(--text); }
+
+        .kpi-cell { padding:18px 20px; border-right:1px solid var(--line); }
+        .kpi-cell:last-child { border-right:0; }
+        .kpi-value { font-size:30px; font-weight:800; letter-spacing:-.025em; line-height:1; margin-top:8px;
+                     font-variant-numeric:tabular-nums; }
+        .kpi-note { font-size:11.5px; color:var(--text-3); margin-top:6px; }
     </style>
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="flex flex-col" style="height:100vh; overflow:hidden; background:var(--bg);">
+<body>
+<!-- The shell replaces this page's old header + "Quick Action Hub" grid. The
+     tiles were doing double duty as the app's navigation, which meant getting
+     anywhere started with coming back here. They are now a six-tile shortcut
+     panel in the right rail; the sidebar is the navigation. -->
+<div class="shell">
 
-    <!-- ── Top bar ─────────────────────────────────────────────────────── -->
-    <header class="bg-white border-b border-[var(--line)] sticky top-0 z-40 shrink-0">
-        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-                <img src="/images/acadia-logo.png" alt="ACADIA" style="height:26px;">
-                <span style="font-size:15px; font-weight:700; letter-spacing:2px; color:var(--text);">ACADIA</span>
-                <span class="hidden sm:block ml-3 pl-3 border-l border-[var(--line)] text-sm font-semibold text-[var(--text-2)]">Roster Hub</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Operational</span>
-                <form th:action="@{/logout}" method="post">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="btn btn-secondary btn-xs">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        Logout
-                    </button>
-                </form>
-            </div>
-        </div>
-    </header>
+    <aside th:replace="~{fragments/shell :: sidebar}"></aside>
 
-    <div id="global-scroll-wrapper" class="flex-1 min-h-0 flex flex-col" style="width:100%;">
+    <div class="shell-main">
+        <header th:replace="~{fragments/shell :: topbar('Roster Hub', 'What needs attention this morning')}"></header>
 
-        <div th:if="${param.success != null and param.success[0] == 'announcement_posted'}" data-flash data-autohide="6000"
-             class="shrink-0 mx-4 sm:mx-6 lg:mx-8 mt-3 rounded-xl px-4 py-2.5 pr-10 flex items-center gap-2 border text-sm"
-             style="background:var(--success-50); border-color:var(--success-200); color:var(--success);">
-            📢 <span class="font-semibold">Announcement broadcast successfully.</span>
-        </div>
+        <div class="shell-body">
+            <div class="shell-content">
 
-        <main class="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex-1 min-h-0 flex flex-col overflow-hidden gap-3">
-
-            <!-- ── KPI strip ────────────────────────────────────────────── -->
-            <section class="card overflow-hidden shrink-0">
-                <div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x"
-                     th:classappend="${currentUserRole == 'PRINCIPAL'} ? 'lg:grid-cols-5' : ''" style="border-color:var(--line)">
-                    <div class="p-3 flex items-center justify-between" style="border-color:var(--line)">
-                        <div>
-                            <p class="eyebrow">Attendance Today</p>
-                            <p class="text-xl font-extrabold text-slate-900 mt-0.5" data-kpi-attendance th:text="|${attendancePercentage}%|">100%</p>
-                        </div>
-                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--success-50); color:var(--success);">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
-                        </span>
-                    </div>
-                    <div class="p-3 flex items-center justify-between" style="border-color:var(--line)">
-                        <div>
-                            <p class="eyebrow">Active Absences</p>
-                            <p class="text-xl font-extrabold text-slate-900 mt-0.5" data-kpi-absences th:text="|${activeAbsences} / ${totalStudents}|">0 / 5</p>
-                        </div>
-                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--warn-50); color:var(--warn);">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        </span>
-                    </div>
-                    <div class="p-3 flex items-center justify-between" style="border-color:var(--line)">
-                        <div>
-                            <p class="eyebrow">System</p>
-                            <p class="text-base font-bold mt-1 flex items-center gap-1.5" style="color:var(--success)">
-                                <span class="dot w-2 h-2 rounded-full" style="background:var(--success)"></span> Secure
-                            </p>
-                        </div>
-                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--success-50); color:var(--success);">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                        </span>
-                    </div>
-                    <div th:if="${currentUserRole == 'PRINCIPAL'}" class="p-4 flex items-center justify-between" style="border-color:var(--line)">
-                        <div>
-                            <p class="eyebrow">Curriculum</p>
-                            <p class="text-xl font-extrabold text-slate-900 mt-0.5" th:text="|${schoolProgress != null ? schoolProgress.get('overallCompletionPercent') : 0}%|">0%</p>
-                        </div>
-                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--info-50); color:var(--info);">📊</span>
-                    </div>
-                    <div th:if="${currentUserRole == 'PRINCIPAL'}" class="p-4 flex items-center justify-between" style="border-color:var(--line)">
-                        <div>
-                            <p class="eyebrow">Fee Collection</p>
-                            <p class="text-xl font-extrabold text-slate-900 mt-0.5" th:text="|${feeSummary != null ? feeSummary.get('collectionPercent') : 0}%|">0%</p>
-                        </div>
-                        <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--success-50); color:var(--success);">💳</span>
-                    </div>
+                <div th:if="${param.success != null and param.success[0] == 'announcement_posted'}" data-flash data-autohide="6000"
+                     class="rounded-xl px-4 py-2.5 pr-10 flex items-center gap-2 border text-sm"
+                     style="background:var(--success-50); border-color:var(--success-200); color:var(--success);">
+                    &#128226; <span class="font-semibold">Announcement broadcast successfully.</span>
                 </div>
-            </section>
 
-            <!-- ── Principal-only approval queues ───────────────────────── -->
-            <section th:if="${currentUserRole == 'PRINCIPAL'}" class="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
-                <div class="card p-4">
-                    <h3 class="eyebrow mb-3">Pending Staff Approvals</h3>
-                    <div id="pendingStaffList" class="space-y-2"><p class="text-xs text-[var(--text-3)]">Loading…</p></div>
-                </div>
-                <div class="card p-4">
-                    <h3 class="eyebrow mb-3">Pending Fee Waivers</h3>
-                    <div id="pendingWaiversList" class="space-y-2"><p class="text-xs text-[var(--text-3)]">Loading…</p></div>
-                </div>
-            </section>
+                <!-- KPI strip -->
+                <section class="card overflow-hidden">
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));">
 
-            <!-- ── Roster + Quick actions ───────────────────────────────── -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch flex-1 min-h-0">
+                        <div class="kpi-cell">
+                            <p class="eyebrow">Attendance today</p>
+                            <p class="kpi-value" data-kpi-attendance th:text="|${attendancePercentage}%|">96.4%</p>
+                            <div class="track track--xs" style="margin-top:7px;">
+                                <div class="fill" th:style="'background:var(--success); width:' + ${attendancePercentage} + '%'"></div>
+                            </div>
+                            <p class="kpi-note" th:text="|${totalStudents - activeAbsences} of ${totalStudents} present|">487 of 505 present</p>
+                        </div>
 
-                <!-- Roster -->
-                <div class="lg:col-span-2 flex flex-col min-h-0">
-                    <div class="card overflow-hidden flex flex-col flex-1 min-h-0">
-                        <div class="p-4 border-b shrink-0" style="border-color:var(--line)">
-                            <div class="flex items-center justify-between gap-3 flex-wrap">
+                        <div class="kpi-cell">
+                            <p class="eyebrow">Active absences</p>
+                            <p class="kpi-value" data-kpi-absences th:text="${activeAbsences}">18</p>
+                            <div class="track track--xs" style="margin-top:7px;">
+                                <div class="fill" th:style="'background:var(--warn); width:' + (${totalStudents} > 0 ? (${activeAbsences} * 100 / ${totalStudents}) : 0) + '%'"></div>
+                            </div>
+                            <p class="kpi-note" th:text="|of ${totalStudents} on roll today|">of 505 on roll today</p>
+                        </div>
+
+                        <!-- Rendered only when the figure is actually known. The
+                             fallback used to be 0%, which reads as "nothing has
+                             been collected" rather than "we could not work it
+                             out" -- a confident wrong number on a head teacher's
+                             morning screen. -->
+                        <div class="kpi-cell"
+                             th:if="${feeSummary != null and feeSummary.get('collectionPercent') != null}">
+                            <p class="eyebrow">Fee collection</p>
+                            <p class="kpi-value" th:text="|${feeSummary.get('collectionPercent')}%|">82%</p>
+                            <div class="track track--xs" style="margin-top:7px;">
+                                <div class="fill" th:style="'background:var(--brand); width:' + ${feeSummary.get('collectionPercent')} + '%'"></div>
+                            </div>
+                            <p class="kpi-note">Billed this academic year</p>
+                        </div>
+
+                        <div class="kpi-cell" th:if="${currentUserRole == 'PRINCIPAL' and (school == null or school.hasSyllabus)}">
+                            <div class="flex items-center justify-between gap-2.5">
+                                <p class="eyebrow">Curriculum</p>
+                                <span class="badge badge--info">on track</span>
+                            </div>
+                            <p class="kpi-value" th:text="|${schoolProgress != null ? schoolProgress.get('overallCompletionPercent') : 0}%|">61%</p>
+                            <div class="track track--xs" style="margin-top:7px;">
+                                <div class="fill" th:style="'background:var(--info); width:' + ${schoolProgress != null ? schoolProgress.get('overallCompletionPercent') : 0} + '%'"></div>
+                            </div>
+                            <p class="kpi-note">Term coverage</p>
+                        </div>
+
+                        <!-- Filled by the same fetch that populates the approval lists
+                             below, so the count cannot disagree with them. -->
+                        <div class="kpi-cell" th:if="${currentUserRole == 'PRINCIPAL'}">
+                            <p class="eyebrow">Open approvals</p>
+                            <p class="kpi-value" data-kpi-approvals>0</p>
+                            <div class="track track--xs" style="margin-top:7px;">
+                                <div class="fill" data-kpi-approvals-bar style="background:var(--warn); width:0%"></div>
+                            </div>
+                            <p class="kpi-note" data-kpi-approvals-note>Nothing waiting</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Approvals, principal only -->
+                <section th:if="${currentUserRole == 'PRINCIPAL'}"
+                         style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;">
+                    <div class="card" style="padding:16px;">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                                <h3 class="card-title">Staff awaiting approval</h3>
+                                <p class="card-sub">Nobody teaches until you say so</p>
+                            </div>
+                            <span class="badge badge--warn" data-staff-count>0 waiting</span>
+                        </div>
+                        <div id="pendingStaffList" style="display:flex; flex-direction:column; gap:8px;">
+                            <p class="text-xs" style="color:var(--text-3)">Loading&hellip;</p>
+                        </div>
+                    </div>
+                    <div class="card" style="padding:16px;">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                                <h3 class="card-title">Fee waivers</h3>
+                                <p class="card-sub">Money written off needs a name against it</p>
+                            </div>
+                            <span class="badge badge--info" data-waiver-count>0 waiting</span>
+                        </div>
+                        <div id="pendingWaiversList" style="display:flex; flex-direction:column; gap:8px;">
+                            <p class="text-xs" style="color:var(--text-3)">Loading&hellip;</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Roster + right rail -->
+                <div style="display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:16px; align-items:start;">
+
+                    <div class="card overflow-hidden" id="rosterCard">
+                        <div style="padding:16px; border-bottom:1px solid var(--line);">
+                            <div class="flex items-start justify-between gap-3 flex-wrap">
                                 <div>
-                                    <h2 class="text-base font-bold text-slate-900 tracking-tight">Student Roster</h2>
-                                    <p class="text-xs text-[var(--text-3)] mt-0.5">Search, filter and open a student profile.</p>
+                                    <h2 class="card-title">Student roster</h2>
+                                    <p class="card-sub">Search, filter and open a student profile</p>
                                 </div>
                                 <span id="rosterResultCount" class="badge badge--info"
-                                      th:text="${totalRosterItems} + ' student' + (${totalRosterItems} != 1 ? 's' : '')">0 students</span>
+                                      th:text="${totalRosterItems} + ' student' + (${totalRosterItems} != 1 ? 's' : '')">505 students</span>
                             </div>
-                            <div class="mt-3 flex flex-wrap items-center gap-2" id="rosterFilterBar">
-                                <div class="relative flex-1 min-w-[180px]">
-                                    <span class="absolute inset-y-0 left-3 flex items-center text-[var(--text-3)] pointer-events-none">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg>
-                                    </span>
-                                    <input id="rosterSearchInput" type="text" placeholder="Search by name… (press Enter)"
-                                           th:value="${filterName}" class="field pl-9"
+
+                            <div class="flex flex-wrap items-center gap-2" style="margin-top:12px;" id="rosterFilterBar">
+                                <label class="field-search" style="flex:1; min-width:200px;">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+                                    </svg>
+                                    <input id="rosterSearchInput" type="text" placeholder="Search by name&hellip; (press Enter)"
+                                           th:value="${filterName}" class="field"
                                            onkeydown="if(event.key==='Enter'){ navigateRoster(); }"/>
-                                </div>
-                                <div class="min-w-[170px]">
-                                    <select id="rosterGradeFilter" class="field" onchange="navigateRoster()">
-                                        <option value="">All Grades</option>
-                                        <option th:each="grade : ${allGradeNames}" th:value="${grade}" th:text="${grade}"
-                                                th:selected="${grade == filterGrade}">Grade 6</option>
-                                    </select>
+                                </label>
+                                <select id="rosterGradeFilter" class="field" style="min-width:150px; width:auto;" onchange="navigateRoster()">
+                                    <option value="">All grades</option>
+                                    <option th:each="grade : ${allGradeNames}" th:value="${grade}" th:text="${grade}"
+                                            th:selected="${grade == filterGrade}">Grade 6</option>
+                                </select>
+                                <div class="segmented" role="group" aria-label="Row density">
+                                    <button type="button" data-density="comfortable" class="is-on" onclick="setDensity('comfortable')">Comfortable</button>
+                                    <button type="button" data-density="compact" onclick="setDensity('compact')">Compact</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="overflow-auto flex-1 min-h-0">
-                            <table class="w-full text-left border-collapse">
-                                <thead class="sticky top-0 z-10">
-                                    <tr class="text-[var(--text-3)] uppercase text-[10px] tracking-wider font-bold" style="background:var(--surface-2)">
-                                        <th class="py-2.5 px-5">Roll</th>
-                                        <th class="py-2.5 px-5">Name</th>
-                                        <th class="py-2.5 px-5">Class</th>
-                                        <th class="py-2.5 px-5 text-right">Actions</th>
-                                        <th th:if="${currentUserRole == 'ADMIN'}" class="py-2.5 px-5 text-center">Remove</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rosterTableBody" class="text-sm">
-                                    <tr th:each="student : ${students}"
-                                        class="roster-row border-b transition-colors group hover:bg-[var(--surface-2)]"
-                                        style="border-color:var(--line)"
-                                        th:data-name="|${student.firstName} ${student.lastName}|"
-                                        th:data-grade="${student.gradeName}">
-                                        <td class="py-2.5 px-5 font-mono text-xs font-semibold text-[var(--brand)]"
-                                            th:text="${student.rollNumber != null ? student.rollNumber : '--'}">6A01</td>
-                                        <td class="py-2.5 px-5 font-semibold text-slate-900 group-hover:text-[var(--brand)] transition-colors"
-                                            th:text="|${student.firstName} ${student.lastName}|">Aarav Sharma</td>
-                                        <td class="py-2.5 px-5">
-                                            <span class="badge badge--neutral"
-                                                  th:text="|${student.gradeName} - ${student.sectionName}|">6 - A</span>
-                                        </td>
-                                        <td class="py-2.5 px-5 text-right">
-                                            <a th:href="@{/web/teacher/student/{id}(id=${student.id})}" class="btn btn-secondary btn-xs">View Profile Data</a>
-                                        </td>
-                                        <td th:if="${currentUserRole == 'ADMIN'}" class="py-2.5 px-5 text-center">
-                                            <button th:data-id="${student.id}" th:data-name="|${student.firstName} ${student.lastName}|"
-                                                    onclick="confirmDelete(this.getAttribute('data-id'), this.getAttribute('data-name'))"
-                                                    class="btn btn-ghost-danger btn-xs" title="Remove">🗑️</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <!-- The table scrolls inside its card, never the page. -->
+                        <div style="max-height:420px; overflow:auto;">
+                            <div class="table-head" style="display:grid; grid-template-columns:90px minmax(140px,1fr) 130px auto; gap:10px; position:sticky; top:0; z-index:1;">
+                                <span>Roll</span><span>Name</span><span>Class</span><span style="text-align:right;">Profile</span>
+                            </div>
 
-                            <div id="rosterEmptyState" th:class="${#lists.isEmpty(students)} ? 'py-14 text-center' : 'hidden'">
-                                <div class="w-12 h-12 mx-auto rounded-full flex items-center justify-center text-xl" style="background:var(--surface-2); border:1px solid var(--line);">🔍</div>
-                                <p class="text-sm font-semibold text-slate-700 mt-2.5">No students match your search</p>
-                                <p class="text-xs text-[var(--text-3)] mt-0.5">Try a different name or grade filter.</p>
+                            <div id="rosterTableBody">
+                                <div th:each="student : ${students}" class="row roster-row"
+                                     style="display:grid; grid-template-columns:90px minmax(140px,1fr) 130px auto; gap:10px; align-items:center;"
+                                     th:data-name="|${student.firstName} ${student.lastName}|"
+                                     th:data-grade="${student.gradeName}">
+                                    <span class="mono" style="font-size:12px; font-weight:600; color:var(--brand);"
+                                          th:text="${student.rollNumber != null ? student.rollNumber : '--'}">SM-001</span>
+                                    <span class="flex items-center gap-2.5" style="min-width:0;">
+                                        <span class="ico ico--sm ico--neutral" style="font-size:12px;"
+                                              th:text="${#strings.substring(student.firstName,0,1)}">A</span>
+                                        <span style="font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                                              th:text="|${student.firstName} ${student.lastName}|">Aarav Kulkarni</span>
+                                    </span>
+                                    <span>
+                                        <span class="badge badge--neutral"
+                                              th:text="|${student.gradeName} &middot; ${student.sectionName}|">Nursery A</span>
+                                    </span>
+                                    <span style="text-align:right; display:flex; gap:6px; justify-content:flex-end;">
+                                        <a th:href="@{/web/teacher/student/{id}(id=${student.id})}" class="btn btn-secondary btn-xs">Open</a>
+                                        <button th:if="${currentUserRole == 'ADMIN'}"
+                                                th:data-id="${student.id}" th:data-name="|${student.firstName} ${student.lastName}|"
+                                                onclick="confirmDelete(this.getAttribute('data-id'), this.getAttribute('data-name'))"
+                                                class="btn btn-ghost-danger btn-xs" title="Remove">&#128465;&#65039;</button>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div id="rosterEmptyState" th:if="${#lists.isEmpty(students)}"
+                                 style="max-height:100px; padding:16px 24px; display:flex; align-items:center; gap:12px;">
+                                <span class="ico ico--sm ico--neutral">&#128269;</span>
+                                <div>
+                                    <p style="font-size:14px; font-weight:600;">No students match your search</p>
+                                    <p style="font-size:12.5px; color:var(--text-3);">Try a different name or grade filter.</p>
+                                </div>
                             </div>
                         </div>
 
-                        <div id="rosterPagination" class="flex items-center justify-between px-5 py-2.5 border-t shrink-0" style="border-color:var(--line); background:var(--surface-2)">
-                            <span id="rosterPageInfo" class="text-xs text-[var(--text-3)]"
-                                  th:text="${totalRosterItems == 0} ? '' : |Page ${currentPage + 1} of ${totalPages} · ${totalRosterItems} students|">Page 1 of 1</span>
-                            <div class="flex items-center gap-2" id="rosterPageButtons">
+                        <div id="rosterPagination" class="flex items-center justify-between"
+                             style="padding:11px 18px; border-top:1px solid var(--line); background:var(--surface-2);">
+                            <span id="rosterPageInfo" style="font-size:12px; color:var(--text-3);"
+                                  th:text="${totalRosterItems == 0} ? '' : |Page ${currentPage + 1} of ${totalPages == 0 ? 1 : totalPages} &middot; ${totalRosterItems} students|">Page 1 of 64</span>
+                            <div class="flex items-center gap-2">
                                 <a th:href="@{/web/admin/dashboard(page=${currentPage - 1}, size=${pageSize}, name=${filterName}, gradeLevel=${filterGrade})}"
-                                   th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40' : ''" class="btn btn-secondary btn-xs">← Prev</a>
-                                <span class="text-xs text-[var(--text-3)]" th:text="${currentPage + 1} + ' / ' + (${totalPages} == 0 ? 1 : ${totalPages})">1 / 1</span>
+                                   th:style="${currentPage == 0} ? 'opacity:.45; pointer-events:none' : ''"
+                                   class="btn btn-secondary btn-xs">&larr; Prev</a>
                                 <a th:href="@{/web/admin/dashboard(page=${currentPage + 1}, size=${pageSize}, name=${filterName}, gradeLevel=${filterGrade})}"
-                                   th:classappend="${currentPage + 1 >= totalPages} ? 'pointer-events-none opacity-40' : ''" class="btn btn-secondary btn-xs">Next →</a>
+                                   th:style="${currentPage + 1 >= totalPages} ? 'opacity:.45; pointer-events:none' : ''"
+                                   class="btn btn-secondary btn-xs">Next &rarr;</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right rail -->
+                    <div style="display:flex; flex-direction:column; gap:16px;">
+
+                        <!-- Driven by what this page actually knows. The handoff's
+                             worked example names individual children and rupee
+                             totals the screen has no data for; inventing them
+                             would put fiction in front of a head teacher. -->
+                        <div class="card" style="padding:16px;">
+                            <p class="eyebrow" style="margin-bottom:8px;">Needs attention</p>
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+
+                                <div th:if="${activeAbsences != null and activeAbsences > 0}" data-attention
+                                     class="flex items-start gap-2.5"
+                                     style="padding:10px 12px; border-radius:12px; background:var(--warn-50); border:1px solid var(--warn-200);">
+                                    <span style="width:7px; height:7px; border-radius:50%; background:var(--warn); margin-top:6px; flex-shrink:0;"></span>
+                                    <div>
+                                        <p style="font-size:13px; font-weight:600;" th:text="|${activeAbsences} away today|">18 away today</p>
+                                        <p style="font-size:11.5px; color:var(--text-3);">Check the register for anything unexplained</p>
+                                    </div>
+                                </div>
+
+                                <div th:if="${feeSummary != null and feeSummary.get('collectionPercent') != null and feeSummary.get('collectionPercent') &lt; 100}"
+                                     data-attention class="flex items-start gap-2.5"
+                                     style="padding:10px 12px; border-radius:12px; background:var(--danger-50); border:1px solid var(--danger-200);">
+                                    <span style="width:7px; height:7px; border-radius:50%; background:var(--danger); margin-top:6px; flex-shrink:0;"></span>
+                                    <div>
+                                        <p style="font-size:13px; font-weight:600;">Fees still outstanding</p>
+                                        <p style="font-size:11.5px;">
+                                            <a href="/web/admin/fees/defaulters" style="color:var(--danger); font-weight:600;">See who is overdue</a>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <p th:if="${(activeAbsences == null or activeAbsences == 0) and (feeSummary == null or feeSummary.get('collectionPercent') == null or feeSummary.get('collectionPercent') &gt;= 100)}"
+                                   style="font-size:12.5px; color:var(--text-3);">Nothing needs you right now.</p>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding:16px;">
+                            <p class="eyebrow" style="margin-bottom:8px;">Quick actions</p>
+                            <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;">
+                                <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="qa-tile">
+                                    <span class="ico ico--sm ico--brand">&#9881;</span><span class="qa-label">School setup</span>
+                                </a>
+                                <a th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}" href="/web/admin/fees" class="qa-tile">
+                                    <span class="ico ico--sm ico--success">&#128179;</span><span class="qa-label">Fee ledger</span>
+                                </a>
+                                <a th:if="${currentUserRole == 'ADMIN' and (school == null or school.hasSyllabus)}" href="/web/admin/curriculum" class="qa-tile">
+                                    <span class="ico ico--sm ico--info">&#128202;</span><span class="qa-label">Curriculum</span>
+                                </a>
+                                <a th:if="${currentUserRole == 'ADMIN' and (school == null or school.hasSyllabus)}" href="/web/admin/subjects" class="qa-tile">
+                                    <span class="ico ico--sm ico--warn">&#128218;</span><span class="qa-label">Subjects</span>
+                                </a>
+                                <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/timetable" class="qa-tile">
+                                    <span class="ico ico--sm ico--brand">&#128197;</span><span class="qa-label">Timetable</span>
+                                </a>
+                                <a th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}" href="/web/admin/audit-log" class="qa-tile">
+                                    <span class="ico ico--sm ico--neutral">&#128196;</span><span class="qa-label">Audit log</span>
+                                </a>
+                                <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/attendance" class="qa-tile">
+                                    <span class="ico ico--sm ico--success">&#128203;</span><span class="qa-label">Take roll call</span>
+                                </a>
+                                <button th:if="${currentUserRole == 'ADMIN'}" onclick="openAnnouncementModal()" class="qa-tile" style="text-align:left;">
+                                    <span class="ico ico--sm ico--brand">&#128226;</span><span class="qa-label">Announcement</span>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick actions -->
-                <div class="flex flex-col min-h-0 overflow-y-auto">
-                    <div class="card p-4">
-                        <h3 class="eyebrow mb-3">Quick Actions</h3>
-                        <div class="space-y-2">
-                            <a th:if="${currentUserRole == 'PARENT'}" href="/web/parent/portal" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--success-50); color:var(--success)">🛡️</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Parent Portal</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Co-sign reward redemptions</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'STUDENT'}" href="/web/student/portal" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--brand-50); color:var(--brand)">🛡️</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Student Portal</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Submit milestone evidence</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'TEACHER'}" href="/web/teacher/attendance" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--success-50); color:var(--success)">📋</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Take Roll Call</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Record today's attendance</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--brand-50); color:var(--brand)">⚙️</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">School Configuration</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Classes, staff, students, buses</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/fees" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--success-50); color:var(--success)">💳</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Fee Ledger &amp; Billing</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Invoices and collections</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/curriculum" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--info-50); color:var(--info)">📊</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Curriculum Intelligence</h4><p class="text-xs text-[var(--text-3)] mt-0.5">School-wide progress analytics</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/subjects" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--warn-50); color:var(--warn)">📚</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Subjects</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Catalog &amp; per-grade assignment</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/timetable" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--success-50); color:var(--success)">📅</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Timetable</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Class periods &amp; teacher schedules</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'ADMIN'}" href="/web/onboard/setup" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--info-50); color:var(--info)">⚡</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Setup Wizard</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Grades, subjects, staff invites</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'PRINCIPAL'}" href="/web/teacher/dashboard" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--brand-50); color:var(--brand)">✓</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Verification Queue</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Approve milestone &amp; syllabus submissions</p></div>
-                            </a>
-                            <a th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}" href="/web/admin/audit-log" class="qa-tile group">
-                                <span class="qa-ico" style="background:var(--danger-50); color:var(--danger)">📄</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Audit Log</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Who changed what, when</p></div>
-                            </a>
-                            <button th:if="${currentUserRole == 'ADMIN'}" onclick="openAnnouncementModal()" class="qa-tile group w-full text-left">
-                                <span class="qa-ico" style="background:var(--brand-50); color:var(--brand)">📢</span>
-                                <div><h4 class="text-sm font-semibold text-slate-900">Post Announcement</h4><p class="text-xs text-[var(--text-3)] mt-0.5">Broadcast notes &amp; updates</p></div>
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
-        </main>
+        </div>
     </div>
+</div>
 
     <!-- ── Delete confirmation modal ────────────────────────────────────── -->
     <div id="deleteModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4 hidden">
@@ -334,6 +376,47 @@
     </footer>
 
     <script>
+        /* Density is a per-person reading preference, not a page setting, so it
+           persists locally rather than round-tripping to the server. */
+        function setDensity(mode) {
+            const card = document.getElementById('rosterCard');
+            if (!card) return;
+            card.classList.toggle('dense', mode === 'compact');
+            document.querySelectorAll('.segmented [data-density]').forEach(b =>
+                b.classList.toggle('is-on', b.getAttribute('data-density') === mode));
+            try { localStorage.setItem('acadia.density', mode); } catch (e) { /* private mode */ }
+        }
+        (function restoreDensity() {
+            let saved = null;
+            try { saved = localStorage.getItem('acadia.density'); } catch (e) { /* private mode */ }
+            if (saved) setDensity(saved);
+        })();
+
+        function initials(name) {
+            if (!name) return '?';
+            const parts = String(name).trim().split(/\s+/);
+            return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+        }
+
+        /* The KPI and the two badges are three views of the same two numbers.
+           Keeping them in one function is what stops the headline count
+           disagreeing with the lists directly beneath it. */
+        const pendingCounts = { staff: 0, waiver: 0 };
+        function publishCount(kind, n) {
+            pendingCounts[kind] = n;
+            const badge = document.querySelector(kind === 'staff' ? '[data-staff-count]' : '[data-waiver-count]');
+            if (badge) badge.textContent = n + ' waiting';
+            const total = pendingCounts.staff + pendingCounts.waiver;
+            const value = document.querySelector('[data-kpi-approvals]');
+            const bar = document.querySelector('[data-kpi-approvals-bar]');
+            const note = document.querySelector('[data-kpi-approvals-note]');
+            if (value) value.textContent = total;
+            if (bar) bar.style.width = Math.min(100, total * 10) + '%';
+            if (note) note.textContent = total === 0
+                ? 'Nothing waiting'
+                : pendingCounts.staff + ' staff · ' + pendingCounts.waiver + ' waivers';
+        }
+
         function navigateRoster() {
             const name = document.getElementById('rosterSearchInput')?.value || '';
             const gradeLevel = document.getElementById('rosterGradeFilter')?.value || '';
@@ -367,14 +450,19 @@
             if (!list) return;
             const res = await fetch('/api/principal/fees/waivers/pending');
             const waivers = await res.json();
-            if (waivers.length === 0) { list.innerHTML = '<p class="text-xs text-[var(--text-3)]">No pending waiver requests.</p>'; return; }
+            publishCount('waiver', waivers.length);
+            if (waivers.length === 0) { list.innerHTML = '<p class="text-xs" style="color:var(--text-3)">No pending waiver requests.</p>'; return; }
             list.innerHTML = waivers.map(w => `
-                <div class="flex items-center justify-between rounded-xl px-4 py-2.5 border" style="background:var(--surface-2); border-color:var(--line)">
-                    <div><span class="text-sm font-semibold text-slate-900">${w.studentName}</span>
-                        <span class="text-xs text-[var(--text-3)] ml-2">₹${w.waiverAmount} — ${w.waiverReason || ''}</span></div>
-                    <div class="flex gap-2">
-                        <button onclick="decideWaiver('${w.invoiceId}', 'reject')" class="btn btn-secondary btn-xs">Reject</button>
-                        <button onclick="decideWaiver('${w.invoiceId}', 'approve')" class="btn btn-primary btn-xs">Approve</button>
+                <div class="flex items-center justify-between gap-3" data-waiver-row
+                     style="padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface-2)">
+                    <div style="min-width:0">
+                        <div style="font-size:13.5px; font-weight:600; color:var(--text)">${w.studentName}</div>
+                        <div style="font-size:11.5px; color:var(--text-3)">${w.waiverReason || 'No reason given'}</div>
+                    </div>
+                    <div class="flex items-center gap-2" style="flex-shrink:0">
+                        <span style="font-size:14px; font-weight:700; font-variant-numeric:tabular-nums">₹${w.waiverAmount}</span>
+                        <button onclick="decideWaiver('${w.invoiceId}', 'reject')" class="btn btn-reject btn-xs">Reject</button>
+                        <button onclick="decideWaiver('${w.invoiceId}', 'approve')" class="btn btn-brand-soft btn-xs">Review</button>
                     </div>
                 </div>`).join('');
         }
@@ -390,14 +478,19 @@
             if (!list) return;
             const res = await fetch('/api/principal/staff/pending');
             const staff = await res.json();
-            if (staff.length === 0) { list.innerHTML = '<p class="text-xs text-[var(--text-3)]">No pending staff approvals.</p>'; return; }
+            publishCount('staff', staff.length);
+            if (staff.length === 0) { list.innerHTML = '<p class="text-xs" style="color:var(--text-3)">No pending staff approvals.</p>'; return; }
             list.innerHTML = staff.map(s => `
-                <div class="flex items-center justify-between rounded-xl px-4 py-2.5 border" style="background:var(--surface-2); border-color:var(--line)">
-                    <div><span class="text-sm font-semibold text-slate-900">${s.fullName}</span>
-                        <span class="text-xs text-[var(--text-3)] ml-2">${s.role} — ${s.email}</span></div>
-                    <div class="flex gap-2">
-                        <button onclick="decideStaff('${s.id}', 'reject')" class="btn btn-secondary btn-xs">Reject</button>
-                        <button onclick="decideStaff('${s.id}', 'approve')" class="btn btn-primary btn-xs">Approve</button>
+                <div class="flex items-center gap-2.5" data-staff-row
+                     style="padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface-2)">
+                    <span class="ico ico--sm" style="background:var(--brand-100); color:var(--brand-700); font-size:12px">${initials(s.fullName)}</span>
+                    <div style="min-width:0; flex:1">
+                        <div style="font-size:13.5px; font-weight:600; color:var(--text)">${s.fullName}</div>
+                        <div style="font-size:11.5px; color:var(--text-3)">${s.role}</div>
+                    </div>
+                    <div class="flex gap-2" style="flex-shrink:0">
+                        <button onclick="decideStaff('${s.id}', 'reject')" class="btn btn-reject btn-xs">Reject</button>
+                        <button onclick="decideStaff('${s.id}', 'approve')" class="btn btn-success-soft btn-xs">Approve</button>
                     </div>
                 </div>`).join('');
         }

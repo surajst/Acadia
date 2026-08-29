@@ -166,14 +166,14 @@ const styles = StyleSheet.create({
   divider: {
     width: 40,
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#E7EAF2',
   },
   formBlock: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E7EAF2',
     marginBottom: 24,
   },
   signInLabel: {
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E7EAF2',
   },
   errorWrap: {
     backgroundColor: '#ef444415',
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#4F46E5',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   footer: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#E2E8F0',
+    color: '#E7EAF2',
     letterSpacing: 0.5,
   },
 });

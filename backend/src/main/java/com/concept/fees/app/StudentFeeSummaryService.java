@@ -111,7 +111,7 @@ public class StudentFeeSummaryService {
                 overdue++;
             }
             dues.add(new StudentFeeSummary.DueLine(
-                    inv.getInstalmentLabel(), owing, inv.getDueDate(), isOverdue));
+                    inv.getId(), inv.getInstalmentLabel(), owing, inv.getDueDate(), isOverdue));
             if (next == null || earlier(inv.getDueDate(), next.getDueDate())) {
                 next = inv;
             }

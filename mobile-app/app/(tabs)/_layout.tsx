@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useAuth } from '@/context/AuthContext';
+import T from '../../constants/theme';
 
 export const DataContext = createContext<any>({ role: null, data: {}, refreshData: async () => {}, selectedChildId: null, selectChild: (_id: string) => {} });
 
@@ -34,7 +35,7 @@ function WebOnlyRoleScreen({ role }: { role: string }) {
       </Text>
       <TouchableOpacity
         onPress={() => logout()}
-        style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 }}
+        style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E7EAF2', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 }}
       >
         <Text style={{ color: '#64748B', fontWeight: '600' }}>Log Out</Text>
       </TouchableOpacity>
@@ -50,6 +51,9 @@ export default function TabLayout() {
   const headerShown = useClientOnlyValue(false, true);
 
   const fetchDashboardData = useCallback(async (childId?: string | null) => {
+    // Admins still manage the school from a bigger screen. Principals do not:
+    // their work in the app is deciding what is waiting, and the approvals
+    // screen fetches that itself.
     if (role === ROLE_ADMIN || role === ROLE_PRINCIPAL) {
       setData({});
       setLoading(false);
@@ -122,16 +126,19 @@ export default function TabLayout() {
   const isParent  = role === ROLE_PARENT;
   const isTeacher = role === ROLE_TEACHER;
   const isDriver  = role === ROLE_DRIVER;
+  const isPrincipal = role === ROLE_PRINCIPAL;
 
-  if (role === ROLE_ADMIN || role === ROLE_PRINCIPAL) {
+  // Admins only. Principals now have the approvals queue, which is the work
+  // they actually do from a phone.
+  if (role === ROLE_ADMIN) {
     return <WebOnlyRoleScreen role={role} />;
   }
 
   if (loading) {
     return (
       <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
-        <View style={{ flex: 1, backgroundColor: '#F7F9FC', justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#6366f1" />
+        <View style={{ flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={T.brand} />
         </View>
       </DataContext.Provider>
     );
@@ -140,7 +147,7 @@ export default function TabLayout() {
   if (!data) {
     return (
       <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
-        <View style={{ flex: 1, backgroundColor: '#F7F9FC' }} />
+        <View style={{ flex: 1, backgroundColor: T.bg }} />
       </DataContext.Provider>
     );
   }
@@ -149,11 +156,13 @@ export default function TabLayout() {
     <DataContext.Provider value={{ role, data, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor:   '#6366f1',
-          tabBarInactiveTintColor: '#64748B',
-          tabBarStyle: { backgroundColor: '#F7F9FC', borderTopColor: '#E2E8F0' },
-          headerStyle: { backgroundColor: '#F7F9FC' },
-          headerTintColor: '#fff',
+          tabBarActiveTintColor:   T.brand,
+          tabBarInactiveTintColor: T.text3,
+          tabBarStyle: { backgroundColor: T.surface, borderTopColor: T.line },
+          headerStyle: { backgroundColor: T.bg },
+          // Was #fff, which put white text on a white header bar -- the screen
+          // title was invisible on every stack screen that showed one.
+          headerTintColor: T.text,
           headerShown: headerShown,
         }}>
 
@@ -236,6 +245,19 @@ export default function TabLayout() {
         {/* Parents only. Fee collection is the school's job and lives on the
             web dashboard; this tab is the family's own read-only view of what
             they owe and what they have paid. */}
+        {/* Principals decide things while walking around a school, not at a
+            desk -- which is why this queue used to sit for days. */}
+        <Tabs.Screen
+          name="approvals"
+          options={{
+            title: 'Approvals',
+            href: isPrincipal ? undefined : null,
+            tabBarIcon: ({ color }) => (
+              <SymbolView name={{ ios: 'checkmark.seal', android: 'verified', web: 'verified' }} tintColor={color} size={28} />
+            ),
+          }}
+        />
+
         <Tabs.Screen
           name="fees"
           options={{

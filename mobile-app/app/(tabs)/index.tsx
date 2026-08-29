@@ -102,7 +102,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
     >
       {role === 'TEACHER' && (
         <View style={styles.notificationHeaderRow}>
@@ -158,14 +158,14 @@ export default function DashboardScreen() {
             <View style={styles.metricBox}>
               <Text style={styles.metricLabel}>Attendance</Text>
               <Text style={[styles.metricValue, {
-                color: attendancePending > 0 ? '#f59e0b' : '#22c55e'
+                color: attendancePending > 0 ? '#D97706' : '#059669'
               }]}>
                 {attendanceMarked}/{attendanceTotal}
               </Text>
             </View>
             <View style={styles.metricBox}>
               <Text style={[styles.metricLabel, {
-                color: tasks.length > 0 ? '#f59e0b' : '#64748B'
+                color: tasks.length > 0 ? '#D97706' : '#64748B'
               }]}>
                 Pending Tasks
               </Text>
@@ -186,23 +186,23 @@ export default function DashboardScreen() {
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.cardGrid}>
               <TouchableOpacity style={styles.navCard} onPress={() => router.push('/teacher')}>
-                <View style={[styles.navCardIcon, { backgroundColor: '#6366f120' }]}>
-                  <SymbolView name={{ ios: 'person.badge.clock', android: 'school', web: 'school' }} tintColor="#818cf8" size={24} />
+                <View style={[styles.navCardIcon, { backgroundColor: '#4F46E520' }]}>
+                  <SymbolView name={{ ios: 'person.badge.clock', android: 'school', web: 'school' }} tintColor="#4F46E5" size={24} />
                 </View>
                 <Text style={styles.navCardTitle}>My Classes</Text>
                 <Text style={styles.navCardSubtitle}>{classes.length} classes</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.navCard} onPress={() => router.push('/tasks')}>
-                <View style={[styles.navCardIcon, { backgroundColor: '#f59e0b20' }]}>
-                  <SymbolView name={{ ios: 'checklist', android: 'task_alt', web: 'task_alt' }} tintColor="#f59e0b" size={24} />
+                <View style={[styles.navCardIcon, { backgroundColor: '#D9770620' }]}>
+                  <SymbolView name={{ ios: 'checklist', android: 'task_alt', web: 'task_alt' }} tintColor="#D97706" size={24} />
                 </View>
                 <Text style={styles.navCardTitle}>Tasks</Text>
                 <Text style={styles.navCardSubtitle}>{tasks.length} pending</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.navCard} onPress={() => router.push('/gradebook')}>
-                <View style={[styles.navCardIcon, { backgroundColor: '#22c55e20' }]}>
+                <View style={[styles.navCardIcon, { backgroundColor: '#05966920' }]}>
                   <SymbolView name={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }} tintColor="#4ade80" size={24} />
                 </View>
                 <Text style={styles.navCardTitle}>Gradebook</Text>
@@ -224,8 +224,8 @@ export default function DashboardScreen() {
               <Text style={styles.sectionTitle}>Today's Schedule</Text>
               {data.timetable.map((period: any) => (
                 <View key={period.id} style={styles.periodItem}>
-                  <View style={[styles.periodTimeBadge, { backgroundColor: period.attendanceMarked ? '#05966920' : '#f59e0b20' }]}>
-                    <Text style={[styles.periodTime, { color: period.attendanceMarked ? '#059669' : '#f59e0b' }]}>
+                  <View style={[styles.periodTimeBadge, { backgroundColor: period.attendanceMarked ? '#05966920' : '#D9770620' }]}>
+                    <Text style={[styles.periodTime, { color: period.attendanceMarked ? '#059669' : '#D97706' }]}>
                       P{period.periodNumber}
                     </Text>
                   </View>
@@ -233,8 +233,8 @@ export default function DashboardScreen() {
                     <Text style={styles.periodSubject}>{period.subjectName}</Text>
                     <Text style={styles.periodMeta}>{period.startTime} – {period.endTime} · {period.roomNumber}</Text>
                   </View>
-                  <View style={[styles.periodStatus, { backgroundColor: period.attendanceMarked ? '#05966915' : '#f59e0b15' }]}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: period.attendanceMarked ? '#059669' : '#f59e0b' }}>
+                  <View style={[styles.periodStatus, { backgroundColor: period.attendanceMarked ? '#05966915' : '#D9770615' }]}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: period.attendanceMarked ? '#059669' : '#D97706' }}>
                       {period.attendanceMarked ? 'Done' : 'Pending'}
                     </Text>
                   </View>
@@ -249,8 +249,8 @@ export default function DashboardScreen() {
               {tasks.slice(0, 3).map((task: any, i: number) => (
                 <View key={i} style={styles.listItem}>
                   <Text style={styles.itemTitle}>{task.title ?? task.taskDescription ?? 'Task'}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: '#f59e0b22' }]}>
-                    <Text style={{ color: '#f59e0b', fontSize: 12, fontWeight: '600' }}>Pending</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: '#D9770622' }]}>
+                    <Text style={{ color: '#D97706', fontSize: 12, fontWeight: '600' }}>Pending</Text>
                   </View>
                 </View>
               ))}
@@ -325,7 +325,16 @@ export default function DashboardScreen() {
           has not noticed their child. */}
       {role === 'PARENT' && Array.isArray(data.awards) && data.awards.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recognised by their teacher</Text>
+          {/* The card shows the newest few; the full history answers the other
+              question a parent asks -- what has my child been noticed for. */}
+          <TouchableOpacity
+            style={awardStyles.headerRow}
+            onPress={() => router.push('/recognition')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.sectionTitle}>Recognised by their teacher</Text>
+            <Text style={awardStyles.seeAll}>See all ›</Text>
+          </TouchableOpacity>
           {data.awards.slice(0, 5).map((a: any, i: number) => (
             <View
               key={a.id ?? `award-${i}`}
@@ -386,8 +395,8 @@ const styles = StyleSheet.create({
   errorText: { color: '#ef4444', fontSize: 16 },
   infoCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, marginBottom: 16 },
   childSwitcherRow: { marginHorizontal: -16, marginBottom: 16 },
-  childChip: { backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: '#E2E8F0' },
-  childChipActive: { backgroundColor: '#6366f1', borderColor: '#6366f1' },
+  childChip: { backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: '#E7EAF2' },
+  childChipActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
   childChipText: { color: '#64748B', fontSize: 14, fontWeight: '600' },
   childChipTextActive: { color: '#fff' },
   greeting: { color: '#0F172A', fontSize: 24, fontWeight: 'bold' },
@@ -396,13 +405,13 @@ const styles = StyleSheet.create({
   metricBox: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, flex: 1, marginHorizontal: 4, alignItems: 'center' },
   metricLabel: { color: '#64748B', fontSize: 12, marginBottom: 4 },
   metricValue: { color: '#0F172A', fontSize: 20, fontWeight: 'bold' },
-  alertCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f59e0b15', borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#f59e0b30', gap: 8 },
-  alertDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#f59e0b' },
-  alertText: { color: '#f59e0b', fontSize: 13, flex: 1 },
+  alertCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#D9770615', borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#D9770630', gap: 8 },
+  alertDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#D97706' },
+  alertText: { color: '#D97706', fontSize: 13, flex: 1 },
   levelCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, marginBottom: 24 },
   levelTitle: { color: '#0F172A', fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
-  progressBarBg: { height: 8, backgroundColor: '#E2E8F0', borderRadius: 4, marginBottom: 8 },
-  progressBarFill: { height: '100%', backgroundColor: '#6366f1', borderRadius: 4 },
+  progressBarBg: { height: 8, backgroundColor: '#E7EAF2', borderRadius: 4, marginBottom: 8 },
+  progressBarFill: { height: '100%', backgroundColor: '#4F46E5', borderRadius: 4 },
   levelHint: { color: '#64748B', fontSize: 12, textAlign: 'right' },
   section: { marginBottom: 24 },
   sectionTitle: { color: '#0F172A', fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
@@ -419,15 +428,15 @@ const styles = StyleSheet.create({
   periodSubject: { color: '#0F172A', fontSize: 14, fontWeight: '600' },
   periodMeta: { color: '#64748b', fontSize: 12, marginTop: 2 },
   periodStatus: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  dateChip: { alignSelf: 'flex-start', backgroundColor: '#6366f120', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 10, borderWidth: 1, borderColor: '#6366f130' },
-  dateChipText: { color: '#818cf8', fontSize: 12, fontWeight: '500' },
+  dateChip: { alignSelf: 'flex-start', backgroundColor: '#4F46E520', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 10, borderWidth: 1, borderColor: '#4F46E530' },
+  dateChipText: { color: '#4F46E5', fontSize: 12, fontWeight: '500' },
   notificationHeaderRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
   cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   navCard: { width: '48%', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 12 },
   navCardIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   navCardTitle: { color: '#0F172A', fontSize: 15, fontWeight: '600' },
   navCardSubtitle: { color: '#64748b', fontSize: 12, marginTop: 2 },
-  tripButton: { backgroundColor: '#6366f1', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
+  tripButton: { backgroundColor: '#4F46E5', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
   tripButtonActive: { backgroundColor: '#ef4444' },
   tripButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   bellButton: { padding: 8, position: 'relative' },
@@ -439,6 +448,8 @@ const styles = StyleSheet.create({
  * styling stays readable -- these are only used by the parent's award list.
  */
 const awardStyles = StyleSheet.create({
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  seeAll: { fontSize: 12.5, fontWeight: '600', color: '#4F46E5' },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',

@@ -12,6 +12,8 @@ import com.concept.teacher.app.TeacherDashboardService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class DashboardService {
+
+    private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
 
     private final DashboardClassSectionRepository classSectionRepository;
     private final DashboardStudentRepository studentRepository;
@@ -157,18 +161,28 @@ public class DashboardService {
                 : (int) Math.round(((double) (totalStudents - activeAbsences) / totalStudents) * 100);
 
         Map<String, Object> schoolProgress = Collections.emptyMap();
-        Map<String, Object> feeSummary = Collections.emptyMap();
         if (principal) {
             try {
                 schoolProgress = adminProgressService.getSchoolWideProgress(tenantId);
             } catch (Exception e) {
+                log.warn("Could not compute school-wide progress for tenant {}", tenantId, e);
                 schoolProgress = Collections.emptyMap();
             }
-            try {
-                feeSummary = feeManagementService.getSchoolWideFeeSummary(tenantId);
-            } catch (Exception e) {
-                feeSummary = Collections.emptyMap();
-            }
+        }
+
+        // Fee collection is on the dashboard for admins too, not just the
+        // principal. An admin already has the whole fee ledger a click away, so
+        // withholding the headline figure bought no privacy -- it just meant the
+        // KPI rendered its zero fallback and told them nothing had been
+        // collected when in fact it had.
+        Map<String, Object> feeSummary = Collections.emptyMap();
+        try {
+            feeSummary = feeManagementService.getSchoolWideFeeSummary(tenantId);
+        } catch (Exception e) {
+            // Swallowing this silently is why the fee KPI could vanish from the
+            // dashboard with no trace anywhere that it had failed.
+            log.warn("Could not compute school-wide fee summary for tenant {}", tenantId, e);
+            feeSummary = Collections.emptyMap();
         }
 
         List<StudentRow> roster = conditionalRoster.stream()

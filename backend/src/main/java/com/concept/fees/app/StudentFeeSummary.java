@@ -34,8 +34,15 @@ public record StudentFeeSummary(BigDecimal totalBilled,
         return totalDue == null || totalDue.signum() <= 0;
     }
 
-    /** One instalment that still owes something. */
-    public record DueLine(String label, BigDecimal amount, LocalDate dueDate, boolean overdue) {}
+    /**
+     * One instalment that still owes something.
+     *
+     * <p>Carries its invoice id so a parent can act on a specific instalment
+     * rather than on "the fees" in general -- asking for help with one term is
+     * a different request from asking for help with the year.
+     */
+    public record DueLine(java.util.UUID invoiceId, String label, BigDecimal amount,
+                          LocalDate dueDate, boolean overdue) {}
 
     /**
      * One row of the family's receipt history.

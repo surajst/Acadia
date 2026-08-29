@@ -27,7 +27,7 @@ export default function QuestsScreen() {
   return (
     <ScrollView 
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Parent Quests</Text>

@@ -15,9 +15,9 @@ interface RosterCardProps {
 
 function RosterCard({ className, subject, studentCount, status, onViewRoster }: RosterCardProps) {
   const statusColors: Record<string, string> = {
-    pending: '#f59e0b',
-    active:  '#22c55e',
-    completed: '#6366f1',
+    pending: '#D97706',
+    active:  '#059669',
+    completed: '#4F46E5',
   };
   const statusLabels: Record<string, string> = {
     pending:   'Pending Review',
@@ -25,9 +25,9 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
     completed: 'Completed',
   };
   const statusBg: Record<string, string> = {
-    pending:   '#f59e0b22',
-    active:    '#22c55e22',
-    completed: '#6366f122',
+    pending:   '#D9770622',
+    active:    '#05966922',
+    completed: '#4F46E522',
   };
 
   return (
@@ -36,7 +36,7 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
         <View style={styles.cardIconWrap}>
           <SymbolView
             name={{ ios: 'person.3', android: 'group', web: 'group' }}
-            tintColor="#6366f1"
+            tintColor="#4F46E5"
             size={22}
           />
         </View>
@@ -107,7 +107,7 @@ export default function TeacherScreen() {
         <View style={styles.headerIconWrap}>
           <SymbolView
             name={{ ios: 'book.pages', android: 'book', web: 'book' }}
-            tintColor="#6366f1"
+            tintColor="#4F46E5"
             size={26}
           />
         </View>
@@ -130,14 +130,14 @@ export default function TeacherScreen() {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#6366f1" />
+          <ActivityIndicator size="large" color="#4F46E5" />
           <Text style={styles.loadingText}>Loading classes...</Text>
         </View>
       ) : classes.length === 0 ? (
         <View style={styles.emptyContainer}>
           <SymbolView
             name={{ ios: 'book.pages', android: 'book', web: 'book' }}
-            tintColor="#6366f1"
+            tintColor="#4F46E5"
             size={32}
           />
           <Text style={styles.emptyText}>No classes assigned</Text>
@@ -184,11 +184,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#E7EAF2',
   },
   headerIconWrap: {
     width: 48, height: 48, borderRadius: 14,
-    backgroundColor: '#6366f120',
+    backgroundColor: '#4F46E520',
     justifyContent: 'center', alignItems: 'center',
   },
   headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', letterSpacing: 0.2 },
@@ -199,10 +199,10 @@ const styles = StyleSheet.create({
   },
   sectionLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', letterSpacing: 1.2 },
   sectionBadge: {
-    backgroundColor: '#6366f122', borderRadius: 20,
+    backgroundColor: '#4F46E522', borderRadius: 20,
     paddingHorizontal: 8, paddingVertical: 2,
   },
-  sectionBadgeText: { fontSize: 11, color: '#6366f1', fontWeight: '600' },
+  sectionBadgeText: { fontSize: 11, color: '#4F46E5', fontWeight: '600' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 12, fontSize: 14, color: '#64748B' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
@@ -212,12 +212,12 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    borderWidth: 1, borderColor: '#E7EAF2',
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
   cardIconWrap: {
     width: 42, height: 42, borderRadius: 12,
-    backgroundColor: '#6366f115',
+    backgroundColor: '#4F46E515',
     justifyContent: 'center', alignItems: 'center',
   },
   cardTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
@@ -228,9 +228,9 @@ const styles = StyleSheet.create({
   },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { fontSize: 11, fontWeight: '600' },
-  cardDivider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 12 },
+  cardDivider: { height: 1, backgroundColor: '#E7EAF2', marginVertical: 12 },
   cardFooter: { flexDirection: 'row', alignItems: 'center' },
   footerText: { fontSize: 13, color: '#64748B', flex: 1 },
   viewBtn: { flexDirection: 'row', alignItems: 'center' },
-  viewBtnText: { fontSize: 13, color: '#6366f1', fontWeight: '600' },
+  viewBtnText: { fontSize: 13, color: '#4F46E5', fontWeight: '600' },
 });

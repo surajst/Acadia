@@ -25,7 +25,11 @@ import com.concept.parentapp.SisDataProvider;
 import com.concept.parentapp.StudentSummary;
 import com.concept.transport.BusRoute;
 import com.concept.transport.BusRouteRepository;
+import java.math.BigDecimal;
 import com.concept.fees.app.StudentFeeSummary;
+import com.concept.fees.app.FeeManagementService;
+import com.concept.fees.data.FeeInvoice;
+import com.concept.fees.data.FeeInvoiceRepository;
 import com.concept.recognition.app.RecognitionService;
 import com.concept.fees.app.StudentFeeSummaryService;
 import com.concept.user.CurrentUserService;
@@ -70,6 +74,8 @@ public class ParentService {
     private final SpeechService speechService;
     private final StudentFeeSummaryService studentFeeSummaryService;
     private final RecognitionService recognitionService;
+    private final FeeManagementService feeManagementService;
+    private final FeeInvoiceRepository feeInvoiceRepository;
     private final CurrentUserService currentUserService;
 
     public ParentService(StudentRepository studentRepository,
@@ -86,6 +92,8 @@ public class ParentService {
                          SpeechService speechService,
                          StudentFeeSummaryService studentFeeSummaryService,
                          RecognitionService recognitionService,
+                         FeeManagementService feeManagementService,
+                         FeeInvoiceRepository feeInvoiceRepository,
                          CurrentUserService currentUserService) {
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
@@ -101,6 +109,8 @@ public class ParentService {
         this.speechService = speechService;
         this.studentFeeSummaryService = studentFeeSummaryService;
         this.recognitionService = recognitionService;
+        this.feeManagementService = feeManagementService;
+        this.feeInvoiceRepository = feeInvoiceRepository;
         this.currentUserService = currentUserService;
     }
 
@@ -237,6 +247,46 @@ public class ParentService {
                 .get(studentId));
 
         return response;
+    }
+
+    /**
+     * A parent asking the school to reduce one instalment.
+     *
+     * <p>This is a request, not a decision: it sets the invoice's waiver to
+     * PENDING and a principal decides, exactly as when the office raises one.
+     * Nothing about the amount owed changes until then, which is why the app
+     * says "asked" rather than "reduced".
+     *
+     * <p>The ownership check is the point of this method existing at all.
+     * {@code requestWaiver} is scoped to the tenant but not to the family, so
+     * called directly it would let any parent request a waiver against any
+     * child's invoice in the school -- including seeing, by the error they got
+     * back, whether an invoice id existed.
+     */
+    public Map<String, Object> requestWaiver(UUID invoiceId, BigDecimal amount, String reason,
+                                             Authentication authentication) {
+        Parent parent = requireParent(authentication);
+        List<Student> children = studentRepository.findByParentsContaining(parent);
+        if (children.isEmpty()) {
+            throw ParentException.badRequest("No student found for this parent.");
+        }
+        UUID tenantId = children.get(0).getTenantId();
+
+        FeeInvoice invoice = feeInvoiceRepository.findByIdAndTenantId(invoiceId, tenantId).orElse(null);
+        boolean mine = invoice != null
+                && children.stream().anyMatch(c -> c.getId().equals(invoice.getStudentId()));
+        if (!mine) {
+            // Same answer for "not yours" and "does not exist", so the response
+            // cannot be used to discover other families' invoices.
+            throw ParentException.badRequest("That invoice could not be found.");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw ParentException.badRequest("Please say why you are asking, so the school can consider it.");
+        }
+
+        feeManagementService.requestWaiver(invoiceId, amount, reason.trim(), tenantId, authentication);
+        return Map.of("status", "requested",
+                "message", "Sent to the school. They will let you know their decision.");
     }
 
     public Object subjectPerformance(UUID studentId, Authentication authentication) {

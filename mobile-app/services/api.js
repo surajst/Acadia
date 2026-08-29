@@ -401,4 +401,111 @@ export const sendVoiceReply = async (conversationId, audioUri, lang) => {
   return response.data;
 };
 
+/*
+ * A child's profile for a teacher on a phone: age, allergies, emergency
+ * contact and who is allowed to collect them. The information exists on the
+ * web console, but the moment it is wanted is at the gate.
+ */
+export const getStudentProfile = async (studentId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/teacher/student/${studentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+/** What a teacher may recognise a child for. */
+export const getBadges = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/teacher/badges`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+/** Recognises a child. Same service and audit trail as the web. */
+export const awardBadge = async (studentId, badgeCode, reason) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(
+    `${BASE_HOST}/api/mobile/teacher/student/${studentId}/award`,
+    { badgeCode, reason },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+/* ── Principal approvals ──────────────────────────────────────────────────
+ * These are the same endpoints the web console uses; they already accept the
+ * app's bearer token, so the app needed a screen rather than an API.
+ */
+export const getPendingApprovals = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/principal/approvals/pending`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const decideApproval = async (requestId, action) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(
+    `${BASE_HOST}/api/principal/approvals/${requestId}/${action}`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+export const getPendingStaff = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/principal/staff/pending`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const decideStaff = async (userId, action) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(
+    `${BASE_HOST}/api/principal/staff/${userId}/${action}`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+/**
+ * Asks the school to reduce one instalment. This is a request: a principal
+ * decides, and nothing owed changes until they do.
+ */
+export const requestFeeWaiver = async (invoiceId, amount, reason) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(
+    `${BASE_HOST}/api/mobile/parent/fees/${invoiceId}/waiver-request`,
+    { amount, reason },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+/* Waivers live in their own queue, separate from approval requests. A
+ * principal's screen has to read both or a parent's request goes unseen. */
+export const getPendingWaivers = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/principal/fees/waivers/pending`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const decideWaiver = async (invoiceId, action) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(
+    `${BASE_HOST}/api/principal/fees/${invoiceId}/waiver/${action}`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
 export default api;

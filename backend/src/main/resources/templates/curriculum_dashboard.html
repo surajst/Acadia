@@ -23,45 +23,37 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-[#F4F6FB] text-slate-800 font-sans  max- overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body>
+<div class="shell">
 
-    <header class="bg-[#F4F6FB] border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div style="display:flex; align-items:center; gap:10px;">
-  <img src="/images/acadia-logo.png" alt="ACADIA"
-       style="height:32px; ">
-  <span style="font-size:16px; font-weight:600; color:#0F172A;
-               letter-spacing:2px;">ACADIA</span>
-</div>
-            <div class="flex items-center gap-4">
-                <a href="/web/admin/dashboard" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200 p-2 rounded-xl bg-[#F4F6FB]/50 hover:bg-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                </a>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-800 via-slate-700 to-indigo-600 bg-clip-text text-transparent">
-                        Curriculum Progress
-                    </h1>
-                    <p class="text-xs text-slate-500 mt-0.5 font-medium">School-Wide Academic Analytics</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-4">
-                <select id="classFilter" class="bg-[#F4F6FB]/70 border border-slate-200/60 rounded-xl text-sm text-slate-800 px-4 py-2 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all">
-                    <option value="ALL">All Classes</option>
-                    <option value="5">Class 5</option>
-                    <option value="6">Class 6</option>
-                    <option value="7">Class 7</option>
-                    <option value="8">Class 8</option>
-                    <option value="9">Class 9</option>
-                    <option value="10">Class 10</option>
-                </select>
-            </div>
-        </div>
-    </header>
-<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
+    <aside th:replace="~{fragments/shell :: sidebar}"></aside>
+
+    <div class="shell-main">
+        <header th:replace="~{fragments/shell :: topbar('Curriculum Progress', 'Where every class stands against the syllabus')}"></header>
+
+        <div class="shell-body">
+            <div class="shell-content">
 
 
     <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 min-h-0 flex flex-col overflow-y-auto space-y-6" >
-        
+
+        <!-- The class filter used to live in this page's own header, which the
+             shell topbar replaced. Everything on the page is loaded by the
+             change handler bound to it, so losing the select did not just lose
+             the filter: getElementById returned null, the listener threw, and
+             the initial loadData('ALL') below it never ran. -->
+        <div class="flex items-center justify-end">
+            <select id="classFilter" class="input" style="max-width:220px;">
+                <option value="ALL">All Classes</option>
+                <option value="5">Class 5</option>
+                <option value="6">Class 6</option>
+                <option value="7">Class 7</option>
+                <option value="8">Class 8</option>
+                <option value="9">Class 9</option>
+                <option value="10">Class 10</option>
+            </select>
+        </div>
+
         <!-- Loading Skeleton -->
         <div id="loadingSkeleton" class="space-y-6 hidden">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 animate-pulse">
@@ -152,14 +144,22 @@
                     </div>
                 </div>
             </div>
-        </div>
     </main>
 
+            </div>
+        </div>
+    </div>
+</div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const filterDropdown = document.getElementById('classFilter');
-            filterDropdown.addEventListener('change', (e) => loadData(e.target.value));
-            
+            // Guarded so a missing filter costs only the filter. Unguarded, it
+            // threw here and took the initial load with it, leaving the whole
+            // page blank.
+            if (filterDropdown) {
+                filterDropdown.addEventListener('change', (e) => loadData(e.target.value));
+            }
+
             // Initial load
             loadData('ALL');
         });

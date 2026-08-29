@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -36,6 +37,7 @@ type AttendanceStatus = 'PRESENT' | 'ABSENT';
 
 export default function ClassRosterModal({ isVisible, onClose, sectionId, className }: ClassRosterModalProps) {
   const { schoolName } = useAuth();
+  const router = useRouter();
   const [students, setStudents] = useState<RosterStudent[]>([]);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, AttendanceStatus>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -122,15 +124,26 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
     const status = attendanceMap[item.id] || 'PRESENT';
     return (
       <View style={styles.studentRow}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
-        </View>
-        <View style={styles.studentInfo}>
-          <Text style={styles.studentName}>{item.name}</Text>
-          {item.className && (
-            <Text style={styles.rollNumber}>{item.className}</Text>
-          )}
-        </View>
+        {/* Tapping the child opens their profile -- allergies, emergency
+            contact, who may collect them. The register is where a teacher
+            already is when they need that, so it is the way in. The
+            present/absent toggles stay outside the touchable so marking
+            attendance never navigates away by accident. */}
+        <TouchableOpacity
+          style={styles.studentTap}
+          activeOpacity={0.7}
+          onPress={() => { onClose(); router.push({ pathname: '/student/[id]', params: { id: item.id } }); }}
+        >
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
+          </View>
+          <View style={styles.studentInfo}>
+            <Text style={styles.studentName}>{item.name}</Text>
+            {item.className && (
+              <Text style={styles.rollNumber}>{item.className}</Text>
+            )}
+          </View>
+        </TouchableOpacity>
         <View style={styles.toggleGroup}>
           <TouchableOpacity
             style={[styles.toggleBtn, status === 'PRESENT' && styles.presentActive]}
@@ -175,7 +188,7 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
           <View style={styles.content}>
             {isLoading ? (
               <View style={styles.centerBox}>
-                <ActivityIndicator size="large" color="#6366f1" />
+                <ActivityIndicator size="large" color="#4F46E5" />
                 <Text style={styles.loadingText}>Loading Roster...</Text>
               </View>
             ) : error ? (
@@ -282,14 +295,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E7EAF2',
   },
-  retryText: { color: '#6366f1', fontWeight: '600' },
+  retryText: { color: '#4F46E5', fontWeight: '600' },
   listPadding: {
     paddingHorizontal: 16,
     paddingBottom: 20,
     flexGrow: 1,
   },
+  studentTap: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12, minHeight: 44 },
   studentRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -299,13 +313,13 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#6366f115',
+    backgroundColor: '#4F46E515',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#6366f130',
+    borderColor: '#4F46E530',
   },
-  avatarText: { color: '#818cf8', fontWeight: '700', fontSize: 18 },
+  avatarText: { color: '#4F46E5', fontWeight: '700', fontSize: 18 },
   studentInfo: { flex: 1, marginLeft: 14 },
   studentName: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
   rollNumber: { fontSize: 12, color: '#64748b', marginTop: 2 },
@@ -335,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F9FC',
   },
   submitBtn: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#4F46E5',
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',

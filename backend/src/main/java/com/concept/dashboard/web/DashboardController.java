@@ -67,8 +67,12 @@ public class DashboardController {
         model.addAttribute("pageSize", size);
         if ("PRINCIPAL".equals(role)) {
             model.addAttribute("schoolProgress", view.schoolProgress());
-            model.addAttribute("feeSummary", view.feeSummary());
         }
+        // Fee collection is on the dashboard for admins as well. It used to be
+        // added only for principals, so an admin's KPI fell through to its zero
+        // fallback and reported that nothing had been collected -- on a school
+        // where most of the year was in fact paid.
+        model.addAttribute("feeSummary", view.feeSummary());
 
         return "unified_dashboard";
     }

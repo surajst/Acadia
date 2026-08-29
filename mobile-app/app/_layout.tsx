@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import T from '../constants/theme';
 import LoginScreen from './index';
 
 export {
@@ -55,7 +56,7 @@ function RootLayoutGate({ fontsLoaded }: RootLayoutGateProps) {
   if (!fontsLoaded || isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -72,7 +73,11 @@ function ProtectedStack() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ contentStyle: { backgroundColor: '#F7F9FC' }, headerStyle: { backgroundColor: '#F7F9FC' }, headerTintColor: '#fff' }}>
+      {/* headerTintColor was #fff on a light header, so every stack screen's
+          title and back arrow were white on near-white -- invisible. That is
+          why the child profile and recognition screens appeared to have no
+          heading at all. */}
+      <Stack screenOptions={{ contentStyle: { backgroundColor: T.bg }, headerStyle: { backgroundColor: T.bg }, headerTintColor: T.text }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="teacher" options={{ title: 'My Classes' }} />

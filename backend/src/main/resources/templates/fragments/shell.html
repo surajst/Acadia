@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  The app shell: a persistent sidebar and top bar, shared by every admin-facing
+  page.
+
+  Before this, each page carried its own header and a "Quick Action Hub" grid of
+  tiles that doubled as navigation. That meant the way to get anywhere was to
+  go back to the dashboard first, and every page had to re-state where you were.
+  The rail answers "where am I" permanently, and the tiles demote to shortcuts.
+
+  Active state is decided here, server-side, from the request path -- see
+  ShellAdvice.Shell#on. Doing it in JavaScript would mean matching URL strings in
+  the browser, and the sidebar would flicker to the wrong item on every load.
+
+  Count pills render only when a page supplies a non-zero count. A badge that
+  always says 0 teaches people to stop reading badges.
+-->
+<body>
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+<aside th:fragment="sidebar" class="shell-side">
+
+    <div class="shell-brand">
+        <img src="/images/acadia-logo.png" alt="" style="height:26px;">
+        <div style="line-height:1.1; min-width:0;">
+            <div style="font-size:14px; font-weight:700; letter-spacing:.16em; color:var(--text);">ACADIA</div>
+            <div style="font-size:10.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                 th:text="${shell?.schoolName()}">Sunshine Montessori</div>
+        </div>
+    </div>
+
+    <nav class="shell-nav">
+
+        <div class="shell-group" th:if="${shell == null or shell.role() != 'TEACHER'}">
+            <p class="shell-grouplabel">School</p>
+
+            <a class="navlink" href="/web/admin/dashboard"
+               th:classappend="${shell != null and shell.on('/web/admin/dashboard')} ? 'active' : ''">
+                <span class="dot"></span> Roster Hub
+            </a>
+            <a class="navlink" href="/web/admin/timetable"
+               th:classappend="${shell != null and shell.on('/web/admin/timetable')} ? 'active' : ''">
+                <span class="dot"></span> Timetable
+            </a>
+            <a class="navlink" href="/web/admin/curriculum" th:if="${school == null or school.hasSyllabus}"
+               th:classappend="${shell != null and shell.on('/web/admin/curriculum')} ? 'active' : ''">
+                <span class="dot"></span> Curriculum
+            </a>
+            <a class="navlink" href="/web/admin/subjects" th:if="${school == null or school.hasSyllabus}"
+               th:classappend="${shell != null and shell.on('/web/admin/subjects')} ? 'active' : ''">
+                <span class="dot"></span> Subjects
+            </a>
+            <a class="navlink" href="/web/admin/fees"
+               th:classappend="${shell != null and shell.on('/web/admin/fees')} ? 'active' : ''">
+                <span class="dot"></span> Fees &amp; Billing
+                <span class="count" th:if="${navCountFees != null and navCountFees > 0}" th:text="${navCountFees}">14</span>
+            </a>
+        </div>
+
+        <!-- A teacher's day. These were an in-page sidebar on the verification
+             queue, which meant they existed on one screen and nowhere else --
+             a teacher on the gradebook had no way back to their register. -->
+        <div class="shell-group" th:if="${shell != null and shell.role() == 'TEACHER'}">
+            <p class="shell-grouplabel">My classroom</p>
+
+            <a class="navlink" href="/web/teacher/attendance"
+               th:classappend="${shell != null and shell.on('/web/teacher/attendance')} ? 'active' : ''">
+                <span class="dot"></span> Daily Attendance
+            </a>
+            <a class="navlink" href="/web/teacher/dashboard"
+               th:classappend="${shell != null and shell.on('/web/teacher/dashboard')} ? 'active' : ''">
+                <span class="dot"></span> Verification Queue
+            </a>
+            <a class="navlink" href="/web/teacher/tasks"
+               th:classappend="${shell != null and shell.on('/web/teacher/tasks')} ? 'active' : ''">
+                <span class="dot"></span> My Tasks
+            </a>
+            <a class="navlink" href="/web/teacher/assessments" th:if="${school == null or school.hasExamScores}"
+               th:classappend="${shell != null and shell.on('/web/teacher/assessments')} ? 'active' : ''">
+                <span class="dot"></span> Gradebook
+            </a>
+            <a class="navlink" href="/web/teacher/messages"
+               th:classappend="${shell != null and shell.on('/web/teacher/messages')} ? 'active' : ''">
+                <span class="dot"></span> Messages
+            </a>
+        </div>
+
+        <!-- People and Governance stay behind the same guard the pages
+             themselves use; a nav item you are not allowed to open is a
+             worse experience than one that is not there. -->
+        <div class="shell-group" th:if="${shell != null and (shell.role() == 'ADMIN' or shell.role() == 'PRINCIPAL')}">
+            <p class="shell-grouplabel">People</p>
+
+            <a class="navlink" href="/web/teacher/dashboard"
+               th:classappend="${shell != null and shell.on('/web/teacher/dashboard')} ? 'active' : ''">
+                <span class="dot"></span> Verification Queue
+                <span class="count" th:if="${navCountQueue != null and navCountQueue > 0}" th:text="${navCountQueue}">6</span>
+            </a>
+            <a class="navlink" href="/web/admin/management"
+               th:classappend="${shell != null and shell.on('/web/admin/management')} ? 'active' : ''">
+                <span class="dot"></span> Staff &amp; Invites
+                <span class="count" th:if="${navCountStaff != null and navCountStaff > 0}" th:text="${navCountStaff}">3</span>
+            </a>
+        </div>
+
+        <div class="shell-group" th:if="${shell != null and (shell.role() == 'ADMIN' or shell.role() == 'PRINCIPAL')}">
+            <p class="shell-grouplabel">Governance</p>
+
+            <a class="navlink" href="/web/admin/audit-log"
+               th:classappend="${shell != null and shell.on('/web/admin/audit-log')} ? 'active' : ''">
+                <span class="dot"></span> Audit Log
+            </a>
+            <a class="navlink" href="/web/onboard/setup"
+               th:classappend="${shell != null and shell.on('/web/onboard/setup')} ? 'active' : ''">
+                <span class="dot"></span> Settings
+            </a>
+        </div>
+    </nav>
+
+    <div class="shell-user">
+        <span class="ico ico--sm ico--brand" style="font-size:13px;"
+              th:text="${shell?.initials()}">PN</span>
+        <div style="min-width:0; flex:1;">
+            <div style="font-size:13px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                 th:text="${shell?.userName()}">Priya Nair</div>
+            <div style="font-size:11px; color:var(--text-3);" th:text="${shell?.role()}">ADMIN</div>
+        </div>
+        <!-- The logout form moves here from the old page header, unchanged,
+             CSRF hidden input and all. -->
+        <form th:action="@{/logout}" method="post" style="flex-shrink:0;">
+            <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}"/>
+            <button type="submit" class="btn btn-secondary" title="Log out"
+                    style="width:30px; height:30px; padding:0;">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                <!-- A real text node rather than aria-label, matching the pattern
+                     the parent and student portals already use: it names the
+                     button for screen readers and keeps it findable by its
+                     visible-equivalent label. -->
+                <span class="sr-only">Logout</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- ── Top bar ──────────────────────────────────────────────────────────── -->
+<header th:fragment="topbar(title, sub)" class="shell-topbar">
+    <div style="min-width:0;">
+        <h1 class="page-title" th:text="${title}">Roster Hub</h1>
+        <p class="page-sub" th:text="${sub}">What needs attention this morning</p>
+    </div>
+    <div class="flex items-center gap-3" style="flex-shrink:0;">
+        <span class="badge badge--success"><span class="dot" style="background:var(--success)"></span> All systems operational</span>
+        <span class="badge badge--neutral">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            Audited session
+        </span>
+    </div>
+</header>
+
+</body>
+</html>
