@@ -48,6 +48,31 @@ public class ShellAdvice {
         public boolean on(String href) {
             return href != null && !href.isBlank() && path != null && path.startsWith(href);
         }
+
+        /**
+         * Where "home" is for whoever is signed in.
+         *
+         * <p>The brand block was a plain div, so clicking the logo -- the first
+         * thing anyone tries when they want out of a sub-page -- did nothing.
+         * The destination cannot be a constant because every role lands
+         * somewhere different, and sending a teacher to the admin dashboard
+         * would bounce them off the security chain onto an error page.
+         *
+         * <p>Falls back to the login page for a shell with no resolvable user,
+         * which is where a visitor with no role belongs anyway.
+         */
+        public String home() {
+            if (role == null) {
+                return "/login";
+            }
+            return switch (role) {
+                case "TEACHER"            -> "/web/teacher/dashboard";
+                case "ADMIN", "PRINCIPAL" -> "/web/admin/dashboard";
+                case "PARENT"             -> "/web/parent/dashboard";
+                case "STUDENT"            -> "/web/student/portal";
+                default                   -> "/login";
+            };
+        }
     }
 
     @ModelAttribute("shell")

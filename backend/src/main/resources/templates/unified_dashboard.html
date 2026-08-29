@@ -250,7 +250,13 @@
                                     </div>
                                 </div>
 
-                                <div th:if="${feeSummary != null and feeSummary.get('collectionPercent') != null and feeSummary.get('collectionPercent') &lt; 100}"
+                                <!-- Gated on there being invoices at all. collectionPercent falls
+                                     back to 0 when nothing has been billed (FeeManagementService
+                                     cannot divide by a zero total), which is indistinguishable
+                                     from "billed plenty, collected none" — so a school on its
+                                     first morning was told to chase arrears it had never raised,
+                                     and the Defaulters page it links to said 0 overdue. -->
+                                <div th:if="${feeSummary != null and feeSummary.get('totalInvoices') != null and feeSummary.get('totalInvoices') &gt; 0 and feeSummary.get('collectionPercent') != null and feeSummary.get('collectionPercent') &lt; 100}"
                                      data-attention class="flex items-start gap-2.5"
                                      style="padding:10px 12px; border-radius:12px; background:var(--danger-50); border:1px solid var(--danger-200);">
                                     <span style="width:7px; height:7px; border-radius:50%; background:var(--danger); margin-top:6px; flex-shrink:0;"></span>
@@ -262,7 +268,7 @@
                                     </div>
                                 </div>
 
-                                <p th:if="${(activeAbsences == null or activeAbsences == 0) and (feeSummary == null or feeSummary.get('collectionPercent') == null or feeSummary.get('collectionPercent') &gt;= 100)}"
+                                <p th:if="${(activeAbsences == null or activeAbsences == 0) and (feeSummary == null or feeSummary.get('totalInvoices') == null or feeSummary.get('totalInvoices') == 0 or feeSummary.get('collectionPercent') == null or feeSummary.get('collectionPercent') &gt;= 100)}"
                                    style="font-size:12.5px; color:var(--text-3);">Nothing needs you right now.</p>
                             </div>
                         </div>

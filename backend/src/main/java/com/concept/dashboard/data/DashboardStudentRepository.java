@@ -29,8 +29,8 @@ public interface DashboardStudentRepository extends JpaRepository<Student, UUID>
     long countByTenantId(UUID tenantId);
 
     @Query("SELECT s FROM Student s WHERE s.tenantId = :tenantId AND " +
-           "(:name IS NULL OR LOWER(s.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
-           "OR LOWER(s.lastName) LIKE LOWER(CONCAT('%', :name, '%')))" +
+           "(:name IS NULL OR LOWER(s.firstName) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')) " +
+           "OR LOWER(s.lastName) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))" +
            " AND (:gradeLevel IS NULL OR s.classSection.gradeName = :gradeLevel)")
     Page<Student> findByNameContainingAndGrade(
             @Param("tenantId") UUID tenantId,
@@ -39,8 +39,8 @@ public interface DashboardStudentRepository extends JpaRepository<Student, UUID>
             Pageable pageable);
 
     @Query("SELECT s FROM Student s WHERE s.classSection IN :sections" +
-           " AND (:name IS NULL OR LOWER(s.firstName) LIKE LOWER(CONCAT('%', :name, '%')) " +
-           "OR LOWER(s.lastName) LIKE LOWER(CONCAT('%', :name, '%')))" +
+           " AND (:name IS NULL OR LOWER(s.firstName) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')) " +
+           "OR LOWER(s.lastName) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))" +
            " AND (:gradeLevel IS NULL OR s.classSection.gradeName = :gradeLevel)")
     Page<Student> findByClassSectionInAndNameAndGrade(
             @Param("sections") List<ClassSection> sections,

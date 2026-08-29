@@ -78,6 +78,12 @@ public class SecurityConfig {
                                                         com.concept.tenant.TenantRepository tenantRepository) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Spring Security defaults X-Frame-Options to DENY, which silently
+                // broke the setup wizard: step 2 embeds /web/admin/subjects in an
+                // iframe, and the browser refused to render it for every school
+                // that signed up. SAMEORIGIN still blocks framing by third-party
+                // sites, so clickjacking protection is kept.
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/web/onboard/signup").permitAll() // public "create your school" form
                         .requestMatchers("/web/onboard/setup", "/web/onboard/complete").hasRole("ADMIN") // setup wizard is data-entry — ADMIN only, principals are read-only
