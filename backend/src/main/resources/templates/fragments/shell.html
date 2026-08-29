@@ -47,6 +47,10 @@
                th:classappend="${shell != null and shell.on('/web/admin/curriculum')} ? 'active' : ''">
                 <span class="dot"></span> Curriculum
             </a>
+            <a class="navlink" href="/web/admin/subjects" th:if="${school == null or school.hasSyllabus}"
+               th:classappend="${shell != null and shell.on('/web/admin/subjects')} ? 'active' : ''">
+                <span class="dot"></span> Subjects
+            </a>
             <a class="navlink" href="/web/admin/fees"
                th:classappend="${shell != null and shell.on('/web/admin/fees')} ? 'active' : ''">
                 <span class="dot"></span> Fees &amp; Billing

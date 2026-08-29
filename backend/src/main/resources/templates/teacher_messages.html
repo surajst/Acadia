@@ -22,26 +22,17 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-[#F4F6FB] text-slate-800 font-sans overflow-hidden flex flex-col selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body>
+<div class="shell">
 
-    <header class="bg-[#F4F6FB] border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 shrink-0">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <a th:href="${currentUserRole == 'ADMIN'} ? '/web/admin/management' : '/web/teacher/dashboard'" class="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200 p-2 rounded-xl bg-[#F4F6FB]/50 hover:bg-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                </a>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-800 via-slate-700 to-indigo-600 bg-clip-text text-transparent">
-                        Messages
-                    </h1>
-                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Direct messages with parents about their child</p>
-                </div>
-            </div>
-            <div></div>
-        </div>
-    </header>
+    <aside th:replace="~{fragments/shell :: sidebar}"></aside>
 
-    <div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0;">
+    <div class="shell-main">
+        <header th:replace="~{fragments/shell :: topbar('Messages', 'Conversations with families')}"></header>
+
+        <div class="shell-body">
+            <div class="shell-content">
+
         <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6" style="min-height:60vh">
 
@@ -69,8 +60,11 @@
                 </section>
             </div>
         </main>
-    </div>
 
+            </div>
+        </div>
+    </div>
+</div>
     <script th:inline="javascript">
         const currentUserRole = /*[[${currentUserRole}]]*/ 'TEACHER';
         const rosterUrl = currentUserRole === 'ADMIN' ? '/api/admin/messages/roster' : '/api/teacher/messages/roster';

@@ -57,35 +57,16 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class=" relative overflow-x-hidden selection:bg-indigo-500/30" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body>
+<div class="shell">
 
-    <header class="bg-white border-b border-[#E7EAF2] sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3.5">
-                <a href="/web/admin/dashboard" class="h-10 w-10 rounded-xl bg-[#EEF0FF] border border-[#E0E3FF] flex items-center justify-center text-[#4F46E5] font-black text-lg transition hover:bg-[#E0E3FF]">&Omega;</a>
-                <div>
-                    <h1 class="text-base font-bold tracking-tight text-slate-900 leading-none">Admin Console</h1>
-                    <p class="text-xs text-[#94A0B4] mt-1 flex items-center gap-1.5">
-                        <a href="/web/admin/dashboard" class="hover:text-[#4F46E5] transition-colors font-medium">Roster Hub</a>
-                        <span>/</span><span class="text-[#475569] font-medium">School Configuration</span>
-                    </p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold" style="background:#ECFDF5; color:#059669; border:1px solid #A7F3D0;">
-                    <span class="w-1.5 h-1.5 rounded-full bg-[#059669]"></span> Operational
-                </span>
-                <form th:action="@{/logout}" method="post">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-[#475569] border border-[#D9DFEA] hover:bg-[#F8FAFC] hover:text-slate-900 transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        Logout
-                    </button>
-                </form>
-            </div>
-        </div>
-    </header>
-<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; width:100%;">
+    <aside th:replace="~{fragments/shell :: sidebar}"></aside>
+
+    <div class="shell-main">
+        <header th:replace="~{fragments/shell :: topbar('School Setup', 'Classes, staff, students and buses')}"></header>
+
+        <div class="shell-body">
+            <div class="shell-content">
 
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
@@ -658,8 +639,11 @@
             </form>
 
         </div>
-    </div>
 
+            </div>
+        </div>
+    </div>
+</div>
     <script>
         // ── Hub navigation: reveal one detail section, hide the card grid ──
         function showSection(id) {
