@@ -71,7 +71,13 @@ body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(
 .shell-topbar { height:64px; flex:0 0 64px; background:var(--surface); border-bottom:1px solid var(--line);
                 display:flex; align-items:center; justify-content:space-between; gap:20px; padding:0 24px; }
 .shell-body   { flex:1; min-height:0; overflow-y:auto; padding:20px 24px 28px; }
-.shell-content{ max-width:1500px; display:flex; flex-direction:column; gap:16px; }
+/* One content column for every shell page. Pages used to nest their own
+   Tailwind max-width plus mx-auto wrapper in here, which capped them a second
+   time at anything from 1024px down to 699px of usable width -- the console's
+   pages were each a different width, several stranded mid-screen. This is the
+   only cap now, and margin-inline keeps it centred once the viewport is wider
+   than the cap. */
+.shell-content{ max-width:1500px; margin-inline:auto; width:100%; display:flex; flex-direction:column; gap:16px; }
 
 /* The narrow-screen warning the comment above has always promised. It did not
    exist: the selector was referenced and never written, so a head teacher who
