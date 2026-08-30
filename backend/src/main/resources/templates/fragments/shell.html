@@ -21,14 +21,19 @@
 <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
 <aside th:fragment="sidebar" class="shell-side">
 
-    <div class="shell-brand">
+    <!-- The brand is the way back. It was a plain div, so clicking the logo --
+         the first thing anyone tries from a sub-page -- did nothing at all.
+         shell.home() resolves per role, because each one lands somewhere
+         different and a wrong guess ends at an access-denied page. -->
+    <a class="shell-brand" th:href="${shell != null} ? ${shell.home()} : '/login'"
+       style="text-decoration:none;" title="Back to dashboard">
         <img src="/images/acadia-logo.png" alt="" style="height:26px;">
         <div style="line-height:1.1; min-width:0;">
             <div style="font-size:14px; font-weight:700; letter-spacing:.16em; color:var(--text);">ACADIA</div>
             <div style="font-size:10.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
                  th:text="${shell?.schoolName()}">Sunshine Montessori</div>
         </div>
-    </div>
+    </a>
 
     <nav class="shell-nav">
 
@@ -143,6 +148,16 @@
                 <span class="sr-only">Logout</span>
             </button>
         </form>
+    </div>
+
+    <!-- Shown only below 1360px (see .shell-narrow). It lives in the sidebar
+         fragment because that is the one piece every shell page renders, and
+         it is position:fixed, so it sits at the bottom of the viewport rather
+         than inside the rail. -->
+    <div class="shell-narrow" role="status">
+        <span aria-hidden="true">&#9432;</span>
+        <span>This console is built for a desktop screen. Scroll sideways to
+              reach the rest of the page, or open it on a larger display.</span>
     </div>
 </aside>
 

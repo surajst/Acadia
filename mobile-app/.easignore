@@ -1,0 +1,12 @@
+# Everything the EAS build archive does not need.
+#
+# .agents/skills holds directory symlinks into .claude/skills. EAS recreates
+# symlinks when it archives the repo, and Windows refuses to create them
+# without elevation, so the upload failed with EPERM before the build could
+# start. None of this is app source.
+.agents
+.claude
+.git
+
+# The backend is a separate deployable; it only makes the tarball bigger.
+backend

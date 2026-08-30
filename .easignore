@@ -1,0 +1,18 @@
+# Everything the EAS build archive does not need.
+#
+# This lives at the repository root, not in mobile-app/, because EAS clones from
+# the git root in a monorepo and resolves .easignore relative to that clone. A
+# copy inside mobile-app/ is never read.
+#
+# .agents/skills holds directory symlinks into .claude/skills. EAS recreates
+# symlinks when it archives the repo, and Windows refuses to create them without
+# elevation, so the upload fails with EPERM before the build can start. None of
+# this is app source.
+.agents
+.claude
+
+# The backend is a separate deployable; it only makes the tarball bigger.
+backend
+
+# Local artefacts that are large and irrelevant to the app bundle.
+acadia-before-wipe.dump

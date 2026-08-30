@@ -50,20 +50,25 @@
 
                         <div class="kpi-cell">
                             <p class="eyebrow">Attendance today</p>
-                            <p class="kpi-value" data-kpi-attendance th:text="|${attendancePercentage}%|">96.4%</p>
+                            <!-- Every figure here defaults rather than trusting the model.
+                                 Arithmetic on a null throws inside SpringEL, and a KPI that
+                                 cannot be computed took the whole dashboard down with a 500
+                                 -- which is how a single failed query in the fee summary
+                                 turned into a blank error page instead of a dash. -->
+                            <p class="kpi-value" data-kpi-attendance th:text="|${attendancePercentage ?: 0}%|">96.4%</p>
                             <div class="track track--xs" style="margin-top:7px;">
-                                <div class="fill" th:style="'background:var(--success); width:' + ${attendancePercentage} + '%'"></div>
+                                <div class="fill" th:style="'background:var(--success); width:' + ${attendancePercentage ?: 0} + '%'"></div>
                             </div>
-                            <p class="kpi-note" th:text="|${totalStudents - activeAbsences} of ${totalStudents} present|">487 of 505 present</p>
+                            <p class="kpi-note" th:text="|${(totalStudents ?: 0) - (activeAbsences ?: 0)} of ${totalStudents ?: 0} present|">487 of 505 present</p>
                         </div>
 
                         <div class="kpi-cell">
                             <p class="eyebrow">Active absences</p>
-                            <p class="kpi-value" data-kpi-absences th:text="${activeAbsences}">18</p>
+                            <p class="kpi-value" data-kpi-absences th:text="${activeAbsences ?: 0}">18</p>
                             <div class="track track--xs" style="margin-top:7px;">
-                                <div class="fill" th:style="'background:var(--warn); width:' + (${totalStudents} > 0 ? (${activeAbsences} * 100 / ${totalStudents}) : 0) + '%'"></div>
+                                <div class="fill" th:style="${'background:var(--warn); width:' + ((totalStudents ?: 0) > 0 ? ((activeAbsences ?: 0) * 100 / totalStudents) : 0) + '%'}"></div>
                             </div>
-                            <p class="kpi-note" th:text="|of ${totalStudents} on roll today|">of 505 on roll today</p>
+                            <p class="kpi-note" th:text="|of ${totalStudents ?: 0} on roll today|">of 505 on roll today</p>
                         </div>
 
                         <!-- Rendered only when the figure is actually known. The
@@ -250,7 +255,13 @@
                                     </div>
                                 </div>
 
-                                <div th:if="${feeSummary != null and feeSummary.get('collectionPercent') != null and feeSummary.get('collectionPercent') &lt; 100}"
+                                <!-- Gated on there being invoices at all. collectionPercent falls
+                                     back to 0 when nothing has been billed (FeeManagementService
+                                     cannot divide by a zero total), which is indistinguishable
+                                     from "billed plenty, collected none" — so a school on its
+                                     first morning was told to chase arrears it had never raised,
+                                     and the Defaulters page it links to said 0 overdue. -->
+                                <div th:if="${feeSummary != null and feeSummary.get('totalInvoices') != null and feeSummary.get('totalInvoices') &gt; 0 and feeSummary.get('collectionPercent') != null and feeSummary.get('collectionPercent') &lt; 100}"
                                      data-attention class="flex items-start gap-2.5"
                                      style="padding:10px 12px; border-radius:12px; background:var(--danger-50); border:1px solid var(--danger-200);">
                                     <span style="width:7px; height:7px; border-radius:50%; background:var(--danger); margin-top:6px; flex-shrink:0;"></span>
@@ -262,7 +273,7 @@
                                     </div>
                                 </div>
 
-                                <p th:if="${(activeAbsences == null or activeAbsences == 0) and (feeSummary == null or feeSummary.get('collectionPercent') == null or feeSummary.get('collectionPercent') &gt;= 100)}"
+                                <p th:if="${(activeAbsences == null or activeAbsences == 0) and (feeSummary == null or feeSummary.get('totalInvoices') == null or feeSummary.get('totalInvoices') == 0 or feeSummary.get('collectionPercent') == null or feeSummary.get('collectionPercent') &gt;= 100)}"
                                    style="font-size:12.5px; color:var(--text-3);">Nothing needs you right now.</p>
                             </div>
                         </div>
