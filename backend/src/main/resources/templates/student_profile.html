@@ -213,11 +213,13 @@
                         </div>
                     </div>
                     <!-- Empty state: deliberate, with action -->
-                    <div th:if="${primaryGuardian == null}" class="text-center py-4">
-                        <div class="w-11 h-11 mx-auto rounded-full flex items-center justify-center text-xl" style="background:var(--surface-2); border:1px solid var(--line);">👤</div>
-                        <p class="text-sm font-semibold text-slate-700 mt-2">No guardian linked yet</p>
-                        <p class="text-xs text-[var(--text-3)] mt-0.5 mb-3">Add a parent so the family can sign in.</p>
-                        <button th:if="${currentUserRole == 'ADMIN'}" type="button" onclick="openEditStudentModal()" class="btn btn-secondary btn-sm">+ Add guardian</button>
+                    <div th:if="${primaryGuardian == null}" class="empty-inline">
+                        <span class="empty-inline__icon">👤</span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-slate-700">No guardian linked yet</p>
+                            <p class="text-xs text-[var(--text-3)]">Add a parent so the family can sign in.</p>
+                        </div>
+                        <button th:if="${currentUserRole == 'ADMIN'}" type="button" onclick="openEditStudentModal()" class="btn btn-secondary btn-sm shrink-0">+ Add</button>
                     </div>
                     <div class="mt-4 pt-3.5 border-t flex items-center justify-between" style="border-color:var(--line)">
                         <span class="eyebrow">Home streak</span>
@@ -247,10 +249,12 @@
                         </div>
                         <p class="text-[11px] text-[var(--text-3)] mt-2 text-right" th:text="|${presentCount} of ${(presentCount + absentCount)} days recorded|">19 of 20 days recorded</p>
                     </div>
-                    <div th:unless="${(presentCount + absentCount) > 0}" class="text-center py-5">
-                        <div class="w-11 h-11 mx-auto rounded-full flex items-center justify-center text-xl" style="background:var(--surface-2); border:1px solid var(--line);">📅</div>
-                        <p class="text-sm font-semibold text-slate-700 mt-2">No attendance recorded yet</p>
-                        <p class="text-xs text-[var(--text-3)] mt-0.5">Daily marks by the class teacher will show here.</p>
+                    <div th:unless="${(presentCount + absentCount) > 0}" class="empty-inline">
+                        <span class="empty-inline__icon">📅</span>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-700">No attendance recorded yet</p>
+                            <p class="text-xs text-[var(--text-3)]">Daily marks by the class teacher will show here.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -323,10 +327,12 @@
                         </table>
                     </div>
                     <!-- Deliberate empty state -->
-                    <div th:if="${recentParentNotes == null and #lists.isEmpty(dispatchLedger)}" class="text-center py-6">
-                        <div class="w-11 h-11 mx-auto rounded-full flex items-center justify-center text-xl" style="background:var(--surface-2); border:1px solid var(--line);">📡</div>
-                        <p class="text-sm font-semibold text-slate-700 mt-2">No activity yet</p>
-                        <p class="text-xs text-[var(--text-3)] mt-0.5">Milestone approvals, attendance and reward alerts will appear here as they happen.</p>
+                    <div th:if="${recentParentNotes == null and #lists.isEmpty(dispatchLedger)}" class="empty-inline">
+                        <span class="empty-inline__icon">📡</span>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-700">No activity yet</p>
+                            <p class="text-xs text-[var(--text-3)]">Milestone approvals, attendance and reward alerts will appear here as they happen.</p>
+                        </div>
                     </div>
                 </div>
             </section>

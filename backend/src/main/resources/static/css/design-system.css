@@ -268,11 +268,20 @@ body { font-family:'Outfit','Inter',sans-serif; background:var(--bg); color:var(
    most of the right-hand side of the screen. Columns flow instead, so a short
    card is followed by the next card rather than by whitespace.
 
-   Children must not be split across a column break, hence break-inside. */
+   Children must not be split across a column break, hence break-inside.
+
+   Two columns, not three: at three the tallest card cannot share a column with
+   any other, so one column dead-ends ~200px above the rest. Two wider columns
+   pair up evenly and give the badge grids and field rows room to stop wrapping. */
 .panel-columns { column-gap:20px; }
 .panel-columns > * { break-inside:avoid; -webkit-column-break-inside:avoid; margin-bottom:20px; }
 @media (min-width:1024px) { .panel-columns { column-count:2; } }
-@media (min-width:1280px) { .panel-columns { column-count:3; } }
+
+/* Empty states read as "nothing here", so they get one compact row rather than a
+   centered icon blob whose padding inflates the card it sits in. */
+.empty-inline { display:flex; align-items:flex-start; gap:10px; padding:10px 12px;
+                background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-sm); }
+.empty-inline__icon { flex:0 0 auto; font-size:16px; line-height:1.35; }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width:9px; height:9px; }
