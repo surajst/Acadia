@@ -138,7 +138,11 @@ export default function TabLayout() {
     return <WebOnlyRoleScreen role={role} />;
   }
 
-  if (loading) {
+  // Only the very first load takes the whole screen. Later refetches -- a pull
+  // to refresh, a parent switching between children -- used to tear the entire
+  // tab navigator down and rebuild it, so the tab bar vanished and the screen
+  // flashed for a request that usually returns in under a second.
+  if (loading && !data) {
     return (
       <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
         <View style={{ flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' }}>

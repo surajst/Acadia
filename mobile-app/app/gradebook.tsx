@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/context/AuthContext';
+import EmptyState from '@/components/ui/EmptyState';
 import {
   getTeacherClasses,
   getAssessmentsForClass,
@@ -156,6 +157,16 @@ export default function GradebookScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {assessments.length === 0 && (
+        <EmptyState
+          icon={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }}
+          title={selectedClass ? `No assessments in ${selectedClass.className} yet` : 'No classes assigned'}
+          body={selectedClass
+            ? 'Name one above — a unit test, a weekly quiz — and every student in the class appears here ready to score.'
+            : 'Once an admin assigns you a class, its assessments and scores live here.'}
+        />
+      )}
 
       {detail && (
         <>

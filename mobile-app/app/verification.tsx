@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, RefreshControl, Alert,
+  RefreshControl, Alert,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { getTeacherQueue, decideMilestone, decideProgress } from '@/services/api';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import EmptyState from '@/components/ui/EmptyState';
 import T from '@/constants/theme';
 
 /**
@@ -92,9 +94,10 @@ export default function VerificationScreen() {
 
   if (loading) {
     return (
-      <View style={s.centre}>
+      <View style={[s.page, s.content]}>
         <Stack.Screen options={{ title: 'Verification Queue' }} />
-        <ActivityIndicator color={T.brand} />
+        <View style={[s.hero, s.heroSkeleton]} />
+        <ListSkeleton rows={3} />
       </View>
     );
   }
@@ -116,12 +119,11 @@ export default function VerificationScreen() {
       </View>
 
       {rows.length === 0 ? (
-        <View style={s.card}>
-          <Text style={s.emptyTitle}>Queue cleared</Text>
-          <Text style={s.emptyBody}>
-            Student milestone submissions and syllabus completions waiting on your review will appear here.
-          </Text>
-        </View>
+        <EmptyState
+          icon={{ ios: 'checkmark.seal', android: 'verified', web: 'verified' }}
+          title="Queue cleared"
+          body="Milestone submissions and syllabus completions waiting on your review appear here."
+        />
       ) : (
         rows.map((r) => (
           <View key={`${r.kind}-${r.id}`} style={s.card}>
@@ -162,9 +164,9 @@ export default function VerificationScreen() {
 const s = StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { padding: 16, paddingBottom: 32, gap: 14 },
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: T.bg },
 
   hero: { ...T.card, backgroundColor: T.brand, borderColor: T.brand, padding: 18 },
+  heroSkeleton: { backgroundColor: T.track, borderColor: T.line, height: 104 },
   heroLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: '#C7D2FE' },
   heroValue: { fontSize: 38, fontWeight: '800', color: '#fff', letterSpacing: -1, marginTop: 6, lineHeight: 40 },
   heroNote: { fontSize: 12.5, color: '#E0E7FF', marginTop: 6 },
@@ -186,6 +188,4 @@ const s = StyleSheet.create({
   btnApproveText: { fontSize: 13.5, fontWeight: '700', color: T.success },
   busy: { opacity: 0.6 },
 
-  emptyTitle: { fontSize: 15, fontWeight: '700', color: T.text, marginBottom: 4 },
-  emptyBody: { fontSize: 13.5, color: T.text3, lineHeight: 20 },
 });

@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { getUnreadNotificationCount } from '../../services/api';
 import { startTrip, stopTrip, isTripActive } from '../../services/driverLocationTask';
+import { Stat, StatRow } from '../../components/ui/Stat';
+import NavCard from '../../components/ui/NavCard';
 
 interface ParentQuest {
   taskDescription: string;
@@ -151,28 +153,19 @@ export default function DashboardScreen() {
 
       {role === 'TEACHER' ? (
         <>
-          <View style={styles.metricsContainer}>
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Classes</Text>
-              <Text style={styles.metricValue}>{classes.length}</Text>
-            </View>
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Attendance</Text>
-              <Text style={[styles.metricValue, {
-                color: attendancePending > 0 ? '#D97706' : '#059669'
-              }]}>
-                {attendanceMarked}/{attendanceTotal}
-              </Text>
-            </View>
-            <View style={styles.metricBox}>
-              <Text style={[styles.metricLabel, {
-                color: tasks.length > 0 ? '#D97706' : '#64748B'
-              }]}>
-                Pending Tasks
-              </Text>
-              <Text style={styles.metricValue}>{tasks.length}</Text>
-            </View>
-          </View>
+          <StatRow>
+            <Stat label="Classes" value={classes.length} />
+            <Stat
+              label="Attendance"
+              value={`${attendanceMarked}/${attendanceTotal}`}
+              tone={attendancePending > 0 ? 'attention' : 'good'}
+            />
+            <Stat
+              label="Tasks"
+              value={tasks.length}
+              tone={tasks.length > 0 ? 'attention' : 'neutral'}
+            />
+          </StatRow>
 
           {attendancePending > 0 && (
             <View style={styles.alertCard}>
@@ -186,47 +179,41 @@ export default function DashboardScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.cardGrid}>
-              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/verification')}>
-                <View style={[styles.navCardIcon, { backgroundColor: pendingReviews > 0 ? '#D9770620' : '#05966920' }]}>
-                  <SymbolView name={{ ios: 'checkmark.seal', android: 'verified', web: 'verified' }} tintColor={pendingReviews > 0 ? '#D97706' : '#059669'} size={24} />
-                </View>
-                <Text style={styles.navCardTitle}>Verification</Text>
-                <Text style={[styles.navCardSubtitle, pendingReviews > 0 && { color: '#D97706', fontWeight: '600' }]}>
-                  {pendingReviews > 0 ? `${pendingReviews} waiting` : 'Queue cleared'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/teacher')}>
-                <View style={[styles.navCardIcon, { backgroundColor: '#4F46E520' }]}>
-                  <SymbolView name={{ ios: 'person.badge.clock', android: 'school', web: 'school' }} tintColor="#4F46E5" size={24} />
-                </View>
-                <Text style={styles.navCardTitle}>My Classes</Text>
-                <Text style={styles.navCardSubtitle}>{classes.length} classes</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/tasks')}>
-                <View style={[styles.navCardIcon, { backgroundColor: '#D9770620' }]}>
-                  <SymbolView name={{ ios: 'checklist', android: 'task_alt', web: 'task_alt' }} tintColor="#D97706" size={24} />
-                </View>
-                <Text style={styles.navCardTitle}>Tasks</Text>
-                <Text style={styles.navCardSubtitle}>{tasks.length} pending</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/gradebook')}>
-                <View style={[styles.navCardIcon, { backgroundColor: '#05966920' }]}>
-                  <SymbolView name={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }} tintColor="#4ade80" size={24} />
-                </View>
-                <Text style={styles.navCardTitle}>Gradebook</Text>
-                <Text style={styles.navCardSubtitle}>Enter scores</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/timetable')}>
-                <View style={[styles.navCardIcon, { backgroundColor: '#38bdf820' }]}>
-                  <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor="#38bdf8" size={24} />
-                </View>
-                <Text style={styles.navCardTitle}>Timetable</Text>
-                <Text style={styles.navCardSubtitle}>Today's schedule</Text>
-              </TouchableOpacity>
+              {/* Only the card with work waiting carries colour. When every
+                  tile has its own tinted icon circle, nothing stands out and
+                  the grid reads as decoration rather than a queue. */}
+              <NavCard
+                to="/verification"
+                icon={{ ios: 'checkmark.seal', android: 'verified', web: 'verified' }}
+                title="Verification"
+                subtitle={pendingReviews > 0 ? `${pendingReviews} waiting` : 'Queue cleared'}
+                urgent={pendingReviews > 0}
+              />
+              <NavCard
+                to="/teacher"
+                icon={{ ios: 'person.badge.clock', android: 'school', web: 'school' }}
+                title="My Classes"
+                subtitle={`${classes.length} ${classes.length === 1 ? 'class' : 'classes'}`}
+              />
+              <NavCard
+                to="/tasks"
+                icon={{ ios: 'checklist', android: 'task_alt', web: 'task_alt' }}
+                title="Tasks"
+                subtitle={tasks.length > 0 ? `${tasks.length} pending` : 'None assigned'}
+                urgent={tasks.length > 0}
+              />
+              <NavCard
+                to="/gradebook"
+                icon={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }}
+                title="Gradebook"
+                subtitle="Enter scores"
+              />
+              <NavCard
+                to="/timetable"
+                icon={{ ios: 'calendar', android: 'event', web: 'event' }}
+                title="Timetable"
+                subtitle="Today's schedule"
+              />
             </View>
           </View>
 
@@ -303,20 +290,11 @@ export default function DashboardScreen() {
           )}
         </>
       ) : (
-        <View style={styles.metricsContainer}>
-          <View style={styles.metricBox}>
-            <Text style={styles.metricLabel}>School XP</Text>
-            <Text style={styles.metricValue}>{data.metrics?.schoolXp ?? 0}</Text>
-          </View>
-          <View style={styles.metricBox}>
-            <Text style={styles.metricLabel}>Parent XP</Text>
-            <Text style={styles.metricValue}>{data.metrics?.parentXp ?? 0}</Text>
-          </View>
-          <View style={styles.metricBox}>
-            <Text style={styles.metricLabel}>Streak</Text>
-            <Text style={styles.metricValue}>{data.metrics?.activeStreak ?? 0}</Text>
-          </View>
-        </View>
+        <StatRow>
+          <Stat label="School XP" value={data.metrics?.schoolXp ?? 0} />
+          <Stat label="Parent XP" value={data.metrics?.parentXp ?? 0} />
+          <Stat label="Streak" value={data.metrics?.activeStreak ?? 0} />
+        </StatRow>
       )}
 
       {role !== 'TEACHER' && role !== 'DRIVER' && (
@@ -412,10 +390,6 @@ const styles = StyleSheet.create({
   childChipTextActive: { color: '#fff' },
   greeting: { color: '#0F172A', fontSize: 24, fontWeight: 'bold' },
   subGreeting: { color: '#64748B', fontSize: 16, marginTop: 4 },
-  metricsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-  metricBox: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, flex: 1, marginHorizontal: 4, alignItems: 'center' },
-  metricLabel: { color: '#64748B', fontSize: 12, marginBottom: 4 },
-  metricValue: { color: '#0F172A', fontSize: 20, fontWeight: 'bold' },
   alertCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#D9770615', borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#D9770630', gap: 8 },
   alertDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#D97706' },
   alertText: { color: '#D97706', fontSize: 13, flex: 1 },
@@ -442,11 +416,7 @@ const styles = StyleSheet.create({
   dateChip: { alignSelf: 'flex-start', backgroundColor: '#4F46E520', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 10, borderWidth: 1, borderColor: '#4F46E530' },
   dateChipText: { color: '#4F46E5', fontSize: 12, fontWeight: '500' },
   notificationHeaderRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
-  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  navCard: { width: '48%', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 12 },
-  navCardIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-  navCardTitle: { color: '#0F172A', fontSize: 15, fontWeight: '600' },
-  navCardSubtitle: { color: '#64748b', fontSize: 12, marginTop: 2 },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   tripButton: { backgroundColor: '#4F46E5', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
   tripButtonActive: { backgroundColor: '#ef4444' },
   tripButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
