@@ -38,6 +38,12 @@ public class TeacherAttendanceController {
         return ResponseEntity.ok(tasksService.todayAttendance(sectionId, authentication));
     }
 
+    @GetMapping("/attendance/roster/{sectionId}")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<?> roster(@PathVariable UUID sectionId, Authentication authentication) {
+        return ResponseEntity.ok(tasksService.rosterForSection(sectionId, authentication));
+    }
+
     @PostMapping("/attendance/submit")
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<?> submit(@RequestBody AttendancePayload payload, Authentication authentication) {

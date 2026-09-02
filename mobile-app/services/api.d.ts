@@ -161,6 +161,14 @@ export function createAssessment(payload: ApiObject): Promise<ApiObject>;
 export function getAssessmentDetail(assessmentId: string): Promise<ApiObject>;
 export function submitAssessmentScores(assessmentId: string, scores: ApiObject[]): Promise<ApiObject>;
 
+export interface TeacherQueue {
+  pendingSubmissions: ApiObject[];
+  pendingProgress: ApiObject[];
+}
+export function getTeacherQueue(): Promise<TeacherQueue>;
+export function decideMilestone(submissionId: string, action: 'approve' | 'reject', reason?: string): Promise<ApiObject>;
+export function decideProgress(studentProgressId: string, action: 'approve' | 'reject', reason?: string): Promise<ApiObject>;
+
 export function getTimetableToday(): Promise<ApiObject[]>;
 export function getTimetableWeek(): Promise<Record<string, ApiObject[]>>;
 
