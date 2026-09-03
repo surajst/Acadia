@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { getParentBusLocation } from '../../services/api';
+import T from '../../constants/theme';
 
 // react-native-maps is a native module with no meaningful web support — the
 // Expo web export (the version actually deployed and tested this session)
@@ -51,7 +52,7 @@ export default function BusScreen() {
     <View style={styles.root}>
       <View style={styles.headerBand}>
         <View style={styles.headerIconWrap}>
-          <SymbolView name={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }} tintColor="#4F46E5" size={26} />
+          <SymbolView name={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }} tintColor={T.brand} size={26} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>Bus Tracker</Text>
@@ -60,7 +61,7 @@ export default function BusScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={T.brand} style={{ marginTop: 40 }} />
       ) : !location?.assigned ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No bus route assigned yet. Ask your school admin to link your child's class to a bus route.</Text>
@@ -110,21 +111,21 @@ export default function BusScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F7F9FC' },
+  root: { flex: 1, backgroundColor: T.bg },
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#E7EAF2',
+    backgroundColor: T.surface, paddingHorizontal: 20, paddingVertical: 18,
+    borderBottomWidth: 1, borderBottomColor: T.line,
   },
-  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#4F46E520', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
-  headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: T.brand50, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: T.text },
+  headerSubtitle: { fontSize: 12, color: T.text3, marginTop: 2 },
   emptyState: { padding: 24 },
-  emptyText: { color: '#64748b', fontSize: 14, textAlign: 'center' },
-  statusCard: { margin: 16, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#E7EAF2' },
-  statusRoute: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
-  statusText: { color: '#64748B', fontSize: 14, marginTop: 6 },
-  statusCoords: { color: '#64748b', fontSize: 12, marginTop: 6, fontVariant: ['tabular-nums'] },
-  webNotice: { color: '#D97706', fontSize: 12, marginTop: 12 },
+  emptyText: { color: T.text3, fontSize: 14, textAlign: 'center' },
+  statusCard: { margin: 16, backgroundColor: T.surface, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: T.line },
+  statusRoute: { color: T.text, fontSize: 16, fontWeight: '700' },
+  statusText: { color: T.text3, fontSize: 14, marginTop: 6 },
+  statusCoords: { color: T.text3, fontSize: 12, marginTop: 6, fontVariant: ['tabular-nums'] },
+  webNotice: { color: T.warn, fontSize: 12, marginTop: 12 },
   map: { flex: 1 },
 });

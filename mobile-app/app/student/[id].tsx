@@ -319,13 +319,13 @@ const s = StyleSheet.create({
   badgeChip: { backgroundColor: T.surface2, borderWidth: 1, borderColor: T.lineStrong, borderRadius: T.pill, paddingHorizontal: 11, paddingVertical: 8 },
   badgeChipOn: { backgroundColor: T.brand, borderColor: T.brand },
   badgeChipText: { fontSize: 12.5, fontWeight: '600', color: T.text2 },
-  badgeChipTextOn: { color: '#fff' },
+  badgeChipTextOn: { color: T.onBrand },
 
   input: { backgroundColor: T.surface2, borderWidth: 1, borderColor: T.lineStrong, borderRadius: T.rXs, padding: 11, fontSize: 14.5, color: T.text, minHeight: 44 },
 
   btn: { borderRadius: T.rXs, alignItems: 'center', justifyContent: 'center', minHeight: 46, marginTop: 10 },
   btnPrimary: { backgroundColor: T.brand },
-  btnPrimaryText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  btnPrimaryText: { color: T.onBrand, fontWeight: '700', fontSize: 14 },
   btnSecondary: { backgroundColor: T.surface2, borderWidth: 1, borderColor: T.lineStrong, paddingHorizontal: 18 },
   btnSecondaryText: { color: T.text, fontWeight: '600', fontSize: 14 },
 

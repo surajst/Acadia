@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/context/AuthContext';
 import { getApiHost } from '../services/api';
+import T from '../constants/theme';
 
 interface Task {
   id: string;
@@ -14,16 +15,16 @@ interface Task {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  HOMEWORK:  '#4F46E5',
-  PRACTICE:  '#059669',
-  PROJECT:   '#D97706',
+  HOMEWORK:  T.brand,
+  PRACTICE:  T.success,
+  PROJECT:   T.warn,
   READING:   '#06b6d4',
 };
 
 const TYPE_BG: Record<string, string> = {
-  HOMEWORK:  '#4F46E522',
-  PRACTICE:  '#05966922',
-  PROJECT:   '#D9770622',
+  HOMEWORK:  T.brand50,
+  PRACTICE:  T.success50,
+  PROJECT:   T.warn50,
   READING:   '#06b6d422',
 };
 
@@ -60,7 +61,7 @@ export default function TasksScreen() {
         <View style={styles.headerIconWrap}>
           <SymbolView
             name={{ ios: 'checklist', android: 'checklist', web: 'checklist' }}
-            tintColor="#4F46E5"
+            tintColor={T.brand}
             size={26}
           />
         </View>
@@ -81,14 +82,14 @@ export default function TasksScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#4F46E5" />
+          <ActivityIndicator size="large" color={T.brand} />
           <Text style={styles.loadingText}>Loading tasks...</Text>
         </View>
       ) : tasks.length === 0 ? (
         <View style={styles.center}>
           <SymbolView
             name={{ ios: 'checklist', android: 'checklist', web: 'checklist' }}
-            tintColor="#334155"
+            tintColor={T.text2}
             size={48}
           />
           <Text style={styles.emptyTitle}>No tasks yet</Text>
@@ -102,8 +103,8 @@ export default function TasksScreen() {
         >
           {tasks.map((task) => {
             const type = task.taskType ?? 'HOMEWORK';
-            const color = TYPE_COLORS[type] ?? '#4F46E5';
-            const bg = TYPE_BG[type] ?? '#4F46E522';
+            const color = TYPE_COLORS[type] ?? T.brand;
+            const bg = TYPE_BG[type] ?? T.brand50;
             return (
               <View key={task.id} style={styles.card}>
                 <View style={styles.cardLeft}>
@@ -130,45 +131,45 @@ export default function TasksScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F7F9FC' },
+  root: { flex: 1, backgroundColor: T.bg },
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#E7EAF2',
+    borderBottomWidth: 1, borderBottomColor: T.line,
   },
   headerIconWrap: {
     width: 48, height: 48, borderRadius: 14,
-    backgroundColor: '#4F46E515',
+    backgroundColor: T.brand50,
     justifyContent: 'center', alignItems: 'center',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', letterSpacing: 0.2 },
-  headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: T.text, letterSpacing: 0.2 },
+  headerSubtitle: { fontSize: 12, color: T.text3, marginTop: 2 },
   sectionLabelRow: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10, gap: 10,
   },
-  sectionLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', letterSpacing: 1.2 },
+  sectionLabel: { fontSize: 11, fontWeight: '700', color: T.text3, letterSpacing: 1.2 },
   sectionBadge: {
-    backgroundColor: '#4F46E522', borderRadius: 20,
+    backgroundColor: T.brand50, borderRadius: 20,
     paddingHorizontal: 8, paddingVertical: 2,
   },
-  sectionBadgeText: { fontSize: 11, color: '#4F46E5', fontWeight: '600' },
+  sectionBadgeText: { fontSize: 11, color: T.brand, fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#64748B' },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#0F172A', marginTop: 16 },
-  emptySubtext: { fontSize: 13, color: '#64748b', marginTop: 6, textAlign: 'center' },
+  loadingText: { marginTop: 12, fontSize: 14, color: T.text3 },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: T.text, marginTop: 16 },
+  emptySubtext: { fontSize: 13, color: T.text3, marginTop: 6, textAlign: 'center' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
   card: {
-    backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16,
-    borderWidth: 1, borderColor: '#E7EAF2',
+    backgroundColor: T.surface, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: T.line,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
   cardLeft: { flex: 1, marginRight: 12 },
   typeBadge: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
   typeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
-  cardTitle: { fontSize: 14, fontWeight: '600', color: '#0F172A', lineHeight: 20 },
-  cardDate: { fontSize: 11, color: '#64748b', marginTop: 4 },
+  cardTitle: { fontSize: 14, fontWeight: '600', color: T.text, lineHeight: 20 },
+  cardDate: { fontSize: 11, color: T.text3, marginTop: 4 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
 });

@@ -34,6 +34,8 @@ export const T = {
 
   bg: '#F7F9FC',
   surface: '#FFFFFF',
+  /** Behind a sheet or modal, so the page reads as sent to the back. */
+  scrim: '#00000090',
   surface2: '#F8FAFC',
   line: '#E7EAF2',
   lineStrong: '#D9DFEA',
@@ -50,6 +52,15 @@ export const T = {
   brand100: '#E0E3FF',
   brand700: '#4338CA',
 
+  /**
+   * On a brand fill the page tokens invert -- text3 on indigo is unreadable.
+   * These are the three weights that work there: a heading, a supporting line,
+   * and an overline label.
+   */
+  onBrand: '#FFFFFF',
+  onBrandMuted: '#E0E7FF',
+  onBrandFaint: '#C7D2FE',
+
   success: '#059669',
   success50: '#ECFDF5',
   success200: '#A7F3D0',
@@ -62,6 +73,17 @@ export const T = {
   info: '#2563EB',
   info50: '#EFF6FF',
   info200: '#BFDBFE',
+
+  /**
+   * Ink steps: the readable weight of each status colour for TEXT sitting on
+   * its own 50 tint. The base colours are sized for fills and icons and do not
+   * all survive as small text -- success on success50 is 3.6:1, under the 4.5:1
+   * floor. These clear it: 5.2, 4.9, 5.9 and 6.2:1 respectively.
+   */
+  successInk: '#047857',
+  warnInk: '#B45309',
+  dangerInk: '#B91C1C',
+  infoInk: '#1D4ED8',
 
   r: 16,
   rSm: 14,

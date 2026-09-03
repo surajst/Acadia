@@ -9,6 +9,7 @@ import {
 import { useContext, useState, useEffect } from 'react';
 import { DataContext } from './_layout';
 import { getStudentTasks } from '../../services/api';
+import T from '../../constants/theme';
 
 type Challenge = {
   id: string;
@@ -24,13 +25,13 @@ type Challenge = {
 const TASK_TYPE_COLOR: Record<Challenge['taskType'], string> = {
   HOMEWORK: '#3b82f6',
   READING: '#a855f7',
-  PROJECT: '#D97706',
+  PROJECT: T.warn,
 };
 
 const TASK_TYPE_BG: Record<Challenge['taskType'], string> = {
   HOMEWORK: '#1e3a8a',
   READING: '#581c87',
-  PROJECT: '#78350f',
+  PROJECT: T.warnInk,
 };
 
 export default function ChallengesScreen() {
@@ -66,12 +67,12 @@ export default function ChallengesScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Active Challenges</Text>
         {loading ? (
-          <ActivityIndicator color="#4F46E5" style={{ marginTop: 20 }} />
+          <ActivityIndicator color={T.brand} style={{ marginTop: 20 }} />
         ) : challenges.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No challenges assigned yet.</Text>
@@ -82,8 +83,8 @@ export default function ChallengesScreen() {
             <View key={item.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{item.title}</Text>
-                <View style={[styles.badge, { backgroundColor: TASK_TYPE_BG[item.taskType] || '#E7EAF2' }]}>
-                  <Text style={[styles.badgeText, { color: TASK_TYPE_COLOR[item.taskType] || '#64748B' }]}>
+                <View style={[styles.badge, { backgroundColor: TASK_TYPE_BG[item.taskType] || T.line }]}>
+                  <Text style={[styles.badgeText, { color: TASK_TYPE_COLOR[item.taskType] || T.text3 }]}>
                     {item.taskType}
                   </Text>
                 </View>
@@ -107,20 +108,20 @@ export default function ChallengesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
     padding: 16,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   cardTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 16,
     fontWeight: '700',
     flex: 1,
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   cardDescription: {
-    color: '#64748B',
+    color: T.text3,
     fontSize: 14,
     marginTop: 8,
     lineHeight: 20,
@@ -160,34 +161,34 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E7EAF2',
+    borderTopColor: T.line,
   },
   xpText: {
-    color: '#4ade80',
+    color: T.successInk,
     fontSize: 15,
     fontWeight: '700',
   },
   dateText: {
-    color: '#64748b',
+    color: T.text3,
     fontSize: 12,
   },
   emptyCard: {
     height: 100,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
   },
   emptySubtext: {
-    color: '#64748B',
+    color: T.text3,
     fontSize: 13,
     marginTop: 4,
     textAlign: 'center',

@@ -26,18 +26,18 @@ function WebOnlyRoleScreen({ role }: { role: string }) {
   const { logout } = useAuth();
   const host = getApiHost();
   return (
-    <View style={{ flex: 1, backgroundColor: '#F7F9FC', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
-      <Text style={{ color: '#0F172A', fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
+    <View style={{ flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+      <Text style={{ color: T.text, fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
         {role === ROLE_ADMIN ? 'Admin' : 'Principal'} accounts use the web dashboard
       </Text>
-      <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
+      <Text style={{ color: T.text3, fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
         Open {host}/login in a browser on your computer or phone to manage your school.
       </Text>
       <TouchableOpacity
         onPress={() => logout()}
-        style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E7EAF2', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 }}
+        style={{ backgroundColor: T.surface, borderWidth: 1, borderColor: T.line, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 }}
       >
-        <Text style={{ color: '#64748B', fontWeight: '600' }}>Log Out</Text>
+        <Text style={{ color: T.text3, fontWeight: '600' }}>Log Out</Text>
       </TouchableOpacity>
     </View>
   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { getTimetableWeek, getTimetableToday } from '@/services/api';
+import T from '../constants/theme';
 
 const DAY_ORDER = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 const DAY_LABELS: Record<string, string> = { MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday', THU: 'Thursday', FRI: 'Friday' };
@@ -29,7 +30,7 @@ export default function TimetableScreen() {
     <View style={styles.root}>
       <View style={styles.headerBand}>
         <View style={styles.headerIconWrap}>
-          <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor="#4F46E5" size={26} />
+          <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor={T.brand} size={26} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>Timetable</Text>
@@ -52,9 +53,9 @@ export default function TimetableScreen() {
               <Text style={styles.periodClass}>{p.className} · {p.roomNumber || ''}</Text>
             </View>
             {p.attendanceMarked ? (
-              <View style={[styles.badge, { backgroundColor: '#05966922' }]}><Text style={[styles.badgeText, { color: '#059669' }]}>Marked</Text></View>
+              <View style={[styles.badge, { backgroundColor: T.success50 }]}><Text style={[styles.badgeText, { color: T.success }]}>Marked</Text></View>
             ) : (
-              <View style={[styles.badge, { backgroundColor: '#D9770622' }]}><Text style={[styles.badgeText, { color: '#D97706' }]}>Pending</Text></View>
+              <View style={[styles.badge, { backgroundColor: T.warn50 }]}><Text style={[styles.badgeText, { color: T.warn }]}>Pending</Text></View>
             )}
           </View>
         ))
@@ -65,7 +66,7 @@ export default function TimetableScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" color={T.brand} style={{ marginTop: 20 }} />
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
           {DAY_ORDER.map((day) => (
@@ -91,35 +92,35 @@ export default function TimetableScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F7F9FC' },
+  root: { flex: 1, backgroundColor: T.bg },
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#E7EAF2',
+    backgroundColor: T.surface, paddingHorizontal: 20, paddingVertical: 18,
+    borderBottomWidth: 1, borderBottomColor: T.line,
   },
-  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#4F46E520', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
-  headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: T.brand50, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: T.text },
+  headerSubtitle: { fontSize: 12, color: T.text3, marginTop: 2 },
   sectionLabelRow: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8 },
-  sectionLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', letterSpacing: 1 },
-  emptyText: { fontSize: 13, color: '#64748b', paddingHorizontal: 20 },
+  sectionLabel: { fontSize: 11, fontWeight: '700', color: T.text3, letterSpacing: 1 },
+  emptyText: { fontSize: 13, color: T.text3, paddingHorizontal: 20 },
   periodCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: T.surface,
     borderRadius: 12, padding: 12, marginHorizontal: 16, marginBottom: 8,
-    borderWidth: 1, borderColor: '#E7EAF2',
+    borderWidth: 1, borderColor: T.line,
   },
-  periodTime: { fontSize: 12, color: '#64748B', fontVariant: ['tabular-nums'] },
-  periodSubject: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
-  periodClass: { fontSize: 11, color: '#64748b', marginTop: 2 },
+  periodTime: { fontSize: 12, color: T.text3, fontVariant: ['tabular-nums'] },
+  periodSubject: { fontSize: 14, fontWeight: '700', color: T.text },
+  periodClass: { fontSize: 11, color: T.text3, marginTop: 2 },
   badge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   badgeText: { fontSize: 10, fontWeight: '700' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 32 },
   dayBlock: { marginBottom: 14 },
-  dayLabel: { fontSize: 13, fontWeight: '700', color: '#0F172A', marginBottom: 6 },
-  emptyDayText: { fontSize: 12, color: '#64748b' },
+  dayLabel: { fontSize: 13, fontWeight: '700', color: T.text, marginBottom: 6 },
+  emptyDayText: { fontSize: 12, color: T.text3 },
   weekRow: { flexDirection: 'row', gap: 10, paddingVertical: 4 },
-  weekTime: { fontSize: 12, color: '#4F46E5', width: 50 },
-  weekSubject: { fontSize: 12, color: '#0F172A', flex: 1 },
-  weekClass: { fontSize: 11, color: '#64748b' },
+  weekTime: { fontSize: 12, color: T.brand, width: 50 },
+  weekSubject: { fontSize: 12, color: T.text, flex: 1 },
+  weekClass: { fontSize: 11, color: T.text3 },
 });

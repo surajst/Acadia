@@ -5,6 +5,7 @@ import { Redirect } from 'expo-router';
 
 import { useAuth } from '@/context/AuthContext';
 import { login as authenticate } from '@/services/api';
+import T from '../constants/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -75,7 +76,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="Email / Username"
-              placeholderTextColor="#475569"
+              placeholderTextColor={T.text2}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -88,7 +89,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor="#475569"
+              placeholderTextColor={T.text2}
               secureTextEntry
               value={password}
               onChangeText={setPassword}
@@ -108,7 +109,7 @@ export default function LoginScreen() {
             activeOpacity={0.85}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={T.surface} />
             ) : (
               <Text style={styles.buttonText}>Log In</Text>
             )}
@@ -126,7 +127,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
   },
   container: {
     flex: 1,
@@ -151,14 +152,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 5,
-    color: '#0F172A',
+    color: T.text,
     marginTop: 4,
   },
   tagline: {
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 2,
-    color: '#64748B',
+    color: T.text3,
     textTransform: 'uppercase',
     marginTop: 4,
     marginBottom: 20,
@@ -166,20 +167,20 @@ const styles = StyleSheet.create({
   divider: {
     width: 40,
     height: 1,
-    backgroundColor: '#E7EAF2',
+    backgroundColor: T.line,
   },
   formBlock: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#E7EAF2',
+    borderColor: T.line,
     marginBottom: 24,
   },
   signInLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#64748B',
+    color: T.text3,
     marginBottom: 20,
   },
   inputWrap: {
@@ -188,19 +189,19 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748b',
+    color: T.text3,
     letterSpacing: 0.5,
     marginBottom: 6,
     textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
     borderRadius: 10,
     padding: 14,
-    color: '#0F172A',
+    color: T.text,
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#E7EAF2',
+    borderColor: T.line,
   },
   errorWrap: {
     backgroundColor: '#ef444415',
@@ -211,12 +212,12 @@ const styles = StyleSheet.create({
     borderColor: '#ef444430',
   },
   errorText: {
-    color: '#ef4444',
+    color: T.danger,
     fontSize: 13,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: T.brand,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: T.surface,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -234,7 +235,8 @@ const styles = StyleSheet.create({
   footer: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#E7EAF2',
+    // Also the border token used as text, same as the syllabus headings.
+    color: T.text3,
     letterSpacing: 0.5,
   },
 });

@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useContext, useState } from 'react';
 import { DataContext } from './_layout';
+import T from '../../constants/theme';
 
 interface ParentQuest {
   taskDescription: string;
@@ -27,7 +28,7 @@ export default function QuestsScreen() {
   return (
     <ScrollView 
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Parent Quests</Text>
@@ -119,24 +120,24 @@ export default function QuestsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
     padding: 16,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 12,
   },
   infoText: {
-    color: '#64748B',
+    color: T.text3,
     fontSize: 14,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
@@ -148,28 +149,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 16,
     fontWeight: 'bold',
     flex: 1,
   },
   itemSubtitle: {
-    color: '#64748B',
+    color: T.text3,
     fontSize: 14,
   },
   badgeText: {
-    color: '#4ade80',
+    color: T.successInk,
     fontWeight: 'bold',
-    backgroundColor: '#14532d',
+    backgroundColor: T.successInk,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     overflow: 'hidden',
   },
   badgeTextCost: {
-    color: '#f87171',
+    color: T.danger,
     fontWeight: 'bold',
-    backgroundColor: '#7f1d1d',
+    backgroundColor: T.dangerInk,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,

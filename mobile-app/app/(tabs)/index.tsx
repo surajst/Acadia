@@ -8,6 +8,7 @@ import { getUnreadNotificationCount } from '../../services/api';
 import { startTrip, stopTrip, isTripActive } from '../../services/driverLocationTask';
 import { Stat, StatRow } from '../../components/ui/Stat';
 import NavCard from '../../components/ui/NavCard';
+import T from '../../constants/theme';
 
 interface ParentQuest {
   taskDescription: string;
@@ -105,12 +106,12 @@ export default function DashboardScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       {role === 'TEACHER' && (
         <View style={styles.notificationHeaderRow}>
           <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.bellButton}>
-            <SymbolView name={{ ios: 'bell', android: 'notifications', web: 'notifications' }} tintColor="#334155" size={24} />
+            <SymbolView name={{ ios: 'bell', android: 'notifications', web: 'notifications' }} tintColor={T.text2} size={24} />
             {unreadCount > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -222,8 +223,8 @@ export default function DashboardScreen() {
               <Text style={styles.sectionTitle}>Today's Schedule</Text>
               {data.timetable.map((period: any) => (
                 <View key={period.id} style={styles.periodItem}>
-                  <View style={[styles.periodTimeBadge, { backgroundColor: period.attendanceMarked ? '#05966920' : '#D9770620' }]}>
-                    <Text style={[styles.periodTime, { color: period.attendanceMarked ? '#059669' : '#D97706' }]}>
+                  <View style={[styles.periodTimeBadge, { backgroundColor: period.attendanceMarked ? T.success50 : T.warn50 }]}>
+                    <Text style={[styles.periodTime, { color: period.attendanceMarked ? T.success : T.warn }]}>
                       P{period.periodNumber}
                     </Text>
                   </View>
@@ -231,8 +232,8 @@ export default function DashboardScreen() {
                     <Text style={styles.periodSubject}>{period.subjectName}</Text>
                     <Text style={styles.periodMeta}>{period.startTime} – {period.endTime} · {period.roomNumber}</Text>
                   </View>
-                  <View style={[styles.periodStatus, { backgroundColor: period.attendanceMarked ? '#05966915' : '#D9770615' }]}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: period.attendanceMarked ? '#059669' : '#D97706' }}>
+                  <View style={[styles.periodStatus, { backgroundColor: period.attendanceMarked ? T.success50 : T.warn50 }]}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: period.attendanceMarked ? T.success : T.warn }}>
                       {period.attendanceMarked ? 'Done' : 'Pending'}
                     </Text>
                   </View>
@@ -247,8 +248,8 @@ export default function DashboardScreen() {
               {tasks.slice(0, 3).map((task: any, i: number) => (
                 <View key={i} style={styles.listItem}>
                   <Text style={styles.itemTitle}>{task.title ?? task.taskDescription ?? 'Task'}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: '#D9770622' }]}>
-                    <Text style={{ color: '#D97706', fontSize: 12, fontWeight: '600' }}>Pending</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: T.warn50 }]}>
+                    <Text style={{ color: T.warn, fontSize: 12, fontWeight: '600' }}>Pending</Text>
                   </View>
                 </View>
               ))}
@@ -379,50 +380,50 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, backgroundColor: '#F7F9FC', justifyContent: 'center', alignItems: 'center' },
-  container: { flex: 1, backgroundColor: '#F7F9FC', padding: 16 },
-  errorText: { color: '#ef4444', fontSize: 16 },
-  infoCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, marginBottom: 16 },
+  center: { flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: T.bg, padding: 16 },
+  errorText: { color: T.danger, fontSize: 16 },
+  infoCard: { backgroundColor: T.surface, padding: 20, borderRadius: 16, marginBottom: 16 },
   childSwitcherRow: { marginHorizontal: -16, marginBottom: 16 },
-  childChip: { backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: '#E7EAF2' },
-  childChipActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
-  childChipText: { color: '#64748B', fontSize: 14, fontWeight: '600' },
-  childChipTextActive: { color: '#fff' },
-  greeting: { color: '#0F172A', fontSize: 24, fontWeight: 'bold' },
-  subGreeting: { color: '#64748B', fontSize: 16, marginTop: 4 },
-  alertCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#D9770615', borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#D9770630', gap: 8 },
-  alertDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#D97706' },
-  alertText: { color: '#D97706', fontSize: 13, flex: 1 },
-  levelCard: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, marginBottom: 24 },
-  levelTitle: { color: '#0F172A', fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
-  progressBarBg: { height: 8, backgroundColor: '#E7EAF2', borderRadius: 4, marginBottom: 8 },
-  progressBarFill: { height: '100%', backgroundColor: '#4F46E5', borderRadius: 4 },
-  levelHint: { color: '#64748B', fontSize: 12, textAlign: 'right' },
+  childChip: { backgroundColor: T.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: T.line },
+  childChipActive: { backgroundColor: T.brand, borderColor: T.brand },
+  childChipText: { color: T.text3, fontSize: 14, fontWeight: '600' },
+  childChipTextActive: { color: T.surface },
+  greeting: { color: T.text, fontSize: 24, fontWeight: 'bold' },
+  subGreeting: { color: T.text3, fontSize: 16, marginTop: 4 },
+  alertCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.warn50, borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: T.warn50, gap: 8 },
+  alertDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: T.warn },
+  alertText: { color: T.warn, fontSize: 13, flex: 1 },
+  levelCard: { backgroundColor: T.surface, padding: 20, borderRadius: 16, marginBottom: 24 },
+  levelTitle: { color: T.text, fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
+  progressBarBg: { height: 8, backgroundColor: T.line, borderRadius: 4, marginBottom: 8 },
+  progressBarFill: { height: '100%', backgroundColor: T.brand, borderRadius: 4 },
+  levelHint: { color: T.text3, fontSize: 12, textAlign: 'right' },
   section: { marginBottom: 24 },
-  sectionTitle: { color: '#0F172A', fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
-  infoText: { color: '#64748B', fontSize: 14 },
-  listItem: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 12, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  itemTitle: { color: '#0F172A', fontSize: 16, fontWeight: '600' },
-  itemSubtitle: { color: '#64748b', fontSize: 12, marginTop: 4 },
-  itemReward: { color: '#4ade80', fontWeight: 'bold' },
+  sectionTitle: { color: T.text, fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
+  infoText: { color: T.text3, fontSize: 14 },
+  listItem: { backgroundColor: T.surface, padding: 16, borderRadius: 12, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  itemTitle: { color: T.text, fontSize: 16, fontWeight: '600' },
+  itemSubtitle: { color: T.text3, fontSize: 12, marginTop: 4 },
+  itemReward: { color: T.successInk, fontWeight: 'bold' },
   statusBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  periodItem: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  periodItem: { backgroundColor: T.surface, borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 },
   periodTimeBadge: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   periodTime: { fontSize: 13, fontWeight: '700' },
   periodInfo: { flex: 1 },
-  periodSubject: { color: '#0F172A', fontSize: 14, fontWeight: '600' },
-  periodMeta: { color: '#64748b', fontSize: 12, marginTop: 2 },
+  periodSubject: { color: T.text, fontSize: 14, fontWeight: '600' },
+  periodMeta: { color: T.text3, fontSize: 12, marginTop: 2 },
   periodStatus: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  dateChip: { alignSelf: 'flex-start', backgroundColor: '#4F46E520', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 10, borderWidth: 1, borderColor: '#4F46E530' },
-  dateChipText: { color: '#4F46E5', fontSize: 12, fontWeight: '500' },
+  dateChip: { alignSelf: 'flex-start', backgroundColor: T.brand50, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 10, borderWidth: 1, borderColor: T.brand100 },
+  dateChipText: { color: T.brand, fontSize: 12, fontWeight: '500' },
   notificationHeaderRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
   cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  tripButton: { backgroundColor: '#4F46E5', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
-  tripButtonActive: { backgroundColor: '#ef4444' },
-  tripButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  tripButton: { backgroundColor: T.brand, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 16 },
+  tripButtonActive: { backgroundColor: T.danger },
+  tripButtonText: { color: T.surface, fontSize: 16, fontWeight: '700' },
   bellButton: { padding: 8, position: 'relative' },
-  badge: { position: 'absolute', top: 2, right: 2, backgroundColor: '#ef4444', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  badge: { position: 'absolute', top: 2, right: 2, backgroundColor: T.danger, borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
+  badgeText: { color: T.surface, fontSize: 10, fontWeight: '700' },
 });
 /**
  * Recognition rows. Kept separate from `styles` so the shared dashboard
@@ -430,20 +431,20 @@ const styles = StyleSheet.create({
  */
 const awardStyles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  seeAll: { fontSize: 12.5, fontWeight: '600', color: '#4F46E5' },
+  seeAll: { fontSize: 12.5, fontWeight: '600', color: T.brand },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF1F6',
+    borderBottomColor: T.track,
   },
   rowLast: { borderBottomWidth: 0 },
   emoji: { fontSize: 18, lineHeight: 22 },
   body: { flex: 1 },
-  label: { fontSize: 13.5, fontWeight: '600', color: '#0F172A' },
-  points: { color: '#4F46E5', fontWeight: '700' },
-  reason: { fontSize: 12.5, color: '#475569', marginTop: 2 },
-  meta: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
+  label: { fontSize: 13.5, fontWeight: '600', color: T.text },
+  points: { color: T.brand, fontWeight: '700' },
+  reason: { fontSize: 12.5, color: T.text2, marginTop: 2 },
+  meta: { fontSize: 11, color: T.text4, marginTop: 2 },
 });

@@ -167,9 +167,9 @@ const s = StyleSheet.create({
 
   hero: { ...T.card, backgroundColor: T.brand, borderColor: T.brand, padding: 18 },
   heroSkeleton: { backgroundColor: T.track, borderColor: T.line, height: 104 },
-  heroLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: '#C7D2FE' },
-  heroValue: { fontSize: 38, fontWeight: '800', color: '#fff', letterSpacing: -1, marginTop: 6, lineHeight: 40 },
-  heroNote: { fontSize: 12.5, color: '#E0E7FF', marginTop: 6 },
+  heroLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: T.onBrandFaint },
+  heroValue: { fontSize: 38, fontWeight: '800', color: T.onBrand, letterSpacing: -1, marginTop: 6, lineHeight: 40 },
+  heroNote: { fontSize: 12.5, color: T.onBrandMuted, marginTop: 6 },
 
   card: { ...T.card, padding: 16 },
   rowTop: { flexDirection: 'row', gap: 10 },
