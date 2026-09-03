@@ -16,10 +16,11 @@ import T from '@/constants/theme';
  * redeeming was a Thymeleaf form post answering with a redirect, so the phone
  * could show a child their XP total and give them no way to spend it.
  *
- * Two ledgers, deliberately kept apart: the school's catalogue costs school XP,
- * and rewards a parent set aside for this child cost parent XP. Merging them
- * into one balance would let a child spend their parent's goodwill on a
- * canteen voucher.
+ * The two ledgers are shown apart because they are earned apart, but they are
+ * not spent apart: a school reward costs school XP, while a parent reward is
+ * charged against parent XP first and then school XP. This screen mirrors that
+ * rather than inventing its own rule -- gating a parent reward on parent XP
+ * alone disabled rewards the child could actually afford.
  */
 
 type Item = { id: string; title?: string; description?: string; xpCost?: number; displayEmoji?: string; inventoryCount?: number };
@@ -131,7 +132,10 @@ export default function MarketplaceScreen() {
               <Text style={s.groupTitle}>Set aside by your family</Text>
               {parentItems.map((it) => {
                 const cost = it.xpCost ?? 0;
-                const afford = parentXp >= cost;
+                // The server checks school + parent and spends parent XP
+                // first, so gating on parent XP alone disabled rewards the
+                // child could actually afford.
+                const afford = schoolXp + parentXp >= cost;
                 return (
                   <Row
                     key={it.id}
@@ -140,7 +144,7 @@ export default function MarketplaceScreen() {
                     cost={cost}
                     disabled={!afford || busyId === it.id}
                     busy={busyId === it.id}
-                    hint={!afford ? `${cost - parentXp} XP to go` : undefined}
+                    hint={!afford ? `${cost - (schoolXp + parentXp)} XP to go` : undefined}
                     onPress={() => spend(it.id, 'parent', it.rewardTitle || 'Reward', cost)}
                   />
                 );

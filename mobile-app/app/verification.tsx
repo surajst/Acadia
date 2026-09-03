@@ -77,6 +77,19 @@ export default function VerificationScreen() {
     setRefreshing(false);
   };
 
+  const confirmDecline = (row: Row) => {
+    // Declining sends the student a "needs review" notice, and there is no
+    // undo -- so it asks first, where awarding XP does not.
+    Alert.alert(
+      'Send this back?',
+      `${row.title} will be returned to the student as needing more work.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Send back', style: 'destructive', onPress: () => decide(row, 'reject') },
+      ],
+    );
+  };
+
   const decide = async (row: Row, action: 'approve' | 'reject') => {
     setBusyId(row.id);
     try {
@@ -139,7 +152,7 @@ export default function VerificationScreen() {
             <View style={s.actions}>
               <TouchableOpacity
                 style={[s.btn, s.btnReject, busyId === r.id && s.busy]}
-                onPress={() => decide(r, 'reject')}
+                onPress={() => confirmDecline(r)}
                 disabled={busyId === r.id}
               >
                 <Text style={s.btnRejectText}>Decline</Text>

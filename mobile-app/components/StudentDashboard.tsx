@@ -140,6 +140,26 @@ export default function StudentDashboard({ data, schoolName, refreshing, onRefre
             />
           </View>
 
+          {/* Quests lost its tab when the bar was cut to four, and the grid
+              that used to link it went with the old dashboard -- leaving the
+              screen reachable only when a claimable one happened to exist. */}
+          <TouchableOpacity
+            style={s.wide}
+            onPress={() => router.push('/quests')}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+          >
+            <View style={s.iconTile}>
+              <SymbolView name={{ ios: 'star', android: 'star', web: 'star' }} tintColor={T.brand} size={17} />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={s.wideTitle}>Quests</Text>
+              <Text style={s.wideSub}>
+                {quests.length > 0 ? `${quests.length} set by your family` : 'Set by your family'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={s.wide}
             onPress={() => router.push('/student-news')}

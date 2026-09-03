@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { getTeacherClasses, createTeacherTask, searchMyStudents } from '@/services/api';
+import { getTeacherClasses, createTeacherTask, searchMyStudents, getSubjects } from '@/services/api';
 import T from '@/constants/theme';
 
 /**
@@ -27,6 +27,7 @@ export default function NewTaskScreen() {
   const router = useRouter();
 
   const [classes, setClasses] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [cls, setCls] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,8 +46,12 @@ export default function NewTaskScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const list = await getTeacherClasses();
+        const [list, subs] = await Promise.all([
+          getTeacherClasses(),
+          getSubjects().catch(() => []),
+        ]);
         setClasses(list);
+        setSubjects(Array.isArray(subs) ? subs : []);
         if (list.length > 0) setCls(list[0]);
       } catch { /* the empty state below covers it */ }
       finally { setLoading(false); }
@@ -72,10 +77,17 @@ export default function NewTaskScreen() {
     if (!canSave || !cls) return;
     setSaving(true);
     try {
+      // The class carries the assignment's free-text subject name
+      // ("Mathematics"); tasks are keyed by the catalogue code
+      // ("MATHEMATICS"), which is what the web form sends.
+      const match = subjects.find(
+        (x) => String(x.displayName ?? '').toLowerCase() === String(cls.subject ?? '').toLowerCase(),
+      );
+
       await createTeacherTask({
         title: title.trim(),
         description: description.trim(),
-        subjectCode: cls.subject,
+        subjectCode: match?.code ?? cls.subject,
         taskType: type,
         standard: cls.standard,
         assignedToClass: toClass,
@@ -85,7 +97,9 @@ export default function NewTaskScreen() {
       });
       Alert.alert(
         'Task assigned',
-        toClass ? `${title.trim()} went to ${cls.className}.` : `${title.trim()} went to ${student?.name}.`,
+        toClass
+          ? `${title.trim()} went to everyone in ${cls.gradeName ?? cls.className}.`
+          : `${title.trim()} went to ${student?.name}.`,
         [{ text: 'Done', onPress: () => router.back() }],
       );
     } catch (e: any) {
@@ -186,12 +200,19 @@ export default function NewTaskScreen() {
       <Field label="ASSIGN TO">
         <ChipRow
           items={[
-            { key: 'class', label: 'Whole class' },
+            { key: 'class', label: `Whole of ${cls?.gradeName ?? 'the grade'}` },
             { key: 'one', label: 'One student' },
           ]}
           selected={toClass ? 'class' : 'one'}
           onSelect={(k) => setToClass(k === 'class')}
         />
+        {/* Tasks are keyed by grade, not section -- a class task reaches 6-A,
+            6-B and 6-C alike. Naming the section here would be a lie. */}
+        {toClass && cls && (
+          <Text style={s.dueNote}>
+            Every section of {cls.gradeName ?? 'this grade'}, not just {cls.className}.
+          </Text>
+        )}
       </Field>
 
       {!toClass && (

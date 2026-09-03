@@ -86,7 +86,9 @@ export default function ParentDashboard({
               <QuestCard
                 title={overdue
                   ? `${fees.overdueCount} instalment${fees.overdueCount > 1 ? 's' : ''} overdue`
-                  : `${money(fees.nextDueAmount)} due next`}
+                  : fees.nextDueAmount != null
+                    ? `${money(fees.nextDueAmount)} due next`
+                    : `${money(fees.totalDue)} outstanding`}
                 subtitle={[fees.nextDueLabel, money(fees.totalDue) && `${money(fees.totalDue)} outstanding`]
                   .filter(Boolean).join(' · ')}
                 cta="View"
