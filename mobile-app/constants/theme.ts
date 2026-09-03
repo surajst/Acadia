@@ -84,6 +84,8 @@ export const T = {
   warnInk: '#B45309',
   dangerInk: '#B91C1C',
   infoInk: '#1D4ED8',
+  /** Readable brand weight for small text on brand50. */
+  brandInk: '#4338CA',
 
   r: 16,
   rSm: 14,

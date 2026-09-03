@@ -329,10 +329,11 @@ const styles = StyleSheet.create({
   saveBtnText: { color: T.surface, fontWeight: '600' },
   divider: { height: 1, backgroundColor: T.line, marginLeft: 16 },
   logoutButton: {
-    backgroundColor: T.dangerInk, padding: 16, borderRadius: 12,
+    backgroundColor: T.danger50, borderWidth: 1, borderColor: T.danger200,
+    padding: 16, borderRadius: 12,
     alignItems: 'center', marginTop: 16,
   },
-  logoutText: { color: T.danger, fontSize: 18, fontWeight: 'bold' },
+  logoutText: { color: T.dangerInk, fontSize: 18, fontWeight: 'bold' },
   modalOverlay: { flex: 1, backgroundColor: T.scrim, justifyContent: 'flex-end' },
   modalCard: { backgroundColor: T.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
   modalTitle: { fontSize: 16, fontWeight: '700', color: T.text, marginBottom: 12 },

@@ -50,17 +50,20 @@ function buildMockRecords(): AttendanceRecord[] {
 const MOCK_RECORDS = buildMockRecords();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+// Ink on its own 50 tint. These were dark-theme leftovers -- a near-black
+// green cell with mid-green digits -- and the token migration made the pairing
+// worse rather than better by turning the background into the ink step.
 const STATUS_COLOR: Record<AttendanceRecord['status'], string> = {
-  PRESENT: T.success,
-  ABSENT: T.danger,
-  LATE: T.warn,
-  HOLIDAY: T.text4,
-};
-
-const STATUS_BG: Record<AttendanceRecord['status'], string> = {
   PRESENT: T.successInk,
   ABSENT: T.dangerInk,
   LATE: T.warnInk,
+  HOLIDAY: T.text3,
+};
+
+const STATUS_BG: Record<AttendanceRecord['status'], string> = {
+  PRESENT: T.success50,
+  ABSENT: T.danger50,
+  LATE: T.warn50,
   HOLIDAY: T.surface,
 };
 

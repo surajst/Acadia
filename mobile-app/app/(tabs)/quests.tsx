@@ -161,16 +161,18 @@ const styles = StyleSheet.create({
   badgeText: {
     color: T.successInk,
     fontWeight: 'bold',
-    backgroundColor: T.successInk,
+    // Was successInk on successInk -- the same colour for text and background,
+    // so the label could not be seen at all.
+    backgroundColor: T.success50,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     overflow: 'hidden',
   },
   badgeTextCost: {
-    color: T.danger,
+    color: T.dangerInk,
     fontWeight: 'bold',
-    backgroundColor: T.dangerInk,
+    backgroundColor: T.danger50,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,

@@ -16,18 +16,21 @@ type AttendanceRecord = {
   status: 'PRESENT' | 'ABSENT' | 'TARDY' | 'LATE';
 };
 
+// Ink on its own 50 tint, matching the parent calendar. These were dark-theme
+// leftovers -- a near-black cell with mid-bright digits -- and the token
+// migration made the pairing worse by turning the background into the ink step.
 const STATUS_COLOR: Record<string, string> = {
-  PRESENT: T.success,
-  ABSENT: T.danger,
-  TARDY: T.warn,
-  LATE: T.warn,
-};
-
-const STATUS_BG: Record<string, string> = {
   PRESENT: T.successInk,
   ABSENT: T.dangerInk,
   TARDY: T.warnInk,
   LATE: T.warnInk,
+};
+
+const STATUS_BG: Record<string, string> = {
+  PRESENT: T.success50,
+  ABSENT: T.danger50,
+  TARDY: T.warn50,
+  LATE: T.warn50,
 };
 
 function getMonthLabel(dateStr: string): string {
@@ -127,10 +130,10 @@ export default function StudentAttendanceScreen() {
               <View style={styles.calendarGrid}>
                 {monthRecords.map(r => (
                   <View key={r.date} style={[styles.dayCell, { backgroundColor: STATUS_BG[r.status] || T.surface }]}>
-                    <Text style={[styles.dayNumber, { color: STATUS_COLOR[r.status] || T.surface }]}>
+                    <Text style={[styles.dayNumber, { color: STATUS_COLOR[r.status] || T.text3 }]}>
                       {getDayLabel(r.date)}
                     </Text>
-                    <Text style={[styles.dayStatus, { color: STATUS_COLOR[r.status] || T.surface }]}>
+                    <Text style={[styles.dayStatus, { color: STATUS_COLOR[r.status] || T.text3 }]}>
                       {r.status === 'PRESENT' ? '✓' : r.status === 'ABSENT' ? '✗' : r.status.charAt(0)}
                     </Text>
                   </View>

@@ -22,16 +22,18 @@ type Challenge = {
   taskStatus: string;
 };
 
+// One status family per type, ink on its own tint. The previous pairing was a
+// dark-theme leftover: a near-black badge with a mid-bright label.
 const TASK_TYPE_COLOR: Record<Challenge['taskType'], string> = {
-  HOMEWORK: '#3b82f6',
-  READING: '#a855f7',
-  PROJECT: T.warn,
+  HOMEWORK: T.infoInk,
+  READING: T.brandInk,
+  PROJECT: T.warnInk,
 };
 
 const TASK_TYPE_BG: Record<Challenge['taskType'], string> = {
-  HOMEWORK: '#1e3a8a',
-  READING: '#581c87',
-  PROJECT: T.warnInk,
+  HOMEWORK: T.info50,
+  READING: T.brand50,
+  PROJECT: T.warn50,
 };
 
 export default function ChallengesScreen() {
