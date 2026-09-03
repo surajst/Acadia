@@ -149,6 +149,7 @@ export function getStudentProgress(): Promise<ApiObject>;
 export function getStudentAttendance(): Promise<ApiObject>;
 export function getStudentTasks(): Promise<any[]>;
 export function getStudentSyllabus(): Promise<ApiObject>;
+export function claimQuest(questId: string): Promise<ApiObject>;
 export function getStudentTimetable(): Promise<ApiObject[]>;
 export function getStudentAnnouncements(): Promise<ApiObject[]>;
 export function getStudentPerformance(): Promise<ApiObject[]>;

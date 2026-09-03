@@ -8,7 +8,7 @@ import { getUnreadNotificationCount } from '../../services/api';
 import { startTrip, stopTrip, isTripActive } from '../../services/driverLocationTask';
 import { Stat, StatRow } from '../../components/ui/Stat';
 import NavCard from '../../components/ui/NavCard';
-import BirthdayCard, { isBirthday, turningAge } from '../../components/ui/BirthdayCard';
+import StudentDashboard from '../../components/StudentDashboard';
 import T from '../../constants/theme';
 
 interface ParentQuest {
@@ -104,6 +104,18 @@ export default function DashboardScreen() {
   const parentQuests = Array.isArray(data.parentQuests) ? data.parentQuests : [];
   const children = Array.isArray(data.children) ? data.children : [];
 
+  if (role === 'STUDENT') {
+    return (
+      <StudentDashboard
+        data={data}
+        schoolName={schoolName}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        refreshData={refreshData}
+      />
+    );
+  }
+
   return (
     <ScrollView
       style={styles.container}
@@ -120,14 +132,6 @@ export default function DashboardScreen() {
             )}
           </TouchableOpacity>
         </View>
-      )}
-
-      {role === 'STUDENT' && isBirthday(data.student?.dateOfBirth) && (
-        <BirthdayCard
-          firstName={data.student?.firstName}
-          schoolName={schoolName ?? undefined}
-          age={turningAge(data.student?.dateOfBirth)}
-        />
       )}
 
       <View style={styles.infoCard}>

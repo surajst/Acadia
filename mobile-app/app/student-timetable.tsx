@@ -12,8 +12,12 @@ import T from '@/constants/theme';
  * is why this reads from the section rather than from subject assignments.
  */
 
-const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-const label = (d: string) => d.charAt(0) + d.slice(1).toLowerCase();
+// The backend stores three-letter codes (MON..SAT), not full day names.
+const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const LABEL: Record<string, string> = {
+  MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday',
+  THU: 'Thursday', FRI: 'Friday', SAT: 'Saturday',
+};
 
 type Period = {
   id: string;
@@ -84,7 +88,7 @@ export default function StudentTimetableScreen() {
         byDay.map(({ day, periods }) => (
           <View key={day} style={s.dayBlock}>
             <View style={s.dayHeader}>
-              <Text style={s.dayName}>{label(day)}</Text>
+              <Text style={s.dayName}>{LABEL[day] ?? day}</Text>
               {day === today && <Text style={s.todayChip}>Today</Text>}
             </View>
 
