@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import LevelRing from './LevelRing';
+import ProgressRing from './ProgressRing';
 import T from '../../constants/theme';
 
 /**
@@ -75,7 +75,7 @@ export default function StudentHeader({
         accessible
         accessibilityLabel={`Level ${level}, ${pct} percent through. ${xpToNextLevel} XP to level ${level + 1}.`}
       >
-        <LevelRing level={level} pct={pct} />
+        <ProgressRing value={level} label="LVL" pct={pct} />
 
         <View style={{ flex: 1, minWidth: 0, gap: 9 }}>
           <View>

@@ -270,6 +270,27 @@ export const submitAssessmentScores = async (assessmentId, scores) => {
   return response.data;
 };
 
+// ─── Task creation (teacher) ───────────────────────────────────────────────
+// The web console has had this form since the beginning; the app could only
+// list what had already been assigned.
+
+export const createTeacherTask = async (payload) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/teacher/tasks/create`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const searchMyStudents = async (query) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/my-students`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { q: query ?? '' },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
 // ─── Verification queue (teacher) ──────────────────────────────────────────
 
 export const getTeacherQueue = async () => {

@@ -1,6 +1,7 @@
 package com.concept.teacher.app;
 
 import com.concept.shared.data.AttendanceRepository;
+import com.concept.common.GradeLevel;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.StudentRepository;
 import com.concept.assignment.data.SubjectAssignment;
@@ -60,6 +61,11 @@ public class TeacherService {
                         classData.put("id",           section.getId());
                         classData.put("className",    section.getGradeName() + " – " + section.getSectionName());
                         classData.put("subject",      assignment.getSubjectName());
+                        // The task form needs the numeric grade to assign to a
+                        // whole class; parsing it back out of "Grade 6 - A" on
+                        // the client would be guesswork.
+                        classData.put("gradeName",    section.getGradeName());
+                        classData.put("standard",     GradeLevel.parse(section.getGradeName()));
                         classData.put("studentCount", studentRepository.countByClassSection(section));
                         classData.put("status",       "active");
                         classData.put("isHomeClass",  assignment.isHomeClass());

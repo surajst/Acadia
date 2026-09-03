@@ -167,6 +167,9 @@ export function createAssessment(payload: ApiObject): Promise<ApiObject>;
 export function getAssessmentDetail(assessmentId: string): Promise<ApiObject>;
 export function submitAssessmentScores(assessmentId: string, scores: ApiObject[]): Promise<ApiObject>;
 
+export function createTeacherTask(payload: ApiObject): Promise<ApiObject>;
+export function searchMyStudents(query?: string): Promise<ApiObject[]>;
+
 export interface TeacherQueue {
   pendingSubmissions: ApiObject[];
   pendingProgress: ApiObject[];

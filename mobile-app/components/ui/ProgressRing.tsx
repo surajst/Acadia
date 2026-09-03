@@ -4,7 +4,9 @@ import Svg, { Circle } from 'react-native-svg';
 import T from '../../constants/theme';
 
 /**
- * The level ring on the student header.
+ * The ring on a gradient header: a big figure, a small label under it, and an
+ * arc showing how far through something you are. The student header uses it
+ * for scholar level; the teacher header for attendance marked today.
  *
  * A real stroked arc rather than the prototype's conic-gradient trick: a conic
  * gradient has no rounded cap and cannot animate a value, and react-native has
@@ -16,7 +18,12 @@ const STROKE = 7;
 const R = (SIZE - STROKE) / 2;
 const C = 2 * Math.PI * R;
 
-export default function LevelRing({ level, pct }: { level: number; pct: number }) {
+export default function ProgressRing({ value, label = 'LVL', pct, color = T.xpSchool }: {
+  value: number | string;
+  label?: string;
+  pct: number;
+  color?: string;
+}) {
   const clamped = Math.max(0, Math.min(100, pct));
 
   return (
@@ -28,7 +35,7 @@ export default function LevelRing({ level, pct }: { level: number; pct: number }
         />
         <Circle
           cx={SIZE / 2} cy={SIZE / 2} r={R}
-          stroke={T.xpSchool} strokeWidth={STROKE} fill="none"
+          stroke={color} strokeWidth={STROKE} fill="none"
           strokeDasharray={`${(C * clamped) / 100} ${C}`}
           strokeLinecap="round"
           // start at 12 o'clock rather than 3
@@ -36,8 +43,8 @@ export default function LevelRing({ level, pct }: { level: number; pct: number }
         />
       </Svg>
       <View style={s.inner} pointerEvents="none">
-        <Text style={s.level}>{level}</Text>
-        <Text style={s.lvl}>LVL</Text>
+        <Text style={s.value}>{value}</Text>
+        <Text style={s.label}>{label}</Text>
       </View>
     </View>
   );
@@ -50,6 +57,6 @@ const s = StyleSheet.create({
     borderRadius: (SIZE - STROKE * 2) / 2, backgroundColor: T.brandRing,
     alignItems: 'center', justifyContent: 'center',
   },
-  level: { fontSize: 20, fontWeight: '800', color: T.onBrand, lineHeight: 23 },
-  lvl: { fontSize: 8, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.6)' },
+  value: { fontSize: 20, fontWeight: '800', color: T.onBrand, lineHeight: 23 },
+  label: { fontSize: 8, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.6)' },
 });

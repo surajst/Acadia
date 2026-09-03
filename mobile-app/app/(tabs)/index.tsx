@@ -9,6 +9,7 @@ import { startTrip, stopTrip, isTripActive } from '../../services/driverLocation
 import { Stat, StatRow } from '../../components/ui/Stat';
 import NavCard from '../../components/ui/NavCard';
 import StudentDashboard from '../../components/StudentDashboard';
+import TeacherDashboard from '../../components/TeacherDashboard';
 import T from '../../constants/theme';
 
 interface ParentQuest {
@@ -103,6 +104,19 @@ export default function DashboardScreen() {
   const pendingReviews = (data.queue?.pendingSubmissions?.length ?? 0) + (data.queue?.pendingProgress?.length ?? 0);
   const parentQuests = Array.isArray(data.parentQuests) ? data.parentQuests : [];
   const children = Array.isArray(data.children) ? data.children : [];
+
+  if (role === 'TEACHER') {
+    return (
+      <TeacherDashboard
+        data={data}
+        firstName={firstName}
+        schoolName={schoolName}
+        unreadCount={unreadCount}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      />
+    );
+  }
 
   if (role === 'STUDENT') {
     return (
