@@ -48,6 +48,24 @@ public class MobileStudentController {
         return ResponseEntity.ok(studentService.mobileSyllabus(authentication));
     }
 
+    @GetMapping("/timetable")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<?> timetable(Authentication authentication) {
+        return ResponseEntity.ok(studentService.timetable(authentication));
+    }
+
+    @GetMapping("/announcements")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<?> announcements(Authentication authentication) {
+        return ResponseEntity.ok(studentService.announcements(authentication));
+    }
+
+    @GetMapping("/performance")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<?> performance(Authentication authentication) {
+        return ResponseEntity.ok(studentService.subjectPerformance(authentication));
+    }
+
     @ExceptionHandler(StudentException.class)
     public ResponseEntity<?> handle(StudentException e) {
         return ResponseEntity.status(e.status()).body(Map.of("error", e.getMessage()));

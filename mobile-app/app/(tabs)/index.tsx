@@ -8,6 +8,7 @@ import { getUnreadNotificationCount } from '../../services/api';
 import { startTrip, stopTrip, isTripActive } from '../../services/driverLocationTask';
 import { Stat, StatRow } from '../../components/ui/Stat';
 import NavCard from '../../components/ui/NavCard';
+import BirthdayCard, { isBirthday, turningAge } from '../../components/ui/BirthdayCard';
 import T from '../../constants/theme';
 
 interface ParentQuest {
@@ -119,6 +120,14 @@ export default function DashboardScreen() {
             )}
           </TouchableOpacity>
         </View>
+      )}
+
+      {role === 'STUDENT' && isBirthday(data.student?.dateOfBirth) && (
+        <BirthdayCard
+          firstName={data.student?.firstName}
+          schoolName={schoolName ?? undefined}
+          age={turningAge(data.student?.dateOfBirth)}
+        />
       )}
 
       <View style={styles.infoCard}>
@@ -352,6 +361,30 @@ export default function DashboardScreen() {
               icon={{ ios: 'calendar', android: 'event', web: 'event' }}
               title="Attendance"
               subtitle="Your record"
+            />
+            <NavCard
+              to="/student-timetable"
+              icon={{ ios: 'clock', android: 'schedule', web: 'schedule' }}
+              title="Timetable"
+              subtitle="Your class week"
+            />
+            <NavCard
+              to="/student-results"
+              icon={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
+              title="My Results"
+              subtitle="Marks by subject"
+            />
+            <NavCard
+              to="/student-news"
+              icon={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }}
+              title="School News"
+              subtitle="Notices for you"
+            />
+            <NavCard
+              to="/marketplace"
+              icon={{ ios: 'gift', android: 'redeem', web: 'redeem' }}
+              title="Rewards"
+              subtitle="Spend your XP"
             />
           </View>
         </View>
