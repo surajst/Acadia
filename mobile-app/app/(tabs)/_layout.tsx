@@ -184,6 +184,10 @@ export default function TabLayout() {
           }}
         />
 
+        {/* Parents had eight tabs and students six, so labels truncated to
+            "Attend", "Perfor", "Messa". These five still exist as routes and
+            are reached from the dashboard's Quick Actions, the same way the
+            teacher's My Classes, Tasks, Gradebook and Timetable already are. */}
         <Tabs.Screen
           name="syllabus"
           options={{
@@ -199,7 +203,7 @@ export default function TabLayout() {
           name="student-attendance"
           options={{
             title: 'Attendance',
-            href: isStudent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor={color} size={28} />
             ),
@@ -221,7 +225,7 @@ export default function TabLayout() {
           name="quests"
           options={{
             title: 'Quests',
-            href: isStudent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'star', android: 'star', web: 'star' }} tintColor={color} size={28} />
             ),
@@ -243,7 +247,7 @@ export default function TabLayout() {
           name="performance"
           options={{
             title: 'Performance',
-            href: isParent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }} tintColor={color} size={28} />
             ),
@@ -281,7 +285,7 @@ export default function TabLayout() {
           name="bus"
           options={{
             title: 'Bus',
-            href: isParent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }} tintColor={color} size={28} />
             ),
@@ -292,7 +296,7 @@ export default function TabLayout() {
           name="announcements"
           options={{
             title: 'News',
-            href: isParent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }} tintColor={color} size={28} />
             ),

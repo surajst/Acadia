@@ -308,6 +308,55 @@ export default function DashboardScreen() {
         </View>
       )}
 
+      {/* The screens that came out of the tab bar. Same treatment the teacher
+          role has used since its own bar was cut from seven items to three. */}
+      {role === 'PARENT' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.cardGrid}>
+            <NavCard
+              to="/performance"
+              icon={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
+              title="Performance"
+              subtitle="Marks and report cards"
+            />
+            <NavCard
+              to="/bus"
+              icon={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }}
+              title="Bus"
+              subtitle="Live pickup status"
+            />
+            <NavCard
+              to="/announcements"
+              icon={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }}
+              title="News"
+              subtitle="From your school"
+            />
+          </View>
+        </View>
+      )}
+
+      {role === 'STUDENT' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.cardGrid}>
+            <NavCard
+              to="/quests"
+              icon={{ ios: 'star', android: 'star', web: 'star' }}
+              title="Quests"
+              subtitle={parentQuests.length > 0 ? `${parentQuests.length} to claim` : 'Set by your family'}
+              urgent={parentQuests.length > 0}
+            />
+            <NavCard
+              to="/student-attendance"
+              icon={{ ios: 'calendar', android: 'event', web: 'event' }}
+              title="Attendance"
+              subtitle="Your record"
+            />
+          </View>
+        </View>
+      )}
+
       {/* What their teacher recognised them for. Directly under the XP tiles
           on purpose: the number above is meaningless on its own, and this is
           the part a parent actually reads. Hidden entirely when there is
