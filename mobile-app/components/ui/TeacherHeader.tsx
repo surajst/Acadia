@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
+import GradientHeader, { HeaderCard, headerStyles as h } from './GradientHeader';
 import ProgressRing from './ProgressRing';
 import T from '../../constants/theme';
 
 /**
- * The teacher home header, built on the same chrome as the student's.
+ * The teacher home header, on the same chrome as the student's.
  *
  * Where a student's ring asks "how far through my level am I", a teacher's
  * asks the only question that matters before the first bell: how much of
@@ -23,14 +23,9 @@ type Props = {
   onBellPress?: () => void;
 };
 
-const dateLine = () =>
-  new Date()
-    .toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })
-    .toUpperCase();
-
 const greetingFor = (name?: string) => {
-  const h = new Date().getHours();
-  const part = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const hour = new Date().getHours();
+  const part = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   return `${part}, ${name || 'Educator'}`;
 };
 
@@ -48,22 +43,10 @@ export default function TeacherHeader({
       : `${left} class${left > 1 ? 'es' : ''} still to mark`;
 
   return (
-    <LinearGradient
-      colors={[T.brand, T.brand700]}
-      start={{ x: 0.1, y: 0 }}
-      end={{ x: 0.9, y: 1 }}
-      style={s.header}
-    >
-      <View style={s.greetRow}>
-        <View style={s.avatar}>
-          <Text style={s.avatarText}>{(firstName ?? '?').charAt(0).toUpperCase()}</Text>
-        </View>
-
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={s.date}>{dateLine()}</Text>
-          <Text style={s.greeting} numberOfLines={1}>{greetingFor(firstName)}</Text>
-        </View>
-
+    <GradientHeader
+      initial={firstName}
+      greeting={greetingFor(firstName)}
+      trailing={
         <TouchableOpacity
           style={s.bell}
           onPress={onBellPress}
@@ -82,13 +65,9 @@ export default function TeacherHeader({
             </View>
           )}
         </TouchableOpacity>
-      </View>
-
-      <View
-        style={s.card}
-        accessible
-        accessibilityLabel={`Attendance: ${marked} of ${total} classes marked. ${subtitle}.`}
-      >
+      }
+    >
+      <HeaderCard label={`Attendance: ${marked} of ${total} classes marked. ${subtitle}.`}>
         <ProgressRing
           value={marked}
           label={total > 0 ? `OF ${total}` : '—'}
@@ -98,38 +77,22 @@ export default function TeacherHeader({
 
         <View style={{ flex: 1, minWidth: 0, gap: 9 }}>
           <View>
-            <Text style={s.title}>Today’s register</Text>
-            <Text style={s.sub}>{subtitle}</Text>
+            <Text style={h.title}>Today’s register</Text>
+            <Text style={h.sub}>{subtitle}</Text>
           </View>
 
-          <View style={s.bar}>
-            <View style={[s.barFill, { width: `${pct}%`, backgroundColor: allDone ? T.xpParent : T.xpSchool }]} />
+          <View style={h.bar}>
+            <View style={[h.barFill, { width: `${pct}%`, backgroundColor: allDone ? T.xpParent : T.xpSchool }]} />
           </View>
 
-          <Text style={s.school} numberOfLines={1}>{schoolName || 'Your school'}</Text>
+          <Text style={h.legendText} numberOfLines={1}>{schoolName || 'Your school'}</Text>
         </View>
-      </View>
-    </LinearGradient>
+      </HeaderCard>
+    </GradientHeader>
   );
 }
 
 const s = StyleSheet.create({
-  header: {
-    paddingTop: 14, paddingHorizontal: 20, paddingBottom: 22,
-    borderBottomLeftRadius: 30, borderBottomRightRadius: 30,
-  },
-
-  greetRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: {
-    width: 44, height: 44, borderRadius: 15,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { fontSize: 17, fontWeight: '800', color: T.onBrand },
-  date: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, color: 'rgba(255,255,255,0.62)' },
-  greeting: { fontSize: 21, fontWeight: '800', letterSpacing: -0.4, color: T.onBrand, marginTop: 2 },
-
   bell: {
     width: 38, height: 38, borderRadius: T.pill,
     alignItems: 'center', justifyContent: 'center',
@@ -142,21 +105,4 @@ const s = StyleSheet.create({
     backgroundColor: T.danger, alignItems: 'center', justifyContent: 'center',
   },
   badgeText: { fontSize: 10.5, fontWeight: '800', color: '#FFFFFF' },
-
-  card: {
-    flexDirection: 'row', alignItems: 'center', gap: 16,
-    padding: 16, borderRadius: 22, marginTop: 16,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
-  },
-  title: { fontSize: 15, fontWeight: '700', color: T.onBrand },
-  sub: { fontSize: 12.5, fontWeight: '500', color: 'rgba(255,255,255,0.66)', marginTop: 1 },
-
-  bar: {
-    height: 7, borderRadius: T.pill,
-    backgroundColor: 'rgba(255,255,255,0.18)', overflow: 'hidden',
-  },
-  barFill: { height: 7, borderRadius: T.pill },
-
-  school: { fontSize: 11.5, fontWeight: '600', color: 'rgba(255,255,255,0.8)' },
 });

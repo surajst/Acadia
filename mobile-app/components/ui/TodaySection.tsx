@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView, SymbolViewProps } from 'expo-symbols';
 import T from '../../constants/theme';
 
 /**
@@ -53,6 +53,37 @@ export function QuestCard({ title, subtitle, cta, onPress, busy }: {
       </View>
       <View style={[s.questCta, done && s.questCtaDone]}>
         <Text style={s.questCtaText}>{busy ? '…' : cta}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+/**
+ * Same row as the next-class card, but led by an icon instead of a period
+ * badge -- for facts that have no period attached, like whether a child is in
+ * school today.
+ */
+export function InfoCard({ icon, tint, title, subtitle, onPress }: {
+  icon: SymbolViewProps['name'];
+  tint?: string;
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      style={s.next}
+      onPress={onPress}
+      disabled={!onPress}
+      activeOpacity={0.85}
+      accessibilityRole={onPress ? 'button' : undefined}
+    >
+      <View style={[s.nextIcon, tint ? { backgroundColor: tint } : null]}>
+        <SymbolView name={icon} tintColor={T.brand} size={18} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={s.nextTitle}>{title}</Text>
+        {!!subtitle && <Text style={s.nextSub}>{subtitle}</Text>}
       </View>
     </TouchableOpacity>
   );

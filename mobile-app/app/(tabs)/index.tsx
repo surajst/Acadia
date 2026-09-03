@@ -10,6 +10,7 @@ import { Stat, StatRow } from '../../components/ui/Stat';
 import NavCard from '../../components/ui/NavCard';
 import StudentDashboard from '../../components/StudentDashboard';
 import TeacherDashboard from '../../components/TeacherDashboard';
+import ParentDashboard from '../../components/ParentDashboard';
 import T from '../../constants/theme';
 
 interface ParentQuest {
@@ -114,6 +115,19 @@ export default function DashboardScreen() {
         unreadCount={unreadCount}
         refreshing={refreshing}
         onRefresh={onRefresh}
+      />
+    );
+  }
+
+  if (role === 'PARENT') {
+    return (
+      <ParentDashboard
+        data={data}
+        parentFirstName={data.parent?.firstName ?? firstName}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        selectedChildId={selectedChildId}
+        selectChild={selectChild}
       />
     );
   }
