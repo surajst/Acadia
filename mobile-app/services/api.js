@@ -1,7 +1,12 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+// expo-file-system 56 moved the whole classic API behind /legacy: the package
+// root now exports only File, Directory and Paths. `FileSystem.documentDirectory`
+// was therefore undefined and `FileSystem.downloadAsync` was not a function, so
+// downloadReportCard threw for every parent who tried it. Importing from
+// /legacy restores it; porting to the File/Paths API is a separate change.
+import * as FileSystem from 'expo-file-system/legacy';
 
 export function getApiHost() {
   const envHost = process.env.EXPO_PUBLIC_API_HOST;
