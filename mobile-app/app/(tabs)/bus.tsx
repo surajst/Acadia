@@ -44,7 +44,6 @@ export default function BusScreen() {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only poll
   }, []);
 
   const lastSeenText = () => {

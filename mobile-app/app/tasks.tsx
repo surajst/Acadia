@@ -30,8 +30,10 @@ const TYPE_BG: Record<string, string> = {
 
 export default function TasksScreen() {
   const { userToken } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  // See teacher.tsx: `null` is "not fetched yet", so loading is derived from the
+  // data rather than stored in a flag the effect had to correct on first render.
+  const [tasks, setTasks] = useState<Task[] | null>(null);
+  const loading = Boolean(userToken) && tasks === null;
 
   const BASE_HOST = getApiHost();
 
@@ -47,13 +49,10 @@ export default function TasksScreen() {
       } catch (e) {
         console.error('Failed to fetch tasks:', e);
         setTasks([]);
-      } finally {
-        setLoading(false);
       }
     };
     if (userToken) fetchTasks();
-    else setLoading(false);
-  }, [userToken]);
+  }, [userToken, BASE_HOST]);
 
   return (
     <View style={styles.root}>
@@ -73,9 +72,9 @@ export default function TasksScreen() {
 
       <View style={styles.sectionLabelRow}>
         <Text style={styles.sectionLabel}>ALL TASKS</Text>
-        {tasks.length > 0 && (
+        {(tasks ?? []).length > 0 && (
           <View style={styles.sectionBadge}>
-            <Text style={styles.sectionBadgeText}>{tasks.length} Tasks</Text>
+            <Text style={styles.sectionBadgeText}>{(tasks ?? []).length} Tasks</Text>
           </View>
         )}
       </View>
@@ -85,7 +84,7 @@ export default function TasksScreen() {
           <ActivityIndicator size="large" color={T.brand} />
           <Text style={styles.loadingText}>Loading tasks...</Text>
         </View>
-      ) : tasks.length === 0 ? (
+      ) : (tasks ?? []).length === 0 ? (
         <View style={styles.center}>
           <SymbolView
             name={{ ios: 'checklist', android: 'checklist', web: 'checklist' }}
@@ -101,7 +100,7 @@ export default function TasksScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {tasks.map((task) => {
+          {(tasks ?? []).map((task) => {
             const type = task.taskType ?? 'HOMEWORK';
             const color = TYPE_COLORS[type] ?? T.brand;
             const bg = TYPE_BG[type] ?? T.brand50;

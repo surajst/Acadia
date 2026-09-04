@@ -31,12 +31,21 @@ module.exports = defineConfig([
       // a pattern that is intentional and consistent across the app.
       'import/no-named-as-default': 'off',
 
-      // A warning, not an error, and deliberately still on. Sixteen screens
-      // share one shape: `useEffect(() => { fetchX(); }, [])`, where fetchX
-      // opens with a synchronous setLoading(true). The rule is right -- that is
-      // an extra render pass on every mount -- but the fix is to seed the state
-      // as `useState(true)` and restructure the loader on all sixteen, which is
-      // a refactor, not a lint cleanup. Left visible so it does not get lost.
+      // A warning, not an error, and deliberately still on.
+      //
+      // An earlier version of this comment said the fix was to seed the flag as
+      // `useState(true)` and drop the synchronous `setLoading(true)`. That was
+      // wrong, and testing it is what showed why: removing the synchronous call
+      // from challenges.tsx did not silence the rule. It is not objecting to a
+      // sync setState inside an async loader -- it objects to an effect calling
+      // anything that eventually sets state, which is fetch-on-mount itself.
+      //
+      // So the remaining 13 cannot be satisfied without moving data loading out
+      // of effects altogether (a query library, or route loaders). That is a
+      // real decision to make, not a cleanup, so it stays a warning until it is
+      // made. The four that were genuinely fixable -- two flags an effect had to
+      // correct on the first frame, one state copy of a value already in props,
+      // and one deliberate hydration probe -- are done.
       'react-hooks/set-state-in-effect': 'warn',
     },
   },
