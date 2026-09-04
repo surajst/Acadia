@@ -53,9 +53,9 @@ export default function TimetableScreen() {
               <Text style={styles.periodClass}>{p.className} · {p.roomNumber || ''}</Text>
             </View>
             {p.attendanceMarked ? (
-              <View style={[styles.badge, { backgroundColor: T.success50 }]}><Text style={[styles.badgeText, { color: T.success }]}>Marked</Text></View>
+              <View style={[styles.badge, { backgroundColor: T.success50 }]}><Text style={[styles.badgeText, { color: T.successInk }]}>Marked</Text></View>
             ) : (
-              <View style={[styles.badge, { backgroundColor: T.warn50 }]}><Text style={[styles.badgeText, { color: T.warn }]}>Pending</Text></View>
+              <View style={[styles.badge, { backgroundColor: T.warn50 }]}><Text style={[styles.badgeText, { color: T.warnInk }]}>Pending</Text></View>
             )}
           </View>
         ))

@@ -298,7 +298,7 @@ const s = StyleSheet.create({
 
   labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   label: { fontSize: 11, fontWeight: '800', letterSpacing: 1, color: T.text3 },
-  hint: { fontSize: 11, fontWeight: '500', color: T.text4 },
+  hint: { fontSize: 11, fontWeight: '500', color: T.text3 },
 
   input: {
     minHeight: 46, borderRadius: 14,

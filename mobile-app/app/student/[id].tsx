@@ -269,7 +269,7 @@ export default function StudentProfileScreen() {
         <View style={s.statRow}>
           <View style={s.stat}>
             <Text style={s.statLabel}>PRESENT</Text>
-            <Text style={[s.statValue, { color: T.success }]}>{profile.presentCount ?? 0}</Text>
+            <Text style={[s.statValue, { color: T.successInk }]}>{profile.presentCount ?? 0}</Text>
           </View>
           <View style={s.stat}>
             <Text style={s.statLabel}>ABSENT</Text>
@@ -334,7 +334,7 @@ const s = StyleSheet.create({
   awardLabel: { fontSize: 13.5, fontWeight: '600', color: T.text },
   awardPoints: { color: T.brand, fontWeight: '700' },
   awardReason: { fontSize: 12.5, color: T.text2, marginTop: 2 },
-  awardMeta: { fontSize: 11, color: T.text4, marginTop: 2 },
+  awardMeta: { fontSize: 11, color: T.text3, marginTop: 2 },
 
   statRow: { flexDirection: 'row', gap: 10 },
   stat: { flex: 1, backgroundColor: T.surface2, borderWidth: 1, borderColor: T.line, borderRadius: T.rXs, padding: 11 },

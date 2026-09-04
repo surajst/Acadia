@@ -156,10 +156,10 @@ const s = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '600', color: T.text },
   points: { color: T.brand, fontWeight: '700' },
   reason: { fontSize: 13, color: T.text2, marginTop: 2, lineHeight: 18 },
-  meta: { fontSize: 11.5, color: T.text4, marginTop: 3 },
+  meta: { fontSize: 11.5, color: T.text3, marginTop: 3 },
 
   emptyTitle: { fontSize: 15, fontWeight: '700', color: T.text, marginBottom: 4 },
   emptyBody: { fontSize: 13.5, color: T.text3, lineHeight: 20 },
 
-  footnote: { fontSize: 11, color: T.text4, textAlign: 'center' },
+  footnote: { fontSize: 11, color: T.text3, textAlign: 'center' },
 });

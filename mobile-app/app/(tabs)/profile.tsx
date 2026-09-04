@@ -73,7 +73,7 @@ export default function ProfileScreen() {
     try {
       await setPreferredLanguage(code);
       setPreferredLanguageState(code);
-    } catch (e) {
+    } catch {
       Alert.alert('Language', 'Could not save your language preference.');
     } finally {
       setSavingLanguage(false);
@@ -106,7 +106,7 @@ export default function ProfileScreen() {
       await AsyncStorage.setItem('userLastName', editLast.trim());
       setProfile(prev => prev ? { ...prev, firstName: editFirst.trim(), lastName: editLast.trim() } : prev);
       setEditing(false);
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'Could not save changes.');
     } finally {
       setSaving(false);

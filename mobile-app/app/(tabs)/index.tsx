@@ -74,7 +74,7 @@ export default function DashboardScreen() {
       try {
         const count = await getUnreadNotificationCount();
         setUnreadCount(count);
-      } catch (e) {
+      } catch {
         setUnreadCount(0);
       }
     }
@@ -261,7 +261,7 @@ export default function DashboardScreen() {
 
           {Array.isArray(data.timetable) && data.timetable.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Today's Schedule</Text>
+              <Text style={styles.sectionTitle}>Today’s Schedule</Text>
               {data.timetable.map((period: any) => (
                 <View key={period.id} style={styles.periodItem}>
                   <View style={[styles.periodTimeBadge, { backgroundColor: period.attendanceMarked ? T.success50 : T.warn50 }]}>
@@ -290,7 +290,7 @@ export default function DashboardScreen() {
                 <View key={i} style={styles.listItem}>
                   <Text style={styles.itemTitle}>{task.title ?? task.taskDescription ?? 'Task'}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: T.warn50 }]}>
-                    <Text style={{ color: T.warn, fontSize: 12, fontWeight: '600' }}>Pending</Text>
+                    <Text style={{ color: T.warnInk, fontSize: 12, fontWeight: '600' }}>Pending</Text>
                   </View>
                 </View>
               ))}
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   subGreeting: { color: T.text3, fontSize: 16, marginTop: 4 },
   alertCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.warn50, borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: T.warn50, gap: 8 },
   alertDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: T.warn },
-  alertText: { color: T.warn, fontSize: 13, flex: 1 },
+  alertText: { color: T.warnInk, fontSize: 13, flex: 1 },
   levelCard: { backgroundColor: T.surface, padding: 20, borderRadius: 16, marginBottom: 24 },
   levelTitle: { color: T.text, fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
   progressBarBg: { height: 8, backgroundColor: T.line, borderRadius: 4, marginBottom: 8 },
@@ -560,5 +560,5 @@ const awardStyles = StyleSheet.create({
   label: { fontSize: 13.5, fontWeight: '600', color: T.text },
   points: { color: T.brand, fontWeight: '700' },
   reason: { fontSize: 12.5, color: T.text2, marginTop: 2 },
-  meta: { fontSize: 11, color: T.text4, marginTop: 2 },
+  meta: { fontSize: 11, color: T.text3, marginTop: 2 },
 });

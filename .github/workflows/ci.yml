@@ -27,6 +27,43 @@ jobs:
         working-directory: backend
         run: mvn -B test -Dtest=LayeringArchitectureTest
 
+  # Until now nothing in CI looked at mobile-app at all — no typecheck, no lint,
+  # no contrast check — which is why a token codemod that put dark *background*
+  # values onto *ink* tokens shipped: attendance cells at 1.45:1, and one badge
+  # with the same token for text and background. It runs independently of the
+  # backend jobs so app-only PRs get an answer in under a minute.
+  mobile-app:
+    name: mobile-app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: mobile-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Contrast gate
+        run: npm run check:contrast
+
+      # Errors block. The 29 remaining warnings are capped by --max-warnings so
+      # the backlog cannot quietly grow back; lower that number as they go, and
+      # never raise it.
+      - name: Lint
+        run: npm run lint
+
   build-and-test:
     name: build-and-test
     needs: enforce-architecture

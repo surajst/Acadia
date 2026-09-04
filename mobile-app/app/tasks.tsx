@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/context/AuthContext';
 import { getApiHost } from '../services/api';
@@ -67,7 +67,7 @@ export default function TasksScreen() {
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>My Tasks</Text>
-          <Text style={styles.headerSubtitle}>Tasks you've assigned to students</Text>
+          <Text style={styles.headerSubtitle}>Tasks you’ve assigned to students</Text>
         </View>
       </View>
 

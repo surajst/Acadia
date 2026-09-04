@@ -20,6 +20,10 @@ const POLL_INTERVAL_MS = 20000;
 export default function BusScreen() {
   const [location, setLocation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  // "Last seen 3 min ago" is a clock reading, so it belongs in state that ticks
+  // rather than a Date.now() call during render -- which is impure, and left the
+  // label frozen at whatever it said when the screen first painted.
+  const [now, setNow] = useState(() => Date.now());
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = async () => {
@@ -30,6 +34,7 @@ export default function BusScreen() {
       console.log('Failed to fetch bus location:', e);
     } finally {
       setLoading(false);
+      setNow(Date.now());
     }
   };
 
@@ -39,11 +44,12 @@ export default function BusScreen() {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only poll
   }, []);
 
   const lastSeenText = () => {
     if (!location?.lastPingAt) return 'No location shared yet';
-    const minutesAgo = Math.round((Date.now() - new Date(location.lastPingAt).getTime()) / 60000);
+    const minutesAgo = Math.round((now - new Date(location.lastPingAt).getTime()) / 60000);
     if (minutesAgo < 1) return 'Last seen just now';
     return `Last seen ${minutesAgo} min ago`;
   };
@@ -64,7 +70,7 @@ export default function BusScreen() {
         <ActivityIndicator size="large" color={T.brand} style={{ marginTop: 40 }} />
       ) : !location?.assigned ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No bus route assigned yet. Ask your school admin to link your child's class to a bus route.</Text>
+          <Text style={styles.emptyText}>No bus route assigned yet. Ask your school admin to link your child’s class to a bus route.</Text>
         </View>
       ) : (
         <>
@@ -126,6 +132,6 @@ const styles = StyleSheet.create({
   statusRoute: { color: T.text, fontSize: 16, fontWeight: '700' },
   statusText: { color: T.text3, fontSize: 14, marginTop: 6 },
   statusCoords: { color: T.text3, fontSize: 12, marginTop: 6, fontVariant: ['tabular-nums'] },
-  webNotice: { color: T.warn, fontSize: 12, marginTop: 12 },
+  webNotice: { color: T.warnInk, fontSize: 12, marginTop: 12 },
   map: { flex: 1 },
 });

@@ -2,8 +2,7 @@ import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
   TouchableOpacity, ActivityIndicator,
 } from 'react-native';
-import { useContext, useState, useEffect, useCallback } from 'react';
-import { DataContext } from './_layout';
+import { useState, useEffect, useCallback } from 'react';
 import { getStudentSyllabus, getSubjects } from '../../services/api';
 import T from '../../constants/theme';
 
@@ -21,7 +20,6 @@ interface Topic {
 const FALLBACK_ACCENTS = [T.success, T.warn, '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
 
 export default function SyllabusScreen() {
-  const { role } = useContext(DataContext);
   const [refreshing, setRefreshing]       = useState(false);
   const [activeSubject, setActiveSubject] = useState('All');
   const [topics, setTopics]               = useState<Topic[]>([]);
@@ -209,14 +207,14 @@ const styles = StyleSheet.create({
                         alignItems: 'center', backgroundColor: T.bg },
   indicatorDone:      { borderColor: T.success, backgroundColor: 'rgba(34,197,94,0.15)' },
   indicatorText:      { color: T.text3, fontSize: 11, fontWeight: 'bold' },
-  indicatorTextDone:  { color: T.success, fontSize: 14 },
+  indicatorTextDone:  { color: T.successInk, fontSize: 14 },
   topicTextContainer: { flex: 1 },
   itemTitle:          { color: T.text, fontSize: 15, fontWeight: '600', marginBottom: 3 },
   itemSubtitle:       { color: T.text3, fontSize: 13 },
   doneBadge:          { backgroundColor: 'rgba(34,197,94,0.15)', borderRadius: 8,
                         paddingHorizontal: 8, paddingVertical: 3,
                         borderWidth: 1, borderColor: 'rgba(34,197,94,0.3)' },
-  doneBadgeText:      { color: T.success, fontSize: 11, fontWeight: '700' },
+  doneBadgeText:      { color: T.successInk, fontSize: 11, fontWeight: '700' },
   emptyCard:          { backgroundColor: T.surface, padding: 16, borderRadius: 12,
                         borderWidth: 1, borderColor: T.line,
                         justifyContent: 'center', alignItems: 'center', height: 90 },

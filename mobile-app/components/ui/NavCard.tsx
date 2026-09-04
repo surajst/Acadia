@@ -51,5 +51,5 @@ const s = StyleSheet.create({
   iconRow: { marginBottom: T.space.md },
   title: { ...T.type.label, color: T.text },
   subtitle: { ...T.type.caption, color: T.text3, marginTop: 2 },
-  subtitleUrgent: { color: T.warn, fontWeight: '600' },
+  subtitleUrgent: { color: T.warnInk, fontWeight: '600' },
 });

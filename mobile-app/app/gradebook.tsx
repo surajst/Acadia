@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
-import { useAuth } from '@/context/AuthContext';
 import EmptyState from '@/components/ui/EmptyState';
 import {
   getTeacherClasses,
@@ -13,7 +12,6 @@ import {
 import T from '../constants/theme';
 
 export default function GradebookScreen() {
-  const { userToken } = useAuth();
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
   const [assessments, setAssessments] = useState<any[]>([]);
@@ -38,23 +36,10 @@ export default function GradebookScreen() {
     })();
   }, []);
 
-  const loadAssessments = useCallback(async (classSectionId: string) => {
-    try {
-      const list = await getAssessmentsForClass(classSectionId);
-      setAssessments(list);
-      setSelectedAssessment(null);
-      setDetail(null);
-      if (list.length > 0) openAssessment((list[0] as any).id);
-    } catch (e) {
-      console.error('Failed to fetch assessments:', e);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (selectedClass) loadAssessments(selectedClass.id);
-  }, [selectedClass, loadAssessments]);
-
-  const openAssessment = async (assessmentId: string) => {
+  // Declared before loadAssessments, which calls it. Read the other way round
+  // the reference was to whichever openAssessment existed on the first render,
+  // so it would not have picked up later changes to this function.
+  const openAssessment = useCallback(async (assessmentId: string) => {
     setSelectedAssessment(assessmentId);
     try {
       const d: any = await getAssessmentDetail(assessmentId);
@@ -65,7 +50,23 @@ export default function GradebookScreen() {
     } catch (e) {
       console.error('Failed to fetch assessment detail:', e);
     }
-  };
+  }, []);
+
+  const loadAssessments = useCallback(async (classSectionId: string) => {
+    try {
+      const list = await getAssessmentsForClass(classSectionId);
+      setAssessments(list);
+      setSelectedAssessment(null);
+      setDetail(null);
+      if (list.length > 0) openAssessment((list[0] as any).id);
+    } catch (e) {
+      console.error('Failed to fetch assessments:', e);
+    }
+  }, [openAssessment]);
+
+  useEffect(() => {
+    if (selectedClass) loadAssessments(selectedClass.id);
+  }, [selectedClass, loadAssessments]);
 
   const handleCreateAssessment = async () => {
     if (!selectedClass || !newTitle.trim()) return;
@@ -81,7 +82,7 @@ export default function GradebookScreen() {
       setNewTitle('');
       await loadAssessments(selectedClass.id);
       openAssessment(created.id);
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'Could not create assessment.');
     }
   };
@@ -95,7 +96,7 @@ export default function GradebookScreen() {
         .map(([studentId, v]) => ({ studentId, score: parseInt(v, 10) }));
       await submitAssessmentScores(selectedAssessment, payload);
       Alert.alert('Saved', 'Scores saved successfully.');
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'Could not save scores.');
     } finally {
       setSaving(false);

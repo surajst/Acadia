@@ -43,8 +43,18 @@ export const T = {
 
   text: '#3A3742',
   text2: '#5C5866',
-  text3: '#84808F',
-  /** Decoration only -- never a label a user has to read. */
+  /**
+   * The muted label weight, and the busiest token in the app -- ~120 uses. The
+   * handoff's #84808F was 3.66:1 on `bg`, under the 4.5:1 floor, so every
+   * caption in the product was failing AA at once. This is the same hue moved
+   * just far enough to clear it: 4.60:1 on bg, 4.82:1 on surface.
+   */
+  text3: '#74707D',
+  /**
+   * Decoration only -- an icon tint or a divider glyph, never a label a user
+   * has to read. At 2.83:1 it cannot carry text, and scripts/check-contrast.mjs
+   * fails the build if it is used as a `color` again.
+   */
   text4: '#9B98A3',
 
   brand: '#5B47D6',
@@ -61,7 +71,7 @@ export const T = {
    */
   onBrand: '#FFFFFF',
   onBrandMuted: '#E0E7FF',
-  onBrandFaint: '#C7D2FE',
+  onBrandFaint: '#D0DBFF',
 
   success: '#3E9E6B',
   success50: '#ECFDF5',
