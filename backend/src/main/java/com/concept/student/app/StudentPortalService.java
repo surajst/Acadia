@@ -109,7 +109,8 @@ public class StudentPortalService {
             availableSkills = List.of(skill1, skill2);
         }
 
-        List<RewardItem> rewardInventory = rewardItemRepository.findAll();
+        // findAll() here listed every school's reward items to every student.
+        List<RewardItem> rewardInventory = rewardItemRepository.findByTenantId(student.getTenantId());
         if (rewardInventory == null) rewardInventory = List.of();
 
         List<ParentReward> pendingRewards = parentRewardRepository.findByStudentIdAndStatus(studentId, "PENDING");

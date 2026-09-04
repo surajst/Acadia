@@ -163,6 +163,20 @@ public class TimetableService {
 
     // ─── Admin CRUD ─────────────────────────────────────────────────────────
 
+    /**
+     * Every period for one class section. The teacher reads resolve periods from
+     * their own subject assignments, which is the wrong shape for a student --
+     * a student wants their whole class's day, not one teacher's slice of it.
+     * The caller supplies the section from the student's own record, so this is
+     * already tenant-scoped by construction.
+     */
+    public List<Map<String, Object>> sectionTimetable(UUID classSectionId) {
+        if (classSectionId == null) return List.of();
+        return timetableRepository.findByClassSectionId(classSectionId).stream()
+                .map(this::toMap)
+                .collect(Collectors.toList());
+    }
+
     public List<Map<String, Object>> adminList(UUID classSectionId, Authentication authentication) {
         List<TimetableEntry> entries;
         if (classSectionId != null) {

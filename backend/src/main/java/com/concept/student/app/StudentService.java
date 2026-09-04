@@ -24,6 +24,11 @@ import com.concept.oversight.app.StudentProgressService;
 import com.concept.shared.data.StudentRepository;
 import com.concept.curriculum.data.SyllabusType;
 import com.concept.tasks.app.TeacherTaskService;
+import com.concept.timetable.app.TimetableService;
+import com.concept.announcement.Announcement;
+import com.concept.announcement.AnnouncementRepository;
+import com.concept.academics.app.AssessmentService;
+import com.concept.shared.data.ClassSection;
 import com.concept.user.CurrentUserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -66,6 +71,9 @@ public class StudentService {
     private final CurriculumService curriculumService;
     private final StudentProgressService studentProgressService;
     private final CurrentUserService currentUserService;
+    private final TimetableService timetableService;
+    private final AnnouncementRepository announcementRepository;
+    private final AssessmentService assessmentService;
 
     public StudentService(StudentRepository studentRepository,
                           StudentMetricRepository studentMetricRepository,
@@ -79,7 +87,10 @@ public class StudentService {
                           StudentProgressRepository studentProgressRepository,
                           CurriculumService curriculumService,
                           StudentProgressService studentProgressService,
-                          CurrentUserService currentUserService) {
+                          CurrentUserService currentUserService,
+                          TimetableService timetableService,
+                          AnnouncementRepository announcementRepository,
+                          AssessmentService assessmentService) {
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.academicSubmissionRepository = academicSubmissionRepository;
@@ -93,6 +104,46 @@ public class StudentService {
         this.curriculumService = curriculumService;
         this.studentProgressService = studentProgressService;
         this.currentUserService = currentUserService;
+        this.timetableService = timetableService;
+        this.announcementRepository = announcementRepository;
+        this.assessmentService = assessmentService;
+    }
+
+
+    /** The student's own class timetable -- their whole day, every subject. */
+    public List<Map<String, Object>> timetable(Authentication authentication) {
+        Student student = requireStudent(authentication);
+        ClassSection section = student.getClassSection();
+        return section == null ? List.of() : timetableService.sectionTimetable(section.getId());
+    }
+
+    /**
+     * School announcements for this student, targeted the same way the parent
+     * feed is: their own grade plus anything addressed to ALL.
+     */
+    public List<Map<String, Object>> announcements(Authentication authentication) {
+        Student student = requireStudent(authentication);
+        String grade = student.getClassSection() != null
+                ? student.getClassSection().getGradeName()
+                : "ALL";
+
+        List<Announcement> rows = announcementRepository.findByTenantIdAndAcademicYearIdAndTargetGradeIn(
+                student.getTenantId(), student.getAcademicYearId(), List.of(grade, "ALL"));
+        rows.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+
+        return rows.stream().map(a -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", a.getId());
+            row.put("title", a.getTitle());
+            row.put("content", a.getContent());
+            row.put("createdAt", a.getCreatedAt());
+            return row;
+        }).collect(Collectors.toList());
+    }
+
+    /** Marks per subject -- what the parent already sees, for the child themselves. */
+    public Object subjectPerformance(Authentication authentication) {
+        return assessmentService.getSubjectPerformance(requireStudent(authentication).getId());
     }
 
     private Student requireStudent(Authentication authentication) {
@@ -114,7 +165,8 @@ public class StudentService {
 
         List<AcademicSubmission> submissions = academicSubmissionRepository.findByStudentId(studentId);
         List<MathSkill> availableSkills = mathSkillRepository.findAll();
-        List<RewardItem> rewardInventoryList = rewardItemRepository.findAll();
+        // findAll() here listed every school's reward items to every student.
+        List<RewardItem> rewardInventoryList = rewardItemRepository.findByTenantId(student.getTenantId());
         List<ParentReward> pendingParentRewards = parentRewardRepository.findByStudentIdAndStatus(studentId, "PENDING");
         List<ParentQuest> parentQuests = parentQuestRepository.findByStudentId(studentId);
         List<ParentReward> availableParentRewards = parentRewardRepository.findByStudentIdAndStatus(studentId, "AVAILABLE");
@@ -126,6 +178,7 @@ public class StudentService {
         studentInfo.put("firstName", student.getFirstName());
         studentInfo.put("lastName", student.getLastName());
         studentInfo.put("rollNumber", student.getRollNumber());
+        studentInfo.put("dateOfBirth", student.getDateOfBirth());
         if (student.getClassSection() != null) {
             studentInfo.put("gradeName", student.getClassSection().getGradeName());
             studentInfo.put("sectionName", student.getClassSection().getSectionName());

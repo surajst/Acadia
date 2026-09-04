@@ -1,6 +1,8 @@
 package com.concept.student.web;
 
 import com.concept.student.app.StudentException;
+import com.concept.student.app.StudentPortalPageService;
+import com.concept.student.app.StudentPortalPageService.RedeemResult;
 import com.concept.student.app.StudentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,9 +29,12 @@ import java.util.UUID;
 public class StudentApiController {
 
     private final StudentService studentService;
+    private final StudentPortalPageService studentPortalPageService;
 
-    public StudentApiController(StudentService studentService) {
+    public StudentApiController(StudentService studentService,
+                                StudentPortalPageService studentPortalPageService) {
         this.studentService = studentService;
+        this.studentPortalPageService = studentPortalPageService;
     }
 
     @PostMapping("/complete-skill/{id}")
@@ -55,6 +60,31 @@ public class StudentApiController {
     @PostMapping("/progress/complete")
     public ResponseEntity<?> markComplete(@RequestBody Map<String, String> body, Authentication authentication) {
         return ResponseEntity.ok(studentService.markProgressComplete(body.get("curriculumId"), authentication));
+    }
+
+    /**
+     * Spending XP from the app. Redeeming existed only as a Thymeleaf form post
+     * that answered with a redirect, so the phone had no way to reach it -- the
+     * marketplace was visible on the portal and nowhere else.
+     */
+    @PostMapping("/rewards/{id}/redeem")
+    public ResponseEntity<?> redeemReward(@PathVariable UUID id, Authentication authentication) {
+        return redeemResponse(studentPortalPageService.redeemReward(id, authentication));
+    }
+
+    @PostMapping("/parent-rewards/{id}/redeem")
+    public ResponseEntity<?> redeemParentReward(@PathVariable UUID id, Authentication authentication) {
+        return redeemResponse(studentPortalPageService.redeemParentReward(id, authentication));
+    }
+
+    private ResponseEntity<?> redeemResponse(RedeemResult outcome) {
+        return switch (outcome) {
+            case SUCCESS -> ResponseEntity.ok(Map.of("status", "redeemed"));
+            case INSUFFICIENT_XP -> ResponseEntity.badRequest()
+                    .body(Map.of("error", "Not enough XP for this one yet."));
+            case NO_LINKED_PARENT -> ResponseEntity.badRequest()
+                    .body(Map.of("error", "This reward needs a parent linked to your account."));
+        };
     }
 
     @ExceptionHandler(StudentException.class)

@@ -155,6 +155,39 @@ export const getStudentSyllabus = async () => {
   return response.data;
 };
 
+export const getStudentTimetable = async () => {
+  const response = await api.get('/student/timetable');
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getStudentAnnouncements = async () => {
+  const response = await api.get('/student/announcements');
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getStudentPerformance = async () => {
+  const response = await api.get('/student/performance');
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+// Spending XP. Two kinds: the school's reward catalogue, and rewards a parent
+// set aside for this child specifically.
+export const redeemSchoolReward = async (rewardId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/student/rewards/${rewardId}/redeem`, null, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const redeemParentReward = async (rewardId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/student/parent-rewards/${rewardId}/redeem`, null, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export const getNotifications = async () => {
   const token = await AsyncStorage.getItem('userToken');
   const response = await axios.get(`${BASE_HOST}/api/notifications`, {

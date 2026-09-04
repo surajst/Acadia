@@ -85,6 +85,10 @@ function ProtectedStack() {
         <Stack.Screen name="tasks" options={{ title: 'Tasks' }} />
         <Stack.Screen name="gradebook" options={{ title: 'Gradebook' }} />
         <Stack.Screen name="timetable" options={{ title: 'Timetable' }} />
+        <Stack.Screen name="student-timetable" options={{ title: 'Timetable' }} />
+        <Stack.Screen name="student-news" options={{ title: 'School News' }} />
+        <Stack.Screen name="student-results" options={{ title: 'My Results' }} />
+        <Stack.Screen name="marketplace" options={{ title: 'Rewards' }} />
       </Stack>
     </ThemeProvider>
   );
