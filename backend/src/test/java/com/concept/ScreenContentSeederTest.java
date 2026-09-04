@@ -32,6 +32,7 @@ public class ScreenContentSeederTest {
     private static final UUID TENANT_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     @Autowired private JdbcTemplate jdbc;
+    @Autowired private ScreenContentSeeder seeder;
 
     private int countIn(String table) {
         Integer n = jdbc.queryForObject(
@@ -50,6 +51,30 @@ public class ScreenContentSeederTest {
         Integer scores = jdbc.queryForObject(
             "SELECT COUNT(*) FROM student_assessment_scores", Integer.class);
         assertTrue(scores != null && scores > 0, "no marks, so the results screen is blank");
+    }
+
+    /**
+     * The seeder has to survive a wipe, because /test/reset performs one on every
+     * Playwright run: it clears attendance and teacher tasks and puts back only
+     * Arjun's, hardcoded to June 2026. Seeding once at boot was therefore not
+     * enough -- the screens went empty again after the first run and stayed empty
+     * until the next restart, which is the exact failure this seeder exists to
+     * prevent. /test/reset now calls seedAll(); this checks seedAll() can rebuild
+     * what a wipe took, rather than skipping because it ran once already.
+     */
+    @Test
+    void seedAllRestoresContentAfterAWipe() {
+        int before = countIn("attendance");
+        assertTrue(before > 0, "nothing to wipe; the boot seed did not run");
+
+        jdbc.update("DELETE FROM attendance WHERE tenant_id = ?", TENANT_ID);
+        assertEquals(0, countIn("attendance"), "the wipe did not take");
+
+        seeder.seedAll();
+
+        assertTrue(countIn("attendance") > 0,
+            "seedAll() did not rebuild attendance after a wipe, so /test/reset "
+            + "would leave the calendar empty until the backend restarted");
     }
 
     @Test

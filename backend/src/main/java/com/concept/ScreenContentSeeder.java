@@ -74,10 +74,22 @@ public class ScreenContentSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        seedAll();
+    }
+
+    /**
+     * Also called by {@code /test/reset}, which wipes attendance and teacher
+     * tasks and then reseeds only Arjun. Without this the screens this class
+     * exists to fill go empty again after the first Playwright run and stay
+     * empty until the next restart -- the exact failure it was written to stop.
+     * The per-batch markers make it a no-op for anything the reset left alone.
+     */
+    @Transactional
+    public String seedAll() {
         UUID teacherId = pilotTeacherId();
         if (teacherId == null) {
             System.out.println(">> Screen Content Seeder -> no teacher@greenwood.com yet, skipping.");
-            return;
+            return "skipped: no pilot teacher";
         }
 
         int timetable = seedTimetable(teacherId);
@@ -86,8 +98,10 @@ public class ScreenContentSeeder implements CommandLineRunner {
         int marks = seedAssessmentsAndScores(teacherId);
         int tasks = seedTeacherTasks(teacherId);
 
-        System.out.printf(">> Screen Content Seeder -> %d timetable, %d attendance, %d announcements, "
-            + "%d marks, %d tasks.%n", timetable, attendance, announcements, marks, tasks);
+        String summary = String.format("%d timetable, %d attendance, %d announcements, %d marks, %d tasks",
+            timetable, attendance, announcements, marks, tasks);
+        System.out.println(">> Screen Content Seeder -> " + summary + ".");
+        return summary;
     }
 
     /**

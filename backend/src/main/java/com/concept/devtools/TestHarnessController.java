@@ -76,6 +76,14 @@ public class TestHarnessController {
     @Autowired private ClassSectionRepository classSectionRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private NotificationRepository notificationRepository;
+    /**
+     * Optional on purpose: the seeder is @ConditionalOnProperty(dev-mode=true),
+     * so in a production context the bean does not exist. A required injection
+     * here fails the whole ApplicationContext when dev-mode is off -- which is
+     * exactly the configuration TestHarnessSecurityTest loads to prove this
+     * endpoint 403s in production. Only the dev-mode path below uses it.
+     */
+    @Autowired(required = false) private com.concept.ScreenContentSeeder screenContentSeeder;
 
     @Value("${app.dev-mode:false}")
     private boolean devMode;
@@ -392,7 +400,16 @@ public class TestHarnessController {
             }
 
             System.err.println("--- TEST RESET COMPLETED: 3 tasks seeded, full attendance month seeded ---");
-            return "OK";
+            // The wipes above take out every screen's content and put back only
+            // Arjun's June 2026 attendance, so a Playwright run left the demo
+            // database emptier than it found it -- timetable, marks, news and
+            // the other students' registers gone until the next restart. The
+            // seeder's markers make this a no-op for whatever survived.
+            String reseeded = screenContentSeeder != null
+                    ? screenContentSeeder.seedAll()
+                    : "seeder unavailable";
+
+            return "OK (screen content: " + reseeded + ")";
         } catch (Exception e) {
             e.printStackTrace();
             java.io.StringWriter sw = new java.io.StringWriter();
