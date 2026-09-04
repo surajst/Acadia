@@ -58,7 +58,7 @@ jobs:
       - name: Contrast gate
         run: npm run check:contrast
 
-      # Errors block. The 29 remaining warnings are capped by --max-warnings so
+      # Errors block. The 22 remaining warnings are capped by --max-warnings so
       # the backlog cannot quietly grow back; lower that number as they go, and
       # never raise it.
       - name: Lint

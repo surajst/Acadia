@@ -21,7 +21,13 @@ export default function ProfileScreen() {
   const [editLast, setEditLast] = useState('');
   const [saving, setSaving] = useState(false);
   const [languages, setLanguages] = useState<any[]>([]);
-  const [preferredLanguage, setPreferredLanguageState] = useState('en');
+  // The server's value, unless the user has picked one this session. Derived
+  // during render rather than copied into state by an effect: the copy only
+  // caught up on the render *after* the dashboard refreshed, so a reload could
+  // briefly show the previous language, and the two could disagree indefinitely
+  // if the effect's dependencies ever stopped firing.
+  const [pickedLanguage, setPickedLanguage] = useState<string | null>(null);
+  const preferredLanguage = pickedLanguage ?? data?.parent?.preferredLanguage ?? 'en';
   const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
   const [savingLanguage, setSavingLanguage] = useState(false);
 
@@ -60,11 +66,8 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (role !== 'PARENT') return;
-    if (data?.parent?.preferredLanguage) {
-      setPreferredLanguageState(data.parent.preferredLanguage);
-    }
     getSupportedLanguages().then(setLanguages).catch(() => setLanguages([]));
-  }, [role, data]);
+  }, [role]);
 
   const handlePickLanguage = async (code: string) => {
     setLanguagePickerOpen(false);
@@ -72,7 +75,7 @@ export default function ProfileScreen() {
     setSavingLanguage(true);
     try {
       await setPreferredLanguage(code);
-      setPreferredLanguageState(code);
+      setPickedLanguage(code);
     } catch {
       Alert.alert('Language', 'Could not save your language preference.');
     } finally {

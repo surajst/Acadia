@@ -72,8 +72,13 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
 
 export default function TeacherScreen() {
   const { userToken, schoolName, academicYearName } = useAuth();
-  const [classes, setClasses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // `null` means "not fetched yet", which is what loading actually is, so the
+  // flag is derived rather than stored. The stored version had to be corrected
+  // by the effect on the first frame (`else setLoading(false)` when there was
+  // no token) -- a synchronous setState in an effect, and one more thing that
+  // could disagree with the data it describes.
+  const [classes, setClasses] = useState<any[] | null>(null);
+  const loading = Boolean(userToken) && classes === null;
   const [rosterVisible, setRosterVisible] = useState(false);
   const [selectedClass, setSelectedClass] = useState<{id: string, name: string} | null>(null);
 
@@ -90,17 +95,11 @@ export default function TeacherScreen() {
       } catch (e) {
         console.error('Failed to fetch classes:', e);
         setClasses([]);
-      } finally {
-        setLoading(false);
       }
     };
 
-    if (userToken) {
-      fetchClasses();
-    } else {
-      setLoading(false);
-    }
-  }, [userToken]);
+    if (userToken) fetchClasses();
+  }, [userToken, BASE_HOST]);
 
   return (
     <View style={styles.root}>
@@ -122,9 +121,9 @@ export default function TeacherScreen() {
 
       <View style={styles.sectionLabelRow}>
         <Text style={styles.sectionLabel}>YOUR CLASS ROSTERS</Text>
-        {classes.length > 0 && (
+        {(classes ?? []).length > 0 && (
           <View style={styles.sectionBadge}>
-            <Text style={styles.sectionBadgeText}>{classes.length} Classes</Text>
+            <Text style={styles.sectionBadgeText}>{(classes ?? []).length} Classes</Text>
           </View>
         )}
       </View>
@@ -134,7 +133,7 @@ export default function TeacherScreen() {
           <ActivityIndicator size="large" color={T.brand} />
           <Text style={styles.loadingText}>Loading classes...</Text>
         </View>
-      ) : classes.length === 0 ? (
+      ) : (classes ?? []).length === 0 ? (
         <View style={styles.emptyContainer}>
           <SymbolView
             name={{ ios: 'book.pages', android: 'book', web: 'book' }}
@@ -150,7 +149,7 @@ export default function TeacherScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {classes.map((cls) => (
+          {(classes ?? []).map((cls) => (
             <RosterCard
               key={cls.id}
               className={cls.className}
