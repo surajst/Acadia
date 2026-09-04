@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { DataContext } from './_layout';
 import { getUserProfile, getSupportedLanguages, setPreferredLanguage, type UserProfile, type UserRole } from '../../services/api';
+import T from '../../constants/theme';
 
 function isUserRole(value: string | null): value is UserRole {
   return value === 'STUDENT' || value === 'PARENT' || value === 'TEACHER';
@@ -128,7 +129,7 @@ export default function ProfileScreen() {
   if (loadingProfile) {
     return (
       <View style={[styles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color={T.brand} />
       </View>
     );
   }
@@ -162,7 +163,7 @@ export default function ProfileScreen() {
                   style={styles.editInput}
                   value={editFirst}
                   onChangeText={setEditFirst}
-                  placeholderTextColor="#475569"
+                  placeholderTextColor={T.text2}
                   autoFocus
                 />
               </View>
@@ -173,7 +174,7 @@ export default function ProfileScreen() {
                   style={styles.editInput}
                   value={editLast}
                   onChangeText={setEditLast}
-                  placeholderTextColor="#475569"
+                  placeholderTextColor={T.text2}
                 />
               </View>
               {profile?.email && (
@@ -191,7 +192,7 @@ export default function ProfileScreen() {
                   <Text style={styles.cancelBtnText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
-                  {saving ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveBtnText}>Save</Text>}
+                  {saving ? <ActivityIndicator color={T.surface} size="small" /> : <Text style={styles.saveBtnText}>Save</Text>}
                 </TouchableOpacity>
               </View>
             </>
@@ -236,7 +237,7 @@ export default function ProfileScreen() {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Announcements & messages in</Text>
               {savingLanguage ? (
-                <ActivityIndicator size="small" color="#4F46E5" />
+                <ActivityIndicator size="small" color={T.brand} />
               ) : (
                 <Text style={styles.detailValue}>
                   {languages.find((l) => l.code === preferredLanguage)?.name ?? 'English'}
@@ -276,39 +277,39 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F9FC', padding: 16 },
+  container: { flex: 1, backgroundColor: T.bg, padding: 16 },
   header: { alignItems: 'center', marginVertical: 32 },
   avatar: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#4F46E5',
+    backgroundColor: T.brand,
     justifyContent: 'center', alignItems: 'center', marginBottom: 16,
   },
-  avatarText: { color: '#0F172A', fontSize: 32, fontWeight: 'bold' },
-  name: { color: '#0F172A', fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
-  roleText: { color: '#64748B', fontSize: 16 },
+  avatarText: { color: T.text, fontSize: 32, fontWeight: 'bold' },
+  name: { color: T.text, fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
+  roleText: { color: T.text3, fontSize: 16 },
   section: { marginBottom: 32 },
   sectionHeaderRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginBottom: 12, marginHorizontal: 4,
   },
   sectionTitle: {
-    color: '#64748B', fontSize: 14, fontWeight: 'bold',
+    color: T.text3, fontSize: 14, fontWeight: 'bold',
     textTransform: 'uppercase',
   },
   editBtn: {
-    backgroundColor: '#4F46E520', borderRadius: 8,
+    backgroundColor: T.brand50, borderRadius: 8,
     paddingHorizontal: 12, paddingVertical: 4,
-    borderWidth: 1, borderColor: '#4F46E540',
+    borderWidth: 1, borderColor: T.brand100,
   },
-  editBtnText: { color: '#4F46E5', fontSize: 13, fontWeight: '600' },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden' },
+  editBtnText: { color: T.brand, fontSize: 13, fontWeight: '600' },
+  card: { backgroundColor: T.surface, borderRadius: 16, overflow: 'hidden' },
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
-  detailLabel: { color: '#64748B', fontSize: 16 },
-  detailValue: { color: '#0F172A', fontSize: 16, fontWeight: '500' },
+  detailLabel: { color: T.text3, fontSize: 16 },
+  detailValue: { color: T.text, fontSize: 16, fontWeight: '500' },
   editRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
   editInput: {
-    color: '#0F172A', fontSize: 15, fontWeight: '500',
-    borderBottomWidth: 1, borderBottomColor: '#4F46E5',
+    color: T.text, fontSize: 15, fontWeight: '500',
+    borderBottomWidth: 1, borderBottomColor: T.brand,
     minWidth: 160, textAlign: 'right', paddingBottom: 2,
   },
   editActions: {
@@ -317,25 +318,26 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1, padding: 12, borderRadius: 10,
-    backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E7EAF2',
+    backgroundColor: T.surface, borderWidth: 1, borderColor: T.line,
     alignItems: 'center',
   },
-  cancelBtnText: { color: '#64748B', fontWeight: '600' },
+  cancelBtnText: { color: T.text3, fontWeight: '600' },
   saveBtn: {
     flex: 1, padding: 12, borderRadius: 10,
-    backgroundColor: '#4F46E5', alignItems: 'center',
+    backgroundColor: T.brand, alignItems: 'center',
   },
-  saveBtnText: { color: '#fff', fontWeight: '600' },
-  divider: { height: 1, backgroundColor: '#E7EAF2', marginLeft: 16 },
+  saveBtnText: { color: T.surface, fontWeight: '600' },
+  divider: { height: 1, backgroundColor: T.line, marginLeft: 16 },
   logoutButton: {
-    backgroundColor: '#7f1d1d', padding: 16, borderRadius: 12,
+    backgroundColor: T.danger50, borderWidth: 1, borderColor: T.danger200,
+    padding: 16, borderRadius: 12,
     alignItems: 'center', marginTop: 16,
   },
-  logoutText: { color: '#f87171', fontSize: 18, fontWeight: 'bold' },
-  modalOverlay: { flex: 1, backgroundColor: '#00000090', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 12 },
+  logoutText: { color: T.dangerInk, fontSize: 18, fontWeight: 'bold' },
+  modalOverlay: { flex: 1, backgroundColor: T.scrim, justifyContent: 'flex-end' },
+  modalCard: { backgroundColor: T.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: T.text, marginBottom: 12 },
   langRow: { padding: 12, borderRadius: 10, marginBottom: 4 },
-  langRowActive: { backgroundColor: '#4F46E522' },
-  langRowText: { color: '#0F172A', fontSize: 14 },
+  langRowActive: { backgroundColor: T.brand50 },
+  langRowText: { color: T.text, fontSize: 14 },
 });

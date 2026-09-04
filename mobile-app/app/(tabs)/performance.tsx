@@ -12,6 +12,7 @@ import { useContext, useState, useEffect } from 'react';
 import * as Sharing from 'expo-sharing';
 import { DataContext } from './_layout';
 import { getSubjectPerformance, getSubjects, downloadReportCard } from '../../services/api';
+import T from '../../constants/theme';
 
 const TERMS = ['TERM1', 'TERM2', 'FINAL'] as const;
 type Term = typeof TERMS[number];
@@ -30,9 +31,9 @@ type Subject = {
 };
 
 function scoreColor(pct: number): string {
-  if (pct >= 80) return '#059669';
-  if (pct >= 60) return '#D97706';
-  return '#ef4444';
+  if (pct >= 80) return T.success;
+  if (pct >= 60) return T.warn;
+  return T.danger;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -143,7 +144,7 @@ export default function PerformanceScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Report Card</Text>
@@ -166,7 +167,7 @@ export default function PerformanceScreen() {
           disabled={downloading || !studentId}
         >
           {downloading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={T.surface} />
           ) : (
             <Text style={styles.downloadButtonText}>Download Report Card</Text>
           )}
@@ -177,7 +178,7 @@ export default function PerformanceScreen() {
         <Text style={styles.sectionTitle}>Subject-wise Performance</Text>
 
         {loading ? (
-          <ActivityIndicator color="#4F46E5" style={{ marginTop: 20 }} />
+          <ActivityIndicator color={T.brand} style={{ marginTop: 20 }} />
         ) : subjects && subjects.length > 0 ? (
           subjects.map((s) => (
             <SubjectCard key={s.subjectCode} subject={s} label={subjectCatalog[s.subjectCode] ?? s.subjectCode} />
@@ -199,30 +200,30 @@ export default function PerformanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
     padding: 16,
   },
   restrictedContainer: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
   restrictedIcon: { fontSize: 48, marginBottom: 16 },
-  restrictedTitle: { color: '#0F172A', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
-  restrictedSub: { color: '#64748B', fontSize: 14, textAlign: 'center' },
+  restrictedTitle: { color: T.text, fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  restrictedSub: { color: T.text3, fontSize: 14, textAlign: 'center' },
 
   section: { marginBottom: 24 },
   sectionTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
   },
 
   subjectCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -233,13 +234,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  subjectName: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
+  subjectName: { color: T.text, fontSize: 16, fontWeight: '700' },
   subjectPct: { fontSize: 18, fontWeight: 'bold' },
 
   progressTrack: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E7EAF2',
+    backgroundColor: T.line,
     overflow: 'hidden',
   },
   progressFill: {
@@ -252,33 +253,33 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderWidth: 1,
-    borderColor: '#E7EAF2',
+    borderColor: T.line,
   },
-  termChipActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
-  termChipText: { color: '#64748B', fontSize: 13, fontWeight: '600' },
-  termChipTextActive: { color: '#fff' },
+  termChipActive: { backgroundColor: T.brand, borderColor: T.brand },
+  termChipText: { color: T.text3, fontSize: 13, fontWeight: '600' },
+  termChipTextActive: { color: T.surface },
 
   downloadButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: T.brand,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  downloadButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  downloadButtonText: { color: T.surface, fontSize: 15, fontWeight: '700' },
 
   trendRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10 },
   trendDot: { width: 8, height: 8, borderRadius: 4 },
-  trendLabel: { color: '#64748B', fontSize: 12, marginLeft: 6 },
+  trendLabel: { color: T.text3, fontSize: 12, marginLeft: 6 },
 
   emptyState: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 14,
     padding: 24,
     alignItems: 'center',
   },
-  emptyText: { color: '#0F172A', fontSize: 15, fontWeight: '600', marginBottom: 4 },
-  emptySub: { color: '#64748B', fontSize: 13, textAlign: 'center' },
+  emptyText: { color: T.text, fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  emptySub: { color: T.text3, fontSize: 13, textAlign: 'center' },
 });

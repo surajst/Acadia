@@ -26,18 +26,18 @@ function WebOnlyRoleScreen({ role }: { role: string }) {
   const { logout } = useAuth();
   const host = getApiHost();
   return (
-    <View style={{ flex: 1, backgroundColor: '#F7F9FC', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
-      <Text style={{ color: '#0F172A', fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
+    <View style={{ flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+      <Text style={{ color: T.text, fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
         {role === ROLE_ADMIN ? 'Admin' : 'Principal'} accounts use the web dashboard
       </Text>
-      <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
+      <Text style={{ color: T.text3, fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
         Open {host}/login in a browser on your computer or phone to manage your school.
       </Text>
       <TouchableOpacity
         onPress={() => logout()}
-        style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E7EAF2', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 }}
+        style={{ backgroundColor: T.surface, borderWidth: 1, borderColor: T.line, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 }}
       >
-        <Text style={{ color: '#64748B', fontWeight: '600' }}>Log Out</Text>
+        <Text style={{ color: T.text3, fontWeight: '600' }}>Log Out</Text>
       </TouchableOpacity>
     </View>
   );
@@ -138,7 +138,11 @@ export default function TabLayout() {
     return <WebOnlyRoleScreen role={role} />;
   }
 
-  if (loading) {
+  // Only the very first load takes the whole screen. Later refetches -- a pull
+  // to refresh, a parent switching between children -- used to tear the entire
+  // tab navigator down and rebuild it, so the tab bar vanished and the screen
+  // flashed for a request that usually returns in under a second.
+  if (loading && !data) {
     return (
       <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
         <View style={{ flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' }}>
@@ -180,6 +184,10 @@ export default function TabLayout() {
           }}
         />
 
+        {/* Parents had eight tabs and students six, so labels truncated to
+            "Attend", "Perfor", "Messa". These five still exist as routes and
+            are reached from the dashboard's Quick Actions, the same way the
+            teacher's My Classes, Tasks, Gradebook and Timetable already are. */}
         <Tabs.Screen
           name="syllabus"
           options={{
@@ -195,7 +203,7 @@ export default function TabLayout() {
           name="student-attendance"
           options={{
             title: 'Attendance',
-            href: isStudent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor={color} size={28} />
             ),
@@ -217,7 +225,7 @@ export default function TabLayout() {
           name="quests"
           options={{
             title: 'Quests',
-            href: isStudent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'star', android: 'star', web: 'star' }} tintColor={color} size={28} />
             ),
@@ -239,7 +247,7 @@ export default function TabLayout() {
           name="performance"
           options={{
             title: 'Performance',
-            href: isParent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }} tintColor={color} size={28} />
             ),
@@ -277,7 +285,7 @@ export default function TabLayout() {
           name="bus"
           options={{
             title: 'Bus',
-            href: isParent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }} tintColor={color} size={28} />
             ),
@@ -288,7 +296,7 @@ export default function TabLayout() {
           name="announcements"
           options={{
             title: 'News',
-            href: isParent ? undefined : null,
+            href: null,
             tabBarIcon: ({ color }) => (
               <SymbolView name={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }} tintColor={color} size={28} />
             ),

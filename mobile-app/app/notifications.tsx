@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, A
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../services/api';
+import T from '../constants/theme';
 
 interface NotificationItem {
   id: string;
@@ -13,10 +14,10 @@ interface NotificationItem {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  ATTENDANCE: '#D97706',
+  ATTENDANCE: T.warn,
   TASK: '#3b82f6',
   ANNOUNCEMENT: '#a855f7',
-  SYSTEM: '#64748b',
+  SYSTEM: T.text3,
 };
 
 function timeAgo(dateStr: string): string {
@@ -84,11 +85,11 @@ export default function NotificationsScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator color="#4F46E5" size="large" /></View>
+        <View style={styles.center}><ActivityIndicator color={T.brand} size="large" /></View>
       ) : (
         <ScrollView
           style={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
         >
           {notifications.length === 0 ? (
             <View style={styles.emptyCard}>
@@ -102,8 +103,8 @@ export default function NotificationsScreen() {
                     {!item.read && <View style={styles.unreadDot} />}
                     <Text style={styles.cardTitle}>{item.title}</Text>
                   </View>
-                  <View style={[styles.typeBadge, { backgroundColor: (TYPE_COLOR[item.type] || '#64748b') + '22' }]}>
-                    <Text style={[styles.typeBadgeText, { color: TYPE_COLOR[item.type] || '#64748b' }]}>
+                  <View style={[styles.typeBadge, { backgroundColor: (TYPE_COLOR[item.type] || T.text3) + '22' }]}>
+                    <Text style={[styles.typeBadgeText, { color: TYPE_COLOR[item.type] || T.text3 }]}>
                       {item.type}
                     </Text>
                   </View>
@@ -120,22 +121,22 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F9FC' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 50, borderBottomWidth: 1, borderBottomColor: '#FFFFFF' },
-  backButton: { color: '#4F46E5', fontSize: 16, fontWeight: '600' },
-  headerTitle: { color: '#0F172A', fontSize: 18, fontWeight: 'bold' },
-  markAllText: { color: '#4F46E5', fontSize: 13, fontWeight: '600' },
+  container: { flex: 1, backgroundColor: T.bg },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 50, borderBottomWidth: 1, borderBottomColor: T.surface },
+  backButton: { color: T.brand, fontSize: 16, fontWeight: '600' },
+  headerTitle: { color: T.text, fontSize: 18, fontWeight: 'bold' },
+  markAllText: { color: T.brand, fontSize: 13, fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { flex: 1, padding: 16 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14, marginBottom: 10 },
+  card: { backgroundColor: T.surface, borderRadius: 12, padding: 14, marginBottom: 10 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#ef4444' },
-  cardTitle: { color: '#0F172A', fontSize: 15, fontWeight: '700', flex: 1 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: T.danger },
+  cardTitle: { color: T.text, fontSize: 15, fontWeight: '700', flex: 1 },
   typeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   typeBadgeText: { fontSize: 10, fontWeight: '700' },
-  cardBody: { color: '#64748B', fontSize: 13, lineHeight: 18 },
-  cardTime: { color: '#64748b', fontSize: 11, marginTop: 6 },
-  emptyCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, alignItems: 'center', height: 100, justifyContent: 'center' },
-  emptyText: { color: '#64748B', fontSize: 14 },
+  cardBody: { color: T.text3, fontSize: 13, lineHeight: 18 },
+  cardTime: { color: T.text3, fontSize: 11, marginTop: 6 },
+  emptyCard: { backgroundColor: T.surface, borderRadius: 12, padding: 20, alignItems: 'center', height: 100, justifyContent: 'center' },
+  emptyText: { color: T.text3, fontSize: 14 },
 });

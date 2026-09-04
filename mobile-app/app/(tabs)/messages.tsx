@@ -15,6 +15,7 @@ import {
   getMessageSpeech,
   sendVoiceReply,
 } from '@/services/api';
+import T from '../../constants/theme';
 
 export default function MessagesScreen() {
   const { role, data } = useContext(DataContext);
@@ -185,7 +186,7 @@ export default function MessagesScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color={T.brand} />
       </View>
     );
   }
@@ -194,14 +195,14 @@ export default function MessagesScreen() {
     <View style={styles.root}>
       <View style={styles.headerBand}>
         <View style={styles.headerIconWrap}>
-          <SymbolView name={{ ios: 'message', android: 'chat', web: 'chat' }} tintColor="#4F46E5" size={26} />
+          <SymbolView name={{ ios: 'message', android: 'chat', web: 'chat' }} tintColor={T.brand} size={26} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>Messages</Text>
           <Text style={styles.headerSubtitle}>{isTeacher ? "Message a student's parent" : 'Message a teacher'}</Text>
         </View>
         <TouchableOpacity style={styles.newBtn} onPress={() => setPickerVisible(true)}>
-          <SymbolView name={{ ios: 'square.and.pencil', android: 'edit', web: 'edit' }} tintColor="#fff" size={18} />
+          <SymbolView name={{ ios: 'square.and.pencil', android: 'edit', web: 'edit' }} tintColor={T.surface} size={18} />
         </TouchableOpacity>
       </View>
 
@@ -209,7 +210,7 @@ export default function MessagesScreen() {
         <View style={{ flex: 1 }}>
           <View style={styles.threadHeader}>
             <TouchableOpacity onPress={() => setActiveConversation(null)}>
-              <SymbolView name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }} tintColor="#4F46E5" size={20} />
+              <SymbolView name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }} tintColor={T.brand} size={20} />
             </TouchableOpacity>
             <Text style={styles.threadTitle}>
               {isTeacher ? activeConversation.studentName : activeConversation.teacherName}
@@ -234,7 +235,7 @@ export default function MessagesScreen() {
                         </TouchableOpacity>
                       )}
                       <TouchableOpacity onPress={() => handlePlayMessage(m.id)} disabled={busy}>
-                        <SymbolView name={{ ios: 'speaker.wave.2', android: 'volume_up', web: 'volume_up' }} tintColor="#4F46E5" size={14} />
+                        <SymbolView name={{ ios: 'speaker.wave.2', android: 'volume_up', web: 'volume_up' }} tintColor={T.brand} size={14} />
                       </TouchableOpacity>
                     </View>
                   )}
@@ -246,7 +247,7 @@ export default function MessagesScreen() {
             <TextInput
               style={styles.input}
               placeholder="Type a reply…"
-              placeholderTextColor="#64748b"
+              placeholderTextColor={T.text3}
               value={replyBody}
               onChangeText={setReplyBody}
             />
@@ -257,9 +258,9 @@ export default function MessagesScreen() {
                 disabled={recordingBusy}
               >
                 {recordingBusy ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={T.surface} />
                 ) : (
-                  <SymbolView name={{ ios: 'mic', android: 'mic', web: 'mic' }} tintColor="#fff" size={18} />
+                  <SymbolView name={{ ios: 'mic', android: 'mic', web: 'mic' }} tintColor={T.surface} size={18} />
                 )}
               </TouchableOpacity>
             )}
@@ -270,7 +271,7 @@ export default function MessagesScreen() {
         </View>
       ) : conversations.length === 0 ? (
         <View style={styles.center}>
-          <SymbolView name={{ ios: 'message', android: 'chat', web: 'chat' }} tintColor="#334155" size={48} />
+          <SymbolView name={{ ios: 'message', android: 'chat', web: 'chat' }} tintColor={T.text2} size={48} />
           <Text style={styles.emptyTitle}>No conversations yet</Text>
         </View>
       ) : (
@@ -307,7 +308,7 @@ export default function MessagesScreen() {
             <TextInput
               style={styles.input}
               placeholder="Type a message…"
-              placeholderTextColor="#64748b"
+              placeholderTextColor={T.text3}
               value={newBody}
               onChangeText={setNewBody}
             />
@@ -346,50 +347,50 @@ export default function MessagesScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F7F9FC' },
-  center: { flex: 1, backgroundColor: '#F7F9FC', justifyContent: 'center', alignItems: 'center' },
+  root: { flex: 1, backgroundColor: T.bg },
+  center: { flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' },
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#E7EAF2',
+    backgroundColor: T.surface, paddingHorizontal: 20, paddingVertical: 18,
+    borderBottomWidth: 1, borderBottomColor: T.line,
   },
-  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#4F46E520', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
-  headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  newBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#4F46E5', justifyContent: 'center', alignItems: 'center' },
+  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: T.brand50, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: T.text },
+  headerSubtitle: { fontSize: 12, color: T.text3, marginTop: 2 },
+  newBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: T.brand, justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, gap: 8 },
   convCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF',
-    borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#E7EAF2',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: T.surface,
+    borderRadius: 12, padding: 14, borderWidth: 1, borderColor: T.line,
   },
-  convName: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
-  convPreview: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#4F46E5' },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#0F172A', marginTop: 16 },
-  threadHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 16, borderBottomWidth: 1, borderBottomColor: '#E7EAF2' },
-  threadTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A', flex: 1 },
-  langBtn: { backgroundColor: '#4F46E520', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#4F46E540' },
-  langBtnText: { color: '#4F46E5', fontSize: 11, fontWeight: '600' },
+  convName: { fontSize: 14, fontWeight: '700', color: T.text },
+  convPreview: { fontSize: 12, color: T.text3, marginTop: 2 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: T.brand },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: T.text, marginTop: 16 },
+  threadHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 16, borderBottomWidth: 1, borderBottomColor: T.line },
+  threadTitle: { fontSize: 15, fontWeight: '700', color: T.text, flex: 1 },
+  langBtn: { backgroundColor: T.brand50, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: T.brand100 },
+  langBtnText: { color: T.brand, fontSize: 11, fontWeight: '600' },
   bubble: { maxWidth: '80%', borderRadius: 14, padding: 10, marginBottom: 8 },
-  bubbleMine: { backgroundColor: '#4F46E540', alignSelf: 'flex-end' },
-  bubbleTheirs: { backgroundColor: '#FFFFFF', alignSelf: 'flex-start' },
-  bubbleText: { color: '#0F172A', fontSize: 13 },
+  bubbleMine: { backgroundColor: T.brand100, alignSelf: 'flex-end' },
+  bubbleTheirs: { backgroundColor: T.surface, alignSelf: 'flex-start' },
+  bubbleText: { color: T.text, fontSize: 13 },
   bubbleActions: { flexDirection: 'row', gap: 10, marginTop: 6, alignItems: 'center' },
-  bubbleActionText: { color: '#4F46E5', fontSize: 11, fontWeight: '600' },
-  replyRow: { flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: '#E7EAF2' },
-  micBtn: { width: 40, height: 40, borderRadius: 10, backgroundColor: '#E7EAF2', justifyContent: 'center', alignItems: 'center' },
-  micBtnActive: { backgroundColor: '#ef4444' },
-  input: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 10, borderWidth: 1, borderColor: '#E7EAF2', paddingHorizontal: 12, color: '#0F172A', marginTop: 10 },
-  sendBtn: { backgroundColor: '#4F46E5', borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' },
-  sendBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  modalOverlay: { flex: 1, backgroundColor: '#00000090', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 12 },
+  bubbleActionText: { color: T.brand, fontSize: 11, fontWeight: '600' },
+  replyRow: { flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: T.line },
+  micBtn: { width: 40, height: 40, borderRadius: 10, backgroundColor: T.line, justifyContent: 'center', alignItems: 'center' },
+  micBtnActive: { backgroundColor: T.danger },
+  input: { flex: 1, backgroundColor: T.surface, borderRadius: 10, borderWidth: 1, borderColor: T.line, paddingHorizontal: 12, color: T.text, marginTop: 10 },
+  sendBtn: { backgroundColor: T.brand, borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' },
+  sendBtnText: { color: T.surface, fontWeight: '700', fontSize: 13 },
+  modalOverlay: { flex: 1, backgroundColor: T.scrim, justifyContent: 'flex-end' },
+  modalCard: { backgroundColor: T.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: T.text, marginBottom: 12 },
   rosterRow: { padding: 10, borderRadius: 10, marginBottom: 4 },
-  rosterRowActive: { backgroundColor: '#4F46E522' },
-  rosterRowText: { color: '#0F172A', fontSize: 13 },
+  rosterRowActive: { backgroundColor: T.brand50 },
+  rosterRowText: { color: T.text, fontSize: 13 },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 12 },
   cancelBtn: { paddingHorizontal: 16, justifyContent: 'center' },
-  cancelBtnText: { color: '#64748B', fontWeight: '600' },
+  cancelBtnText: { color: T.text3, fontWeight: '600' },
 });

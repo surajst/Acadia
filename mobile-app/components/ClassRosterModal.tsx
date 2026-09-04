@@ -19,6 +19,7 @@ import {
   submitClassAttendance,
   getApiHost,
 } from '../services/api';
+import T from '../constants/theme';
 
 interface RosterStudent {
   id: string;
@@ -179,7 +180,7 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} disabled={isSubmitting}>
               <SymbolView
                 name={{ ios: 'xmark.circle.fill', android: 'cancel', web: 'cancel' }}
-                tintColor="#94a3b8"
+                tintColor={T.text4}
                 size={24}
               />
             </TouchableOpacity>
@@ -188,7 +189,7 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
           <View style={styles.content}>
             {isLoading ? (
               <View style={styles.centerBox}>
-                <ActivityIndicator size="large" color="#4F46E5" />
+                <ActivityIndicator size="large" color={T.brand} />
                 <Text style={styles.loadingText}>Loading Roster...</Text>
               </View>
             ) : error ? (
@@ -219,7 +220,7 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={T.surface} />
                 ) : (
                   <Text style={styles.submitBtnText}>Submit Attendance Sheet</Text>
                 )}
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '90%',
@@ -263,16 +264,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#FFFFFF',
+    borderBottomColor: T.surface,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: T.text,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#64748b',
+    color: T.text3,
     marginTop: 2,
   },
   closeBtn: { padding: 4 },
@@ -286,18 +287,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 40,
   },
-  loadingText: { color: '#64748B', marginTop: 12, fontSize: 14 },
-  errorText: { color: '#ef4444', textAlign: 'center', fontSize: 14 },
+  loadingText: { color: T.text3, marginTop: 12, fontSize: 14 },
+  errorText: { color: T.danger, textAlign: 'center', fontSize: 14 },
   retryBtn: {
     marginTop: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E7EAF2',
+    borderColor: T.line,
   },
-  retryText: { color: '#4F46E5', fontWeight: '600' },
+  retryText: { color: T.brand, fontWeight: '600' },
   listPadding: {
     paddingHorizontal: 16,
     paddingBottom: 20,
@@ -313,19 +314,19 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#4F46E515',
+    backgroundColor: T.brand50,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#4F46E530',
+    borderColor: T.brand100,
   },
-  avatarText: { color: '#4F46E5', fontWeight: '700', fontSize: 18 },
+  avatarText: { color: T.brand, fontWeight: '700', fontSize: 18 },
   studentInfo: { flex: 1, marginLeft: 14 },
-  studentName: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
-  rollNumber: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  studentName: { fontSize: 15, fontWeight: '600', color: T.text },
+  rollNumber: { fontSize: 12, color: T.text3, marginTop: 2 },
   toggleGroup: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 8,
     padding: 4,
     gap: 4,
@@ -337,19 +338,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  toggleText: { fontSize: 13, fontWeight: '700', color: '#94A3B8' },
-  presentActive: { backgroundColor: '#059669' },
-  absentActive: { backgroundColor: '#dc2626' },
-  textActive: { color: '#ffffff' },
-  separator: { height: 1, backgroundColor: '#FFFFFF' },
+  toggleText: { fontSize: 13, fontWeight: '700', color: T.text4 },
+  presentActive: { backgroundColor: T.success },
+  absentActive: { backgroundColor: T.danger },
+  textActive: { color: T.surface },
+  separator: { height: 1, backgroundColor: T.surface },
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#FFFFFF',
-    backgroundColor: '#F7F9FC',
+    borderTopColor: T.surface,
+    backgroundColor: T.bg,
   },
   submitBtn: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: T.brand,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
   },
   submitDisabled: { opacity: 0.6 },
   submitBtnText: {
-    color: '#ffffff',
+    color: T.surface,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -380,29 +381,29 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#059669',
+    backgroundColor: T.success,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#059669',
+    shadowColor: T.success,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 10,
   },
   successCheckmark: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 36,
     fontWeight: '700',
   },
   successTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 8,
   },
   successSubtitle: {
-    color: '#64748b',
+    color: T.text3,
     fontSize: 14,
   },
 });

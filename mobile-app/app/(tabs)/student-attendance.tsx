@@ -9,24 +9,28 @@ import {
 import { useContext, useState, useEffect } from 'react';
 import { DataContext } from './_layout';
 import { getStudentAttendance } from '../../services/api';
+import T from '../../constants/theme';
 
 type AttendanceRecord = {
   date: string;
   status: 'PRESENT' | 'ABSENT' | 'TARDY' | 'LATE';
 };
 
+// Ink on its own 50 tint, matching the parent calendar. These were dark-theme
+// leftovers -- a near-black cell with mid-bright digits -- and the token
+// migration made the pairing worse by turning the background into the ink step.
 const STATUS_COLOR: Record<string, string> = {
-  PRESENT: '#059669',
-  ABSENT: '#ef4444',
-  TARDY: '#D97706',
-  LATE: '#D97706',
+  PRESENT: T.successInk,
+  ABSENT: T.dangerInk,
+  TARDY: T.warnInk,
+  LATE: T.warnInk,
 };
 
 const STATUS_BG: Record<string, string> = {
-  PRESENT: '#14532d',
-  ABSENT: '#7f1d1d',
-  TARDY: '#78350f',
-  LATE: '#78350f',
+  PRESENT: T.success50,
+  ABSENT: T.danger50,
+  TARDY: T.warn50,
+  LATE: T.warn50,
 };
 
 function getMonthLabel(dateStr: string): string {
@@ -86,24 +90,24 @@ export default function StudentAttendanceScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Attendance Summary</Text>
         <View style={styles.summaryRow}>
-          <View style={[styles.summaryBox, { borderColor: '#059669' }]}>
+          <View style={[styles.summaryBox, { borderColor: T.success }]}>
             <Text style={styles.summaryNum}>{present}</Text>
             <Text style={styles.summaryLabel}>Present</Text>
           </View>
-          <View style={[styles.summaryBox, { borderColor: '#ef4444' }]}>
+          <View style={[styles.summaryBox, { borderColor: T.danger }]}>
             <Text style={styles.summaryNum}>{absent}</Text>
             <Text style={styles.summaryLabel}>Absent</Text>
           </View>
-          <View style={[styles.summaryBox, { borderColor: '#D97706' }]}>
+          <View style={[styles.summaryBox, { borderColor: T.warn }]}>
             <Text style={styles.summaryNum}>{late}</Text>
             <Text style={styles.summaryLabel}>Late</Text>
           </View>
-          <View style={[styles.summaryBox, { borderColor: '#4F46E5' }]}>
+          <View style={[styles.summaryBox, { borderColor: T.brand }]}>
             <Text style={styles.summaryNum}>{pct}%</Text>
             <Text style={styles.summaryLabel}>Rate</Text>
           </View>
@@ -113,7 +117,7 @@ export default function StudentAttendanceScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Attendance History</Text>
         {loading ? (
-          <ActivityIndicator color="#4F46E5" style={{ marginTop: 20 }} />
+          <ActivityIndicator color={T.brand} style={{ marginTop: 20 }} />
         ) : records.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No attendance records</Text>
@@ -125,11 +129,11 @@ export default function StudentAttendanceScreen() {
               <Text style={styles.monthLabel}>{monthLabel}</Text>
               <View style={styles.calendarGrid}>
                 {monthRecords.map(r => (
-                  <View key={r.date} style={[styles.dayCell, { backgroundColor: STATUS_BG[r.status] || '#FFFFFF' }]}>
-                    <Text style={[styles.dayNumber, { color: STATUS_COLOR[r.status] || '#fff' }]}>
+                  <View key={r.date} style={[styles.dayCell, { backgroundColor: STATUS_BG[r.status] || T.surface }]}>
+                    <Text style={[styles.dayNumber, { color: STATUS_COLOR[r.status] || T.text3 }]}>
                       {getDayLabel(r.date)}
                     </Text>
-                    <Text style={[styles.dayStatus, { color: STATUS_COLOR[r.status] || '#fff' }]}>
+                    <Text style={[styles.dayStatus, { color: STATUS_COLOR[r.status] || T.text3 }]}>
                       {r.status === 'PRESENT' ? '✓' : r.status === 'ABSENT' ? '✗' : r.status.charAt(0)}
                     </Text>
                   </View>
@@ -148,14 +152,14 @@ export default function StudentAttendanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
     padding: 16,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
@@ -166,19 +170,19 @@ const styles = StyleSheet.create({
   },
   summaryBox: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 12,
     padding: 10,
     alignItems: 'center',
     borderWidth: 1.5,
   },
   summaryNum: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 20,
     fontWeight: 'bold',
   },
   summaryLabel: {
-    color: '#64748B',
+    color: T.text3,
     fontSize: 11,
     marginTop: 2,
   },
@@ -186,7 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   monthLabel: {
-    color: '#64748B',
+    color: T.text3,
     fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -217,19 +221,19 @@ const styles = StyleSheet.create({
     height: 100,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
   },
   emptySubtext: {
-    color: '#64748B',
+    color: T.text3,
     fontSize: 13,
     marginTop: 4,
     textAlign: 'center',

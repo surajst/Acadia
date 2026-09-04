@@ -4,6 +4,7 @@ import { SymbolView } from 'expo-symbols';
 import ClassRosterModal from '@/components/ClassRosterModal';
 import { useAuth } from '@/context/AuthContext';
 import { getApiHost } from '../services/api';
+import T from '../constants/theme';
 
 interface RosterCardProps {
   className: string;
@@ -15,9 +16,9 @@ interface RosterCardProps {
 
 function RosterCard({ className, subject, studentCount, status, onViewRoster }: RosterCardProps) {
   const statusColors: Record<string, string> = {
-    pending: '#D97706',
-    active:  '#059669',
-    completed: '#4F46E5',
+    pending: T.warn,
+    active:  T.success,
+    completed: T.brand,
   };
   const statusLabels: Record<string, string> = {
     pending:   'Pending Review',
@@ -25,9 +26,9 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
     completed: 'Completed',
   };
   const statusBg: Record<string, string> = {
-    pending:   '#D9770622',
-    active:    '#05966922',
-    completed: '#4F46E522',
+    pending:   T.warn50,
+    active:    T.success50,
+    completed: T.brand50,
   };
 
   return (
@@ -36,7 +37,7 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
         <View style={styles.cardIconWrap}>
           <SymbolView
             name={{ ios: 'person.3', android: 'group', web: 'group' }}
-            tintColor="#4F46E5"
+            tintColor={T.brand}
             size={22}
           />
         </View>
@@ -57,7 +58,7 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
       <View style={styles.cardFooter}>
         <SymbolView
           name={{ ios: 'person', android: 'person', web: 'person' }}
-          tintColor="#94a3b8"
+          tintColor={T.text4}
           size={14}
         />
         <Text style={styles.footerText}> {studentCount} Students</Text>
@@ -107,7 +108,7 @@ export default function TeacherScreen() {
         <View style={styles.headerIconWrap}>
           <SymbolView
             name={{ ios: 'book.pages', android: 'book', web: 'book' }}
-            tintColor="#4F46E5"
+            tintColor={T.brand}
             size={26}
           />
         </View>
@@ -130,14 +131,14 @@ export default function TeacherScreen() {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4F46E5" />
+          <ActivityIndicator size="large" color={T.brand} />
           <Text style={styles.loadingText}>Loading classes...</Text>
         </View>
       ) : classes.length === 0 ? (
         <View style={styles.emptyContainer}>
           <SymbolView
             name={{ ios: 'book.pages', android: 'book', web: 'book' }}
-            tintColor="#4F46E5"
+            tintColor={T.brand}
             size={32}
           />
           <Text style={styles.emptyText}>No classes assigned</Text>
@@ -176,61 +177,61 @@ export default function TeacherScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F7F9FC' },
+  root: { flex: 1, backgroundColor: T.bg },
   headerBand: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     paddingHorizontal: 20,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#E7EAF2',
+    borderBottomColor: T.line,
   },
   headerIconWrap: {
     width: 48, height: 48, borderRadius: 14,
-    backgroundColor: '#4F46E520',
+    backgroundColor: T.brand50,
     justifyContent: 'center', alignItems: 'center',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', letterSpacing: 0.2 },
-  headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: T.text, letterSpacing: 0.2 },
+  headerSubtitle: { fontSize: 12, color: T.text3, marginTop: 2 },
   sectionLabelRow: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10, gap: 10,
   },
-  sectionLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', letterSpacing: 1.2 },
+  sectionLabel: { fontSize: 11, fontWeight: '700', color: T.text3, letterSpacing: 1.2 },
   sectionBadge: {
-    backgroundColor: '#4F46E522', borderRadius: 20,
+    backgroundColor: T.brand50, borderRadius: 20,
     paddingHorizontal: 8, paddingVertical: 2,
   },
-  sectionBadgeText: { fontSize: 11, color: '#4F46E5', fontWeight: '600' },
+  sectionBadgeText: { fontSize: 11, color: T.brand, fontWeight: '600' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#64748B' },
+  loadingText: { marginTop: 12, fontSize: 14, color: T.text3 },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
-  emptyText: { fontSize: 16, fontWeight: '600', color: '#0F172A', marginTop: 12 },
-  emptySubtext: { fontSize: 13, color: '#64748b', marginTop: 6, textAlign: 'center' },
+  emptyText: { fontSize: 16, fontWeight: '600', color: T.text, marginTop: 12 },
+  emptySubtext: { fontSize: 13, color: T.text3, marginTop: 6, textAlign: 'center' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
   card: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: '#E7EAF2',
+    backgroundColor: T.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: T.line,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
   cardIconWrap: {
     width: 42, height: 42, borderRadius: 12,
-    backgroundColor: '#4F46E515',
+    backgroundColor: T.brand50,
     justifyContent: 'center', alignItems: 'center',
   },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
-  cardSubject: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: T.text },
+  cardSubject: { fontSize: 12, color: T.text3, marginTop: 2 },
   statusBadge: {
     flexDirection: 'row', alignItems: 'center',
     borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4, gap: 5,
   },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { fontSize: 11, fontWeight: '600' },
-  cardDivider: { height: 1, backgroundColor: '#E7EAF2', marginVertical: 12 },
+  cardDivider: { height: 1, backgroundColor: T.line, marginVertical: 12 },
   cardFooter: { flexDirection: 'row', alignItems: 'center' },
-  footerText: { fontSize: 13, color: '#64748B', flex: 1 },
+  footerText: { fontSize: 13, color: T.text3, flex: 1 },
   viewBtn: { flexDirection: 'row', alignItems: 'center' },
-  viewBtnText: { fontSize: 13, color: '#4F46E5', fontWeight: '600' },
+  viewBtnText: { fontSize: 13, color: T.brand, fontWeight: '600' },
 });

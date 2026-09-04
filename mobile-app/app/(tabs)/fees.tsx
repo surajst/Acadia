@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, T
 import { SymbolView } from 'expo-symbols';
 import { DataContext } from './_layout';
 import { requestFeeWaiver } from '../../services/api';
+import T from '../../constants/theme';
 
 /**
  * What this family owes the school, and what they have already paid.
@@ -75,7 +76,7 @@ export default function FeesScreen() {
   if (!fees) {
     return (
       <ScrollView style={s.page} contentContainerStyle={s.emptyWrap} refreshControl={refresh}>
-        <SymbolView name={{ ios: 'doc.text', android: 'receipt', web: 'receipt' }} tintColor="#94A3B8" size={44} />
+        <SymbolView name={{ ios: 'doc.text', android: 'receipt', web: 'receipt' }} tintColor={T.text4} size={44} />
         <Text style={s.emptyTitle}>No fees raised yet</Text>
         <Text style={s.emptyBody}>
           The school has not billed anything for {childName} so far. Anything raised will appear here.
@@ -134,7 +135,7 @@ export default function FeesScreen() {
                   {d.dueDate ? `${d.overdue ? 'overdue' : 'due'} ${day(d.dueDate)}` : ''}
                 </Text>
               </View>
-              <Text style={[s.rowAmount, d.overdue && { color: '#B91C1C' }]}>{money(d.amount)}</Text>
+              <Text style={[s.rowAmount, d.overdue && { color: T.dangerInk }]}>{money(d.amount)}</Text>
             </View>
           ))}
 
@@ -150,7 +151,7 @@ export default function FeesScreen() {
                   <TextInput
                     style={s.askInput}
                     placeholder="What has changed? A short reason is enough."
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={T.text3}
                     value={reason}
                     onChangeText={setReason}
                     multiline
@@ -191,14 +192,14 @@ export default function FeesScreen() {
           fees.payments.map((p: any, i: number) => (
             <View key={`pmt-${i}`} style={[s.row, i === fees.payments.length - 1 && s.rowLast]}>
               <View style={s.rowLeft}>
-                <Text style={[s.rowLabel, p.reversal && { color: '#B91C1C' }]}>
+                <Text style={[s.rowLabel, p.reversal && { color: T.dangerInk }]}>
                   {p.reversal ? 'Reversed' : p.receiptNumber != null ? `Receipt #${p.receiptNumber}` : 'Payment'}
                 </Text>
                 <Text style={s.rowMeta}>
                   {[p.label, day(p.paidOn), p.reversal ? null : p.mode].filter(Boolean).join(' · ')}
                 </Text>
               </View>
-              <Text style={[s.rowAmount, { color: p.reversal ? '#B91C1C' : '#047857' }]}>{money(p.amount)}</Text>
+              <Text style={[s.rowAmount, { color: p.reversal ? T.dangerInk : T.successInk }]}>{money(p.amount)}</Text>
             </View>
           ))
         ) : (
@@ -214,54 +215,54 @@ export default function FeesScreen() {
 }
 
 const TONE = {
-  settled: { bg: '#ECFDF5', border: '#A7F3D0', ink: '#047857' },
-  overdue: { bg: '#FEF2F2', border: '#FECACA', ink: '#B91C1C' },
-  due:     { bg: '#FFFBEB', border: '#FDE68A', ink: '#B45309' },
+  settled: { bg: T.success50, border: T.success200, ink: T.successInk },
+  overdue: { bg: T.danger50, border: T.danger200, ink: T.dangerInk },
+  due:     { bg: T.warn50, border: T.warn200, ink: T.warnInk },
 };
 
 const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#F4F6FB' },
+  page: { flex: 1, backgroundColor: T.bg },
   content: { padding: 16, paddingBottom: 32, gap: 14 },
 
   hero: { borderRadius: 16, borderWidth: 1, padding: 16 },
   heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  eyebrow: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: '#64748B' },
-  overduePill: { backgroundColor: '#DC2626', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  overduePillText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  eyebrow: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: T.text3 },
+  overduePill: { backgroundColor: T.danger, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  overduePillText: { color: T.surface, fontSize: 10, fontWeight: '700' },
   heroAmount: { fontSize: 30, fontWeight: '800', letterSpacing: -0.5 },
-  heroNext: { fontSize: 12.5, color: '#475569', marginTop: 4 },
-  heroProgress: { fontSize: 11.5, color: '#64748B', marginTop: 8 },
+  heroNext: { fontSize: 12.5, color: T.text2, marginTop: 4 },
+  heroProgress: { fontSize: 11.5, color: T.text3, marginTop: 8 },
 
-  card: { backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#E7EAF2', padding: 14 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 8 },
+  card: { backgroundColor: T.surface, borderRadius: 16, borderWidth: 1, borderColor: T.line, padding: 14 },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: T.text, marginBottom: 8 },
 
   row: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: '#EEF1F6', gap: 12,
+    paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: T.track, gap: 12,
   },
   rowLast: { borderBottomWidth: 0 },
   rowLeft: { flex: 1 },
-  rowLabel: { fontSize: 13.5, fontWeight: '600', color: '#0F172A' },
-  rowMeta: { fontSize: 11.5, color: '#64748B', marginTop: 2 },
-  rowMetaOverdue: { color: '#B91C1C' },
-  rowAmount: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+  rowLabel: { fontSize: 13.5, fontWeight: '600', color: T.text },
+  rowMeta: { fontSize: 11.5, color: T.text3, marginTop: 2 },
+  rowMetaOverdue: { color: T.dangerInk },
+  rowAmount: { fontSize: 14, fontWeight: '700', color: T.text },
 
   askLinkRow: { minHeight: 44, justifyContent: 'center' },
-  askLink: { fontSize: 12.5, fontWeight: '600', color: '#4F46E5' },
-  askBox: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#D9DFEA', borderRadius: 12, padding: 12, marginTop: 8 },
-  askTitle: { fontSize: 13.5, fontWeight: '700', color: '#0F172A', marginBottom: 8 },
-  askInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#D9DFEA', borderRadius: 10, padding: 10, fontSize: 14, color: '#0F172A', minHeight: 44 },
+  askLink: { fontSize: 12.5, fontWeight: '600', color: T.brand },
+  askBox: { backgroundColor: T.surface2, borderWidth: 1, borderColor: T.lineStrong, borderRadius: 12, padding: 12, marginTop: 8 },
+  askTitle: { fontSize: 13.5, fontWeight: '700', color: T.text, marginBottom: 8 },
+  askInput: { backgroundColor: T.surface, borderWidth: 1, borderColor: T.lineStrong, borderRadius: 10, padding: 10, fontSize: 14, color: T.text, minHeight: 44 },
   askActions: { flexDirection: 'row', gap: 8, marginTop: 10 },
   askBtn: { flex: 1, minHeight: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  askCancel: { backgroundColor: '#fff', borderColor: '#D9DFEA' },
-  askCancelText: { fontSize: 13.5, fontWeight: '600', color: '#475569' },
-  askSend: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
-  askSendText: { fontSize: 13.5, fontWeight: '700', color: '#fff' },
+  askCancel: { backgroundColor: T.surface, borderColor: T.lineStrong },
+  askCancelText: { fontSize: 13.5, fontWeight: '600', color: T.text2 },
+  askSend: { backgroundColor: T.brand, borderColor: T.brand },
+  askSendText: { fontSize: 13.5, fontWeight: '700', color: T.surface },
 
-  emptyRow: { fontSize: 13, color: '#64748B', paddingVertical: 6 },
+  emptyRow: { fontSize: 13, color: T.text3, paddingVertical: 6 },
   emptyWrap: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 10 },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
-  emptyBody: { fontSize: 13.5, color: '#64748B', textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: T.text },
+  emptyBody: { fontSize: 13.5, color: T.text3, textAlign: 'center', lineHeight: 20 },
 
-  footnote: { fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 2 },
+  footnote: { fontSize: 11, color: T.text4, textAlign: 'center', marginTop: 2 },
 });

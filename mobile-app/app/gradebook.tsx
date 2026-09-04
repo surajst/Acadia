@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/context/AuthContext';
+import EmptyState from '@/components/ui/EmptyState';
 import {
   getTeacherClasses,
   getAssessmentsForClass,
@@ -9,6 +10,7 @@ import {
   getAssessmentDetail,
   submitAssessmentScores,
 } from '@/services/api';
+import T from '../constants/theme';
 
 export default function GradebookScreen() {
   const { userToken } = useAuth();
@@ -103,7 +105,7 @@ export default function GradebookScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color={T.brand} />
       </View>
     );
   }
@@ -112,7 +114,7 @@ export default function GradebookScreen() {
     <View style={styles.root}>
       <View style={styles.headerBand}>
         <View style={styles.headerIconWrap}>
-          <SymbolView name={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }} tintColor="#4F46E5" size={26} />
+          <SymbolView name={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }} tintColor={T.brand} size={26} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.headerTitle}>Gradebook</Text>
@@ -136,7 +138,7 @@ export default function GradebookScreen() {
         <TextInput
           style={styles.input}
           placeholder="New assessment title"
-          placeholderTextColor="#64748b"
+          placeholderTextColor={T.text3}
           value={newTitle}
           onChangeText={setNewTitle}
         />
@@ -156,6 +158,16 @@ export default function GradebookScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {assessments.length === 0 && (
+        <EmptyState
+          icon={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }}
+          title={selectedClass ? `No assessments in ${selectedClass.className} yet` : 'No classes assigned'}
+          body={selectedClass
+            ? 'Name one above — a unit test, a weekly quiz — and every student in the class appears here ready to score.'
+            : 'Once an admin assigns you a class, its assessments and scores live here.'}
+        />
+      )}
 
       {detail && (
         <>
@@ -188,40 +200,40 @@ export default function GradebookScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F7F9FC' },
-  center: { flex: 1, backgroundColor: '#F7F9FC', justifyContent: 'center', alignItems: 'center' },
+  root: { flex: 1, backgroundColor: T.bg },
+  center: { flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' },
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#E7EAF2',
+    backgroundColor: T.surface, paddingHorizontal: 20, paddingVertical: 18,
+    borderBottomWidth: 1, borderBottomColor: T.line,
   },
-  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#4F46E520', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
-  headerSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: T.brand50, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: T.text },
+  headerSubtitle: { fontSize: 12, color: T.text3, marginTop: 2 },
   classChips: { marginTop: 14, maxHeight: 44 },
   assessmentChips: { marginTop: 10, maxHeight: 44 },
-  chip: { backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#E7EAF2' },
-  chipActive: { backgroundColor: '#4F46E522', borderColor: '#4F46E5' },
-  chipText: { fontSize: 13, color: '#64748B', fontWeight: '600' },
-  chipTextActive: { color: '#4F46E5' },
+  chip: { backgroundColor: T.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: T.line },
+  chipActive: { backgroundColor: T.brand50, borderColor: T.brand },
+  chipText: { fontSize: 13, color: T.text3, fontWeight: '600' },
+  chipTextActive: { color: T.brand },
   newAssessmentRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: 14 },
-  input: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 10, borderWidth: 1, borderColor: '#E7EAF2', paddingHorizontal: 12, color: '#0F172A' },
-  createBtn: { backgroundColor: '#4F46E5', borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' },
-  createBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  input: { flex: 1, backgroundColor: T.surface, borderRadius: 10, borderWidth: 1, borderColor: T.line, paddingHorizontal: 12, color: T.text },
+  createBtn: { backgroundColor: T.brand, borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' },
+  createBtnText: { color: T.surface, fontWeight: '700', fontSize: 13 },
   sectionLabelRow: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8 },
-  sectionLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', letterSpacing: 1 },
+  sectionLabel: { fontSize: 11, fontWeight: '700', color: T.text3, letterSpacing: 1 },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 16, gap: 8 },
   rosterRow: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF',
-    borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E7EAF2',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: T.surface,
+    borderRadius: 12, padding: 12, borderWidth: 1, borderColor: T.line,
   },
-  rosterName: { fontSize: 14, fontWeight: '600', color: '#0F172A' },
-  rosterRoll: { fontSize: 11, color: '#64748b', marginTop: 2 },
+  rosterName: { fontSize: 14, fontWeight: '600', color: T.text },
+  rosterRoll: { fontSize: 11, color: T.text3, marginTop: 2 },
   scoreInput: {
-    width: 60, backgroundColor: '#F7F9FC', borderRadius: 8, borderWidth: 1, borderColor: '#E7EAF2',
-    color: '#0F172A', textAlign: 'center', paddingVertical: 6,
+    width: 60, backgroundColor: T.bg, borderRadius: 8, borderWidth: 1, borderColor: T.line,
+    color: T.text, textAlign: 'center', paddingVertical: 6,
   },
-  saveBtn: { backgroundColor: '#4F46E5', margin: 16, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  saveBtn: { backgroundColor: T.brand, margin: 16, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  saveBtnText: { color: T.surface, fontWeight: '700', fontSize: 14 },
 });

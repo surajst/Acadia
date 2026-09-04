@@ -10,6 +10,7 @@ import {
 import { useContext, useState, useEffect } from 'react';
 import { DataContext } from './_layout';
 import { getParentAttendance } from '../../services/api';
+import T from '../../constants/theme';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AttendanceRecord = {
@@ -49,18 +50,21 @@ function buildMockRecords(): AttendanceRecord[] {
 const MOCK_RECORDS = buildMockRecords();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+// Ink on its own 50 tint. These were dark-theme leftovers -- a near-black
+// green cell with mid-green digits -- and the token migration made the pairing
+// worse rather than better by turning the background into the ink step.
 const STATUS_COLOR: Record<AttendanceRecord['status'], string> = {
-  PRESENT: '#059669',
-  ABSENT: '#ef4444',
-  LATE: '#D97706',
-  HOLIDAY: '#94A3B8',
+  PRESENT: T.successInk,
+  ABSENT: T.dangerInk,
+  LATE: T.warnInk,
+  HOLIDAY: T.text3,
 };
 
 const STATUS_BG: Record<AttendanceRecord['status'], string> = {
-  PRESENT: '#14532d',
-  ABSENT: '#7f1d1d',
-  LATE: '#78350f',
-  HOLIDAY: '#FFFFFF',
+  PRESENT: T.success50,
+  ABSENT: T.danger50,
+  LATE: T.warn50,
+  HOLIDAY: T.surface,
 };
 
 function getMonthLabel(dateStr: string): string {
@@ -95,15 +99,15 @@ function AttendanceSummary({ records }: { records: AttendanceRecord[] }) {
 
   return (
     <View style={styles.summaryRow}>
-      <View style={[styles.summaryBox, { borderColor: '#059669' }]}>
+      <View style={[styles.summaryBox, { borderColor: T.success }]}>
         <Text style={styles.summaryNum}>{present}</Text>
         <Text style={styles.summaryLabel}>Present</Text>
       </View>
-      <View style={[styles.summaryBox, { borderColor: '#ef4444' }]}>
+      <View style={[styles.summaryBox, { borderColor: T.danger }]}>
         <Text style={styles.summaryNum}>{absent}</Text>
         <Text style={styles.summaryLabel}>Absent</Text>
       </View>
-      <View style={[styles.summaryBox, { borderColor: '#4F46E5' }]}>
+      <View style={[styles.summaryBox, { borderColor: T.brand }]}>
         <Text style={styles.summaryNum}>{pct}%</Text>
         <Text style={styles.summaryLabel}>Attendance</Text>
       </View>
@@ -190,7 +194,7 @@ export default function AttendanceScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       {/* Child Selector Header */}
       <View style={styles.section}>
@@ -211,7 +215,7 @@ export default function AttendanceScreen() {
         <Text style={styles.sectionTitle}>Attendance Calendar</Text>
 
         {loading ? (
-          <ActivityIndicator color="#4F46E5" style={{ marginTop: 20 }} />
+          <ActivityIndicator color={T.brand} style={{ marginTop: 20 }} />
         ) : (
           Object.entries(byMonth).map(([monthLabel, monthRecords]) => (
             <View key={monthLabel} style={styles.monthBlock}>
@@ -245,23 +249,23 @@ export default function AttendanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
     padding: 16,
   },
   restrictedContainer: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: T.bg,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
   restrictedIcon: { fontSize: 48, marginBottom: 16 },
-  restrictedTitle: { color: '#0F172A', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
-  restrictedSub: { color: '#64748B', fontSize: 14, textAlign: 'center' },
+  restrictedTitle: { color: T.text, fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  restrictedSub: { color: T.text3, fontSize: 14, textAlign: 'center' },
 
   section: { marginBottom: 24 },
   sectionTitle: {
-    color: '#0F172A',
+    color: T.text,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
@@ -269,7 +273,7 @@ const styles = StyleSheet.create({
 
   // Child badge
   childBadge: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
@@ -280,31 +284,31 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#4F46E5',
+    backgroundColor: T.brand,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  childAvatarText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  childName: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
-  childGrade: { color: '#64748B', fontSize: 13 },
+  childAvatarText: { color: T.surface, fontSize: 20, fontWeight: 'bold' },
+  childName: { color: T.text, fontSize: 16, fontWeight: '700' },
+  childGrade: { color: T.text3, fontSize: 13 },
 
   // Summary boxes
   summaryRow: { flexDirection: 'row', gap: 10 },
   summaryBox: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.surface,
     borderRadius: 14,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1.5,
   },
-  summaryNum: { color: '#0F172A', fontSize: 24, fontWeight: 'bold' },
-  summaryLabel: { color: '#64748B', fontSize: 12, marginTop: 2 },
+  summaryNum: { color: T.text, fontSize: 24, fontWeight: 'bold' },
+  summaryLabel: { color: T.text3, fontSize: 12, marginTop: 2 },
 
   // Month block
   monthBlock: { marginBottom: 20 },
   monthLabel: {
-    color: '#64748B',
+    color: T.text3,
     fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -330,5 +334,5 @@ const styles = StyleSheet.create({
   legendRow: { flexDirection: 'row', gap: 16, paddingHorizontal: 4, marginBottom: 8 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendText: { color: '#64748B', fontSize: 13 },
+  legendText: { color: T.text3, fontSize: 13 },
 });

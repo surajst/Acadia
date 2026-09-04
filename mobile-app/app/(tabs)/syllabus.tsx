@@ -5,6 +5,7 @@ import {
 import { useContext, useState, useEffect, useCallback } from 'react';
 import { DataContext } from './_layout';
 import { getStudentSyllabus, getSubjects } from '../../services/api';
+import T from '../../constants/theme';
 
 interface Topic {
   id: string;
@@ -17,7 +18,7 @@ interface Topic {
 }
 
 // Fallback accent palette, applied in catalog order when a subject has no colorHex set.
-const FALLBACK_ACCENTS = ['#059669', '#D97706', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
+const FALLBACK_ACCENTS = [T.success, T.warn, '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
 
 export default function SyllabusScreen() {
   const { role } = useContext(DataContext);
@@ -90,7 +91,7 @@ export default function SyllabusScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color={T.brand} />
       </View>
     );
   }
@@ -98,7 +99,7 @@ export default function SyllabusScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Curriculum Overview</Text>
@@ -132,7 +133,7 @@ export default function SyllabusScreen() {
           subjectKeys.map(subjectKey => {
             const subjectTopics = grouped[subjectKey];
             const completedCount = subjectTopics.filter(t => t.completed).length;
-            const accent = subjectAccent[subjectKey] ?? '#4F46E5';
+            const accent = subjectAccent[subjectKey] ?? T.brand;
 
             return (
               <View key={subjectKey} style={styles.subjectGroup}>
@@ -182,40 +183,42 @@ export default function SyllabusScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:          { flex: 1, backgroundColor: '#F7F9FC', padding: 16 },
+  container:          { flex: 1, backgroundColor: T.bg, padding: 16 },
   center:             { justifyContent: 'center', alignItems: 'center' },
   section:            { marginBottom: 24 },
-  sectionTitle:       { color: '#0F172A', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+  sectionTitle:       { color: T.text, fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
   chipContainer:      { flexDirection: 'row', gap: 8, paddingBottom: 8 },
   chip:               { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-                        backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E7EAF2' },
-  chipActive:         { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
-  chipText:           { color: '#64748B', fontWeight: '600' },
-  chipTextActive:     { color: '#ffffff' },
+                        backgroundColor: T.surface, borderWidth: 1, borderColor: T.line },
+  chipActive:         { backgroundColor: T.brand, borderColor: T.brand },
+  chipText:           { color: T.text3, fontWeight: '600' },
+  chipTextActive:     { color: T.surface },
   subjectGroup:       { marginBottom: 20 },
   subjectHeader:      { flexDirection: 'row', justifyContent: 'space-between',
                         alignItems: 'center', paddingLeft: 10,
                         borderLeftWidth: 3, marginBottom: 10 },
-  subjectName:        { color: '#E7EAF2', fontSize: 15, fontWeight: '700' },
+  // Was the border token used as a text colour -- #E7EAF2 on white, about
+  // 1.1:1, so the subject each group belonged to was invisible.
+  subjectName:        { color: T.text, fontSize: 15, fontWeight: '700' },
   subjectProgress:    { fontSize: 13, fontWeight: '600' },
-  card:               { backgroundColor: '#FFFFFF', padding: 14, borderRadius: 12,
-                        marginBottom: 8, borderWidth: 1, borderColor: '#E7EAF2' },
+  card:               { backgroundColor: T.surface, padding: 14, borderRadius: 12,
+                        marginBottom: 8, borderWidth: 1, borderColor: T.line },
   topicRow:           { flexDirection: 'row', alignItems: 'center', gap: 12 },
   indicator:          { width: 28, height: 28, borderRadius: 14, borderWidth: 2,
-                        borderColor: '#94A3B8', justifyContent: 'center',
-                        alignItems: 'center', backgroundColor: '#F7F9FC' },
-  indicatorDone:      { borderColor: '#059669', backgroundColor: 'rgba(34,197,94,0.15)' },
-  indicatorText:      { color: '#64748B', fontSize: 11, fontWeight: 'bold' },
-  indicatorTextDone:  { color: '#059669', fontSize: 14 },
+                        borderColor: T.text4, justifyContent: 'center',
+                        alignItems: 'center', backgroundColor: T.bg },
+  indicatorDone:      { borderColor: T.success, backgroundColor: 'rgba(34,197,94,0.15)' },
+  indicatorText:      { color: T.text3, fontSize: 11, fontWeight: 'bold' },
+  indicatorTextDone:  { color: T.success, fontSize: 14 },
   topicTextContainer: { flex: 1 },
-  itemTitle:          { color: '#0F172A', fontSize: 15, fontWeight: '600', marginBottom: 3 },
-  itemSubtitle:       { color: '#64748B', fontSize: 13 },
+  itemTitle:          { color: T.text, fontSize: 15, fontWeight: '600', marginBottom: 3 },
+  itemSubtitle:       { color: T.text3, fontSize: 13 },
   doneBadge:          { backgroundColor: 'rgba(34,197,94,0.15)', borderRadius: 8,
                         paddingHorizontal: 8, paddingVertical: 3,
                         borderWidth: 1, borderColor: 'rgba(34,197,94,0.3)' },
-  doneBadgeText:      { color: '#059669', fontSize: 11, fontWeight: '700' },
-  emptyCard:          { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 12,
-                        borderWidth: 1, borderColor: '#E7EAF2',
+  doneBadgeText:      { color: T.success, fontSize: 11, fontWeight: '700' },
+  emptyCard:          { backgroundColor: T.surface, padding: 16, borderRadius: 12,
+                        borderWidth: 1, borderColor: T.line,
                         justifyContent: 'center', alignItems: 'center', height: 90 },
-  emptyText:          { color: '#64748B', fontSize: 14, textAlign: 'center' },
+  emptyText:          { color: T.text3, fontSize: 14, textAlign: 'center' },
 });
