@@ -1,0 +1,16 @@
+{
+  "_note": [
+    "Text colours we have measured, looked at, and accepted below the 4.5:1 floor.",
+    "check-contrast.mjs measures each token used as text once, against the lightest",
+    "ground it could honestly sit on. Anything under 4.5:1 that is not listed here",
+    "fails the build.",
+    "",
+    "Every entry needs a written reason -- the script rejects one without it -- and",
+    "the recorded ratio is a ratchet: a token may improve, never slip. Prefer fixing",
+    "the token to adding an entry; the list is empty today because all five findings",
+    "from the first run turned out to be real bugs.",
+    "",
+    "Shape: { \"token\": \"T.text3\", \"ratio\": 3.84, \"reason\": \"...\" }"
+  ],
+  "accepted": []
+}
