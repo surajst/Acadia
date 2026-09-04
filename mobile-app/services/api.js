@@ -155,6 +155,16 @@ export const getStudentSyllabus = async () => {
   return response.data;
 };
 
+// Claiming a parent-set quest. The endpoint existed; nothing in the app called
+// it, so a child could see "available to claim" and had no way to claim it.
+export const claimQuest = async (questId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/student/claim-quest/${questId}`, null, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export const getStudentTimetable = async () => {
   const response = await api.get('/student/timetable');
   return Array.isArray(response.data) ? response.data : [];
@@ -258,6 +268,27 @@ export const submitAssessmentScores = async (assessmentId, scores) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
+};
+
+// ─── Task creation (teacher) ───────────────────────────────────────────────
+// The web console has had this form since the beginning; the app could only
+// list what had already been assigned.
+
+export const createTeacherTask = async (payload) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/teacher/tasks/create`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const searchMyStudents = async (query) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/my-students`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { q: query ?? '' },
+  });
+  return Array.isArray(response.data) ? response.data : [];
 };
 
 // ─── Verification queue (teacher) ──────────────────────────────────────────

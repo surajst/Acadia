@@ -202,7 +202,82 @@ public class StudentService {
         response.put("parentQuests", parentQuests);
         response.put("availableParentRewards", availableParentRewards);
 
+        // ── What the home screen shows above the fold ───────────────────────
+        // The dashboard used to hand back XP and lists only, so the app had to
+        // fan out to three more endpoints to answer "what is happening today".
+
+        List<Map<String, Object>> periods = student.getClassSection() != null
+                ? timetableService.sectionTimetable(student.getClassSection().getId())
+                : List.of();
+        String todayCode = DAY_CODES[Math.floorMod(LocalDate.now().getDayOfWeek().getValue() - 1, 7)];
+        List<Map<String, Object>> todayPeriods = periods.stream()
+                .filter(e -> todayCode.equalsIgnoreCase(String.valueOf(e.get("dayOfWeek"))))
+                .sorted(Comparator.comparingInt(e -> asInt(e.get("periodNumber"))))
+                .collect(Collectors.toList());
+
+        Map<String, Object> today = new HashMap<>();
+        today.put("periodsToday", todayPeriods.size());
+        today.put("nextClass", nextClass(todayPeriods));
+        response.put("today", today);
+
+        Map<String, Object> quickStats = new HashMap<>();
+        quickStats.put("attendancePct", attendancePercentage(student));
+
+        List<?> perf = assessmentService.getSubjectPerformance(studentId);
+        quickStats.put("subjectCount", perf.size());
+        quickStats.put("averageMark", averageMark(perf));
+        response.put("quickStats", quickStats);
+
         return response;
+    }
+
+    private static final String[] DAY_CODES = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"};
+
+    private static int asInt(Object o) {
+        return o instanceof Number n ? n.intValue() : 0;
+    }
+
+    /**
+     * The period a student is heading to: the first one today that has not
+     * finished yet, falling back to the first of the day once school is over so
+     * the card shows the day's shape rather than going blank.
+     */
+    private Map<String, Object> nextClass(List<Map<String, Object>> todayPeriods) {
+        if (todayPeriods.isEmpty()) return null;
+        String now = java.time.LocalTime.now().toString().substring(0, 5);
+        return todayPeriods.stream()
+                .filter(e -> {
+                    Object end = e.get("endTime");
+                    return end != null && String.valueOf(end).compareTo(now) >= 0;
+                })
+                .findFirst()
+                .orElse(todayPeriods.get(0));
+    }
+
+    /** Attendance over the same 60-day window the attendance screen shows. */
+    private Integer attendancePercentage(Student student) {
+        LocalDate end = LocalDate.now();
+        List<Attendance> rows = attendanceRepository
+                .findByStudentAndAttendanceDateBetween(student, end.minusDays(60), end);
+        if (rows == null || rows.isEmpty()) return null;
+        long present = rows.stream()
+                .filter(a -> a.getStatus() != null && !"ABSENT".equals(a.getStatus().name()))
+                .count();
+        return (int) Math.round(present * 100.0 / rows.size());
+    }
+
+    /** Mean of the per-subject averages; null when nothing has been graded. */
+    private Integer averageMark(List<?> perf) {
+        if (perf == null || perf.isEmpty()) return null;
+        double sum = 0;
+        int n = 0;
+        for (Object o : perf) {
+            if (o instanceof com.concept.academics.app.SubjectPerformance sp) {
+                sum += sp.averagePercentage();
+                n++;
+            }
+        }
+        return n == 0 ? null : (int) Math.round(sum / n);
     }
 
     public List<Map<String, String>> mobileAttendance(Authentication authentication) {

@@ -8,7 +8,9 @@ import { getUnreadNotificationCount } from '../../services/api';
 import { startTrip, stopTrip, isTripActive } from '../../services/driverLocationTask';
 import { Stat, StatRow } from '../../components/ui/Stat';
 import NavCard from '../../components/ui/NavCard';
-import BirthdayCard, { isBirthday, turningAge } from '../../components/ui/BirthdayCard';
+import StudentDashboard from '../../components/StudentDashboard';
+import TeacherDashboard from '../../components/TeacherDashboard';
+import ParentDashboard from '../../components/ParentDashboard';
 import T from '../../constants/theme';
 
 interface ParentQuest {
@@ -104,6 +106,44 @@ export default function DashboardScreen() {
   const parentQuests = Array.isArray(data.parentQuests) ? data.parentQuests : [];
   const children = Array.isArray(data.children) ? data.children : [];
 
+  if (role === 'TEACHER') {
+    return (
+      <TeacherDashboard
+        data={data}
+        firstName={firstName}
+        schoolName={schoolName}
+        unreadCount={unreadCount}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      />
+    );
+  }
+
+  if (role === 'PARENT') {
+    return (
+      <ParentDashboard
+        data={data}
+        parentFirstName={data.parent?.firstName ?? firstName}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        selectedChildId={selectedChildId}
+        selectChild={selectChild}
+      />
+    );
+  }
+
+  if (role === 'STUDENT') {
+    return (
+      <StudentDashboard
+        data={data}
+        schoolName={schoolName}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        refreshData={refreshData}
+      />
+    );
+  }
+
   return (
     <ScrollView
       style={styles.container}
@@ -120,14 +160,6 @@ export default function DashboardScreen() {
             )}
           </TouchableOpacity>
         </View>
-      )}
-
-      {role === 'STUDENT' && isBirthday(data.student?.dateOfBirth) && (
-        <BirthdayCard
-          firstName={data.student?.firstName}
-          schoolName={schoolName ?? undefined}
-          age={turningAge(data.student?.dateOfBirth)}
-        />
       )}
 
       <View style={styles.infoCard}>

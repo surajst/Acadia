@@ -32,25 +32,27 @@ const type = {
 export const T = {
   type,
 
-  bg: '#F7F9FC',
+  bg: '#FAF9FC',
   surface: '#FFFFFF',
   /** Behind a sheet or modal, so the page reads as sent to the back. */
   scrim: '#00000090',
-  surface2: '#F8FAFC',
-  line: '#E7EAF2',
-  lineStrong: '#D9DFEA',
-  track: '#F1F4F9',
+  surface2: '#F7F6FA',
+  line: '#EAE9EE',
+  lineStrong: '#DCDAE2',
+  track: '#F1F0F5',
 
-  text: '#0F172A',
-  text2: '#475569',
-  text3: '#64748B',
+  text: '#3A3742',
+  text2: '#5C5866',
+  text3: '#84808F',
   /** Decoration only -- never a label a user has to read. */
-  text4: '#94A0B4',
+  text4: '#9B98A3',
 
-  brand: '#4F46E5',
-  brand50: '#EEF0FF',
-  brand100: '#E0E3FF',
-  brand700: '#4338CA',
+  brand: '#5B47D6',
+  brand50: '#EDEAFA',
+  brand100: '#DCD6F5',
+  brand700: '#4A3BB0',
+  /** The darker stop of the header gradient's inner surfaces. */
+  brandRing: '#5044C4',
 
   /**
    * On a brand fill the page tokens invert -- text3 on indigo is unreadable.
@@ -61,18 +63,36 @@ export const T = {
   onBrandMuted: '#E0E7FF',
   onBrandFaint: '#C7D2FE',
 
-  success: '#059669',
+  success: '#3E9E6B',
   success50: '#ECFDF5',
   success200: '#A7F3D0',
   warn: '#D97706',
   warn50: '#FFFBEB',
   warn200: '#FDE68A',
-  danger: '#DC2626',
+  danger: '#D14545',
   danger50: '#FEF2F2',
   danger200: '#FECACA',
   info: '#2563EB',
   info50: '#EFF6FF',
   info200: '#BFDBFE',
+
+  /**
+   * The two XP ledgers, kept visually distinct wherever they are shown side by
+   * side -- a child earns them differently and spends them differently.
+   */
+  xpSchool: '#DFE05C',
+  xpParent: '#8FD3E8',
+
+  /**
+   * The quest accent. Deliberately its own family rather than reusing warn:
+   * amber here means "something good is waiting for you", not "attention".
+   */
+  quest: '#F0B33C',
+  quest50: '#FFFCEF',
+  quest200: '#EFE0B8',
+  questInk: '#4A3F22',
+  questInkMuted: '#7E7355',
+  questCta: '#4B3F1F',
 
   /**
    * Ink steps: the readable weight of each status colour for TEXT sitting on
@@ -85,7 +105,7 @@ export const T = {
   dangerInk: '#B91C1C',
   infoInk: '#1D4ED8',
   /** Readable brand weight for small text on brand50. */
-  brandInk: '#4338CA',
+  brandInk: '#453A87',
 
   r: 16,
   rSm: 14,

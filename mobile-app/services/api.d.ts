@@ -149,6 +149,7 @@ export function getStudentProgress(): Promise<ApiObject>;
 export function getStudentAttendance(): Promise<ApiObject>;
 export function getStudentTasks(): Promise<any[]>;
 export function getStudentSyllabus(): Promise<ApiObject>;
+export function claimQuest(questId: string): Promise<ApiObject>;
 export function getStudentTimetable(): Promise<ApiObject[]>;
 export function getStudentAnnouncements(): Promise<ApiObject[]>;
 export function getStudentPerformance(): Promise<ApiObject[]>;
@@ -165,6 +166,9 @@ export function getAssessmentsForClass(classSectionId: string): Promise<ApiObjec
 export function createAssessment(payload: ApiObject): Promise<ApiObject>;
 export function getAssessmentDetail(assessmentId: string): Promise<ApiObject>;
 export function submitAssessmentScores(assessmentId: string, scores: ApiObject[]): Promise<ApiObject>;
+
+export function createTeacherTask(payload: ApiObject): Promise<ApiObject>;
+export function searchMyStudents(query?: string): Promise<ApiObject[]>;
 
 export interface TeacherQueue {
   pendingSubmissions: ApiObject[];
