@@ -5,7 +5,6 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
-  TouchableOpacity,
 } from 'react-native';
 import { useContext, useState, useEffect } from 'react';
 import { DataContext } from './_layout';

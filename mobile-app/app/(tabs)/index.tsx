@@ -74,7 +74,7 @@ export default function DashboardScreen() {
       try {
         const count = await getUnreadNotificationCount();
         setUnreadCount(count);
-      } catch (e) {
+      } catch {
         setUnreadCount(0);
       }
     }
@@ -261,7 +261,7 @@ export default function DashboardScreen() {
 
           {Array.isArray(data.timetable) && data.timetable.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Today's Schedule</Text>
+              <Text style={styles.sectionTitle}>Today’s Schedule</Text>
               {data.timetable.map((period: any) => (
                 <View key={period.id} style={styles.periodItem}>
                   <View style={[styles.periodTimeBadge, { backgroundColor: period.attendanceMarked ? T.success50 : T.warn50 }]}>

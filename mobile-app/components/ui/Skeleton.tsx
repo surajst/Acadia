@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Animated, View, StyleSheet, Easing, AccessibilityInfo } from 'react-native';
 import T from '../../constants/theme';
 
@@ -18,7 +18,10 @@ export function Skeleton({ width, height, radius = T.rXs, style }: {
   radius?: number;
   style?: any;
 }) {
-  const pulse = useRef(new Animated.Value(0.5)).current;
+  // Lazy useState, not useRef(new Animated.Value(...)).current: reading .current
+  // during render is a hook-rules violation, and the useRef spelling also
+  // constructs a throwaway Animated.Value on every single render.
+  const [pulse] = useState(() => new Animated.Value(0.5));
 
   useEffect(() => {
     let loop: Animated.CompositeAnimation | null = null;

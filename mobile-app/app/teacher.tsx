@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import ClassRosterModal from '@/components/ClassRosterModal';
 import { useAuth } from '@/context/AuthContext';

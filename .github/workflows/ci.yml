@@ -58,11 +58,10 @@ jobs:
       - name: Contrast gate
         run: npm run check:contrast
 
-      # Not blocking yet: the app carries 45 pre-existing lint errors, and
-      # cleaning those is its own change. Drop continue-on-error once it is
-      # green, otherwise this reports a status nobody has to act on.
+      # Errors block. The 29 remaining warnings are capped by --max-warnings so
+      # the backlog cannot quietly grow back; lower that number as they go, and
+      # never raise it.
       - name: Lint
-        continue-on-error: true
         run: npm run lint
 
   build-and-test:

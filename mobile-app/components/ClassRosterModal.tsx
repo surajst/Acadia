@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,7 +7,6 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SymbolView } from 'expo-symbols';
@@ -48,13 +47,10 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
 
   const BASE_HOST = getApiHost();
 
-  useEffect(() => {
-    if (isVisible) {
-      fetchRoster();
-    }
-  }, [isVisible]);
-
-  const fetchRoster = async () => {
+  // Declared before the effect that calls it. The other way round, the effect
+  // captured whichever fetchRoster existed on the first render and never saw a
+  // change of sectionId.
+  const fetchRoster = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -91,7 +87,13 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sectionId, BASE_HOST]);
+
+  useEffect(() => {
+    if (isVisible) {
+      fetchRoster();
+    }
+  }, [isVisible, fetchRoster]);
 
   const toggleAttendance = (studentId: string, status: AttendanceStatus) => {
     setAttendanceMap(prev => ({

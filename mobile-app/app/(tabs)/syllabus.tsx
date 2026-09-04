@@ -2,8 +2,7 @@ import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
   TouchableOpacity, ActivityIndicator,
 } from 'react-native';
-import { useContext, useState, useEffect, useCallback } from 'react';
-import { DataContext } from './_layout';
+import { useState, useEffect, useCallback } from 'react';
 import { getStudentSyllabus, getSubjects } from '../../services/api';
 import T from '../../constants/theme';
 
@@ -21,7 +20,6 @@ interface Topic {
 const FALLBACK_ACCENTS = [T.success, T.warn, '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
 
 export default function SyllabusScreen() {
-  const { role } = useContext(DataContext);
   const [refreshing, setRefreshing]       = useState(false);
   const [activeSubject, setActiveSubject] = useState('All');
   const [topics, setTopics]               = useState<Topic[]>([]);

@@ -24,12 +24,6 @@ type SubjectPerformance = {
   trend: number[];
 };
 
-type Subject = {
-  code: string;
-  displayName: string;
-  colorHex?: string | null;
-};
-
 function scoreColor(pct: number): string {
   if (pct >= 80) return T.success;
   if (pct >= 60) return T.warn;
@@ -100,7 +94,7 @@ export default function PerformanceScreen() {
       } else {
         Alert.alert('Downloaded', `Report card saved to ${uri}`);
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Download failed', 'Could not download the report card. Please try again.');
     } finally {
       setDownloading(false);

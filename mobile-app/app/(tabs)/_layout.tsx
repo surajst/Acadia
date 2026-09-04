@@ -1,6 +1,6 @@
 import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
-import { View, ActivityIndicator, Platform, Text, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { useCallback, useState, useEffect, createContext } from 'react';
 import { getStudentDashboard, getParentDashboard, getApiHost } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -129,7 +129,6 @@ export default function TabLayout() {
   const isStudent = role === ROLE_STUDENT || (!role && true);
   const isParent  = role === ROLE_PARENT;
   const isTeacher = role === ROLE_TEACHER;
-  const isDriver  = role === ROLE_DRIVER;
   const isPrincipal = role === ROLE_PRINCIPAL;
 
   // Admins only. Principals now have the approvals queue, which is the work

@@ -44,9 +44,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 29",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "check": "npm run typecheck && npm run check:contrast"
+    "check": "npm run typecheck && npm run lint && npm run check:contrast"
   },
   "private": true
 }
