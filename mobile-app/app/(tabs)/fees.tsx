@@ -264,5 +264,5 @@ const s = StyleSheet.create({
   emptyTitle: { fontSize: 17, fontWeight: '700', color: T.text },
   emptyBody: { fontSize: 13.5, color: T.text3, textAlign: 'center', lineHeight: 20 },
 
-  footnote: { fontSize: 11, color: T.text4, textAlign: 'center', marginTop: 2 },
+  footnote: { fontSize: 11, color: T.text3, textAlign: 'center', marginTop: 2 },
 });

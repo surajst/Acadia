@@ -126,6 +126,6 @@ const styles = StyleSheet.create({
   statusRoute: { color: T.text, fontSize: 16, fontWeight: '700' },
   statusText: { color: T.text3, fontSize: 14, marginTop: 6 },
   statusCoords: { color: T.text3, fontSize: 12, marginTop: 6, fontVariant: ['tabular-nums'] },
-  webNotice: { color: T.warn, fontSize: 12, marginTop: 12 },
+  webNotice: { color: T.warnInk, fontSize: 12, marginTop: 12 },
   map: { flex: 1 },
 });

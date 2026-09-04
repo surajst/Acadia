@@ -191,14 +191,14 @@ const s = StyleSheet.create({
   kindProgress: { backgroundColor: T.info },
   title: { fontSize: 14.5, fontWeight: '600', color: T.text, lineHeight: 20 },
   sub: { fontSize: 12.5, color: T.text2, marginTop: 2 },
-  meta: { fontSize: 11.5, color: T.text4, marginTop: 3 },
+  meta: { fontSize: 11.5, color: T.text3, marginTop: 3 },
 
   actions: { flexDirection: 'row', gap: 8, marginTop: 12 },
   btn: { flex: 1, minHeight: 44, borderRadius: T.rXs, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   btnReject: { backgroundColor: T.surface, borderColor: T.lineStrong },
   btnRejectText: { fontSize: 13.5, fontWeight: '600', color: T.text2 },
   btnApprove: { backgroundColor: T.success50, borderColor: T.success200 },
-  btnApproveText: { fontSize: 13.5, fontWeight: '700', color: T.success },
+  btnApproveText: { fontSize: 13.5, fontWeight: '700', color: T.successInk },
   busy: { opacity: 0.6 },
 
 });

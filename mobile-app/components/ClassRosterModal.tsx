@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  toggleText: { fontSize: 13, fontWeight: '700', color: T.text4 },
+  toggleText: { fontSize: 13, fontWeight: '700', color: T.text3 },
   presentActive: { backgroundColor: T.success },
   absentActive: { backgroundColor: T.danger },
   textActive: { color: T.surface },

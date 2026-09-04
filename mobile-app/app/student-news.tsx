@@ -85,6 +85,6 @@ const s = StyleSheet.create({
   content: { padding: T.space.lg, paddingBottom: T.space.xxl, gap: T.space.md },
   card: { ...T.card, padding: T.space.lg },
   title: { ...T.type.heading, color: T.text },
-  date: { ...T.type.caption, color: T.text4, marginTop: 2 },
+  date: { ...T.type.caption, color: T.text3, marginTop: 2 },
   body: { ...T.type.body, color: T.text2, marginTop: T.space.sm },
 });
