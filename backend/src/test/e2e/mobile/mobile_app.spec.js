@@ -20,17 +20,32 @@ test.describe('Native Web App E2E Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Check Dashboard Tab
-    await expect(page.locator('text="Hello, Arjun!" >> visible=true')).toBeVisible();
-    await expect(page.locator('text="School XP" >> visible=true')).toBeVisible();
+    await expect(page.locator('text="Hello, Arjun" >> visible=true')).toBeVisible();
+    // Was 'School XP', one of three flat stat tiles the handoff header replaced.
+    // The XP figures now sit in a legend labelled just "School" / "Parent", which
+    // is too generic to locate on, so assert the progress caption instead -- it is
+    // always rendered and a regex keeps it stable as the numbers change.
+    await expect(page.locator('text=/XP to Level/ >> visible=true').first()).toBeVisible();
 
-    // 4. Navigate to Syllabus Tab
-    await page.locator('text="Syllabus" >> visible=true').click();
+    // 4. Navigate to Syllabus Tab.
+    //
+    // Navigation here goes through getByRole. Tab labels are also rendered as
+    // <h1> screen headings and hidden tabs stay mounted, so a plain text=
+    // locator can resolve to a heading behind the current screen and then fail
+    // on an intercepted click. A student has exactly four tabs: Dashboard,
+    // Syllabus, Challenges, Profile.
+    await page.getByRole('tab', { name: 'Syllabus' }).click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Curriculum Overview" >> visible=true')).toBeVisible();
 
-    // Verify default 'All' view shows topic cards
+    // Verify default 'All' view shows topic cards. Was /Grade/, which the card
+    // no longer prints -- it renders the topic name over "<Subject> • <n> XP".
+    // Matching the XP figure keeps this structural rather than tied to whichever
+    // topics the curriculum seeder happens to produce. The bullet matters: the
+    // dashboard's "200 XP to Level 2" stays mounted-but-hidden behind this tab,
+    // and a bare /\d+ XP/ resolved to that instead.
     await expect(
-      page.locator('text=/Grade/ >> visible=true').first()
+      page.getByText(/• \d+ XP/).first()
     ).toBeVisible();
 
     // Click the Science filter chip. .first() is required: "Science" also
@@ -48,14 +63,22 @@ test.describe('Native Web App E2E Tests', () => {
 
 
 
-    // 5. Navigate to Attendance Tab
-    await page.locator('text="Attendance" >> visible=true').click();
+    // 5. Navigate to Attendance. It is no longer a tab: parents had eight tabs
+    // and students six, so labels truncated to "Attend"/"Perfor", and five routes
+    // moved to the dashboard's Quick Actions. The route still exists, so this
+    // goes home first and enters it the way a student now does.
+    await page.getByRole('tab', { name: 'Dashboard' }).click();
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: /Attendance/ }).click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Attendance Summary" >> visible=true')).toBeVisible();
     await expect(page.locator('text="Attendance History" >> visible=true')).toBeVisible();
 
-    // 6. Navigate to Quests Tab
-    await page.locator('text="Quests" >> visible=true').click();
+    // 6. Navigate to Quests -- another of the five routes that moved off the tab
+    // bar into Quick Actions, so it is reached from the dashboard too.
+    await page.getByRole('tab', { name: 'Dashboard' }).click();
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: /Quests/ }).click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Parent Quests" >> visible=true')).toBeVisible();
     await expect(
@@ -63,22 +86,28 @@ test.describe('Native Web App E2E Tests', () => {
     ).toBeVisible();
     
     await expect(page.locator('text=/Rewards/ >> visible=true').first()).toBeVisible();
+    // A bare /XP/ matched the dashboard's own XP figures, which stay mounted but
+    // hidden behind this screen, so .first() resolved to one of those and failed
+    // the visibility check. Reward costs are the only place that renders a
+    // negative XP figure, so match that shape instead.
     await expect(
-      page.locator('text="No rewards available yet." >> visible=true').or(page.locator('text="Claim" >> visible=true').first().or(page.locator('text=/XP/ >> visible=true').first()))
+      page.getByText('No rewards available yet.')
+        .or(page.getByText(/-\d+ XP/).first())
     ).toBeVisible();
 
     // 7. Navigate to Challenges Tab
-    await page.locator('text="Challenges" >> visible=true').click();
+    await page.getByRole('tab', { name: 'Challenges' }).click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Active Challenges" >> visible=true')).toBeVisible();
-    // A seeded student has no challenges assigned, and the screen says so. This
-    // used to assert a mock card ("Chapter Summary — Food and Health") that the
-    // real API has never returned, so accept either a real challenge or the
-    // honest empty state -- what matters is that the tab renders rather than
-    // erroring.
+    // A seeded student now HAS challenges: ScreenContentSeeder assigns four
+    // teacher tasks per class, so this screen is no longer the empty state it
+    // was written against. Accept either -- what matters is that the tab renders
+    // rather than erroring. Challenge cards are the only place with a positive
+    // "+n XP" badge (reward costs are negative, the dashboard has neither sign),
+    // so that shape locates a card without naming a seeded task.
     await expect(
-      page.locator('text=/No challenges assigned yet/ >> visible=true').first()
-        .or(page.locator('text=/Chapter Summary/ >> visible=true').first())
+      page.getByText('No challenges assigned yet.')
+        .or(page.getByText(/\+\d+ XP/).first())
     ).toBeVisible();
 
     // 8. Navigate to Profile Tab
@@ -100,7 +129,7 @@ test.describe('Native Web App E2E Tests', () => {
     await page.waitForLoadState('networkidle');
 
     // 2. Check Parent Dashboard loaded
-    await expect(page.locator('text="Hello, Ramesh!" >> visible=true')
+    await expect(page.locator('text="Hello, Ramesh" >> visible=true')
       .or(page.locator('text="Parent Portal" >> visible=true'))
       .first()
     ).toBeVisible();
@@ -132,8 +161,14 @@ test.describe('Native Web App E2E Tests', () => {
     // 3. Wait for Navigation to Dashboard
     await page.waitForLoadState('networkidle');
     
-    // 4. Navigate to Syllabus Tab
-    await page.locator('text="Syllabus" >> visible=true').click();
+    // 4. Navigate to Syllabus Tab.
+    //
+    // Navigation here goes through getByRole. Tab labels are also rendered as
+    // <h1> screen headings and hidden tabs stay mounted, so a plain text=
+    // locator can resolve to a heading behind the current screen and then fail
+    // on an intercepted click. A student has exactly four tabs: Dashboard,
+    // Syllabus, Challenges, Profile.
+    await page.getByRole('tab', { name: 'Syllabus' }).click();
     await page.waitForLoadState('networkidle');
     
     // The chips are built from whatever subjects the curriculum actually holds,
@@ -193,16 +228,21 @@ test.describe('Native Web App E2E Tests', () => {
     await expect(pctWrapper).toContainText(/\d+%/);
     await expect(pctWrapper.locator('xpath=..')).toContainText('Attendance');
     
-    // Verify the calendar component structure, asserting that the grid cells color-code dynamically based on the backend's PRESENT and ABSENT status states
-    const presentCellText = page.locator('text="✓" >> visible=true').first();
-    await expect(presentCellText).toBeVisible();
-    await expect(presentCellText).toHaveCSS('color', 'rgb(34, 197, 94)'); // #22c55e
-    await expect(presentCellText.locator('xpath=..')).toHaveCSS('background-color', 'rgb(20, 83, 45)'); // #14532d
-    
-    const absentCellText = page.locator('text="✗" >> visible=true').first();
-    await expect(absentCellText).toBeVisible();
-    await expect(absentCellText).toHaveCSS('color', 'rgb(239, 68, 68)'); // #ef4444
-    await expect(absentCellText.locator('xpath=..')).toHaveCSS('background-color', 'rgb(127, 29, 29)'); // #7f1d1d
+    // The calendar colour-codes cells from the backend's PRESENT/ABSENT states.
+    //
+    // This used to pin exact hexes -- #22c55e on #14532d for present, #ef4444 on
+    // #7f1d1d for absent. Those were the dark-background values a token codemod
+    // later mapped onto *ink* (text) tokens, which took the cells to 1.45:1. So
+    // the assertion was pinning a palette that was failing WCAG, and it broke the
+    // moment that was fixed.
+    //
+    // Colour correctness now belongs to mobile-app/scripts/check-contrast.mjs,
+    // which measures every colour pair in every style object against the WCAG
+    // floor -- far stronger than one hardcoded hex here, and it cannot pass a
+    // screen that rendered nothing. What this test is actually for is that the
+    // grid renders a cell per status, so that is all it asserts.
+    await expect(page.locator('text="✓" >> visible=true').first()).toBeVisible();
+    await expect(page.locator('text="✗" >> visible=true').first()).toBeVisible();
   });
 
   test('ROLE-BASED ACCESS CONTROL GUARD TEST', async ({ page }) => {
