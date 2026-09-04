@@ -129,6 +129,24 @@ public class TasksService {
                 .collect(Collectors.toList());
     }
 
+    /** Just the one section's roster, for the attendance sheet -- not the teacher's whole caseload. */
+    public List<Map<String, String>> rosterForSection(UUID sectionId, Authentication authentication) {
+        User teacher = userRepository.findByEmail(authentication.getName()).orElse(null);
+        ClassSection section = teacher != null
+                ? classSectionRepository.findByIdAndTenantId(sectionId, teacher.getTenantId()).orElse(null)
+                : null;
+        if (teacher == null || section == null || !teacherOwnsSection(teacher, section)) {
+            throw TasksException.badRequest("Section not found");
+        }
+        String className = section.getGradeName() + " - " + section.getSectionName();
+        return studentRepository.findByClassSectionIn(List.of(section)).stream()
+                .map(s -> Map.of(
+                        "id", s.getId().toString(),
+                        "name", s.getFirstName() + " " + s.getLastName(),
+                        "className", className))
+                .collect(Collectors.toList());
+    }
+
     public Object testStudents() {
         if (!devMode) {
             throw TasksException.forbidden("Disabled in production");

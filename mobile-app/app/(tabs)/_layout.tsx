@@ -72,7 +72,7 @@ export default function TabLayout() {
       } else if (role === ROLE_TEACHER) {
         const token = await AsyncStorage.getItem('userToken');
         const BASE_HOST = getApiHost();
-        const [classesResp, tasksResp, attendanceSummaryResp, timetableResp] = await Promise.all([
+        const [classesResp, tasksResp, attendanceSummaryResp, timetableResp, queueResp] = await Promise.all([
           fetch(`${BASE_HOST}/api/teacher/classes`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
@@ -84,6 +84,9 @@ export default function TabLayout() {
           }),
           fetch(`${BASE_HOST}/api/teacher/timetable/today`, {
             headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch(`${BASE_HOST}/api/teacher/queue`, {
+            headers: { Authorization: `Bearer ${token}` }
           })
         ]);
         const classes = await classesResp.json();
@@ -92,7 +95,8 @@ export default function TabLayout() {
         const attendanceSummary = await attendanceSummaryResp.json();
         const timetableRaw = await timetableResp.json();
         const timetable = Array.isArray(timetableRaw) ? timetableRaw : (timetableRaw.value ?? []);
-        setData({ teacher: true, classes, tasks, attendanceSummary, timetable });
+        const queue = await queueResp.json();
+        setData({ teacher: true, classes, tasks, attendanceSummary, timetable, queue });
       } else if (role === ROLE_DRIVER) {
         const token = await AsyncStorage.getItem('userToken');
         const BASE_HOST = getApiHost();

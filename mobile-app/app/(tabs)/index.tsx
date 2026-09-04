@@ -96,6 +96,7 @@ export default function DashboardScreen() {
   const attendancePending = data.attendanceSummary?.pendingToday ?? 0;
   const classes = Array.isArray(data.classes) ? data.classes : [];
   const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+  const pendingReviews = (data.queue?.pendingSubmissions?.length ?? 0) + (data.queue?.pendingProgress?.length ?? 0);
   const parentQuests = Array.isArray(data.parentQuests) ? data.parentQuests : [];
   const children = Array.isArray(data.children) ? data.children : [];
 
@@ -185,6 +186,16 @@ export default function DashboardScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.cardGrid}>
+              <TouchableOpacity style={styles.navCard} onPress={() => router.push('/verification')}>
+                <View style={[styles.navCardIcon, { backgroundColor: pendingReviews > 0 ? '#D9770620' : '#05966920' }]}>
+                  <SymbolView name={{ ios: 'checkmark.seal', android: 'verified', web: 'verified' }} tintColor={pendingReviews > 0 ? '#D97706' : '#059669'} size={24} />
+                </View>
+                <Text style={styles.navCardTitle}>Verification</Text>
+                <Text style={[styles.navCardSubtitle, pendingReviews > 0 && { color: '#D97706', fontWeight: '600' }]}>
+                  {pendingReviews > 0 ? `${pendingReviews} waiting` : 'Queue cleared'}
+                </Text>
+              </TouchableOpacity>
+
               <TouchableOpacity style={styles.navCard} onPress={() => router.push('/teacher')}>
                 <View style={[styles.navCardIcon, { backgroundColor: '#4F46E520' }]}>
                   <SymbolView name={{ ios: 'person.badge.clock', android: 'school', web: 'school' }} tintColor="#4F46E5" size={24} />

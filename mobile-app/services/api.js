@@ -105,7 +105,7 @@ export const downloadReportCard = async (term, studentId) => {
 
 export const getClassRoster = async (sectionId) => {
   const token = await AsyncStorage.getItem('userToken');
-  const response = await axios.get(`${BASE_HOST}/api/teacher/my-students`, {
+  const response = await axios.get(`${BASE_HOST}/api/teacher/attendance/roster/${sectionId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
@@ -223,6 +223,36 @@ export const submitAssessmentScores = async (assessmentId, scores) => {
   const token = await AsyncStorage.getItem('userToken');
   const response = await axios.post(`${BASE_HOST}/api/teacher/assessments/${assessmentId}/scores`, { scores }, {
     headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// ─── Verification queue (teacher) ──────────────────────────────────────────
+
+export const getTeacherQueue = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/queue`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const decideMilestone = async (submissionId, action, reason) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const params = action === 'approve' ? { submissionId } : { submissionId, reason };
+  const response = await axios.post(`${BASE_HOST}/api/teacher/milestone/${action}`, null, {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+  return response.data;
+};
+
+export const decideProgress = async (studentProgressId, action, reason) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const params = action === 'approve' ? { studentProgressId } : { studentProgressId, reason };
+  const response = await axios.post(`${BASE_HOST}/api/teacher/progress/${action}`, null, {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
   });
   return response.data;
 };
