@@ -39,3 +39,12 @@ backend/target/
 
 # Local production schema dumps pulled for migration reconciliation.
 prod-schema.sql
+
+# Database dumps. acadia-before-wipe.dump is a pg_dump of the live Neon
+# database taken before a destructive change -- a real backup holding real
+# school data, so it must never be committed and must not be deleted casually.
+*.dump
+
+# Cookie jars left behind by curl when driving the app by hand.
+n.txt
+backend/n.txt
