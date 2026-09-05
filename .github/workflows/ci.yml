@@ -115,6 +115,40 @@ jobs:
         working-directory: backend/src/test/e2e
         run: npx playwright test --config=playwright.web.config.js
 
+      # The mobile suite runs here rather than in its own job so it can reuse the
+      # backend already booted above -- a second job would have to rebuild and
+      # relaunch it, which costs far more than the two minutes this adds. It had
+      # never run anywhere: 7 of its 10 tests were failing against the redesigned
+      # app and nothing said so.
+      - name: Install mobile-app dependencies
+        working-directory: mobile-app
+        run: npm ci
+
+      # Port 8081 is not arbitrary: it is the only localhost origin the backend's
+      # CORS list allows.
+      - name: Launch Expo web
+        working-directory: mobile-app
+        env:
+          EXPO_PUBLIC_API_HOST: http://localhost:8080
+        run: |
+          nohup npx expo start --web --port 8081 > expo.log 2>&1 &
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/ || true)
+            if [ "$code" = "200" ]; then echo "Expo web is up"; exit 0; fi
+            sleep 5
+          done
+          echo "Expo web failed to start in time"
+          cat expo.log
+          exit 1
+
+      - name: Run mobile Playwright suite
+        working-directory: backend/src/test/e2e
+        run: npx playwright test --config=playwright.mobile.config.js
+
+      - name: Dump Expo log on failure
+        if: failure()
+        run: cat mobile-app/expo.log || true
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
