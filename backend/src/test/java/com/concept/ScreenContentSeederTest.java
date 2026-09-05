@@ -40,6 +40,59 @@ public class ScreenContentSeederTest {
         return n == null ? 0 : n;
     }
 
+    /**
+     * The pilot teacher teaches one subject, in one room.
+     *
+     * The first version of the seeder gave every section's every period to
+     * teacher@greenwood.com, so a Maths teacher's own week contained Science in
+     * a Science Lab and PE on a Sports Ground. Two Playwright specs caught it,
+     * but only after a full backend boot and a browser; this catches the same
+     * thing in the unit suite. The counts matter as much as the values -- an
+     * empty week would satisfy a bare "every row is Mathematics" loop.
+     */
+    @Test
+    void pilotTeacherOwnsOnlyMathematicsInTheirOwnRoom() {
+        UUID pilot = jdbc.queryForObject(
+            "SELECT id FROM users WHERE email = ?", UUID.class, "teacher@greenwood.com");
+        assertNotNull(pilot, "no pilot teacher, so this asserts nothing");
+
+        List<String> subjects = jdbc.queryForList(
+            "SELECT DISTINCT subject_name FROM timetable_entries WHERE teacher_id = ?",
+            String.class, pilot);
+        List<String> rooms = jdbc.queryForList(
+            "SELECT DISTINCT room_number FROM timetable_entries WHERE teacher_id = ?",
+            String.class, pilot);
+        Integer periods = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM timetable_entries WHERE teacher_id = ?", Integer.class, pilot);
+
+        assertTrue(periods != null && periods > 0,
+            "the pilot teacher has no periods at all, so the timetable screen is blank");
+        assertEquals(List.of("Mathematics"), subjects,
+            "the pilot teacher is teaching subjects that are not theirs: " + subjects);
+        assertEquals(List.of("Room 204"), rooms,
+            "the pilot teacher is teaching outside their own room: " + rooms);
+    }
+
+    /**
+     * Every other section still gets a full timetable -- the fix above must not
+     * be a fix by deletion. Students read their timetable by section, not by
+     * teacher, so a section with no periods is a blank screen for a whole class.
+     */
+    @Test
+    void everySectionStillHasAWeekOfPeriods() {
+        List<UUID> sections = jdbc.queryForList(
+            "SELECT DISTINCT class_section_id FROM timetable_entries WHERE tenant_id = ?",
+            UUID.class, TENANT_ID);
+        assertEquals(5, sections.size(),
+            "expected all five demo sections to have a timetable, got " + sections.size());
+        for (UUID section : sections) {
+            Integer days = jdbc.queryForObject(
+                "SELECT COUNT(DISTINCT day_of_week) FROM timetable_entries WHERE class_section_id = ?",
+                Integer.class, section);
+            assertEquals(5, days, "section " + section + " does not have a full school week");
+        }
+    }
+
     @Test
     void everyScreenBackingTableHasRows() {
         for (String table : List.of(
