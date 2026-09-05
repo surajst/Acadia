@@ -49,6 +49,15 @@ public class ScreenContentSeeder implements CommandLineRunner {
         UUID.fromString("10101010-1010-1010-1010-101010101010"),
     };
 
+    /**
+     * Grade 6 A, which teacher@greenwood.com teaches. TimetableService and
+     * AssignmentService hardcode the same id for the same reason.
+     */
+    private static final UUID PILOT_SECTION_ID = SECTION_IDS[0];
+
+    /** The one subject the pilot teacher owns. See {@link #seedTimetable}. */
+    private static final String MATHEMATICS = "Mathematics";
+
     /** Three letters, because timetable_entries.day_of_week is varchar(3). */
     private static final String[] DAY_CODES = {"MON", "TUE", "WED", "THU", "FRI"};
 
@@ -74,10 +83,22 @@ public class ScreenContentSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        seedAll();
+    }
+
+    /**
+     * Also called by {@code /test/reset}, which wipes attendance and teacher
+     * tasks and then reseeds only Arjun. Without this the screens this class
+     * exists to fill go empty again after the first Playwright run and stay
+     * empty until the next restart -- the exact failure it was written to stop.
+     * The per-batch markers make it a no-op for anything the reset left alone.
+     */
+    @Transactional
+    public String seedAll() {
         UUID teacherId = pilotTeacherId();
         if (teacherId == null) {
             System.out.println(">> Screen Content Seeder -> no teacher@greenwood.com yet, skipping.");
-            return;
+            return "skipped: no pilot teacher";
         }
 
         int timetable = seedTimetable(teacherId);
@@ -86,8 +107,10 @@ public class ScreenContentSeeder implements CommandLineRunner {
         int marks = seedAssessmentsAndScores(teacherId);
         int tasks = seedTeacherTasks(teacherId);
 
-        System.out.printf(">> Screen Content Seeder -> %d timetable, %d attendance, %d announcements, "
-            + "%d marks, %d tasks.%n", timetable, attendance, announcements, marks, tasks);
+        String summary = String.format("%d timetable, %d attendance, %d announcements, %d marks, %d tasks",
+            timetable, attendance, announcements, marks, tasks);
+        System.out.println(">> Screen Content Seeder -> " + summary + ".");
+        return summary;
     }
 
     /**
@@ -127,7 +150,7 @@ public class ScreenContentSeeder implements CommandLineRunner {
 
     /**
      * Whether THIS seeder's rows are already in place -- not whether the table has
-     * anything in it. DemoTestHarness writes its own announcement and timetable
+     * anything in it. DemoTestHarness writes its own announcement
      * rows as part of a smoke run, so a table-level "is it empty" check made this
      * seeder skip every block and quietly do nothing. Each block writes a fixed
      * set of deterministic ids in one batch, so the first id is a reliable marker
@@ -151,8 +174,32 @@ public class ScreenContentSeeder implements CommandLineRunner {
 
     /* --------------------------------------------------------------- timetable --- */
 
-    private int seedTimetable(UUID teacherId) {
+    /**
+     * A timetable for every section, with each period owned by a teacher who
+     * could plausibly be teaching it.
+     *
+     * The first version of this hung all five sections off the pilot teacher,
+     * which put Science in a Science Lab and PE on a Sports Ground inside
+     * teacher@greenwood.com's own week. That broke timetable.spec.js, which
+     * asserts every period the pilot teacher owns is Mathematics in Room 204 --
+     * and the spec was right: a secondary teacher teaches one subject, not the
+     * whole curriculum. So the pilot teacher gets Mathematics in the pilot
+     * section and nothing else; every other period goes to one of the staff
+     * teachers ScaleTestDataSeeder creates.
+     *
+     * Rows are deleted by id before being written rather than skipped when a
+     * marker is present, because a marker check cannot repair a database that
+     * already holds the wrong shape -- and one did, on every machine that ran
+     * the first version.
+     */
+    private int seedTimetable(UUID pilotTeacherId) {
+        List<UUID> staff = staffTeacherIds();
+        if (staff.isEmpty()) {
+            System.out.println(">> Screen Content Seeder -> no staff teachers; "
+                + "seeding the pilot teacher's periods only.");
+        }
         List<Object[]> rows = new ArrayList<>();
+        List<Object[]> ids = new ArrayList<>();
         for (UUID sectionId : SECTION_IDS) {
             if (gradeNameOf(sectionId) == null) continue;
             String room = roomOf(sectionId);
@@ -160,24 +207,57 @@ public class ScreenContentSeeder implements CommandLineRunner {
                 for (int p = 0; p < PERIODS.length; p++) {
                     // Rotate the subject by day as well as period, so no two days look alike.
                     String subject = SUBJECT_NAMES[(p + d) % SUBJECT_NAMES.length];
+                    UUID teacherId = teacherFor(staff, sectionId, subject, pilotTeacherId);
+                    // Better no period at all than one owned by an id nobody logs in as.
+                    if (teacherId == null) continue;
                     // Science and PE happen somewhere other than the home room.
                     String where = subject.equals("Science") ? "Science Lab"
                         : subject.equals("Physical Education") ? "Sports Ground"
                         : room;
+                    UUID id = idFor("timetable", sectionId.toString(), DAY_CODES[d], String.valueOf(p));
+                    ids.add(new Object[]{id});
                     rows.add(new Object[]{
-                        idFor("timetable", sectionId.toString(), DAY_CODES[d], String.valueOf(p)),
-                        TENANT_ID, ACADEMIC_YEAR_ID, sectionId, teacherId,
+                        id, TENANT_ID, ACADEMIC_YEAR_ID, sectionId, teacherId,
                         DAY_CODES[d], p + 1, PERIODS[p][0], PERIODS[p][1], subject, where,
                     });
                 }
             }
         }
-        if (rows.isEmpty() || alreadySeeded("timetable_entries", (UUID) rows.get(0)[0])) return 0;
+        if (rows.isEmpty()) return 0;
+        // Only this seeder's own ids, so timetable entries an admin created
+        // through the CRUD screens survive a reseed.
+        jdbc.batchUpdate("DELETE FROM timetable_entries WHERE id = ?", ids);
         jdbc.batchUpdate(
             "INSERT INTO timetable_entries (id, tenant_id, academic_year_id, class_section_id, "
             + "teacher_id, day_of_week, period_number, start_time, end_time, subject_name, room_number) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", rows);
         return rows.size();
+    }
+
+    /**
+     * Mathematics in the pilot section belongs to the pilot teacher; everything
+     * else goes to a staff teacher picked from the subject and section, so the
+     * same person keeps the same class all week.
+     */
+    private UUID teacherFor(List<UUID> staff, UUID sectionId, String subject, UUID pilotTeacherId) {
+        if (sectionId.equals(PILOT_SECTION_ID) && subject.equals(MATHEMATICS)) {
+            return pilotTeacherId;
+        }
+        if (staff.isEmpty()) return null;
+        return staff.get(spread(staff.size(), sectionId.toString(), subject));
+    }
+
+    /**
+     * The staff teacher accounts, which are real logins rather than the
+     * synthetic ids AcademicDataSeeder puts on class_sections.teacher_id --
+     * those reference no users row at all. Ordered by email so the assignment
+     * is the same on every run. Excludes the pilot teacher by construction.
+     */
+    private List<UUID> staffTeacherIds() {
+        return jdbc.query(
+            "SELECT id FROM users WHERE role = 'TEACHER' AND tenant_id = ? "
+            + "AND email LIKE 'staff%@greenwood.com' ORDER BY email",
+            (rs, n) -> UUID.fromString(rs.getString("id")), TENANT_ID);
     }
 
     /* -------------------------------------------------------------- attendance --- */
