@@ -61,7 +61,8 @@
         }
       ],
       "./plugins/withGradleMemory",
-      "./plugins/withReleaseSigning"
+      "./plugins/withReleaseSigning",
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true

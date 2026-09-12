@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal } from 'react-native';
 import { SymbolView } from 'expo-symbols';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import {
   getParentAnnouncements,
   getSupportedLanguages,
@@ -19,7 +19,7 @@ export default function AnnouncementsScreen() {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [localized, setLocalized] = useState<Record<string, { title: string; content: string }>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [player, setPlayer] = useState<AudioPlayer | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -34,7 +34,8 @@ export default function AnnouncementsScreen() {
       }
     })();
     return () => {
-      sound?.unloadAsync();
+      // expo-audio players hold a native resource until removed.
+      player?.remove();
     };
   }, []);
 
@@ -68,12 +69,10 @@ export default function AnnouncementsScreen() {
     setBusyId(id);
     try {
       const { audioBase64 } = await getAnnouncementSpeech(id, selectedLang);
-      await sound?.unloadAsync();
-      const { sound: newSound } = await Audio.Sound.createAsync({
-        uri: `data:audio/mpeg;base64,${audioBase64}`,
-      });
-      setSound(newSound);
-      await newSound.playAsync();
+      player?.remove();
+      const nextPlayer = createAudioPlayer({ uri: `data:audio/mpeg;base64,${audioBase64}` });
+      setPlayer(nextPlayer);
+      nextPlayer.play();
     } catch (e) {
       console.log('Failed to play announcement audio:', e);
     } finally {

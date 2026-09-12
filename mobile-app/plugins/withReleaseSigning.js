@@ -37,11 +37,15 @@ const ABI_SPLITS = `
             // A universal APK carries every architecture at once, which is most
             // of why the EAS preview build weighs 109 MB. Splitting emits one
             // slim APK per architecture; the universal one stays as a fallback
-            // for anything that does not match. x86_64 is omitted on purpose --
-            // it is emulators only, and it is a third of the native build.
+            // for anything that does not match.
+            //
+            // x86_64 is included even though no phone uses it: Android
+            // emulators do. Dropping it to save build time is what made a
+            // launch crash impossible to reproduce locally -- the only APK that
+            // would install on an emulator was the old EAS one.
             enable true
             reset()
-            include 'armeabi-v7a', 'arm64-v8a'
+            include 'armeabi-v7a', 'arm64-v8a', 'x86_64'
             universalApk true
         }
     }`;
