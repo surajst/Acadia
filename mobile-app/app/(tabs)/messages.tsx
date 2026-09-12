@@ -1,7 +1,14 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Modal, Platform, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
-import { Audio } from 'expo-av';
+import {
+  createAudioPlayer,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+  RecordingPresets,
+  type AudioPlayer,
+} from 'expo-audio';
 import { DataContext } from './_layout';
 import {
   getConversations,
@@ -39,8 +46,12 @@ export default function MessagesScreen() {
   const [langPickerVisible, setLangPickerVisible] = useState(false);
   const [localized, setLocalized] = useState<Record<string, string>>({});
   const [busyMessageId, setBusyMessageId] = useState<string | null>(null);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [player, setPlayer] = useState<AudioPlayer | null>(null);
+  // expo-audio exposes the recorder through a hook rather than a constructor,
+  // so it lives here rather than in state. `isRecording` on the recorder is a
+  // native property and does not re-render, so the button's state is mirrored.
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const [isRecording, setIsRecording] = useState(false);
   const [recordingBusy, setRecordingBusy] = useState(false);
 
   useEffect(() => {
@@ -131,10 +142,10 @@ export default function MessagesScreen() {
     setBusyMessageId(messageId);
     try {
       const { audioBase64 } = await getMessageSpeech(activeConversation.id, messageId, lang);
-      await sound?.unloadAsync();
-      const { sound: newSound } = await Audio.Sound.createAsync({ uri: `data:audio/mpeg;base64,${audioBase64}` });
-      setSound(newSound);
-      await newSound.playAsync();
+      player?.remove();
+      const nextPlayer = createAudioPlayer({ uri: `data:audio/mpeg;base64,${audioBase64}` });
+      setPlayer(nextPlayer);
+      nextPlayer.play();
     } catch (e) {
       console.log('Failed to play message audio:', e);
     } finally {
@@ -149,12 +160,12 @@ export default function MessagesScreen() {
     }
     if (!activeConversation) return;
 
-    if (recording) {
+    if (isRecording) {
       setRecordingBusy(true);
       try {
-        await recording.stopAndUnloadAsync();
-        const uri = recording.getURI();
-        setRecording(null);
+        await recorder.stop();
+        const uri = recorder.uri;
+        setIsRecording(false);
         if (uri) {
           await sendVoiceReply(activeConversation.id, uri, lang);
           openThread(activeConversation);
@@ -169,14 +180,17 @@ export default function MessagesScreen() {
     }
 
     try {
-      const permission = await Audio.requestPermissionsAsync();
+      const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) {
         Alert.alert('Voice reply', 'Microphone permission was not granted.');
         return;
       }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording: newRecording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      setRecording(newRecording);
+      // The iOS-suffixed keys are gone: expo-audio applies allowsRecording and
+      // playsInSilentMode on both platforms.
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      setIsRecording(true);
     } catch (e) {
       console.log('Failed to start recording:', e);
       Alert.alert('Voice reply', 'Could not start recording.');
@@ -253,7 +267,7 @@ export default function MessagesScreen() {
             />
             {isParent && (
               <TouchableOpacity
-                style={[styles.micBtn, recording && styles.micBtnActive]}
+                style={[styles.micBtn, isRecording && styles.micBtnActive]}
                 onPress={handleToggleRecording}
                 disabled={recordingBusy}
               >
