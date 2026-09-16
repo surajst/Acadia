@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import T from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
  * The ring on a gradient header: a big figure, a small label under it, and an
@@ -18,13 +18,17 @@ const STROKE = 7;
 const R = (SIZE - STROKE) / 2;
 const C = 2 * Math.PI * R;
 
-export default function ProgressRing({ value, label = 'LVL', pct, color = T.xpSchool }: {
+export default function ProgressRing({ value, label = 'LVL', pct, color }: {
   value: number | string;
   label?: string;
   pct: number;
   color?: string;
 }) {
+  // `T` has to come from the hook, called from inside the function body --
+  // not as a parameter default, since hooks can only run during render.
+  const T = useTheme();
   const clamped = Math.max(0, Math.min(100, pct));
+  const strokeColor = color ?? T.xpSchool;
 
   return (
     <View style={s.wrap}>
@@ -35,15 +39,15 @@ export default function ProgressRing({ value, label = 'LVL', pct, color = T.xpSc
         />
         <Circle
           cx={SIZE / 2} cy={SIZE / 2} r={R}
-          stroke={color} strokeWidth={STROKE} fill="none"
+          stroke={strokeColor} strokeWidth={STROKE} fill="none"
           strokeDasharray={`${(C * clamped) / 100} ${C}`}
           strokeLinecap="round"
           // start at 12 o'clock rather than 3
           transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
         />
       </Svg>
-      <View style={s.inner} pointerEvents="none">
-        <Text style={s.value}>{value}</Text>
+      <View style={[s.inner, { backgroundColor: T.brandRing }]} pointerEvents="none">
+        <Text style={[s.value, { color: T.onBrand }]}>{value}</Text>
         <Text style={s.label}>{label}</Text>
       </View>
     </View>
@@ -54,9 +58,12 @@ const s = StyleSheet.create({
   wrap: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
   inner: {
     position: 'absolute', width: SIZE - STROKE * 2, height: SIZE - STROKE * 2,
-    borderRadius: (SIZE - STROKE * 2) / 2, backgroundColor: T.brandRing,
+    borderRadius: (SIZE - STROKE * 2) / 2,
+    // backgroundColor deliberately absent -- brandRing changes with the
+    // chosen theme, applied inline above from the theme-hook-sourced T.
     alignItems: 'center', justifyContent: 'center',
   },
-  value: { fontSize: 20, fontWeight: '800', color: T.onBrand, lineHeight: 23 },
+  // color deliberately absent -- see inner, above.
+  value: { fontSize: 20, fontWeight: '800', lineHeight: 23 },
   label: { fontSize: 8, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.6)' },
 });

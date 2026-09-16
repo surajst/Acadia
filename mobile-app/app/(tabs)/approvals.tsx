@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert,
@@ -8,7 +8,7 @@ import {
   getPendingApprovals, decideApproval, getPendingStaff, decideStaff,
   getPendingWaivers, decideWaiver,
 } from '../../services/api';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 /**
  * What is waiting on the principal.
@@ -34,6 +34,8 @@ const when = (iso?: string) => {
 };
 
 export default function ApprovalsScreen() {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -191,7 +193,7 @@ export default function ApprovalsScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { padding: 16, paddingBottom: 32, gap: 14 },
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: T.bg },

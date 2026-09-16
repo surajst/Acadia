@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import ClassRosterModal from '@/components/ClassRosterModal';
 import { useAuth } from '@/context/AuthContext';
 import { getApiHost } from '../services/api';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 interface RosterCardProps {
   className: string;
@@ -15,6 +15,8 @@ interface RosterCardProps {
 }
 
 function RosterCard({ className, subject, studentCount, status, onViewRoster }: RosterCardProps) {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const statusColors: Record<string, string> = {
     pending: T.warn,
     active:  T.success,
@@ -71,6 +73,8 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
 }
 
 export default function TeacherScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const { userToken, schoolName, academicYearName } = useAuth();
   // `null` means "not fetched yet", which is what loading actually is, so the
   // flag is derived rather than stored. The stored version had to be corrected
@@ -175,7 +179,7 @@ export default function TeacherScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   root: { flex: 1, backgroundColor: T.bg },
   headerBand: {
     flexDirection: 'row',

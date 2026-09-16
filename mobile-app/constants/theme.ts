@@ -57,21 +57,29 @@ export const T = {
    */
   text4: '#9B98A3',
 
-  brand: '#5B47D6',
-  brand50: '#EDEAFA',
-  brand100: '#DCD6F5',
-  brand700: '#4A3BB0',
-  /** The darker stop of the header gradient's inner surfaces. */
-  brandRing: '#5044C4',
+  /**
+   * "Ink & Amber" -- a duotone, not a tint family: brand and brand700 are two
+   * different hues (near-black, deep gold), not a colour and its own shade.
+   * That inverts the usual relationship -- brand700 is the *brighter* of the
+   * two gradient stops here -- so every onBrand* value below is checked
+   * against BOTH stops and tuned to the worse one, not just against brand.
+   */
+  brand: '#17181C',
+  brand50: '#EFEFEF',
+  brand100: '#DADADB',
+  brand700: '#8A6423',
+  /** Between the two gradient stops, leaning toward the gold: the ring's inner fill. */
+  brandRing: '#5E4720',
 
   /**
-   * On a brand fill the page tokens invert -- text3 on indigo is unreadable.
+   * On the gradient the page tokens invert -- text3 is unreadable there.
    * These are the three weights that work there: a heading, a supporting line,
-   * and an overline label.
+   * and an overline label. Checked against whichever of brand/brand700 is
+   * harder for that weight, not just against brand.
    */
   onBrand: '#FFFFFF',
-  onBrandMuted: '#E0E7FF',
-  onBrandFaint: '#D0DBFF',
+  onBrandMuted: '#ECEDED',
+  onBrandFaint: '#C3C3C4',
 
   success: '#3E9E6B',
   success50: '#ECFDF5',
@@ -114,8 +122,9 @@ export const T = {
   warnInk: '#B45309',
   dangerInk: '#B91C1C',
   infoInk: '#1D4ED8',
-  /** Readable brand weight for small text on brand50. */
-  brandInk: '#453A87',
+  /** Readable brand weight for small text on brand50. brand itself, since it's
+   *  already near-black -- 15.4:1 on brand50, nothing tighter is needed. */
+  brandInk: '#17181C',
 
   r: 16,
   rSm: 14,

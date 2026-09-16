@@ -3,7 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import GradientHeader, { HeaderCard, headerStyles as h } from './GradientHeader';
 import ProgressRing from './ProgressRing';
+// T here is for the frozen module-scope styles below (T.pill, T.danger --
+// neither is theme-dependent). The component itself shadows this with a
+// locally-scoped, hook-sourced `const T` for h.title's colour override.
 import T from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
  * The teacher home header, on the same chrome as the student's.
@@ -32,6 +36,7 @@ const greetingFor = (name?: string) => {
 export default function TeacherHeader({
   firstName, schoolName, marked, total, unread = 0, onBellPress,
 }: Props) {
+  const T = useTheme();
   const pct = total > 0 ? Math.round((marked / total) * 100) : 0;
   const left = Math.max(0, total - marked);
   const allDone = total > 0 && left === 0;
@@ -77,7 +82,7 @@ export default function TeacherHeader({
 
         <View style={{ flex: 1, minWidth: 0, gap: 9 }}>
           <View>
-            <Text style={h.title}>Today’s register</Text>
+            <Text style={[h.title, { color: T.onBrand }]}>Today’s register</Text>
             <Text style={h.sub}>{subtitle}</Text>
           </View>
 

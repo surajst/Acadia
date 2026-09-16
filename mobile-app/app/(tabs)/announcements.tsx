@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
@@ -9,9 +9,11 @@ import {
   getAnnouncementSpeech,
   setPreferredLanguage,
 } from '../../services/api';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 export default function AnnouncementsScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [languages, setLanguages] = useState<any[]>([]);
   const [selectedLang, setSelectedLang] = useState('en');
@@ -162,7 +164,7 @@ export default function AnnouncementsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   root: { flex: 1, backgroundColor: T.bg },
   center: { flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' },
   headerBand: {

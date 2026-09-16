@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { getTeacherClasses, createTeacherTask, searchMyStudents, getSubjects } from '@/services/api';
-import T from '@/constants/theme';
+import { useTheme, type Theme } from '@/context/ThemeContext';
 
 /**
  * Assigning work from the phone.
@@ -24,6 +24,8 @@ const pretty = (d: Date) =>
   d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
 export default function NewTaskScreen() {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
 
   const [classes, setClasses] = useState<any[]>([]);
@@ -253,6 +255,8 @@ export default function NewTaskScreen() {
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   return (
     <View style={{ gap: 7 }}>
       <View style={s.labelRow}>
@@ -269,6 +273,8 @@ function ChipRow({ items, selected, onSelect }: {
   selected?: string;
   onSelect: (key: string) => void;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   return (
     <View style={s.chipRow}>
       {items.map((it) => {
@@ -289,7 +295,7 @@ function ChipRow({ items, selected, onSelect }: {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { padding: 20, paddingBottom: 40, gap: 18 },
   centre: { flex: 1, backgroundColor: T.bg, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 6 },

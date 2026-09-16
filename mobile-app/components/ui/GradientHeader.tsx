@@ -1,7 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+// T here is only for the frozen module-scope styles below, which use
+// non-brand constants (T.pill) that never change with the chosen theme.
+// Inside each component, a locally-shadowing `const T = useTheme()` is used
+// instead for anything that does -- see the note on Theme in ThemeContext.tsx
+// for why the identifier name has to stay `T` either way.
 import T from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
  * The chrome every role's home screen shares: the gradient block, the avatar,
@@ -24,6 +30,7 @@ export default function GradientHeader({ initial, greeting, trailing, children }
   trailing?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  const T = useTheme();
   return (
     <LinearGradient
       colors={[T.brand, T.brand700]}
@@ -33,12 +40,12 @@ export default function GradientHeader({ initial, greeting, trailing, children }
     >
       <View style={s.greetRow}>
         <View style={s.avatar}>
-          <Text style={s.avatarText}>{(initial ?? '?').charAt(0).toUpperCase()}</Text>
+          <Text style={[s.avatarText, { color: T.onBrand }]}>{(initial ?? '?').charAt(0).toUpperCase()}</Text>
         </View>
 
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.date}>{headerDateLine()}</Text>
-          <Text style={s.greeting} numberOfLines={1}>{greeting}</Text>
+          <Text style={[s.greeting, { color: T.onBrand }]} numberOfLines={1}>{greeting}</Text>
         </View>
 
         {trailing}
@@ -59,7 +66,10 @@ export function HeaderCard({ children, label }: { children: React.ReactNode; lab
 }
 
 export const headerStyles = StyleSheet.create({
-  title: { fontSize: 15, fontWeight: '700', color: T.onBrand },
+  // color is deliberately absent -- onBrand changes with the chosen theme, so
+  // every consumer applies it inline: style={[h.title, { color: T.onBrand }]}
+  // with a theme-hook-sourced T, not the module-level static one.
+  title: { fontSize: 15, fontWeight: '700' },
   sub: { fontSize: 12.5, fontWeight: '500', color: 'rgba(255,255,255,0.66)', marginTop: 1 },
   bar: {
     height: 7, borderRadius: T.pill,
@@ -91,9 +101,10 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: { fontSize: 17, fontWeight: '800', color: T.onBrand },
+  // color absent on both -- same reason as headerStyles.title above.
+  avatarText: { fontSize: 17, fontWeight: '800' },
   date: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, color: 'rgba(255,255,255,0.62)' },
-  greeting: { fontSize: 21, fontWeight: '800', letterSpacing: -0.4, color: T.onBrand, marginTop: 2 },
+  greeting: { fontSize: 21, fontWeight: '800', letterSpacing: -0.4, marginTop: 2 },
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 16,
     padding: 16, borderRadius: 22, marginTop: 16,

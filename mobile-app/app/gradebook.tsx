@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import EmptyState from '@/components/ui/EmptyState';
@@ -9,9 +9,11 @@ import {
   getAssessmentDetail,
   submitAssessmentScores,
 } from '@/services/api';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 export default function GradebookScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
   const [assessments, setAssessments] = useState<any[]>([]);
@@ -200,7 +202,7 @@ export default function GradebookScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   root: { flex: 1, backgroundColor: T.bg },
   center: { flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' },
   headerBand: {

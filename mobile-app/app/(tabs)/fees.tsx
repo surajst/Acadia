@@ -1,9 +1,12 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { DataContext } from './_layout';
 import { requestFeeWaiver } from '../../services/api';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
+// Only for TONE below -- success/danger/warn are not brand-family tokens, so
+// they never change with the chosen theme and don't need the live hook.
+import baseT from '../../constants/theme';
 
 /**
  * What this family owes the school, and what they have already paid.
@@ -31,6 +34,8 @@ const day = (iso?: string | null) => {
 };
 
 export default function FeesScreen() {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const { data, refreshData } = useContext(DataContext);
   const [refreshing, setRefreshing] = useState(false);
   // Which instalment the parent is asking about, and why. Only one at a time:
@@ -215,12 +220,12 @@ export default function FeesScreen() {
 }
 
 const TONE = {
-  settled: { bg: T.success50, border: T.success200, ink: T.successInk },
-  overdue: { bg: T.danger50, border: T.danger200, ink: T.dangerInk },
-  due:     { bg: T.warn50, border: T.warn200, ink: T.warnInk },
+  settled: { bg: baseT.success50, border: baseT.success200, ink: baseT.successInk },
+  overdue: { bg: baseT.danger50, border: baseT.danger200, ink: baseT.dangerInk },
+  due:     { bg: baseT.warn50, border: baseT.warn200, ink: baseT.warnInk },
 };
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { padding: 16, paddingBottom: 32, gap: 14 },
 

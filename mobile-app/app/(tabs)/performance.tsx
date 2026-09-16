@@ -8,11 +8,14 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useMemo } from 'react';
 import * as Sharing from 'expo-sharing';
 import { DataContext } from './_layout';
 import { getSubjectPerformance, getSubjects, downloadReportCard } from '../../services/api';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
+// Only for scoreColor below -- success/warn/danger are not brand-family
+// tokens, so they never change with the chosen theme.
+import baseT from '../../constants/theme';
 
 const TERMS = ['TERM1', 'TERM2', 'FINAL'] as const;
 type Term = typeof TERMS[number];
@@ -25,13 +28,15 @@ type SubjectPerformance = {
 };
 
 function scoreColor(pct: number): string {
-  if (pct >= 80) return T.success;
-  if (pct >= 60) return T.warn;
-  return T.danger;
+  if (pct >= 80) return baseT.success;
+  if (pct >= 60) return baseT.warn;
+  return baseT.danger;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function SubjectCard({ subject, label }: { subject: SubjectPerformance; label: string }) {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const color = scoreColor(subject.averagePercentage);
 
   return (
@@ -62,6 +67,8 @@ function SubjectCard({ subject, label }: { subject: SubjectPerformance; label: s
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function PerformanceScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const { role, data, refreshData } = useContext(DataContext);
   const [refreshing, setRefreshing] = useState(false);
   const [subjects, setSubjects] = useState<SubjectPerformance[] | null>(
@@ -191,7 +198,7 @@ export default function PerformanceScreen() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: T.bg,

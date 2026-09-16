@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/context/AuthContext';
 import { getApiHost } from '../services/api';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 interface Task {
   id: string;
@@ -14,21 +14,28 @@ interface Task {
   createdAt?: string;
 }
 
-const TYPE_COLORS: Record<string, string> = {
+// Functions, not plain objects: HOMEWORK's colour is T.brand, which changes
+// with the chosen theme, so these have to be recomputed from the live T
+// rather than captured once at module load.
+const makeTypeColors = (T: Theme): Record<string, string> => ({
   HOMEWORK:  T.brand,
   PRACTICE:  T.success,
   PROJECT:   T.warn,
   READING:   '#06b6d4',
-};
+});
 
-const TYPE_BG: Record<string, string> = {
+const makeTypeBg = (T: Theme): Record<string, string> => ({
   HOMEWORK:  T.brand50,
   PRACTICE:  T.success50,
   PROJECT:   T.warn50,
   READING:   '#06b6d422',
-};
+});
 
 export default function TasksScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
+  const TYPE_COLORS = useMemo(() => makeTypeColors(T), [T]);
+  const TYPE_BG = useMemo(() => makeTypeBg(T), [T]);
   const { userToken } = useAuth();
   // See teacher.tsx: `null` is "not fetched yet", so loading is derived from the
   // data rather than stored in a flag the effect had to correct on first render.
@@ -129,7 +136,7 @@ export default function TasksScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   root: { flex: 1, backgroundColor: T.bg },
   headerBand: {
     flexDirection: 'row', alignItems: 'center',
