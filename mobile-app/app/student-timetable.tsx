@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Stack } from 'expo-router';
 import { getStudentTimetable } from '@/services/api';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
-import T from '@/constants/theme';
+import { useTheme, type Theme } from '@/context/ThemeContext';
 
 /**
  * The student's own class timetable. The teacher's timetable screen shows one
@@ -30,6 +30,8 @@ type Period = {
 };
 
 export default function StudentTimetableScreen() {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const [rows, setRows] = useState<Period[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -114,7 +116,7 @@ export default function StudentTimetableScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { padding: T.space.lg, paddingBottom: T.space.xxl, gap: T.space.xl },
 

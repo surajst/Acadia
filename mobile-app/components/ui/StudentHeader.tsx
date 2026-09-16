@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import GradientHeader, { HeaderCard, headerStyles as h } from './GradientHeader';
 import ProgressRing from './ProgressRing';
-import T from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
  * The student home header: who they are, how far through the level they are,
@@ -34,6 +34,7 @@ export default function StudentHeader({
   firstName, streak = 0, level, schoolXp, parentXp,
   levelProgress, xpToNextLevel, onStreakPress,
 }: Props) {
+  const T = useTheme();
   const pct = Math.max(0, Math.min(100, levelProgress));
 
   return (
@@ -58,7 +59,7 @@ export default function StudentHeader({
 
         <View style={{ flex: 1, minWidth: 0, gap: 9 }}>
           <View>
-            <Text style={h.title}>Scholar Level {level}</Text>
+            <Text style={[h.title, { color: T.onBrand }]}>Scholar Level {level}</Text>
             <Text style={h.sub}>{xpToNextLevel} XP to Level {level + 1}</Text>
           </View>
 

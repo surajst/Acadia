@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { SymbolView, SymbolViewProps } from 'expo-symbols';
 import { useRouter } from 'expo-router';
@@ -6,7 +6,7 @@ import StudentHeader from './ui/StudentHeader';
 import { SectionLabel, QuestCard, NextClassCard } from './ui/TodaySection';
 import BirthdayCard, { isBirthday, turningAge } from './ui/BirthdayCard';
 import { claimQuest } from '../services/api';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 /**
  * The student home screen.
@@ -26,6 +26,8 @@ type Props = {
 };
 
 export default function StudentDashboard({ data, schoolName, refreshing, onRefresh, refreshData }: Props) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
   const [claiming, setClaiming] = useState<string | null>(null);
 
@@ -187,6 +189,8 @@ function Action({ to, icon, title, metric, tone }: {
   metric: string;
   tone?: string;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
   return (
     <TouchableOpacity
@@ -205,7 +209,7 @@ function Action({ to, icon, title, metric, tone }: {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { paddingBottom: 40 },
   body: { paddingHorizontal: 20, paddingTop: 20, gap: 22 },

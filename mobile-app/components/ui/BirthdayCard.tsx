@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 /**
  * A birthday greeting, shown on the child's own dashboard on the day.
@@ -33,6 +33,8 @@ export default function BirthdayCard({ firstName, schoolName, age }: {
   schoolName?: string;
   age?: number | null;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   return (
     <View style={s.card} accessibilityRole="summary">
       <Text style={s.emoji}>🎂</Text>
@@ -47,7 +49,7 @@ export default function BirthdayCard({ firstName, schoolName, age }: {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   card: {
     ...T.card,
     backgroundColor: T.brand,

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SymbolView, SymbolViewProps } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import ParentHeader from './ui/ParentHeader';
 import { SectionLabel, QuestCard, InfoCard } from './ui/TodaySection';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 /**
  * The parent home screen, on the same shape as the other two.
@@ -30,6 +30,8 @@ const money = (n: any) =>
 export default function ParentDashboard({
   data, parentFirstName, refreshing, onRefresh, selectedChildId, selectChild,
 }: Props) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
 
   const m = data.metrics ?? {};
@@ -161,6 +163,8 @@ export default function ParentDashboard({
 function Action({ to, icon, title, metric }: {
   to: string; icon: SymbolViewProps['name']; title: string; metric: string;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
   return (
     <TouchableOpacity
@@ -179,7 +183,7 @@ function Action({ to, icon, title, metric }: {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { paddingBottom: 40 },
   body: { paddingHorizontal: 20, paddingTop: 20, gap: 22 },

@@ -1,11 +1,11 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Alert, Modal } from 'react-native';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '@/context/AuthContext';
 import { DataContext } from './_layout';
 import { getUserProfile, getSupportedLanguages, setPreferredLanguage, type UserProfile, type UserRole } from '../../services/api';
-import T from '../../constants/theme';
+import { useThemePicker, type Theme } from '../../context/ThemeContext';
 
 function isUserRole(value: string | null): value is UserRole {
   return value === 'STUDENT' || value === 'PARENT' || value === 'TEACHER';
@@ -14,6 +14,9 @@ function isUserRole(value: string | null): value is UserRole {
 export default function ProfileScreen() {
   const { role, data } = useContext(DataContext);
   const { logout, firstName: authFirstName, lastName: authLastName } = useAuth();
+  const { theme: T, paletteId, palettes, setPaletteId } = useThemePicker();
+  const styles = useMemo(() => makeStyles(T), [T]);
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -233,6 +236,21 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Theme</Text>
+        <TouchableOpacity style={styles.card} onPress={() => setThemePickerOpen(true)}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Header colour</Text>
+            <View style={styles.themeRowValue}>
+              <View style={[styles.themeSwatch, { backgroundColor: T.brand }]} />
+              <Text style={styles.detailValue}>
+                {palettes.find((p) => p.id === paletteId)?.label ?? 'Default'}
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </View>
+
       {role === 'PARENT' && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Language</Text>
@@ -275,11 +293,38 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={themePickerOpen} transparent animationType="slide" onRequestClose={() => setThemePickerOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Choose a theme</Text>
+            <ScrollView style={{ maxHeight: 360 }}>
+              {palettes.map((p) => (
+                <TouchableOpacity
+                  key={p.id}
+                  style={[styles.themePickerRow, paletteId === p.id && styles.langRowActive]}
+                  onPress={() => { setPaletteId(p.id); setThemePickerOpen(false); }}
+                >
+                  <View style={[styles.themeSwatch, styles.themeSwatchLg, { backgroundColor: p.brand }]}>
+                    <View style={[styles.themeSwatchHalf, { backgroundColor: p.brand700 }]} />
+                  </View>
+                  <Text style={styles.langRowText}>{p.label}</Text>
+                  {paletteId === p.id && <Text style={{ color: T.brand, fontWeight: '700' }}>✓</Text>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+// A function, not a module-level object, because several properties below
+// (avatar, editBtn, saveBtn, langRowActive...) depend on the chosen theme's
+// brand colour. Called via useMemo(() => makeStyles(T), [T]) so it only
+// recomputes when the palette actually changes.
+const makeStyles = (T: Theme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg, padding: 16 },
   header: { alignItems: 'center', marginVertical: 32 },
   avatar: {
@@ -342,5 +387,19 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 16, fontWeight: '700', color: T.text, marginBottom: 12 },
   langRow: { padding: 12, borderRadius: 10, marginBottom: 4 },
   langRowActive: { backgroundColor: T.brand50 },
-  langRowText: { color: T.text, fontSize: 14 },
+  langRowText: { color: T.text, fontSize: 14, flex: 1 },
+  themeRowValue: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  themeSwatch: { width: 16, height: 16, borderRadius: 5 },
+  themeSwatchLg: { width: 28, height: 28, borderRadius: 8, overflow: 'hidden' },
+  // A tiny diagonal split so the picker previews the actual two-stop gradient
+  // (brand -> brand700), not just the flat brand colour -- the duotone
+  // options (Ink & Amber) would otherwise look identical to a plain hue.
+  themeSwatchHalf: {
+    position: 'absolute', width: 40, height: 40, right: -10, bottom: -10,
+    transform: [{ rotate: '45deg' }],
+  },
+  themePickerRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    padding: 12, borderRadius: 10, marginBottom: 4,
+  },
 });

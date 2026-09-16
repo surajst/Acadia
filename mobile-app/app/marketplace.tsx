@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { Stack } from 'expo-router';
 import {
@@ -9,7 +9,7 @@ import {
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import { Stat, StatRow } from '@/components/ui/Stat';
-import T from '@/constants/theme';
+import { useTheme, type Theme } from '@/context/ThemeContext';
 
 /**
  * Spending XP. The catalogue and the redeem logic both already existed -- but
@@ -27,6 +27,8 @@ type Item = { id: string; title?: string; description?: string; xpCost?: number;
 type ParentItem = { id: string; rewardTitle?: string; xpCost?: number };
 
 export default function MarketplaceScreen() {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const [schoolXp, setSchoolXp] = useState(0);
   const [parentXp, setParentXp] = useState(0);
   const [items, setItems] = useState<Item[]>([]);
@@ -161,6 +163,8 @@ function Row({ emoji, title, subtitle, cost, disabled, busy, hint, onPress }: {
   emoji?: string; title: string; subtitle?: string; cost: number;
   disabled?: boolean; busy?: boolean; hint?: string; onPress: () => void;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   return (
     <View style={s.card}>
       <View style={s.rowTop}>
@@ -187,7 +191,7 @@ function Row({ emoji, title, subtitle, cost, disabled, busy, hint, onPress }: {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { padding: T.space.lg, paddingBottom: T.space.xxl, gap: T.space.md },
 

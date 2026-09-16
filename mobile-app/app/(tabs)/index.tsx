@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Platform, Alert } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useMemo } from 'react';
 import { DataContext } from './_layout';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -11,7 +11,7 @@ import NavCard from '../../components/ui/NavCard';
 import StudentDashboard from '../../components/StudentDashboard';
 import TeacherDashboard from '../../components/TeacherDashboard';
 import ParentDashboard from '../../components/ParentDashboard';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 interface ParentQuest {
   taskDescription: string;
@@ -19,6 +19,9 @@ interface ParentQuest {
 }
 
 export default function DashboardScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
+  const awardStyles = useMemo(() => makeAwardStyles(T), [T]);
   const ctx = useContext(DataContext);
   const role = ctx?.role ?? null;
   const data = ctx?.data ?? {};
@@ -493,7 +496,7 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   center: { flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' },
   container: { flex: 1, backgroundColor: T.bg, padding: 16 },
   errorText: { color: T.danger, fontSize: 16 },
@@ -543,7 +546,7 @@ const styles = StyleSheet.create({
  * Recognition rows. Kept separate from `styles` so the shared dashboard
  * styling stays readable -- these are only used by the parent's award list.
  */
-const awardStyles = StyleSheet.create({
+const makeAwardStyles = (T: Theme) => StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   seeAll: { fontSize: 12.5, fontWeight: '600', color: T.brand },
   row: {

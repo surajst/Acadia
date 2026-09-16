@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import GradientHeader, { HeaderCard, headerStyles as h } from './GradientHeader';
 import ProgressRing from './ProgressRing';
 import { Legend } from './StudentHeader';
-import T from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
  * The parent home header.
@@ -26,6 +26,7 @@ type Props = {
 export default function ParentHeader({
   parentName, childName, level, schoolXp, parentXp, levelProgress, xpToNextLevel,
 }: Props) {
+  const T = useTheme();
   const pct = Math.max(0, Math.min(100, levelProgress));
   const who = childName || 'Your child';
 
@@ -39,7 +40,7 @@ export default function ParentHeader({
 
         <View style={{ flex: 1, minWidth: 0, gap: 9 }}>
           <View>
-            <Text style={h.title} numberOfLines={1}>{who} · Level {level}</Text>
+            <Text style={[h.title, { color: T.onBrand }]} numberOfLines={1}>{who} · Level {level}</Text>
             <Text style={h.sub}>{xpToNextLevel} XP to Level {level + 1}</Text>
           </View>
 

@@ -1,13 +1,15 @@
 import axios from 'axios';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { Redirect } from 'expo-router';
 
 import { useAuth } from '@/context/AuthContext';
 import { login as authenticate } from '@/services/api';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 export default function LoginScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -124,7 +126,7 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: T.bg,

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SymbolView, SymbolViewProps } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import TeacherHeader from './ui/TeacherHeader';
 import { SectionLabel, QuestCard, NextClassCard } from './ui/TodaySection';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 /**
  * The teacher home screen, on the same shape as the student's: gradient
@@ -27,6 +27,8 @@ type Props = {
 export default function TeacherDashboard({
   data, firstName, schoolName, unreadCount, refreshing, onRefresh,
 }: Props) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
 
   const classes: any[] = Array.isArray(data.classes) ? data.classes : [];
@@ -146,6 +148,8 @@ function Action({ to, icon, title, metric }: {
   title: string;
   metric: string;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
   return (
     <TouchableOpacity
@@ -164,7 +168,7 @@ function Action({ to, icon, title, metric }: {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { paddingBottom: 40 },
   body: { paddingHorizontal: 20, paddingTop: 20, gap: 22 },

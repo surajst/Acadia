@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { getTimetableWeek, getTimetableToday } from '@/services/api';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 const DAY_ORDER = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 const DAY_LABELS: Record<string, string> = { MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday', THU: 'Thursday', FRI: 'Friday' };
 
 export default function TimetableScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const [today, setToday] = useState<any[]>([]);
   const [week, setWeek] = useState<Record<string, any[]> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,7 +93,7 @@ export default function TimetableScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   root: { flex: 1, backgroundColor: T.bg },
   headerBand: {
     flexDirection: 'row', alignItems: 'center',

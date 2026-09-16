@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SymbolView, SymbolViewProps } from 'expo-symbols';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 /**
  * The "Today" block: the one thing a student can claim right now, and the
@@ -15,6 +15,8 @@ export function SectionLabel({ label, action, onAction }: {
   action?: string;
   onAction?: () => void;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   return (
     <View style={s.labelRow}>
       <Text style={s.label}>{label}</Text>
@@ -34,6 +36,8 @@ export function QuestCard({ title, subtitle, cta, onPress, busy }: {
   onPress?: () => void;
   busy?: boolean;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const done = !onPress;
   return (
     <TouchableOpacity
@@ -70,6 +74,8 @@ export function InfoCard({ icon, tint, title, subtitle, onPress }: {
   subtitle?: string;
   onPress?: () => void;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   return (
     <TouchableOpacity
       style={s.next}
@@ -97,6 +103,8 @@ export function NextClassCard({ period, time, subject, room, note, onPress }: {
   note?: string;
   onPress?: () => void;
 }) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   return (
     <TouchableOpacity
       style={s.next}
@@ -117,7 +125,7 @@ export function NextClassCard({ period, time, subject, room, note, onPress }: {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   label: { fontSize: 12, fontWeight: '800', letterSpacing: 1.1, color: T.text3 },
   action: { fontSize: 12.5, fontWeight: '700', color: T.brand },

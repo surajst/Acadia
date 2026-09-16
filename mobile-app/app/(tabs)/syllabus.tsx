@@ -2,9 +2,11 @@ import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
   TouchableOpacity, ActivityIndicator,
 } from 'react-native';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getStudentSyllabus, getSubjects } from '../../services/api';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
+// Only for FALLBACK_ACCENTS below -- success/warn are not brand-family tokens.
+import baseT from '../../constants/theme';
 
 interface Topic {
   id: string;
@@ -17,9 +19,11 @@ interface Topic {
 }
 
 // Fallback accent palette, applied in catalog order when a subject has no colorHex set.
-const FALLBACK_ACCENTS = [T.success, T.warn, '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
+const FALLBACK_ACCENTS = [baseT.success, baseT.warn, '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
 
 export default function SyllabusScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const [refreshing, setRefreshing]       = useState(false);
   const [activeSubject, setActiveSubject] = useState('All');
   const [topics, setTopics]               = useState<Topic[]>([]);
@@ -180,7 +184,7 @@ export default function SyllabusScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   container:          { flex: 1, backgroundColor: T.bg, padding: 16 },
   center:             { justifyContent: 'center', alignItems: 'center' },
   section:            { marginBottom: 24 },

@@ -6,10 +6,13 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useMemo } from 'react';
 import { DataContext } from './_layout';
 import { getParentAttendance } from '../../services/api';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
+// Only for STATUS_COLOR / STATUS_BG below -- the success/danger/warn weights
+// are not brand-family tokens, so they never change with the chosen theme.
+import baseT from '../../constants/theme';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AttendanceRecord = {
@@ -53,17 +56,17 @@ const MOCK_RECORDS = buildMockRecords();
 // green cell with mid-green digits -- and the token migration made the pairing
 // worse rather than better by turning the background into the ink step.
 const STATUS_COLOR: Record<AttendanceRecord['status'], string> = {
-  PRESENT: T.successInk,
-  ABSENT: T.dangerInk,
-  LATE: T.warnInk,
-  HOLIDAY: T.text3,
+  PRESENT: baseT.successInk,
+  ABSENT: baseT.dangerInk,
+  LATE: baseT.warnInk,
+  HOLIDAY: baseT.text3,
 };
 
 const STATUS_BG: Record<AttendanceRecord['status'], string> = {
-  PRESENT: T.success50,
-  ABSENT: T.danger50,
-  LATE: T.warn50,
-  HOLIDAY: T.surface,
+  PRESENT: baseT.success50,
+  ABSENT: baseT.danger50,
+  LATE: baseT.warn50,
+  HOLIDAY: baseT.surface,
 };
 
 function getMonthLabel(dateStr: string): string {
@@ -78,6 +81,8 @@ function getDayLabel(dateStr: string): string {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function AttendanceDayCell({ record }: { record: AttendanceRecord }) {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   return (
     <View style={[styles.dayCell, { backgroundColor: STATUS_BG[record.status] }]}>
       <Text style={[styles.dayNumber, { color: STATUS_COLOR[record.status] }]}>
@@ -91,6 +96,8 @@ function AttendanceDayCell({ record }: { record: AttendanceRecord }) {
 }
 
 function AttendanceSummary({ records }: { records: AttendanceRecord[] }) {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const total = records.length;
   const present = records.filter(r => r.status === 'PRESENT').length;
   const absent = records.filter(r => r.status === 'ABSENT').length;
@@ -116,6 +123,8 @@ function AttendanceSummary({ records }: { records: AttendanceRecord[] }) {
 
 // ─── Child selector ───────────────────────────────────────────────────────────
 function ChildBadge({ name, grade, section }: { name: string; grade: string; section: string }) {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   return (
     <View style={styles.childBadge}>
       <View style={styles.childAvatar}>
@@ -131,6 +140,8 @@ function ChildBadge({ name, grade, section }: { name: string; grade: string; sec
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function AttendanceScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const { role, data, refreshData } = useContext(DataContext);
   const [refreshing, setRefreshing] = useState(false);
   const [records, setRecords] = useState<AttendanceRecord[] | null>(null);
@@ -245,7 +256,7 @@ export default function AttendanceScreen() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: T.bg,

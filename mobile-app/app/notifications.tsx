@@ -1,8 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../services/api';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
+// Only for TYPE_COLOR below -- warn/text3 are not brand-family tokens.
+import baseT from '../constants/theme';
 
 interface NotificationItem {
   id: string;
@@ -14,10 +16,10 @@ interface NotificationItem {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  ATTENDANCE: T.warn,
+  ATTENDANCE: baseT.warn,
   TASK: '#3b82f6',
   ANNOUNCEMENT: '#a855f7',
-  SYSTEM: T.text3,
+  SYSTEM: baseT.text3,
 };
 
 function timeAgo(dateStr: string): string {
@@ -31,6 +33,8 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function NotificationsScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,7 +124,7 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 50, borderBottomWidth: 1, borderBottomColor: T.surface },
   backButton: { color: T.brand, fontSize: 16, fontWeight: '600' },

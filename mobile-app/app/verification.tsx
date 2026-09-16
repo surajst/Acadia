@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, Alert,
@@ -7,7 +7,7 @@ import { Stack } from 'expo-router';
 import { getTeacherQueue, decideMilestone, decideProgress } from '@/services/api';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
-import T from '@/constants/theme';
+import { useTheme, type Theme } from '@/context/ThemeContext';
 
 /**
  * What is waiting on the teacher: student milestone submissions asking for an
@@ -32,6 +32,8 @@ const when = (iso?: string) => {
 };
 
 export default function VerificationScreen() {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -174,7 +176,7 @@ export default function VerificationScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { padding: 16, paddingBottom: 32, gap: 14 },
 

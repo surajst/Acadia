@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SymbolView, SymbolViewProps } from 'expo-symbols';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 /**
  * The two empty states, which are not the same thing.
@@ -33,6 +33,8 @@ export default function EmptyState({
   actionLabel,
   onAction,
 }: Props) {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const fallback: SymbolViewProps['name'] = kind === 'noResults'
     ? { ios: 'magnifyingglass', android: 'search', web: 'search' }
     : { ios: 'tray', android: 'inbox', web: 'inbox' };
@@ -53,7 +55,7 @@ export default function EmptyState({
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   wrap: {
     alignItems: 'center',
     paddingVertical: T.space.xxl,

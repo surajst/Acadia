@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -18,7 +18,7 @@ import {
   submitClassAttendance,
   getApiHost,
 } from '../services/api';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 interface RosterStudent {
   id: string;
@@ -36,6 +36,8 @@ interface ClassRosterModalProps {
 type AttendanceStatus = 'PRESENT' | 'ABSENT';
 
 export default function ClassRosterModal({ isVisible, onClose, sectionId, className }: ClassRosterModalProps) {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const { schoolName } = useAuth();
   const router = useRouter();
   const [students, setStudents] = useState<RosterStudent[]>([]);
@@ -247,7 +249,7 @@ export default function ClassRosterModal({ isVisible, onClose, sectionId, classN
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',

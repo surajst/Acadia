@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native
 import { Stack } from 'expo-router';
 import { DataContext } from './(tabs)/_layout';
 import { getParentDashboard } from '../services/api';
-import T from '../constants/theme';
+import { useTheme, type Theme } from '../context/ThemeContext';
 
 /**
  * Everything a child has been recognised for.
@@ -38,6 +38,8 @@ const dayLabel = (iso: string) => {
 };
 
 export default function RecognitionScreen() {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const ctx = useContext(DataContext);
   const [refreshing, setRefreshing] = useState(false);
   // Own copy, for when this screen is reached directly rather than from the
@@ -138,7 +140,7 @@ export default function RecognitionScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { padding: 16, paddingBottom: 32, gap: 14 },
 

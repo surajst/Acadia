@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
   ActivityIndicator, RefreshControl, Alert, Linking,
@@ -6,7 +6,7 @@ import {
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { getStudentProfile, getBadges, awardBadge } from '../../services/api';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 /**
  * One child, on a teacher's phone.
@@ -33,6 +33,8 @@ const day = (iso?: string | null) => {
 };
 
 export default function StudentProfileScreen() {
+  const T = useTheme();
+  const s = useMemo(() => makeStyles(T), [T]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
@@ -285,7 +287,7 @@ export default function StudentProfileScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },
   content: { padding: 16, paddingBottom: 32, gap: 14 },
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: T.bg, padding: 24 },

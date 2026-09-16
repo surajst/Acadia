@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useCallback } from 'react';
+import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Modal, Platform, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -22,9 +22,11 @@ import {
   getMessageSpeech,
   sendVoiceReply,
 } from '@/services/api';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 export default function MessagesScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const { role, data } = useContext(DataContext);
   const isTeacher = role === 'TEACHER';
   const studentId = data?.student?.id;
@@ -360,7 +362,7 @@ export default function MessagesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   root: { flex: 1, backgroundColor: T.bg },
   center: { flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' },
   headerBand: {

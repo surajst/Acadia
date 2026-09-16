@@ -7,6 +7,9 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+// Aliased: expo-router also exports a `ThemeProvider` (light/dark nav chrome,
+// used below for the Stack) -- unrelated to the app's own brand-colour theme.
+import { ThemeProvider as AppThemeProvider } from '@/context/ThemeContext';
 import T from '../constants/theme';
 import LoginScreen from './index';
 
@@ -40,9 +43,11 @@ export default function RootLayout() {
   }, [loaded]);
 
   return (
-    <AuthProvider>
-      <RootLayoutGate fontsLoaded={loaded} />
-    </AuthProvider>
+    <AppThemeProvider>
+      <AuthProvider>
+        <RootLayoutGate fontsLoaded={loaded} />
+      </AuthProvider>
+    </AppThemeProvider>
   );
 }
 
