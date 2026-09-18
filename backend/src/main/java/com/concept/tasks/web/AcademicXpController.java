@@ -8,10 +8,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -33,17 +36,29 @@ public class AcademicXpController {
         this.tenantContext = tenantContext;
     }
 
+    /** What a pupil hands in: their own work, and nothing else. */
+    public static class SubmitTaskRequest {
+        public UUID taskId;
+        public String notes;
+        public List<String> answers;
+    }
+
+    /**
+     * Hand in a task.
+     *
+     * <p>Takes a body rather than the previous query parameters, which included
+     * the XP to award — the reward is read off the task server-side now, so a
+     * pupil cannot name their own price. Nothing called the old shape.
+     */
     @PostMapping("/submit-task")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<String> submitTask(@RequestParam UUID studentId,
-                                             @RequestParam String skillName,
-                                             @RequestParam Integer xpBounty,
-                                             Authentication authentication) {
+    public ResponseEntity<?> submitTask(@RequestBody SubmitTaskRequest request,
+                                        Authentication authentication) {
         try {
-            tasksService.submitAcademicTask(studentId, skillName, xpBounty, authentication);
-            return ResponseEntity.ok("Task successfully queued for teacher validation.");
+            return ResponseEntity.ok(tasksService.submitTaskForCurrentStudent(
+                    request.taskId, request.notes, request.answers, authentication));
         } catch (TasksException e) {
-            return ResponseEntity.status(e.status()).body(e.getMessage());
+            return ResponseEntity.status(e.status()).body(Map.of("error", e.getMessage()));
         }
     }
 

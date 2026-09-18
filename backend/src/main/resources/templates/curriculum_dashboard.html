@@ -144,6 +144,45 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Row 4: the syllabus itself. Everything above reports progress
+                 against the curriculum; until this panel existed there was no
+                 way to enter one, so for a real school every figure above was
+                 measured against nothing and pupils saw an empty Syllabus tab. -->
+            <div class="glass-panel rounded-2xl shadow-xl p-6 mb-6">
+                <h3 class="text-lg font-bold text-slate-900 mb-1 tracking-tight">Syllabus topics</h3>
+                <p class="text-xs text-slate-500 mb-4">
+                    What pupils see under Syllabus in the app, and what the progress figures above are measured against.
+                </p>
+
+                <form id="topicForm" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end mb-5">
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-semibold text-slate-600 block mb-1" for="topicGrade">Grade</label>
+                        <select id="topicGrade" class="input w-full" required></select>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="text-xs font-semibold text-slate-600 block mb-1" for="topicSubject">Subject</label>
+                        <select id="topicSubject" class="input w-full" required></select>
+                    </div>
+                    <div class="md:col-span-4">
+                        <label class="text-xs font-semibold text-slate-600 block mb-1" for="topicName">Topic</label>
+                        <input id="topicName" class="input w-full" type="text" maxlength="200"
+                               placeholder="e.g. Fractions and decimals" required>
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="text-xs font-semibold text-slate-600 block mb-1" for="topicXp">XP</label>
+                        <input id="topicXp" class="input w-full" type="number" min="0" max="1000" value="50">
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" id="topicAddBtn" class="btn btn-primary w-full">Add topic</button>
+                    </div>
+                </form>
+
+                <p id="topicError" class="text-sm text-red-600 mb-3 hidden"></p>
+                <div id="topicList" class="space-y-4">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
     </main>
 
             </div>
@@ -162,7 +201,157 @@
 
             // Initial load
             loadData('ALL');
+            initTopics();
         });
+
+        // ── Syllabus topics ────────────────────────────────────────────────
+        // The write path for /api/admin/curriculum. Kept deliberately plain:
+        // a form that appends, and a list that renames and deletes in place.
+
+        const GRADES = Array.from({ length: 12 }, (_, i) => i + 1);
+
+        function escapeHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function showTopicError(message) {
+            const box = document.getElementById('topicError');
+            if (!box) return;
+            if (!message) { box.classList.add('hidden'); box.textContent = ''; return; }
+            box.textContent = message;
+            box.classList.remove('hidden');
+        }
+
+        async function topicApi(method, path, body) {
+            const response = await fetch('/api/admin/curriculum' + (path || ''), {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: body ? JSON.stringify(body) : undefined,
+            });
+            const text = await response.text();
+            const data = text ? JSON.parse(text) : null;
+            if (!response.ok) {
+                throw new Error((data && data.error) || 'Request failed');
+            }
+            return data;
+        }
+
+        async function initTopics() {
+            const gradeSelect = document.getElementById('topicGrade');
+            const subjectSelect = document.getElementById('topicSubject');
+            const form = document.getElementById('topicForm');
+            if (!gradeSelect || !subjectSelect || !form) return;
+
+            gradeSelect.innerHTML = GRADES
+                .map((g) => '<option value="' + g + '">Grade ' + g + '</option>').join('');
+
+            // Subjects come from the school's own catalogue, so the syllabus can
+            // only ever name a subject the rest of the product knows about.
+            try {
+                const subjects = await (await fetch('/api/admin/subjects')).json();
+                subjectSelect.innerHTML = (subjects || [])
+                    .map((s) => '<option value="' + escapeHtml(s.code) + '">'
+                        + escapeHtml(s.displayName) + '</option>').join('');
+            } catch (err) {
+                console.error('Could not load subjects:', err);
+                showTopicError('Could not load your subject list.');
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                showTopicError(null);
+                const button = document.getElementById('topicAddBtn');
+                button.disabled = true;
+                try {
+                    await topicApi('POST', '', {
+                        standard: parseInt(gradeSelect.value, 10),
+                        subjectCode: subjectSelect.value,
+                        topicName: document.getElementById('topicName').value,
+                        xpReward: parseInt(document.getElementById('topicXp').value, 10),
+                    });
+                    document.getElementById('topicName').value = '';
+                    await loadTopics();
+                } catch (err) {
+                    showTopicError(err.message);
+                } finally {
+                    button.disabled = false;
+                }
+            });
+
+            await loadTopics();
+        }
+
+        async function loadTopics() {
+            const list = document.getElementById('topicList');
+            if (!list) return;
+            let topics;
+            try {
+                topics = await topicApi('GET', '');
+            } catch (err) {
+                showTopicError(err.message);
+                return;
+            }
+
+            if (!topics || topics.length === 0) {
+                list.innerHTML = '<p class="text-sm text-slate-500">'
+                    + 'No topics yet. Add the first one above and it appears in every pupil&rsquo;s Syllabus tab.</p>';
+                return;
+            }
+
+            // Grouped by grade then subject, which is how a school thinks about
+            // a syllabus and how the pupil's own screen orders it.
+            const groups = {};
+            topics.forEach((t) => {
+                const key = t.standard + '|' + t.subjectCode;
+                (groups[key] = groups[key] || []).push(t);
+            });
+
+            list.innerHTML = Object.keys(groups).sort((a, b) => {
+                const [ga, sa] = a.split('|'); const [gb, sb] = b.split('|');
+                return Number(ga) - Number(gb) || sa.localeCompare(sb);
+            }).map((key) => {
+                const [grade, subject] = key.split('|');
+                const rows = groups[key].map((t) => ''
+                    + '<li class="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">'
+                    +   '<span class="text-xs text-slate-400 w-6 shrink-0">' + escapeHtml(t.topicOrder) + '</span>'
+                    +   '<input class="input flex-1 text-sm" value="' + escapeHtml(t.topicName) + '"'
+                    +     ' data-topic-id="' + escapeHtml(t.id) + '" onchange="renameTopic(this)">'
+                    +   '<span class="text-xs font-semibold text-emerald-600 w-16 text-right shrink-0">'
+                    +     escapeHtml(t.xpReward) + ' XP</span>'
+                    +   '<button type="button" class="btn btn-danger text-xs shrink-0"'
+                    +     ' onclick="deleteTopic(\'' + escapeHtml(t.id) + '\')">Remove</button>'
+                    + '</li>').join('');
+                return ''
+                    + '<div>'
+                    +   '<h4 class="text-sm font-bold text-slate-700 mb-1">Grade ' + escapeHtml(grade)
+                    +     ' &middot; ' + escapeHtml(subject) + '</h4>'
+                    +   '<ul class="bg-white/60 rounded-xl px-3">' + rows + '</ul>'
+                    + '</div>';
+            }).join('');
+        }
+
+        async function renameTopic(input) {
+            showTopicError(null);
+            try {
+                await topicApi('PUT', '/' + input.dataset.topicId, { topicName: input.value });
+            } catch (err) {
+                showTopicError(err.message);
+                await loadTopics();
+            }
+        }
+
+        async function deleteTopic(id) {
+            if (!window.confirm('Remove this topic from the syllabus?')) return;
+            showTopicError(null);
+            try {
+                await topicApi('DELETE', '/' + id);
+                await loadTopics();
+            } catch (err) {
+                showTopicError(err.message);
+            }
+        }
 
         function getColorClass(percent) {
             if (percent <= 30) return 'bg-red-500';

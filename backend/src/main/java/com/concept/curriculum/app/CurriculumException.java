@@ -21,4 +21,13 @@ public class CurriculumException extends RuntimeException {
     public static CurriculumException badRequest(String message) {
         return new CurriculumException(400, message);
     }
+
+    /**
+     * Used when a topic id is not in the caller's own school. Deliberately the
+     * same answer as a genuinely missing row, so the endpoint cannot be used to
+     * probe whether another school owns a given id.
+     */
+    public static CurriculumException notFound(String message) {
+        return new CurriculumException(404, message);
+    }
 }

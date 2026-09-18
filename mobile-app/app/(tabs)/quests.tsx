@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { useContext, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { DataContext } from './_layout';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 interface ParentQuest {
   taskDescription: string;
@@ -16,6 +16,8 @@ interface ParentReward {
 }
 
 export default function QuestsScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const { role, data, refreshData } = useContext(DataContext);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -117,7 +119,7 @@ export default function QuestsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: T.bg,

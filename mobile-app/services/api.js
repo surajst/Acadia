@@ -160,6 +160,27 @@ export const getStudentSyllabus = async () => {
   return response.data;
 };
 
+// The reading questions a teacher attached to a task. Returns {} for task types
+// that carry none, which is most of them.
+export const getTaskQuestions = async (taskId) => {
+  const response = await api.get(`/student/tasks/${taskId}/questions`);
+  return response.data || {};
+};
+
+// Handing a task in. Both endpoints existed on the server and neither was ever
+// called: the app listed tasks as flat, untappable cards, so a child could read
+// the title of their homework and had no way to submit it.
+// Note the path: submission lives under /api/academic, not /api/mobile.
+export const submitTask = async ({ taskId, notes, answers }) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(
+    `${BASE_HOST}/api/academic/submit-task`,
+    { taskId, notes, answers },
+    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } },
+  );
+  return response.data;
+};
+
 // Claiming a parent-set quest. The endpoint existed; nothing in the app called
 // it, so a child could see "available to claim" and had no way to claim it.
 export const claimQuest = async (questId) => {

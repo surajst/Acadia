@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -42,12 +43,19 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  // SafeAreaProvider is what makes useSafeAreaInsets() return real numbers.
+  // Without it every inset is zero, and nothing says so: the tab bar sat under
+  // the Android navigation bar, bottom sheets had their last row cut off by it,
+  // and ClassRosterModal's own edges={['bottom']} quietly did nothing. It has
+  // to wrap everything, because react-navigation's tab bar reads the insets too.
   return (
-    <AppThemeProvider>
-      <AuthProvider>
-        <RootLayoutGate fontsLoaded={loaded} />
-      </AuthProvider>
-    </AppThemeProvider>
+    <SafeAreaProvider>
+      <AppThemeProvider>
+        <AuthProvider>
+          <RootLayoutGate fontsLoaded={loaded} />
+        </AuthProvider>
+      </AppThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

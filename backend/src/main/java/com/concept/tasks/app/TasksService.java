@@ -16,6 +16,8 @@ import com.concept.shared.data.StudentRepository;
 import com.concept.assignment.data.SubjectAssignment;
 import com.concept.assignment.data.SubjectAssignmentRepository;
 import com.concept.tasks.data.TaskType;
+import com.concept.tasks.data.TeacherTask;
+import com.concept.tasks.data.TeacherTaskRepository;
 import com.concept.tasks.data.TeacherTaskRequest;
 import com.concept.tasks.app.TeacherTaskService;
 import com.concept.user.CurrentUserService;
@@ -55,6 +57,7 @@ public class TasksService {
     private final SubjectAssignmentRepository subjectAssignmentRepository;
     private final UserRepository userRepository;
     private final AcademicSubmissionRepository submissionRepository;
+    private final TeacherTaskRepository teacherTaskRepository;
     private final NotificationDeliveryService notificationDeliveryService;
     private final CurrentUserService currentUserService;
     private final boolean devMode;
@@ -67,6 +70,7 @@ public class TasksService {
                         SubjectAssignmentRepository subjectAssignmentRepository,
                         UserRepository userRepository,
                         AcademicSubmissionRepository submissionRepository,
+                        TeacherTaskRepository teacherTaskRepository,
                         NotificationDeliveryService notificationDeliveryService,
                         CurrentUserService currentUserService,
                         @Value("${app.dev-mode:false}") boolean devMode) {
@@ -78,6 +82,7 @@ public class TasksService {
         this.subjectAssignmentRepository = subjectAssignmentRepository;
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
+        this.teacherTaskRepository = teacherTaskRepository;
         this.notificationDeliveryService = notificationDeliveryService;
         this.currentUserService = currentUserService;
         this.devMode = devMode;
@@ -329,13 +334,49 @@ public class TasksService {
 
     // ─── Academic-XP submission queue ───────────────────────────────────────
 
+    /**
+     * A pupil hands in a task their teacher set.
+     *
+     * <p>Nothing called this before: the app could list tasks but had no way to
+     * open or submit one, so a child saw homework they could not hand in. It
+     * also took the XP to award as a request parameter, which would have let
+     * the first caller award itself any number it liked — the reward is read
+     * off the task here instead, along with the title, so the only thing the
+     * pupil supplies is their own work.
+     */
     @Transactional
-    public void submitAcademicTask(UUID studentId, String skillName, Integer xpBounty, Authentication authentication) {
-        UUID ownStudentId = currentUserService.getCurrentStudent(authentication).map(Student::getId).orElse(null);
-        if (ownStudentId == null || !ownStudentId.equals(studentId)) {
-            throw TasksException.forbidden("Error: Not authorized for this student.");
+    public Map<String, Object> submitTaskForCurrentStudent(UUID teacherTaskId, String notes,
+                                                           List<String> answers,
+                                                           Authentication authentication) {
+        Student student = currentUserService.getCurrentStudent(authentication)
+                .orElseThrow(() -> TasksException.forbidden("No student record for this account"));
+        if (teacherTaskId == null) {
+            throw TasksException.badRequest("A task is required");
         }
-        submissionRepository.save(new AcademicSubmission(studentId, skillName, xpBounty));
+        TeacherTask task = teacherTaskRepository
+                .findByIdAndTenantId(teacherTaskId, student.getTenantId())
+                .orElseThrow(() -> TasksException.badRequest("Task not found"));
+
+        // One pending hand-in per task: re-submitting replaces the previous
+        // attempt rather than queueing a second copy for the teacher to review.
+        submissionRepository
+                .findByStudentIdAndTeacherTaskId(student.getId(), teacherTaskId).stream()
+                .filter(s -> "PENDING".equals(s.getStatus()))
+                .forEach(submissionRepository::delete);
+
+        AcademicSubmission submission =
+                new AcademicSubmission(student.getId(), task.getTitle(), task.getXpReward());
+        submission.setTeacherTaskId(teacherTaskId);
+        submission.setProofOfWorkNotes(notes);
+        List<String> given = answers == null ? List.of() : answers;
+        if (given.size() > 0) submission.setAnswer1(given.get(0));
+        if (given.size() > 1) submission.setAnswer2(given.get(1));
+        if (given.size() > 2) submission.setAnswer3(given.get(2));
+        submissionRepository.save(submission);
+
+        return Map.of("status", "submitted",
+                "taskId", teacherTaskId,
+                "xpAwaiting", task.getXpReward() == null ? 0 : task.getXpReward());
     }
 
     /**

@@ -16,6 +16,11 @@ public interface AcademicSubmissionRepository extends JpaRepository<AcademicSubm
 
     List<AcademicSubmission> findByStudentId(UUID studentId);
 
+    // Keyed on the student as well as the task, not the task alone: this backs
+    // "has this pupil already handed this in", and a task-only lookup would
+    // return the whole class's submissions.
+    List<AcademicSubmission> findByStudentIdAndTeacherTaskId(UUID studentId, UUID teacherTaskId);
+
     // AcademicSubmission has no direct tenantId column — scope via the
     // referenced student's own tenant instead.
     @Query("SELECT a FROM AcademicSubmission a WHERE a.status = :status " +
