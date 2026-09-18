@@ -68,26 +68,21 @@ const TEACHER: WheelOption[] = [
   { key: 'newTask',      label: 'New task',   route: '/task-new',     icon: { ios: 'plus',                        android: 'add',      web: 'add' } },
 ];
 
-// One destination of their own. MIN_ORBIT lifts this to three.
-const PRINCIPAL: WheelOption[] = [
-  { key: 'approvals', label: 'Approvals', route: '/approvals', icon: { ios: 'checkmark.seal', android: 'verified', web: 'verified' } },
-];
-
 // None. A driver's job is the trip button, which stays on the home screen
 // below the wheel: it is a stateful toggle, not a place to go.
 const DRIVER: WheelOption[] = [];
 
 const BY_ROLE: Record<string, WheelOption[]> = {
-  STUDENT, PARENT, TEACHER, PRINCIPAL, DRIVER,
+  STUDENT, PARENT, TEACHER, DRIVER,
 };
 
 /**
  * The rim for a role, already padded to {@link MIN_ORBIT}.
  *
- * <p>ADMIN is deliberately absent: `(tabs)/_layout.tsx` returns the web-only
- * screen before the navigator mounts, so an admin never renders a wheel. The
- * empty fallback means that if that guard is ever removed, the result is a bare
- * hub rather than a crash.
+ * <p>ADMIN and PRINCIPAL are deliberately absent: `(tabs)/_layout.tsx` returns
+ * the web-only screen for both before the navigator mounts, so neither ever
+ * renders a wheel. The empty fallback means that if that guard is ever removed,
+ * the result is a bare hub rather than a crash.
  *
  * <p>`/notifications` is deliberately excluded for teachers -- it is an inbox,
  * not a place, and already has a badge-carrying bell in the header.
@@ -98,11 +93,3 @@ export function wheelOptionsFor(role: string | null | undefined): WheelOption[] 
   return own.length < MIN_ORBIT ? [...own, PROFILE_OPTION, SETTINGS_OPTION] : own;
 }
 
-/**
- * Whether the header should draw its Profile/Settings corners. False for the
- * roles whose wheel already carries them, so they are never offered twice.
- */
-export function showsHeaderCorners(role: string | null | undefined): boolean {
-  const own = (role && BY_ROLE[role]) || [];
-  return own.length >= MIN_ORBIT;
-}

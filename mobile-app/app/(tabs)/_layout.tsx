@@ -134,9 +134,11 @@ export default function TabLayout() {
   // which spokes the wheel shows, in constants/wheel.ts -- one place, instead
   // of thirteen scattered conditionals.
 
-  // Admins only. Principals now have the approvals queue, which is the work
-  // they actually do from a phone.
-  if (role === ROLE_ADMIN) {
+  // Both oversight roles work from the web dashboard. Principals briefly had
+  // the approvals queue here, but their job is review and data entry on a
+  // bigger screen; the queue still exists at /approvals and the route is a
+  // one-line revert away if that turns out to be wrong.
+  if (role === ROLE_ADMIN || role === ROLE_PRINCIPAL) {
     return <WebOnlyRoleScreen role={role} />;
   }
 
