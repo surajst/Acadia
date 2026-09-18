@@ -1,12 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '@/context/AuthContext';
 import { DataContext } from './_layout';
-import { getUserProfile, getSupportedLanguages, setPreferredLanguage, type UserProfile, type UserRole } from '../../services/api';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemePicker, type Theme } from '../../context/ThemeContext';
+import { getUserProfile, type UserProfile, type UserRole } from '../../services/api';
+import { useTheme, type Theme } from '../../context/ThemeContext';
 
 function isUserRole(value: string | null): value is UserRole {
   return value === 'STUDENT' || value === 'PARENT' || value === 'TEACHER';
@@ -14,27 +13,15 @@ function isUserRole(value: string | null): value is UserRole {
 
 export default function ProfileScreen() {
   const { role, data } = useContext(DataContext);
-  const { logout, firstName: authFirstName, lastName: authLastName } = useAuth();
-  const { theme: T, paletteId, palettes, setPaletteId } = useThemePicker();
-  const insets = useSafeAreaInsets();
+  const { firstName: authFirstName, lastName: authLastName } = useAuth();
+  const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
-  const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editFirst, setEditFirst] = useState('');
   const [editLast, setEditLast] = useState('');
   const [saving, setSaving] = useState(false);
-  const [languages, setLanguages] = useState<any[]>([]);
-  // The server's value, unless the user has picked one this session. Derived
-  // during render rather than copied into state by an effect: the copy only
-  // caught up on the render *after* the dashboard refreshed, so a reload could
-  // briefly show the previous language, and the two could disagree indefinitely
-  // if the effect's dependencies ever stopped firing.
-  const [pickedLanguage, setPickedLanguage] = useState<string | null>(null);
-  const preferredLanguage = pickedLanguage ?? data?.parent?.preferredLanguage ?? 'en';
-  const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
-  const [savingLanguage, setSavingLanguage] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -68,29 +55,6 @@ export default function ProfileScreen() {
     };
     loadProfile();
   }, []);
-
-  useEffect(() => {
-    if (role !== 'PARENT') return;
-    getSupportedLanguages().then(setLanguages).catch(() => setLanguages([]));
-  }, [role]);
-
-  const handlePickLanguage = async (code: string) => {
-    setLanguagePickerOpen(false);
-    if (code === preferredLanguage) return;
-    setSavingLanguage(true);
-    try {
-      await setPreferredLanguage(code);
-      setPickedLanguage(code);
-    } catch {
-      Alert.alert('Language', 'Could not save your language preference.');
-    } finally {
-      setSavingLanguage(false);
-    }
-  };
-
-  const handleLogout = async (): Promise<void> => {
-    await logout();
-  };
 
   const handleEditPress = () => {
     setEditFirst(firstName);
@@ -238,92 +202,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Theme</Text>
-        <TouchableOpacity style={styles.card} onPress={() => setThemePickerOpen(true)}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Header colour</Text>
-            <View style={styles.themeRowValue}>
-              <View style={[styles.themeSwatch, { backgroundColor: T.brand }]} />
-              <Text style={styles.detailValue}>
-                {palettes.find((p) => p.id === paletteId)?.label ?? 'Default'}
-              </Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      {role === 'PARENT' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Language</Text>
-          <TouchableOpacity style={styles.card} onPress={() => setLanguagePickerOpen(true)} disabled={savingLanguage}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Announcements & messages in</Text>
-              {savingLanguage ? (
-                <ActivityIndicator size="small" color={T.brand} />
-              ) : (
-                <Text style={styles.detailValue}>
-                  {languages.find((l) => l.code === preferredLanguage)?.name ?? 'English'}
-                </Text>
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
-        <Text style={styles.logoutText}>Log Out</Text>
-      </TouchableOpacity>
-
       <View style={{ height: 40 }} />
-
-      <Modal visible={languagePickerOpen} transparent animationType="slide" onRequestClose={() => setLanguagePickerOpen(false)}>
-        <View style={styles.modalOverlay}>
-          {/* paddingBottom from the real inset: these sheets sit on the bottom
-              edge, so on a device with a navigation bar the last row was drawn
-              underneath it and could not be tapped. */}
-          <View style={[styles.modalCard, { paddingBottom: 20 + insets.bottom }]}>
-            <Text style={styles.modalTitle}>Choose Language</Text>
-            <ScrollView style={{ maxHeight: 300 }}>
-              {languages.map((l) => (
-                <TouchableOpacity
-                  key={l.code}
-                  style={[styles.langRow, preferredLanguage === l.code && styles.langRowActive]}
-                  onPress={() => handlePickLanguage(l.code)}
-                >
-                  <Text style={styles.langRowText}>{l.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={themePickerOpen} transparent animationType="slide" onRequestClose={() => setThemePickerOpen(false)}>
-        <View style={styles.modalOverlay}>
-          {/* paddingBottom from the real inset: these sheets sit on the bottom
-              edge, so on a device with a navigation bar the last row was drawn
-              underneath it and could not be tapped. */}
-          <View style={[styles.modalCard, { paddingBottom: 20 + insets.bottom }]}>
-            <Text style={styles.modalTitle}>Choose a theme</Text>
-            <ScrollView style={{ maxHeight: 360 }}>
-              {palettes.map((p) => (
-                <TouchableOpacity
-                  key={p.id}
-                  style={[styles.themePickerRow, paletteId === p.id && styles.langRowActive]}
-                  onPress={() => { setPaletteId(p.id); setThemePickerOpen(false); }}
-                >
-                  <View style={[styles.themeSwatch, styles.themeSwatchLg, { backgroundColor: p.brand }]}>
-                    <View style={[styles.themeSwatchHalf, { backgroundColor: p.brand700 }]} />
-                  </View>
-                  <Text style={styles.langRowText}>{p.label}</Text>
-                  {paletteId === p.id && <Text style={{ color: T.brand, fontWeight: '700' }}>✓</Text>}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 }

@@ -93,6 +93,9 @@ function ProtectedStack() {
       <Stack screenOptions={{ contentStyle: { backgroundColor: T.bg }, headerStyle: { backgroundColor: T.bg }, headerTintColor: T.text }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        {/* Had no title anywhere -- not declared here, and no inline
+            Stack.Screen in the file -- so its header read the raw route name. */}
+        <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
         <Stack.Screen name="teacher" options={{ title: 'My Classes' }} />
         <Stack.Screen name="verification" options={{ title: 'Verification Queue' }} />
         <Stack.Screen name="tasks" options={{ title: 'Tasks' }} />

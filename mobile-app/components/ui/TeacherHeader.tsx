@@ -19,6 +19,10 @@ import { useTheme } from '../../context/ThemeContext';
  */
 
 type Props = {
+  /** Top-left / top-right corners of the home screen. */
+  photoUri?: string | null;
+  onProfilePress?: () => void;
+  onSettingsPress?: () => void;
   firstName?: string;
   schoolName?: string | null;
   marked: number;
@@ -35,6 +39,7 @@ const greetingFor = (name?: string) => {
 
 export default function TeacherHeader({
   firstName, schoolName, marked, total, unread = 0, onBellPress,
+  photoUri, onProfilePress, onSettingsPress,
 }: Props) {
   const T = useTheme();
   const pct = total > 0 ? Math.round((marked / total) * 100) : 0;
@@ -50,6 +55,9 @@ export default function TeacherHeader({
   return (
     <GradientHeader
       initial={firstName}
+      photoUri={photoUri}
+      onProfilePress={onProfilePress}
+      onSettingsPress={onSettingsPress}
       greeting={greetingFor(firstName)}
       trailing={
         <TouchableOpacity
