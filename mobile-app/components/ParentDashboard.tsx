@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } 
 import { useRouter } from 'expo-router';
 import ParentHeader from './ui/ParentHeader';
 import HomeWheel from './HomeWheel';
+import { useProfilePhoto } from '../context/ProfilePhotoContext';
 import { SectionLabel, QuestCard, InfoCard } from './ui/TodaySection';
 import { useTheme, type Theme } from '../context/ThemeContext';
 
@@ -33,6 +34,7 @@ export default function ParentDashboard({
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
+  const { photoUri } = useProfilePhoto();
 
   const m = data.metrics ?? {};
   const child = data.student ?? {};
@@ -51,6 +53,7 @@ export default function ParentDashboard({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <ParentHeader
+        photoUri={photoUri}
         onProfilePress={() => router.push('/profile' as never)}
         onSettingsPress={() => router.push('/settings' as never)}
         parentName={parentFirstName ?? undefined}

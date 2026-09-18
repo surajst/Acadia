@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 // Aliased: expo-router also exports a `ThemeProvider` (light/dark nav chrome,
 // used below for the Stack) -- unrelated to the app's own brand-colour theme.
 import { ThemeProvider as AppThemeProvider } from '@/context/ThemeContext';
+import { ProfilePhotoProvider } from '@/context/ProfilePhotoContext';
 import T from '../constants/theme';
 import LoginScreen from './index';
 
@@ -52,7 +53,10 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AppThemeProvider>
         <AuthProvider>
-          <RootLayoutGate fontsLoaded={loaded} />
+          {/* Inside AuthProvider: it reads the profile, which needs a token. */}
+          <ProfilePhotoProvider>
+            <RootLayoutGate fontsLoaded={loaded} />
+          </ProfilePhotoProvider>
         </AuthProvider>
       </AppThemeProvider>
     </SafeAreaProvider>

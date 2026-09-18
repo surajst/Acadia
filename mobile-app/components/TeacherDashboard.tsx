@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import TeacherHeader from './ui/TeacherHeader';
 import HomeWheel from './HomeWheel';
+import { useProfilePhoto } from '../context/ProfilePhotoContext';
 import { SectionLabel, QuestCard, NextClassCard } from './ui/TodaySection';
 import { useTheme, type Theme } from '../context/ThemeContext';
 
@@ -30,6 +31,7 @@ export default function TeacherDashboard({
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
+  const { photoUri } = useProfilePhoto();
   const timetable: any[] = Array.isArray(data.timetable) ? data.timetable : [];
   const summary = data.attendanceSummary ?? {};
   const marked = summary.markedToday ?? 0;
@@ -49,6 +51,7 @@ export default function TeacherDashboard({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <TeacherHeader
+        photoUri={photoUri}
         onProfilePress={() => router.push('/profile' as never)}
         onSettingsPress={() => router.push('/settings' as never)}
         firstName={firstName ?? undefined}

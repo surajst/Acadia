@@ -6,6 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { DataContext } from './_layout';
 import { getUserProfile, type UserProfile, type UserRole } from '../../services/api';
 import { useTheme, type Theme } from '../../context/ThemeContext';
+import { useProfilePhoto } from '../../context/ProfilePhotoContext';
+import Avatar from '../../components/ui/Avatar';
 
 function isUserRole(value: string | null): value is UserRole {
   return value === 'STUDENT' || value === 'PARENT' || value === 'TEACHER';
@@ -15,6 +17,7 @@ export default function ProfileScreen() {
   const { role, data } = useContext(DataContext);
   const { firstName: authFirstName, lastName: authLastName } = useAuth();
   const T = useTheme();
+  const { photoUri, isBusy, pickAndUpload, removePhoto } = useProfilePhoto();
   const styles = useMemo(() => makeStyles(T), [T]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -109,9 +112,20 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{firstName.charAt(0)}</Text>
-        </View>
+        <TouchableOpacity
+          onPress={pickAndUpload}
+          disabled={isBusy}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={photoUri ? 'Change your profile picture' : 'Add a profile picture'}
+        >
+          <Avatar uri={photoUri} initial={firstName} size={80} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={photoUri ? removePhoto : pickAndUpload} disabled={isBusy}>
+          <Text style={styles.photoAction}>
+            {isBusy ? 'Saving…' : photoUri ? 'Remove photo' : 'Add a photo'}
+          </Text>
+        </TouchableOpacity>
         <Text style={styles.name}>{firstName} {lastName}</Text>
         <Text style={styles.roleText}>{getAccountTypeLabel()}</Text>
       </View>
@@ -214,12 +228,7 @@ export default function ProfileScreen() {
 const makeStyles = (T: Theme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg, padding: 16 },
   header: { alignItems: 'center', marginVertical: 32 },
-  avatar: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: T.brand,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 16,
-  },
-  avatarText: { color: T.text, fontSize: 32, fontWeight: 'bold' },
+  photoAction: { color: T.brandInk, fontSize: 13, fontWeight: '600', marginTop: 8 },
   name: { color: T.text, fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
   roleText: { color: T.text3, fontSize: 16 },
   section: { marginBottom: 32 },

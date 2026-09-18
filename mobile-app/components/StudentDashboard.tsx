@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-nativ
 import { useRouter } from 'expo-router';
 import StudentHeader from './ui/StudentHeader';
 import HomeWheel from './HomeWheel';
+import { useProfilePhoto } from '../context/ProfilePhotoContext';
 import { SectionLabel, QuestCard, NextClassCard } from './ui/TodaySection';
 import BirthdayCard, { isBirthday, turningAge } from './ui/BirthdayCard';
 import { claimQuest } from '../services/api';
@@ -29,6 +30,7 @@ export default function StudentDashboard({ data, schoolName, refreshing, onRefre
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
+  const { photoUri } = useProfilePhoto();
   const [claiming, setClaiming] = useState<string | null>(null);
 
   const m = data.metrics ?? {};
@@ -59,6 +61,7 @@ export default function StudentDashboard({ data, schoolName, refreshing, onRefre
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <StudentHeader
+        photoUri={photoUri}
         onProfilePress={() => router.push('/profile' as never)}
         onSettingsPress={() => router.push('/settings' as never)}
         firstName={data.student?.firstName}

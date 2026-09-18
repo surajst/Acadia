@@ -1,9 +1,9 @@
 import { useContext, useMemo } from 'react';
-import { useRouter } from 'expo-router';
 
 import { useAuth } from '@/context/AuthContext';
 import { DataContext } from '../app/(tabs)/_layout';
 import { wheelOptionsFor } from '../constants/wheel';
+import { useProfilePhoto } from '../context/ProfilePhotoContext';
 import Avatar from './ui/Avatar';
 import UserWheel from './ui/UserWheel';
 
@@ -14,13 +14,10 @@ import UserWheel from './ui/UserWheel';
  * exists once rather than three times: the dashboards keep their own data and
  * their own summary header, and share this.
  */
-export default function HomeWheel({ photoUri, onHubPress }: {
-  photoUri?: string | null;
-  onHubPress?: () => void;
-}) {
+export default function HomeWheel({ onHubPress }: { onHubPress?: () => void }) {
   const { userRole: role, firstName } = useAuth();
   const { data } = useContext(DataContext);
-  const router = useRouter();
+  const { photoUri, pickAndUpload } = useProfilePhoto();
 
   const options = useMemo(() => wheelOptionsFor(role), [role]);
 
@@ -35,7 +32,7 @@ export default function HomeWheel({ photoUri, onHubPress }: {
       options={options}
       hub={<Avatar uri={photoUri} initial={name} size={92} />}
       hubLabel={photoUri ? 'Your profile picture' : 'Add a profile picture'}
-      onHubPress={onHubPress ?? (() => router.push('/profile' as never))}
+      onHubPress={onHubPress ?? pickAndUpload}
     />
   );
 }
