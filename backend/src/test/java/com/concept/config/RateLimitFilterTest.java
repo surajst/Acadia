@@ -129,6 +129,87 @@ class RateLimitFilterTest {
         }
     }
 
+    /** A chain that leaves the response as the given status, standing in for the app. */
+    private FilterChain chainReturning(int status) {
+        return (req, res) -> ((MockHttpServletResponse) res).setStatus(status);
+    }
+
+    /** A chain that answers like Spring's form login: always 302, Location says which way it went. */
+    private FilterChain chainRedirectingTo(String location) {
+        return (req, res) -> {
+            MockHttpServletResponse r = (MockHttpServletResponse) res;
+            r.setStatus(302);
+            r.setHeader("Location", location);
+        };
+    }
+
+    /**
+     * The lockout this filter used to cause: a school's families share one NAT,
+     * so counting every login meant the whole school shared one small budget and
+     * ordinary successful sign-ins at drop-off locked everyone else out.
+     */
+    @Test
+    void successfulLoginsFromOneSharedIpAreNeverThrottled() throws Exception {
+        RateLimitFilter filter = enabledFilter();
+        FilterChain chain = chainReturning(200);
+
+        for (int i = 0; i < LOGIN_LIMIT * 4; i++) {
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(post("/api/mobile/auth/login", "203.0.113.7"), response, chain);
+            assertEquals(200, response.getStatus(),
+                    "successful login " + (i + 1) + " from a shared IP must not be throttled");
+        }
+    }
+
+    @Test
+    void failedLoginsAreCountedAndEventuallyBlocked() throws Exception {
+        RateLimitFilter filter = enabledFilter();
+        FilterChain chain = chainReturning(401);
+
+        for (int i = 0; i < LOGIN_LIMIT; i++) {
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(post("/api/mobile/auth/login", "203.0.113.7"), response, chain);
+            assertEquals(401, response.getStatus(), "attempt " + (i + 1) + " should reach the app");
+        }
+
+        MockHttpServletResponse blocked = new MockHttpServletResponse();
+        filter.doFilter(post("/api/mobile/auth/login", "203.0.113.7"), blocked, chain);
+
+        assertEquals(429, blocked.getStatus(), "brute force must still be stopped");
+        assertNotNull(blocked.getHeader("Retry-After"));
+    }
+
+    /**
+     * Form login answers 302 whether it worked or not, so a status-only check
+     * would read every failure as a success and leave this path unthrottled.
+     */
+    @Test
+    void formLoginFailureIsCountedDespiteBeingARedirect() throws Exception {
+        RateLimitFilter filter = enabledFilter();
+        FilterChain chain = chainRedirectingTo("/login?error");
+
+        for (int i = 0; i < LOGIN_LIMIT; i++) {
+            filter.doFilter(post("/login", "203.0.113.7"), new MockHttpServletResponse(), chain);
+        }
+
+        MockHttpServletResponse blocked = new MockHttpServletResponse();
+        filter.doFilter(post("/login", "203.0.113.7"), blocked, chain);
+        assertEquals(429, blocked.getStatus(), "a redirect back to /login?error is a failed attempt");
+    }
+
+    @Test
+    void formLoginSuccessRedirectIsNotCounted() throws Exception {
+        RateLimitFilter filter = enabledFilter();
+        FilterChain chain = chainRedirectingTo("/web/admin/dashboard");
+
+        for (int i = 0; i < LOGIN_LIMIT * 3; i++) {
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(post("/login", "203.0.113.7"), response, chain);
+            assertEquals(302, response.getStatus(),
+                    "a redirect to the dashboard is a successful sign-in, not an attempt to throttle");
+        }
+    }
+
     @Test
     void isInertWhenDevModeIsOn() throws Exception {
         RateLimitFilter filter = new RateLimitFilter(true, true, SIGNUP_LIMIT, LOGIN_LIMIT);

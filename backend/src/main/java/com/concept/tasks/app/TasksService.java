@@ -13,6 +13,7 @@ import com.concept.shared.data.Parent;
 import com.concept.parent.data.ParentQuestRepository;
 import com.concept.shared.data.Student;
 import com.concept.shared.data.StudentRepository;
+import com.concept.assignment.data.SubjectAssignment;
 import com.concept.assignment.data.SubjectAssignmentRepository;
 import com.concept.tasks.data.TaskType;
 import com.concept.tasks.data.TeacherTaskRequest;
@@ -101,18 +102,35 @@ public class TasksService {
         return teacherTaskService.getTasksCreatedByTeacher(username, tenantId);
     }
 
+    /**
+     * The students a teacher can pick from when assigning a task, filtered by
+     * a name fragment.
+     *
+     * <p>This used to invent a teacher id as
+     * {@code UUID.nameUUIDFromBytes(email)} and look up
+     * {@code ClassSection.teacherId} with it — a column nothing outside the
+     * dev-mode seeders writes, and which that invented id could not have matched
+     * regardless. The result was an empty list for every real teacher, so the
+     * task-assignment autocomplete returned nothing at all. The subject
+     * assignments below are the same link {@link #teacherOwnsSection} already
+     * uses to gate the attendance register.
+     */
     public List<Map<String, String>> searchMyStudents(String query, Authentication authentication) {
-        String username = authentication != null ? authentication.getName() : "teacher_1";
-        if ("teacher@greenwood.com".equalsIgnoreCase(username)) {
-            username = "teacher_1";
-        }
-        UUID teacherId = UUID.nameUUIDFromBytes(username.getBytes());
+        String username = authentication != null ? authentication.getName() : null;
+        User teacher = username == null ? null : userRepository.findByEmail(username).orElse(null);
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        if (teacher == null || tenantId == null || !tenantId.equals(teacher.getTenantId())) {
+            return List.of();
+        }
 
-        List<ClassSection> sections = (tenantId != null)
-                ? classSectionRepository.findByTeacherIdAndTenantId(teacherId, tenantId)
-                : List.of();
-        List<Student> students = studentRepository.findByClassSectionIn(sections);
+        List<ClassSection> sections = subjectAssignmentRepository.findByTeacher(teacher).stream()
+                .map(SubjectAssignment::getClassSection)
+                .filter(s -> s != null && tenantId.equals(s.getTenantId()))
+                .distinct()
+                .collect(Collectors.toList());
+        List<Student> students = sections.isEmpty()
+                ? List.of()
+                : studentRepository.findByClassSectionIn(sections);
 
         String lowerQuery = query.toLowerCase();
         return students.stream()
@@ -235,6 +253,7 @@ public class TasksService {
             throw TasksException.forbidden("Teacher not found");
         }
         LocalDate today = LocalDate.now();
+        LocalDate date = attendanceDate(payload, today);
         int saved = 0;
         int skipped = 0;
 
@@ -245,7 +264,7 @@ public class TasksService {
             if (section == null || !teacherOwnsSection(teacher, section)) { skipped++; continue; }
 
             List<Attendance> existing = attendanceRepository
-                    .findByClassSectionAndAttendanceDate(section, today).stream()
+                    .findByClassSectionAndAttendanceDate(section, date).stream()
                     .filter(a -> a.getStudent().getId().equals(entry.studentId()))
                     .collect(Collectors.toList());
             if (!existing.isEmpty()) {
@@ -258,13 +277,16 @@ public class TasksService {
             attendance.setAcademicYearId(student.getAcademicYearId());
             attendance.setStudent(student);
             attendance.setClassSection(section);
-            attendance.setAttendanceDate(today);
+            attendance.setAttendanceDate(date);
             attendance.setStatus(entry.status());
             attendance.setRemarks(entry.remarks() != null ? entry.remarks() : "");
             attendanceRepository.save(attendance);
             saved++;
 
-            if (entry.status() == AttendanceStatus.ABSENT) {
+            // Only today's absences raise an alert. Telling a parent their child
+            // "was marked ABSENT today" while a teacher tidies up last week's
+            // register would be a false alarm.
+            if (entry.status() == AttendanceStatus.ABSENT && date.equals(today)) {
                 for (Parent parent : student.getParents()) {
                     notificationDeliveryService.send(parent.getPhoneNumber(),
                             "[ALERT WHATSAPP DISPATCH] Sending to "
@@ -274,7 +296,35 @@ public class TasksService {
                 }
             }
         }
-        return Map.of("status", "success", "saved", saved, "skipped", skipped);
+        return Map.of("status", "success", "saved", saved, "skipped", skipped,
+                "date", date.toString());
+    }
+
+    /** How far back a teacher may correct the register. */
+    private static final int BACKFILL_WINDOW_DAYS = 30;
+
+    /**
+     * The date to write, defaulting to today when the client sends none.
+     *
+     * <p>Backfill is bounded in both directions. The future is refused outright
+     * — marking a child present for a day that has not happened is never a
+     * correction. The past is capped at {@link #BACKFILL_WINDOW_DAYS} so a
+     * mis-sent date cannot silently rewrite last term's register, which is the
+     * record a school's attendance reporting is built on.
+     */
+    private LocalDate attendanceDate(AttendancePayload payload, LocalDate today) {
+        LocalDate requested = payload.date();
+        if (requested == null) {
+            return today;
+        }
+        if (requested.isAfter(today)) {
+            throw TasksException.badRequest("Attendance cannot be marked for a future date");
+        }
+        if (requested.isBefore(today.minusDays(BACKFILL_WINDOW_DAYS))) {
+            throw TasksException.badRequest(
+                    "Attendance can only be corrected within the last " + BACKFILL_WINDOW_DAYS + " days");
+        }
+        return requested;
     }
 
     // ─── Academic-XP submission queue ───────────────────────────────────────

@@ -13,5 +13,10 @@ public interface DashboardClassSectionRepository extends JpaRepository<ClassSect
 
     List<ClassSection> findByTenantId(UUID tenantId);
 
-    List<ClassSection> findByTeacherIdAndTenantId(UUID teacherId, UUID tenantId);
+    // There is deliberately no findByTeacherIdAndTenantId here. ClassSection
+    // .teacherId is written by nothing outside the dev-mode seeders, so any
+    // lookup through it silently returns nothing in production — which is how
+    // the roster dashboard came to show every teacher the whole school.
+    // SubjectAssignmentRepository.findByTeacher is the real teacher-to-class
+    // link; use that.
 }

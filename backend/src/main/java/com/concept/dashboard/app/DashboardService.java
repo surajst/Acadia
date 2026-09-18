@@ -1,5 +1,7 @@
 package com.concept.dashboard.app;
 
+import com.concept.assignment.data.SubjectAssignment;
+import com.concept.assignment.data.SubjectAssignmentRepository;
 import com.concept.dashboard.data.DashboardAttendanceRepository;
 import com.concept.dashboard.data.DashboardClassSectionRepository;
 import com.concept.dashboard.data.DashboardStudentRepository;
@@ -9,6 +11,9 @@ import com.concept.shared.data.ClassSection;
 import com.concept.fees.app.FeeManagementService;
 import com.concept.shared.data.Student;
 import com.concept.teacher.app.TeacherDashboardService;
+import com.concept.user.User;
+import com.concept.user.UserRepository;
+import com.concept.user.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,32 +51,33 @@ public class DashboardService {
     private final AdminProgressService adminProgressService;
     private final FeeManagementService feeManagementService;
     private final TeacherDashboardService teacherDashboardService;
+    private final UserRepository userRepository;
+    private final SubjectAssignmentRepository subjectAssignmentRepository;
 
     public DashboardService(DashboardClassSectionRepository classSectionRepository,
                             DashboardStudentRepository studentRepository,
                             DashboardAttendanceRepository attendanceRepository,
                             AdminProgressService adminProgressService,
                             FeeManagementService feeManagementService,
-                            TeacherDashboardService teacherDashboardService) {
+                            TeacherDashboardService teacherDashboardService,
+                            UserRepository userRepository,
+                            SubjectAssignmentRepository subjectAssignmentRepository) {
         this.classSectionRepository = classSectionRepository;
         this.studentRepository = studentRepository;
         this.attendanceRepository = attendanceRepository;
         this.adminProgressService = adminProgressService;
         this.feeManagementService = feeManagementService;
         this.teacherDashboardService = teacherDashboardService;
+        this.userRepository = userRepository;
+        this.subjectAssignmentRepository = subjectAssignmentRepository;
     }
 
     @Transactional(readOnly = true)
     public RosterDashboardView buildRosterDashboard(UUID tenantId, String username, UUID classId,
                                                     String nameFilter, String gradeFilter,
                                                     int page, int size, boolean principal) {
-        // Legacy teacher-id derivation preserved from the original controller.
-        String effectiveUser = (username != null && !username.isBlank()) ? username : "teacher_1";
-        UUID teacherId = UUID.nameUUIDFromBytes(effectiveUser.getBytes());
-
-        // Every section visible to this tenant — the ADMIN-view fallback. Never
-        // unscoped: falling back to "the first section found anywhere" would leak
-        // another tenant's roster.
+        // Every section in this tenant. Never unscoped: falling back to "the
+        // first section found anywhere" would leak another tenant's roster.
         List<ClassSection> checkSections = Collections.emptyList();
         try {
             checkSections = tenantId != null ? classSectionRepository.findByTenantId(tenantId) : Collections.emptyList();
@@ -79,15 +85,25 @@ public class DashboardService {
             // gracefully catch
         }
 
-        List<ClassSection> assignedClassrooms = Collections.emptyList();
-        try {
-            assignedClassrooms = classSectionRepository.findByTeacherIdAndTenantId(teacherId, tenantId);
-        } catch (Exception e) {
-            // gracefully catch
-        }
-        if (assignedClassrooms.isEmpty() && !checkSections.isEmpty()) {
-            assignedClassrooms = checkSections;
-        }
+        // A teacher is confined to the sections they actually teach; an admin or
+        // principal sees the school. `scoped` is what makes the difference load-
+        // bearing further down: every query below has to narrow for a teacher,
+        // and an empty list must mean "no students" rather than "no filter".
+        //
+        // An unknown caller, or one whose account belongs to another tenant, is
+        // treated as scoped-with-nothing, so the failure mode is an empty roster
+        // rather than the whole school's.
+        User caller = resolveCaller(tenantId, username);
+        boolean scoped = caller == null || caller.getRole() == UserRole.TEACHER;
+        List<ClassSection> assignedClassrooms = scoped
+                ? taughtSections(caller, tenantId)
+                : checkSections;
+
+        // A scoped caller may only ask about a class they teach. classId arrives
+        // straight off the query string, so without this a teacher could read
+        // any section's register by editing the URL.
+        boolean classDenied = classId != null && scoped
+                && assignedClassrooms.stream().noneMatch(s -> classId.equals(s.getId()));
 
         // Normalise empty-string filter params to null so JPQL IS NULL checks work.
         String effectiveName = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
@@ -98,7 +114,11 @@ public class DashboardService {
         long totalRosterItems = 0;
         int totalRosterPages = 0;
         try {
-            if (classId != null && (effectiveName != null || effectiveGrade != null)) {
+            if (classDenied) {
+                // Asked for someone else's class: serve an empty roster rather
+                // than that class's children.
+                conditionalRoster = Collections.emptyList();
+            } else if (classId != null && (effectiveName != null || effectiveGrade != null)) {
                 // Class-specific view with name/grade filters: no dedicated paginated
                 // query exists for this combination, so filter in-memory (bounded by
                 // one class section's roster size, not the whole tenant).
@@ -125,6 +145,11 @@ public class DashboardService {
                 if (!assignedClassrooms.isEmpty()) {
                     searchPage = studentRepository.findByClassSectionInAndNameAndGrade(
                             assignedClassrooms, effectiveName, effectiveGrade, pageable);
+                } else if (scoped) {
+                    // A teacher with no assignments searches nothing. This
+                    // branch used to fall through to the tenant-wide search,
+                    // so the name filter was a way around the section scope.
+                    searchPage = Page.empty(pageable);
                 } else {
                     searchPage = studentRepository.findByNameContainingAndGrade(tenantId, effectiveName, effectiveGrade, pageable);
                 }
@@ -141,7 +166,10 @@ public class DashboardService {
             // gracefully catch
         }
 
-        List<String> allGradeNames = checkSections.stream()
+        // The grade filter offers what the caller can actually reach, so a
+        // teacher's dropdown does not advertise grades whose roster the query
+        // above will refuse to return.
+        List<String> allGradeNames = assignedClassrooms.stream()
                 .map(ClassSection::getGradeName)
                 .distinct()
                 .sorted()
@@ -211,5 +239,44 @@ public class DashboardService {
                 .collect(Collectors.toList());
 
         return new TeacherDashboardView(submissions, progress);
+    }
+
+    /**
+     * The sections a teacher is assigned to teach, empty when they have none.
+     *
+     * <p>This used to read {@code ClassSection.teacherId}, matched against a
+     * teacher id invented as {@code UUID.nameUUIDFromBytes(email)}. Nothing
+     * outside the dev-mode seeders ever writes that column, and the invented id
+     * could not have matched it anyway, so the lookup always came back empty and
+     * the caller fell through to an "all sections in the tenant" fallback —
+     * which is how every teacher ended up reading the whole school's roster.
+     *
+     * <p>{@link SubjectAssignment} is the real teacher-to-class link, and the
+     * same one {@code TasksService.teacherOwnsSection} already gates the
+     * attendance register on, so the two now agree on what a teacher owns.
+     */
+    private List<ClassSection> taughtSections(User caller, UUID tenantId) {
+        if (caller == null) {
+            return Collections.emptyList();
+        }
+        try {
+            return subjectAssignmentRepository.findByTeacher(caller).stream()
+                    .map(SubjectAssignment::getClassSection)
+                    .filter(s -> s != null && tenantId != null && tenantId.equals(s.getTenantId()))
+                    .distinct()
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("Could not resolve taught sections for {} in tenant {}", caller.getEmail(), tenantId, e);
+            return Collections.emptyList();
+        }
+    }
+
+    /** The signed-in user, but only when they really belong to this tenant. */
+    private User resolveCaller(UUID tenantId, String username) {
+        if (tenantId == null || username == null || username.isBlank()) {
+            return null;
+        }
+        User caller = userRepository.findByEmail(username).orElse(null);
+        return (caller != null && tenantId.equals(caller.getTenantId())) ? caller : null;
     }
 }
