@@ -96,7 +96,21 @@ public class RosterImportServiceTest {
         assertEquals(2, preview.willFail());
         assertTrue(preview.canCommit());
         // Dry run: no student login was provisioned.
-        assertFalse(userRepository.existsByEmail("R1"));
+        assertFalse(userRepository.existsByEmail(studentLogin(admin, "Aarav", "R1")));
+    }
+
+    /** The school-qualified username the import should mint, e.g. "aaravr1@t-1a2b3c4d". */
+    private String studentLogin(User admin, String firstName, String rollNumber) {
+        return firstName.toLowerCase() + rollNumber.toLowerCase() + "@" + subdomain(admin);
+    }
+
+    /** The guardian equivalent: first name + digits of the phone, school-qualified. */
+    private String guardianLogin(User admin, String firstName, String phone) {
+        return firstName.toLowerCase() + phone.replaceAll("[^0-9]", "") + "@" + subdomain(admin);
+    }
+
+    private String subdomain(User admin) {
+        return tenantRepository.findById(admin.getTenantId()).orElseThrow().getSubdomain();
     }
 
     @Test
@@ -113,9 +127,58 @@ public class RosterImportServiceTest {
         assertEquals(2, result.created());
         assertEquals(0, result.skipped());
         assertEquals(0, result.failed());
-        // Student and parent logins were provisioned.
-        assertTrue(userRepository.existsByEmail("R1"));
-        assertTrue(userRepository.existsByEmail("+91 9812345670"));
+        // Student and parent logins were provisioned, under the school-qualified
+        // usernames. These assertions used to read existsByEmail("R1") and
+        // existsByEmail("+91 9812345670") -- the raw roll number and phone -- which
+        // pinned the very namespace collision that stopped the second school to
+        // import a given roll number from getting any login at all.
+        assertTrue(userRepository.existsByEmail(studentLogin(admin, "Aarav", "R1")));
+        assertTrue(userRepository.existsByEmail(guardianLogin(admin, "Rohan", "+91 9812345670")));
+        // And emphatically not under the bare values.
+        assertFalse(userRepository.existsByEmail("R1"));
+        assertFalse(userRepository.existsByEmail("+91 9812345670"));
+    }
+
+    /**
+     * Two schools importing the same roll number and the same parent phone must
+     * each end up with working logins.
+     *
+     * <p>They did not. User.email carries a global unique constraint, and the
+     * import used the bare roll number and bare phone as the username, so the
+     * first school to import "R1" claimed it platform-wide; every later school
+     * fell through the existsByEmail check and silently provisioned nothing --
+     * while the row still reported "Created". A child who could not sign in, and
+     * nothing anywhere saying why.
+     */
+    @Test
+    public void twoSchoolsCanImportTheSameRollNumberAndPhone() throws Exception {
+        String row = "Aarav,Mehta,R1,Grade 5,A,Rohan Mehta,+91 9812345670";
+        String content = String.join("\n",
+                "FirstName,LastName,RollNumber,Grade,Section,ParentName,ParentPhone", row);
+
+        User first = admin();
+        rosterImportService.commitStudents(
+                rosterImportService.previewStudents(csv(content).getInputStream(), "roster.csv", first).rows(), first);
+
+        User second = admin();
+        RosterImportService.ImportResult result = rosterImportService.commitStudents(
+                rosterImportService.previewStudents(csv(content).getInputStream(), "roster.csv", second).rows(), second);
+
+        assertEquals(1, result.created(), "the second school's row should import");
+
+        // Both schools have their own working student and guardian logins.
+        assertTrue(userRepository.existsByEmail(studentLogin(first, "Aarav", "R1")),
+                "first school's pupil must keep their login");
+        assertTrue(userRepository.existsByEmail(studentLogin(second, "Aarav", "R1")),
+                "second school's pupil must get a login of their own");
+        assertTrue(userRepository.existsByEmail(guardianLogin(first, "Rohan", "+91 9812345670")));
+        assertTrue(userRepository.existsByEmail(guardianLogin(second, "Rohan", "+91 9812345670")));
+
+        // The row must say what was provisioned, so a blank credentials cell can
+        // never again be the only sign that a login was skipped.
+        String detail = result.outcomes().get(0).get("detail");
+        assertTrue(detail.contains(studentLogin(second, "Aarav", "R1")),
+                "the outcome should hand the admin the credentials it created; got: " + detail);
     }
 
     @Test

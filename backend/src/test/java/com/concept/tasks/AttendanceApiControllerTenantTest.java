@@ -173,7 +173,14 @@ public class AttendanceApiControllerTenantTest {
 
         Map<String, Object> result = tasksService.submitAttendance(payload, authA);
 
-        assertEquals(Map.of("status", "success", "saved", 0, "skipped", 1), result);
+        // Asserted field by field rather than as one exact map: the point of this
+        // test is that another tenant's student is skipped and never written, and
+        // the response gained a "date" field when backfill was added.
+        assertEquals("success", result.get("status"));
+        assertEquals(0, result.get("saved"));
+        assertEquals(1, result.get("skipped"));
+        assertEquals(LocalDate.now().toString(), result.get("date"),
+                "a payload with no date is still today's register");
         assertTrue(attendanceRepository.findByClassSectionAndAttendanceDate(sectionB, LocalDate.now()).isEmpty());
     }
 }

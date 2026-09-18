@@ -45,6 +45,7 @@ public class RosterImportService {
     private final ParentRepository parentRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SchoolUsernames schoolUsernames;
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -52,12 +53,14 @@ public class RosterImportService {
                                StudentRepository studentRepository,
                                ParentRepository parentRepository,
                                UserRepository userRepository,
-                               PasswordEncoder passwordEncoder) {
+                               PasswordEncoder passwordEncoder,
+                               SchoolUsernames schoolUsernames) {
         this.classSectionRepository = classSectionRepository;
         this.studentRepository = studentRepository;
         this.parentRepository = parentRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.schoolUsernames = schoolUsernames;
     }
 
     /** Result of the student dry-run preview: the parsed rows (to stash and later commit), per-row outcomes, and counts. */
@@ -224,45 +227,60 @@ public class RosterImportService {
                 student.getParents().add(parent);
 
                 // Provision logins so imported students/parents can actually sign in.
-                // Student logs in with their roll number, parent with their phone —
-                // both already in the import, each with an auto-generated temp password.
+                // The username is the school-qualified form ("asha6a-01@greenwood"),
+                // not the bare roll number or phone: User.email is globally unique,
+                // so unqualified values put every school in one namespace and the
+                // second school to import a roll number silently got no login at
+                // all. See SchoolUsernames.
                 StringBuilder creds = new StringBuilder();
+                UUID tenantId = currentUser.getTenantId();
 
-                if (!rollNumber.isEmpty() && !userRepository.existsByEmail(rollNumber)) {
+                String studentUsername = schoolUsernames.forStudent(firstName, rollNumber, tenantId);
+                if (studentUsername != null) {
                     String studentPassword = generateTempPassword();
                     User studentUser = new User();
                     studentUser.setId(UUID.randomUUID());
-                    studentUser.setTenantId(currentUser.getTenantId());
+                    studentUser.setTenantId(tenantId);
                     studentUser.setAcademicYearId(currentUser.getAcademicYearId());
-                    studentUser.setEmail(rollNumber);
+                    studentUser.setEmail(studentUsername);
                     studentUser.setPasswordHash(passwordEncoder.encode(studentPassword));
                     studentUser.setFullName(firstName + " " + lastName);
                     studentUser.setRole(UserRole.STUDENT);
                     studentUser.setActive(true);
                     userRepository.save(studentUser);
                     student.setUserId(studentUser.getId());
-                    creds.append("student login ").append(rollNumber).append(" / ").append(studentPassword);
+                    creds.append("student login ").append(studentUsername).append(" / ").append(studentPassword);
+                } else {
+                    // Say so rather than reporting a bare "Created" with no
+                    // credentials, which is how this failure stayed invisible.
+                    creds.append("no student login (needs a first name and roll number)");
                 }
 
                 // Only create a parent login if this parent doesn't already have one
                 // (a reused parent from a prior row/upload keeps their existing login).
-                if (parent.getUserId() == null && !parentPhone.isEmpty() && !userRepository.existsByEmail(parentPhone)) {
-                    String parentPassword = generateTempPassword();
-                    User parentUser = new User();
-                    parentUser.setId(UUID.randomUUID());
-                    parentUser.setTenantId(currentUser.getTenantId());
-                    parentUser.setAcademicYearId(currentUser.getAcademicYearId());
-                    parentUser.setEmail(parentPhone);
-                    parentUser.setPasswordHash(passwordEncoder.encode(parentPassword));
-                    parentUser.setFullName(parent.getFirstName() + " " + parent.getLastName());
-                    parentUser.setRole(UserRole.PARENT);
-                    parentUser.setActive(true);
-                    userRepository.save(parentUser);
-                    parent.setUserId(parentUser.getId());
-                    parent.setEmail(parentPhone);
-                    parentRepository.save(parent);
-                    if (creds.length() > 0) creds.append(" · ");
-                    creds.append("parent login ").append(parentPhone).append(" / ").append(parentPassword);
+                if (parent.getUserId() == null) {
+                    String parentUsername = schoolUsernames.forGuardian(parent.getFirstName(), parentPhone, tenantId);
+                    if (parentUsername != null) {
+                        String parentPassword = generateTempPassword();
+                        User parentUser = new User();
+                        parentUser.setId(UUID.randomUUID());
+                        parentUser.setTenantId(tenantId);
+                        parentUser.setAcademicYearId(currentUser.getAcademicYearId());
+                        parentUser.setEmail(parentUsername);
+                        parentUser.setPasswordHash(passwordEncoder.encode(parentPassword));
+                        parentUser.setFullName(parent.getFirstName() + " " + parent.getLastName());
+                        parentUser.setRole(UserRole.PARENT);
+                        parentUser.setActive(true);
+                        userRepository.save(parentUser);
+                        parent.setUserId(parentUser.getId());
+                        parent.setEmail(parentUsername);
+                        parentRepository.save(parent);
+                        if (creds.length() > 0) creds.append(" · ");
+                        creds.append("parent login ").append(parentUsername).append(" / ").append(parentPassword);
+                    } else {
+                        if (creds.length() > 0) creds.append(" · ");
+                        creds.append("no parent login (needs a name and phone number)");
+                    }
                 }
 
                 studentRepository.save(student);

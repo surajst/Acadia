@@ -45,7 +45,7 @@ public class StudentAdminService {
     private final StudentMetricRepository studentMetricRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
-    private final com.concept.tenant.TenantRepository tenantRepository;
+    private final SchoolUsernames schoolUsernames;
 
     public StudentAdminService(RosterStudentRepository studentRepository,
                                RosterParentRepository parentRepository,
@@ -55,7 +55,7 @@ public class StudentAdminService {
                                StudentMetricRepository studentMetricRepository,
                                PasswordEncoder passwordEncoder,
                                AuditLogService auditLogService,
-                               com.concept.tenant.TenantRepository tenantRepository) {
+                               SchoolUsernames schoolUsernames) {
         this.studentRepository = studentRepository;
         this.parentRepository = parentRepository;
         this.userRepository = userRepository;
@@ -64,7 +64,7 @@ public class StudentAdminService {
         this.studentMetricRepository = studentMetricRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
-        this.tenantRepository = tenantRepository;
+        this.schoolUsernames = schoolUsernames;
     }
 
     // ---------------------------------------------------------------- add
@@ -126,73 +126,18 @@ public class StudentAdminService {
     }
 
     /**
-     * Builds a student's sign-in username as firstname + roll number, qualified by
-     * the school's subdomain: "asha6a-01@greenwood".
-     *
-     * <p>The subdomain is not decoration. User.email is globally unique across
-     * every school, and the previous version used the bare roll number, so the
-     * first school to register "6A-01" claimed that username for the whole
-     * system. Every later school registering their own 6A-01 fell through the
-     * existence check and silently got no login at all -- no error, no warning,
-     * just a child who could not sign in. Qualifying by tenant removes the shared
-     * namespace; the first name makes the username less guessable from a class
-     * list than a bare roll number.
+     * Student login: first name + roll number, qualified by the school.
      *
      * @return the username, or null when one cannot be formed or stays taken
+     * @see SchoolUsernames for why the school qualifier is load-bearing
      */
-    /** Student login: first name + roll number, qualified by the school. */
     private String buildUsername(String firstName, String rollNumber, UUID tenantId) {
-        return qualifiedUsername(sanitiseForUsername(firstName) + sanitiseForUsername(rollNumber), tenantId);
+        return schoolUsernames.forStudent(firstName, rollNumber, tenantId);
     }
 
-    /**
-     * Guardian login: first name + phone number, qualified by the school.
-     *
-     * <p>The phone number used to be the whole username. User.email is unique
-     * across the platform, so the first school to register a given number
-     * claimed it globally and every later school silently got no guardian
-     * login at all -- the caller checked existsByEmail and simply skipped
-     * provisioning. Same defect as bare roll numbers, same fix: the school's
-     * subdomain makes the namespace per-school.
-     */
+    /** Guardian login: first name + phone number, qualified by the school. */
     private String buildGuardianUsername(String firstName, String phoneNumber, UUID tenantId) {
-        return qualifiedUsername(sanitiseForUsername(firstName) + sanitiseForUsername(phoneNumber), tenantId);
-    }
-
-    /**
-     * Turns a local part into a school-qualified username, or null when one
-     * cannot be formed. Null means "no login", and every caller has to treat it
-     * as such rather than falling back to an unqualified value.
-     */
-    private String qualifiedUsername(String localSeed, UUID tenantId) {
-        String subdomain = tenantId == null ? null : tenantRepository.findById(tenantId)
-                .map(com.concept.tenant.Tenant::getSubdomain).orElse(null);
-        if (subdomain == null || subdomain.isBlank()) {
-            return null;
-        }
-        String local = localSeed == null ? "" : localSeed;
-        if (local.isBlank()) {
-            return null;
-        }
-        String candidate = local + "@" + sanitiseForUsername(subdomain);
-        if (!userRepository.existsByEmail(candidate)) {
-            return candidate;
-        }
-        // A clash within one school should be near-impossible, but it must not
-        // silently mean "no login" the way the global namespace did.
-        for (int i = 2; i <= 20; i++) {
-            String next = local + i + "@" + sanitiseForUsername(subdomain);
-            if (!userRepository.existsByEmail(next)) {
-                return next;
-            }
-        }
-        return null;
-    }
-
-    /** Lowercase, keeping only characters a family can retype without ambiguity. */
-    private String sanitiseForUsername(String raw) {
-        return raw == null ? "" : raw.trim().toLowerCase(java.util.Locale.ROOT)
-                .replaceAll("[^a-z0-9.-]", "");
+        return schoolUsernames.forGuardian(firstName, phoneNumber, tenantId);
     }
 
     /**

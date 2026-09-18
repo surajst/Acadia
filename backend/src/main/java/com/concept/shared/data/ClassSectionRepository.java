@@ -10,9 +10,13 @@ import java.util.UUID;
 @Repository
 public interface ClassSectionRepository extends TenantScopedRepository<ClassSection, UUID> {
     List<ClassSection> findByTenantId(UUID tenantId);
-    List<ClassSection> findByTeacherIdAndTenantId(UUID teacherId, UUID tenantId);
-    
-    // 👈 Add this line back so UploadWebController stops complaining!
+
+    // No findByTeacherIdAndTenantId: ClassSection.teacherId is written only by
+    // the dev-mode seeders, so in production it is always null and any query
+    // through it quietly returns nothing. Both callers that used it shipped
+    // bugs because of that. SubjectAssignmentRepository.findByTeacher is the
+    // real teacher-to-class link.
+
     Optional<ClassSection> findByGradeNameAndSectionName(String gradeName, String sectionName);
     Optional<ClassSection> findByTenantIdAndGradeNameAndSectionName(UUID tenantId, String gradeName, String sectionName);
 }

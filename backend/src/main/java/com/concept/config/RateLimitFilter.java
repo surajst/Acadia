@@ -47,8 +47,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     /**
      * A quota: how many requests one IP may make to one rule within one window.
+     *
+     * <p>{@code failuresOnly} rules count only requests that were rejected. That
+     * distinction is what keeps a shared IP usable: a school's families sit
+     * behind one NAT (school wi-fi, or a mobile carrier's CGNAT), so counting
+     * every login meant the whole school shared a single 20-per-15-minutes
+     * budget and the twenty-first parent to open the app at drop-off was locked
+     * out for a quarter of an hour. Brute force is made of failures, so counting
+     * only those throttles the attack without throttling the school.
      */
-    private record Rule(String name, List<String> paths, int limit, Duration window) {
+    private record Rule(String name, List<String> paths, int limit, Duration window, boolean failuresOnly) {
         boolean matches(String path) {
             return paths.contains(path);
         }
@@ -72,13 +80,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
             @Value("${app.dev-mode:false}") boolean devMode,
             @Value("${app.rate-limit.enabled:true}") boolean rateLimitEnabled,
             @Value("${app.rate-limit.signup-per-hour:5}") int signupPerHour,
-            @Value("${app.rate-limit.login-per-15min:20}") int loginPer15Min) {
+            @Value("${app.rate-limit.login-per-15min:50}") int loginPer15Min) {
         this.enabled = rateLimitEnabled && !devMode;
         this.rules = List.of(
+                // Signup counts every attempt: each success creates a tenant, so
+                // successes are exactly what needs limiting here.
                 new Rule("signup", List.of("/api/onboard/create-school"),
-                        signupPerHour, Duration.ofHours(1)),
+                        signupPerHour, Duration.ofHours(1), false),
+                // Login counts only rejected attempts — see Rule's note on why a
+                // shared IP makes counting successes the wrong quota. The ceiling
+                // is higher than the old 20 because a whole school's mistyped
+                // passwords now share it, and nothing else does.
                 new Rule("login", List.of("/login", "/web/auth/login", "/api/mobile/auth/login"),
-                        loginPer15Min, Duration.ofMinutes(15)));
+                        loginPer15Min, Duration.ofMinutes(15), true));
         if (!this.enabled) {
             log.info("Rate limiting disabled (dev-mode={}, app.rate-limit.enabled={})", devMode, rateLimitEnabled);
         }
@@ -107,7 +121,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return existing;
         });
 
-        if (window.count.incrementAndGet() > rule.limit()) {
+        // Already over quota: reject without running the request at all.
+        if (window.count.get() >= rule.limit()) {
             long retryAfter = Math.max(1, Duration.between(now, window.resetAt).getSeconds());
             log.warn("Rate limit exceeded: rule={} ip={} path={}", rule.name(), clientIp(request),
                     request.getServletPath());
@@ -120,7 +135,40 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         evictExpired(now);
+
+        if (!rule.failuresOnly()) {
+            window.count.incrementAndGet();
+            chain.doFilter(request, response);
+            return;
+        }
+
+        // Charge the quota only if the attempt was rejected. The status is read
+        // after the chain has run, so this has to come last.
         chain.doFilter(request, response);
+        if (wasRejected(response)) {
+            window.count.incrementAndGet();
+        }
+    }
+
+    /**
+     * Whether a completed login attempt was refused.
+     *
+     * <p>Two shapes to recognise: the JSON endpoint answers 401, while Spring's
+     * form login always answers 302 and signals failure by redirecting back to
+     * the login page with an {@code error} marker. Treating that redirect as a
+     * success would leave the form-login path effectively unthrottled, so the
+     * Location header is checked rather than the status alone.
+     */
+    private boolean wasRejected(HttpServletResponse response) {
+        int status = response.getStatus();
+        if (status >= 400) {
+            return true;
+        }
+        if (status >= 300 && status < 400) {
+            String location = response.getHeader("Location");
+            return location != null && location.contains("error");
+        }
+        return false;
     }
 
     private Rule ruleFor(String path) {
