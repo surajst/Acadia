@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { DataContext } from './_layout';
 import { getUserProfile, getSupportedLanguages, setPreferredLanguage, type UserProfile, type UserRole } from '../../services/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemePicker, type Theme } from '../../context/ThemeContext';
 
 function isUserRole(value: string | null): value is UserRole {
@@ -15,6 +16,7 @@ export default function ProfileScreen() {
   const { role, data } = useContext(DataContext);
   const { logout, firstName: authFirstName, lastName: authLastName } = useAuth();
   const { theme: T, paletteId, palettes, setPaletteId } = useThemePicker();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => makeStyles(T), [T]);
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -277,7 +279,10 @@ export default function ProfileScreen() {
 
       <Modal visible={languagePickerOpen} transparent animationType="slide" onRequestClose={() => setLanguagePickerOpen(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          {/* paddingBottom from the real inset: these sheets sit on the bottom
+              edge, so on a device with a navigation bar the last row was drawn
+              underneath it and could not be tapped. */}
+          <View style={[styles.modalCard, { paddingBottom: 20 + insets.bottom }]}>
             <Text style={styles.modalTitle}>Choose Language</Text>
             <ScrollView style={{ maxHeight: 300 }}>
               {languages.map((l) => (
@@ -296,7 +301,10 @@ export default function ProfileScreen() {
 
       <Modal visible={themePickerOpen} transparent animationType="slide" onRequestClose={() => setThemePickerOpen(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          {/* paddingBottom from the real inset: these sheets sit on the bottom
+              edge, so on a device with a navigation bar the last row was drawn
+              underneath it and could not be tapped. */}
+          <View style={[styles.modalCard, { paddingBottom: 20 + insets.bottom }]}>
             <Text style={styles.modalTitle}>Choose a theme</Text>
             <ScrollView style={{ maxHeight: 360 }}>
               {palettes.map((p) => (

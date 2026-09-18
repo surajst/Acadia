@@ -6,10 +6,13 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useMemo } from 'react';
 import { DataContext } from './_layout';
 import { getStudentAttendance } from '../../services/api';
-import T from '../../constants/theme';
+import { useTheme, type Theme } from '../../context/ThemeContext';
+// STATUS_COLOR/STATUS_BG below are status families, not brand tokens -- no
+// palette touches them, so they stay module-level off the static import.
+import baseT from '../../constants/theme';
 
 type AttendanceRecord = {
   date: string;
@@ -20,17 +23,17 @@ type AttendanceRecord = {
 // leftovers -- a near-black cell with mid-bright digits -- and the token
 // migration made the pairing worse by turning the background into the ink step.
 const STATUS_COLOR: Record<string, string> = {
-  PRESENT: T.successInk,
-  ABSENT: T.dangerInk,
-  TARDY: T.warnInk,
-  LATE: T.warnInk,
+  PRESENT: baseT.successInk,
+  ABSENT: baseT.dangerInk,
+  TARDY: baseT.warnInk,
+  LATE: baseT.warnInk,
 };
 
 const STATUS_BG: Record<string, string> = {
-  PRESENT: T.success50,
-  ABSENT: T.danger50,
-  TARDY: T.warn50,
-  LATE: T.warn50,
+  PRESENT: baseT.success50,
+  ABSENT: baseT.danger50,
+  TARDY: baseT.warn50,
+  LATE: baseT.warn50,
 };
 
 function getMonthLabel(dateStr: string): string {
@@ -44,6 +47,8 @@ function getDayLabel(dateStr: string): string {
 }
 
 export default function StudentAttendanceScreen() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
   const { refreshData } = useContext(DataContext);
   const [refreshing, setRefreshing] = useState(false);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -149,7 +154,7 @@ export default function StudentAttendanceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (T: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: T.bg,
