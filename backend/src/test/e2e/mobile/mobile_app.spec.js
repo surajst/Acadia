@@ -4,7 +4,7 @@ test.describe('Native Web App E2E Tests', () => {
   // Use the Expo Web URL instead of the backend URL
   test.use({ baseURL: 'http://localhost:8081' });
 
-  test('Student logs in and navigates all 4 native tabs', async ({ page }) => {
+  test('Student logs in and reaches every screen from the wheel', async ({ page }) => {
     // Reset database to a clean state
     await page.goto('http://localhost:8080/test/reset');
 
@@ -27,14 +27,14 @@ test.describe('Native Web App E2E Tests', () => {
     // always rendered and a regex keeps it stable as the numbers change.
     await expect(page.locator('text=/XP to Level/ >> visible=true').first()).toBeVisible();
 
-    // 4. Navigate to Syllabus Tab.
+    // 4. Navigate to Syllabus.
     //
-    // Navigation here goes through getByRole. Tab labels are also rendered as
-    // <h1> screen headings and hidden tabs stay mounted, so a plain text=
-    // locator can resolve to a heading behind the current screen and then fail
-    // on an intercepted click. A student has exactly four tabs: Dashboard,
-    // Syllabus, Challenges, Profile.
-    await page.getByRole('tab', { name: 'Syllabus' }).click();
+    // There is no tab bar any more: every destination is a spoke on the home
+    // screen's wheel, and each spoke is a button labelled "<Name>, <i> of <n>"
+    // so a screen reader can say where it sits on the rim. Anchoring the match
+    // at the start keeps it off the screen headings of the same name, which are
+    // still mounted behind the current screen.
+    await page.getByRole('button', { name: /^Syllabus/ }).click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Curriculum Overview" >> visible=true')).toBeVisible();
 
@@ -63,22 +63,21 @@ test.describe('Native Web App E2E Tests', () => {
 
 
 
-    // 5. Navigate to Attendance. It is no longer a tab: parents had eight tabs
-    // and students six, so labels truncated to "Attend"/"Perfor", and five routes
-    // moved to the dashboard's Quick Actions. The route still exists, so this
-    // goes home first and enters it the way a student now does.
-    await page.getByRole('tab', { name: 'Dashboard' }).click();
+    // 5. Navigate to Attendance. Getting back to the wheel is a back
+    // navigation now rather than a tab press -- which is worth exercising,
+    // since the whole point of making (tabs) a Stack was that destinations
+    // push and return.
+    await page.goBack();
     await page.waitForLoadState('networkidle');
-    await page.getByRole('button', { name: /Attendance/ }).click();
+    await page.getByRole('button', { name: /^Attendance/ }).click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Attendance Summary" >> visible=true')).toBeVisible();
     await expect(page.locator('text="Attendance History" >> visible=true')).toBeVisible();
 
-    // 6. Navigate to Quests -- another of the five routes that moved off the tab
-    // bar into Quick Actions, so it is reached from the dashboard too.
-    await page.getByRole('tab', { name: 'Dashboard' }).click();
+    // 6. Navigate to Quests, another spoke.
+    await page.goBack();
     await page.waitForLoadState('networkidle');
-    await page.getByRole('button', { name: /Quests/ }).click();
+    await page.getByRole('button', { name: /^Quests/ }).click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Parent Quests" >> visible=true')).toBeVisible();
     await expect(
@@ -95,8 +94,10 @@ test.describe('Native Web App E2E Tests', () => {
         .or(page.getByText(/-\d+ XP/).first())
     ).toBeVisible();
 
-    // 7. Navigate to Challenges Tab
-    await page.getByRole('tab', { name: 'Challenges' }).click();
+    // 7. Navigate to Challenges, another spoke.
+    await page.goBack();
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: /^Challenges/ }).click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Active Challenges" >> visible=true')).toBeVisible();
     // A seeded student now HAS challenges: ScreenContentSeeder assigns four
@@ -166,9 +167,8 @@ test.describe('Native Web App E2E Tests', () => {
     // Navigation here goes through getByRole. Tab labels are also rendered as
     // <h1> screen headings and hidden tabs stay mounted, so a plain text=
     // locator can resolve to a heading behind the current screen and then fail
-    // on an intercepted click. A student has exactly four tabs: Dashboard,
-    // Syllabus, Challenges, Profile.
-    await page.getByRole('tab', { name: 'Syllabus' }).click();
+    // on an intercepted click. Syllabus is a spoke on the home wheel.
+    await page.getByRole('button', { name: /^Syllabus/ }).click();
     await page.waitForLoadState('networkidle');
     
     // The chips are built from whatever subjects the curriculum actually holds,
