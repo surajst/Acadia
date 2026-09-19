@@ -196,7 +196,15 @@ export const getStudentSyllabus = async () => {
 // The reading questions a teacher attached to a task. Returns {} for task types
 // that carry none, which is most of them.
 export const getTaskQuestions = async (taskId) => {
-  const response = await api.get(`/student/tasks/${taskId}/questions`);
+  // Absolute, not through `api`. That instance's baseURL is /api/mobile, but
+  // TaskApiController is mapped at /api -- so the relative form asked for
+  // /api/mobile/student/tasks/{id}/questions and got a 404. The caller
+  // swallows the error, so the only symptom was a reading task opening with
+  // its questions silently missing.
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/student/tasks/${taskId}/questions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return response.data || {};
 };
 
