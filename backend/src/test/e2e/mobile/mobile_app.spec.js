@@ -111,8 +111,19 @@ test.describe('Native Web App E2E Tests', () => {
         .or(page.getByText(/\+\d+ XP/).first())
     ).toBeVisible();
 
-    // 8. Navigate to Profile Tab
-    await page.locator('text="Profile" >> visible=true').click();
+    // 8. Navigate to Profile. It was a visible tab for every role; it is now
+    // the avatar in the home screen's top-left corner, which carries the
+    // accessible name but no visible text -- so this matches the button's
+    // label rather than looking for the word on screen. Worth having as a
+    // test: that corner is the only way to Profile now, and therefore the
+    // only way to Log Out.
+    await page.goBack();
+    await page.waitForLoadState('networkidle');
+    // exact: true matters. getByRole's name is a case-insensitive SUBSTRING
+    // match by default, and the wheel's hub is labelled "Add a profile
+    // picture" -- which contains "profile", so a loose match finds two buttons
+    // and fails strict mode.
+    await page.getByRole('button', { name: 'Profile', exact: true }).click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text="Account Details" >> visible=true')).toBeVisible();
     await expect(page.locator('text="Student Account" >> visible=true')).toBeVisible();
