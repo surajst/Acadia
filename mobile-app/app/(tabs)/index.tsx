@@ -2,26 +2,17 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, P
 import { useAuth } from '@/context/AuthContext';
 import { useContext, useState, useEffect, useMemo } from 'react';
 import { DataContext } from './_layout';
-import { useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { getUnreadNotificationCount } from '../../services/api';
 import { startTrip, stopTrip, isTripActive } from '../../services/driverLocationTask';
-import { Stat, StatRow } from '../../components/ui/Stat';
-import NavCard from '../../components/ui/NavCard';
 import StudentDashboard from '../../components/StudentDashboard';
+import HomeWheel from '../../components/HomeWheel';
 import TeacherDashboard from '../../components/TeacherDashboard';
 import ParentDashboard from '../../components/ParentDashboard';
 import { useTheme, type Theme } from '../../context/ThemeContext';
 
-interface ParentQuest {
-  taskDescription: string;
-  xpBounty: number;
-}
-
 export default function DashboardScreen() {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
-  const awardStyles = useMemo(() => makeAwardStyles(T), [T]);
   const ctx = useContext(DataContext);
   const role = ctx?.role ?? null;
   const data = ctx?.data ?? {};
@@ -30,7 +21,6 @@ export default function DashboardScreen() {
   const selectChild = ctx?.selectChild ?? (() => {});
   const { firstName, schoolName } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
   const [tripActive, setTripActive] = useState(false);
   const [tripBusy, setTripBusy] = useState(false);
@@ -100,15 +90,6 @@ export default function DashboardScreen() {
     return `${data.student?.gradeName || 'Grade N/A'} - ${data.student?.sectionName || 'N/A'}`;
   };
 
-  const attendanceMarked = data.attendanceSummary?.markedToday ?? 0;
-  const attendanceTotal = data.attendanceSummary?.totalClasses ?? 0;
-  const attendancePending = data.attendanceSummary?.pendingToday ?? 0;
-  const classes = Array.isArray(data.classes) ? data.classes : [];
-  const tasks = Array.isArray(data.tasks) ? data.tasks : [];
-  const pendingReviews = (data.queue?.pendingSubmissions?.length ?? 0) + (data.queue?.pendingProgress?.length ?? 0);
-  const parentQuests = Array.isArray(data.parentQuests) ? data.parentQuests : [];
-  const children = Array.isArray(data.children) ? data.children : [];
-
   if (role === 'TEACHER') {
     return (
       <TeacherDashboard
@@ -147,160 +128,25 @@ export default function DashboardScreen() {
     );
   }
 
+  // Only DRIVER and PRINCIPAL reach here -- every other role returned above.
+  // What used to follow was ~350 lines branching on TEACHER and PARENT, all of
+  // it unreachable, plus two NavCard grids that no role could open.
   return (
     <ScrollView
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
-      {role === 'TEACHER' && (
-        <View style={styles.notificationHeaderRow}>
-          <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.bellButton}>
-            <SymbolView name={{ ios: 'bell', android: 'notifications', web: 'notifications' }} tintColor={T.text2} size={24} />
-            {unreadCount > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-      )}
-
       <View style={styles.infoCard}>
         <Text style={styles.greeting}>{getGreeting()}</Text>
         <Text style={styles.subGreeting}>{getSubGreeting()}</Text>
-        {role === 'TEACHER' && (
-          <View style={styles.dateChip}>
-            <Text style={styles.dateChipText}>
-              {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
-            </Text>
-          </View>
-        )}
       </View>
 
-      {role === 'PARENT' && children.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.childSwitcherRow} contentContainerStyle={{ paddingHorizontal: 16 }}>
-          {children.map((child: any) => {
-            const active = child.id === selectedChildId;
-            return (
-              <TouchableOpacity
-                key={child.id}
-                onPress={() => selectChild(child.id)}
-                style={[styles.childChip, active && styles.childChipActive]}
-              >
-                <Text style={[styles.childChipText, active && styles.childChipTextActive]}>
-                  {child.firstName} {child.lastName}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      )}
+      {/* Both roles carry Profile and Settings on the rim rather than in header
+          corners -- with one destination and none respectively, a ring of two
+          would read as a rendering fault. See MIN_ORBIT in constants/wheel.ts. */}
+      <HomeWheel />
 
-      {role === 'TEACHER' ? (
-        <>
-          <StatRow>
-            <Stat label="Classes" value={classes.length} />
-            <Stat
-              label="Attendance"
-              value={`${attendanceMarked}/${attendanceTotal}`}
-              tone={attendancePending > 0 ? 'attention' : 'good'}
-            />
-            <Stat
-              label="Tasks"
-              value={tasks.length}
-              tone={tasks.length > 0 ? 'attention' : 'neutral'}
-            />
-          </StatRow>
-
-          {attendancePending > 0 && (
-            <View style={styles.alertCard}>
-              <View style={styles.alertDot} />
-              <Text style={styles.alertText}>
-                {attendancePending} class{attendancePending > 1 ? 'es' : ''} still need attendance marked today
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-            <View style={styles.cardGrid}>
-              {/* Only the card with work waiting carries colour. When every
-                  tile has its own tinted icon circle, nothing stands out and
-                  the grid reads as decoration rather than a queue. */}
-              <NavCard
-                to="/verification"
-                icon={{ ios: 'checkmark.seal', android: 'verified', web: 'verified' }}
-                title="Verification"
-                subtitle={pendingReviews > 0 ? `${pendingReviews} waiting` : 'Queue cleared'}
-                urgent={pendingReviews > 0}
-              />
-              <NavCard
-                to="/teacher"
-                icon={{ ios: 'person.badge.clock', android: 'school', web: 'school' }}
-                title="My Classes"
-                subtitle={`${classes.length} ${classes.length === 1 ? 'class' : 'classes'}`}
-              />
-              <NavCard
-                to="/tasks"
-                icon={{ ios: 'checklist', android: 'task_alt', web: 'task_alt' }}
-                title="Tasks"
-                subtitle={tasks.length > 0 ? `${tasks.length} pending` : 'None assigned'}
-                urgent={tasks.length > 0}
-              />
-              <NavCard
-                to="/gradebook"
-                icon={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }}
-                title="Gradebook"
-                subtitle="Enter scores"
-              />
-              <NavCard
-                to="/timetable"
-                icon={{ ios: 'calendar', android: 'event', web: 'event' }}
-                title="Timetable"
-                subtitle="Today's schedule"
-              />
-            </View>
-          </View>
-
-          {Array.isArray(data.timetable) && data.timetable.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Today’s Schedule</Text>
-              {data.timetable.map((period: any) => (
-                <View key={period.id} style={styles.periodItem}>
-                  <View style={[styles.periodTimeBadge, { backgroundColor: period.attendanceMarked ? T.success50 : T.warn50 }]}>
-                    <Text style={[styles.periodTime, { color: period.attendanceMarked ? T.success : T.warn }]}>
-                      P{period.periodNumber}
-                    </Text>
-                  </View>
-                  <View style={styles.periodInfo}>
-                    <Text style={styles.periodSubject}>{period.subjectName}</Text>
-                    <Text style={styles.periodMeta}>{period.startTime} – {period.endTime} · {period.roomNumber}</Text>
-                  </View>
-                  <View style={[styles.periodStatus, { backgroundColor: period.attendanceMarked ? T.success50 : T.warn50 }]}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: period.attendanceMarked ? T.success : T.warn }}>
-                      {period.attendanceMarked ? 'Done' : 'Pending'}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {tasks.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Recent Tasks</Text>
-              {tasks.slice(0, 3).map((task: any, i: number) => (
-                <View key={i} style={styles.listItem}>
-                  <Text style={styles.itemTitle}>{task.title ?? task.taskDescription ?? 'Task'}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: T.warn50 }]}>
-                    <Text style={{ color: T.warnInk, fontSize: 12, fontWeight: '600' }}>Pending</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
-        </>
-      ) : role === 'DRIVER' ? (
+      {role === 'DRIVER' && (
         <>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{data.route?.assigned ? data.route.routeName : 'No route assigned'}</Text>
@@ -323,6 +169,8 @@ export default function DashboardScreen() {
               </Text>
             </View>
           ) : (
+            /* The driver's actual job, and a stateful toggle rather than a
+               destination -- which is why it is not a spoke. */
             <TouchableOpacity
               style={[styles.tripButton, tripActive && styles.tripButtonActive]}
               disabled={!data.route?.assigned || tripBusy}
@@ -334,161 +182,6 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           )}
         </>
-      ) : (
-        <StatRow>
-          <Stat label="School XP" value={data.metrics?.schoolXp ?? 0} />
-          <Stat label="Parent XP" value={data.metrics?.parentXp ?? 0} />
-          <Stat label="Streak" value={data.metrics?.activeStreak ?? 0} />
-        </StatRow>
-      )}
-
-      {role !== 'TEACHER' && role !== 'DRIVER' && (
-        <View style={styles.levelCard}>
-          <Text style={styles.levelTitle}>Scholar Level {data.metrics?.scholarLevel ?? 1}</Text>
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${data.metrics?.levelProgress ?? 0}%` }]} />
-          </View>
-          <Text style={styles.levelHint}>{data.metrics?.xpToNextLevel ?? 500} XP to next level</Text>
-        </View>
-      )}
-
-      {/* The screens that came out of the tab bar. Same treatment the teacher
-          role has used since its own bar was cut from seven items to three. */}
-      {role === 'PARENT' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.cardGrid}>
-            <NavCard
-              to="/performance"
-              icon={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
-              title="Performance"
-              subtitle="Marks and report cards"
-            />
-            <NavCard
-              to="/bus"
-              icon={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }}
-              title="Bus"
-              subtitle="Live pickup status"
-            />
-            <NavCard
-              to="/announcements"
-              icon={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }}
-              title="News"
-              subtitle="From your school"
-            />
-          </View>
-        </View>
-      )}
-
-      {role === 'STUDENT' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.cardGrid}>
-            <NavCard
-              to="/quests"
-              icon={{ ios: 'star', android: 'star', web: 'star' }}
-              title="Quests"
-              subtitle={parentQuests.length > 0 ? `${parentQuests.length} to claim` : 'Set by your family'}
-              urgent={parentQuests.length > 0}
-            />
-            <NavCard
-              to="/student-attendance"
-              icon={{ ios: 'calendar', android: 'event', web: 'event' }}
-              title="Attendance"
-              subtitle="Your record"
-            />
-            <NavCard
-              to="/student-timetable"
-              icon={{ ios: 'clock', android: 'schedule', web: 'schedule' }}
-              title="Timetable"
-              subtitle="Your class week"
-            />
-            <NavCard
-              to="/student-results"
-              icon={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
-              title="My Results"
-              subtitle="Marks by subject"
-            />
-            <NavCard
-              to="/student-news"
-              icon={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }}
-              title="School News"
-              subtitle="Notices for you"
-            />
-            <NavCard
-              to="/marketplace"
-              icon={{ ios: 'gift', android: 'redeem', web: 'redeem' }}
-              title="Rewards"
-              subtitle="Spend your XP"
-            />
-          </View>
-        </View>
-      )}
-
-      {/* What their teacher recognised them for. Directly under the XP tiles
-          on purpose: the number above is meaningless on its own, and this is
-          the part a parent actually reads. Hidden entirely when there is
-          nothing yet -- an empty "recognition" heading reads as a school that
-          has not noticed their child. */}
-      {role === 'PARENT' && Array.isArray(data.awards) && data.awards.length > 0 && (
-        <View style={styles.section}>
-          {/* The card shows the newest few; the full history answers the other
-              question a parent asks -- what has my child been noticed for. */}
-          <TouchableOpacity
-            style={awardStyles.headerRow}
-            onPress={() => router.push('/recognition')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.sectionTitle}>Recognised by their teacher</Text>
-            <Text style={awardStyles.seeAll}>See all ›</Text>
-          </TouchableOpacity>
-          {data.awards.slice(0, 5).map((a: any, i: number) => (
-            <View
-              key={a.id ?? `award-${i}`}
-              style={[awardStyles.row, i === Math.min(data.awards.length, 5) - 1 && awardStyles.rowLast]}
-            >
-              <Text style={awardStyles.emoji}>{a.emoji || '🏅'}</Text>
-              <View style={awardStyles.body}>
-                <Text style={awardStyles.label}>
-                  {a.label} <Text style={awardStyles.points}>+{a.points}</Text>
-                </Text>
-                {a.reason ? <Text style={awardStyles.reason}>{a.reason}</Text> : null}
-                <Text style={awardStyles.meta}>
-                  {[a.awardedByName, a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : null]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {role === 'PARENT' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Child: {data.student?.firstName || 'Unknown'} {data.student?.lastName || 'Student'}
-          </Text>
-          <Text style={styles.infoText}>
-            Attendance Today: {data.attendanceStatus || 'NOT MARKED'}
-          </Text>
-        </View>
-      )}
-
-      {role === 'STUDENT' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pending Quests</Text>
-          {parentQuests.length === 0 ? (
-            <Text style={styles.infoText}>No active quests.</Text>
-          ) : (
-            parentQuests.map((q: ParentQuest, i: number) => (
-              <View key={i} style={styles.listItem}>
-                <Text style={styles.itemTitle}>{q.taskDescription}</Text>
-                <Text style={styles.itemReward}>+{q.xpBounty} XP</Text>
-              </View>
-            ))
-          )}
-        </View>
       )}
 
       <View style={{ height: 40 }} />
@@ -546,22 +239,3 @@ const makeStyles = (T: Theme) => StyleSheet.create({
  * Recognition rows. Kept separate from `styles` so the shared dashboard
  * styling stays readable -- these are only used by the parent's award list.
  */
-const makeAwardStyles = (T: Theme) => StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  seeAll: { fontSize: 12.5, fontWeight: '600', color: T.brand },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: T.track,
-  },
-  rowLast: { borderBottomWidth: 0 },
-  emoji: { fontSize: 18, lineHeight: 22 },
-  body: { flex: 1 },
-  label: { fontSize: 13.5, fontWeight: '600', color: T.text },
-  points: { color: T.brand, fontWeight: '700' },
-  reason: { fontSize: 12.5, color: T.text2, marginTop: 2 },
-  meta: { fontSize: 11, color: T.text3, marginTop: 2 },
-});

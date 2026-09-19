@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 // Aliased: expo-router also exports a `ThemeProvider` (light/dark nav chrome,
 // used below for the Stack) -- unrelated to the app's own brand-colour theme.
 import { ThemeProvider as AppThemeProvider } from '@/context/ThemeContext';
+import { ProfilePhotoProvider } from '@/context/ProfilePhotoContext';
 import T from '../constants/theme';
 import LoginScreen from './index';
 
@@ -52,7 +53,10 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AppThemeProvider>
         <AuthProvider>
-          <RootLayoutGate fontsLoaded={loaded} />
+          {/* Inside AuthProvider: it reads the profile, which needs a token. */}
+          <ProfilePhotoProvider>
+            <RootLayoutGate fontsLoaded={loaded} />
+          </ProfilePhotoProvider>
         </AuthProvider>
       </AppThemeProvider>
     </SafeAreaProvider>
@@ -93,6 +97,9 @@ function ProtectedStack() {
       <Stack screenOptions={{ contentStyle: { backgroundColor: T.bg }, headerStyle: { backgroundColor: T.bg }, headerTintColor: T.text }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        {/* Had no title anywhere -- not declared here, and no inline
+            Stack.Screen in the file -- so its header read the raw route name. */}
+        <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
         <Stack.Screen name="teacher" options={{ title: 'My Classes' }} />
         <Stack.Screen name="verification" options={{ title: 'Verification Queue' }} />
         <Stack.Screen name="tasks" options={{ title: 'Tasks' }} />

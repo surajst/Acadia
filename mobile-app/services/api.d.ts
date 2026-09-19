@@ -38,6 +38,14 @@ export interface UserProfile {
   lastName: string;
   email: string;
   role: UserRole;
+  // The server has always returned these three; the type just never said so.
+  fullName?: string;
+  schoolName?: string | null;
+  academicYearName?: string | null;
+  // Added with profile photographs.
+  userId?: string;
+  hasPhoto?: boolean;
+  photoUpdatedAt?: string | null;
 }
 
 export interface RosterStudent {
@@ -135,6 +143,9 @@ export function logout(): Promise<void>;
 export function getStudentDashboard(): Promise<ApiObject>;
 export function getParentDashboard(studentId?: string): Promise<ApiObject>;
 export function getUserProfile(): Promise<UserProfile>;
+export function profilePhotoUrl(userId?: string | null, updatedAt?: string | null): string | null;
+export function uploadProfilePhoto(input: { uri: string; mimeType?: string }): Promise<ApiObject>;
+export function deleteProfilePhoto(): Promise<ApiObject>;
 
 export function getCurriculumTopics(subjectEnum: string, standard?: number): Promise<CurriculumTopic[]>;
 export function getParentAttendance(studentId?: string): Promise<ApiObject>;

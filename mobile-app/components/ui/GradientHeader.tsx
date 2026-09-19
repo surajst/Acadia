@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SymbolView } from 'expo-symbols';
+import Avatar from './Avatar';
 // T here is only for the frozen module-scope styles below, which use
 // non-brand constants (T.pill) that never change with the chosen theme.
 // Inside each component, a locally-shadowing `const T = useTheme()` is used
@@ -24,13 +26,25 @@ export const headerDateLine = () =>
     .toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })
     .toUpperCase();
 
-export default function GradientHeader({ initial, greeting, trailing, children }: {
+export default function GradientHeader({
+  initial, greeting, trailing, children, photoUri, onProfilePress, onSettingsPress,
+}: {
   initial?: string;
   greeting: string;
   trailing?: React.ReactNode;
   children?: React.ReactNode;
+  photoUri?: string | null;
+  /** Top-left corner. Omit and the avatar stays a plain, non-interactive disc. */
+  onProfilePress?: () => void;
+  /** Top-right corner, drawn to the right of `trailing` rather than replacing it. */
+  onSettingsPress?: () => void;
 }) {
   const T = useTheme();
+  // The avatar is the top-left corner when it is pressable, so it has to carry a
+  // real 44dp target and a label -- it is the only way to Profile now that the
+  // tab bar is gone.
+  const avatar = <Avatar uri={photoUri} initial={initial} size={44} radius={15} tone="onGradient" />;
+
   return (
     <LinearGradient
       colors={[T.brand, T.brand700]}
@@ -39,16 +53,42 @@ export default function GradientHeader({ initial, greeting, trailing, children }
       style={s.header}
     >
       <View style={s.greetRow}>
-        <View style={s.avatar}>
-          <Text style={[s.avatarText, { color: T.onBrand }]}>{(initial ?? '?').charAt(0).toUpperCase()}</Text>
-        </View>
+        {onProfilePress ? (
+          <TouchableOpacity
+            onPress={onProfilePress}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Profile"
+            accessibilityHint="Opens your profile"
+          >
+            {avatar}
+          </TouchableOpacity>
+        ) : avatar}
 
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.date}>{headerDateLine()}</Text>
           <Text style={[s.greeting, { color: T.onBrand }]} numberOfLines={1}>{greeting}</Text>
         </View>
 
-        {trailing}
+        <View style={s.corner}>
+          {trailing}
+          {onSettingsPress && (
+            <TouchableOpacity
+              style={s.iconBtn}
+              onPress={onSettingsPress}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              accessibilityHint="Opens settings"
+            >
+              <SymbolView
+                name={{ ios: 'gearshape', android: 'settings', web: 'settings' }}
+                tintColor="#FFFFFF"
+                size={20}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {children}
@@ -95,14 +135,15 @@ const s = StyleSheet.create({
     borderBottomLeftRadius: 30, borderBottomRightRadius: 30,
   },
   greetRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: {
-    width: 44, height: 44, borderRadius: 15,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)',
+  corner: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iconBtn: {
+    width: 44, height: 44, borderRadius: T.pill,
     alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
-  // color absent on both -- same reason as headerStyles.title above.
-  avatarText: { fontSize: 17, fontWeight: '800' },
+  // The avatar disc and its letter moved to components/ui/Avatar.tsx, which
+  // renders a photo when there is one and this same disc when there is not.
   date: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, color: 'rgba(255,255,255,0.62)' },
   greeting: { fontSize: 21, fontWeight: '800', letterSpacing: -0.4, marginTop: 2 },
   card: {

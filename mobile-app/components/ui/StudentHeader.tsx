@@ -19,6 +19,10 @@ import { useTheme } from '../../context/ThemeContext';
  */
 
 type Props = {
+  /** Top-left / top-right corners of the home screen. */
+  photoUri?: string | null;
+  onProfilePress?: () => void;
+  onSettingsPress?: () => void;
   firstName?: string;
   streak?: number;
   level: number;
@@ -33,6 +37,7 @@ type Props = {
 export default function StudentHeader({
   firstName, streak = 0, level, schoolXp, parentXp,
   levelProgress, xpToNextLevel, onStreakPress,
+  photoUri, onProfilePress, onSettingsPress,
 }: Props) {
   const T = useTheme();
   const pct = Math.max(0, Math.min(100, levelProgress));
@@ -40,6 +45,9 @@ export default function StudentHeader({
   return (
     <GradientHeader
       initial={firstName}
+      photoUri={photoUri}
+      onProfilePress={onProfilePress}
+      onSettingsPress={onSettingsPress}
       greeting={`Hello, ${firstName ?? 'there'}`}
       trailing={
         <TouchableOpacity

@@ -1,17 +1,21 @@
-import { SymbolView } from 'expo-symbols';
-import { Tabs } from 'expo-router';
+import { Stack } from 'expo-router';
 import { View, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { useCallback, useState, useEffect, createContext } from 'react';
 import { getStudentDashboard, getParentDashboard, getApiHost } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useAuth } from '@/context/AuthContext';
 import T from '../../constants/theme';
 
+/**
+ * The screen a cold deep link is opened *beneath*, so a link straight to
+ * /fees still has the wheel under it and therefore a back arrow. Read by
+ * expo-router at getRoutesCore.js:655.
+ */
+export const unstable_settings = { anchor: 'index' };
+
 export const DataContext = createContext<any>({ role: null, data: {}, refreshData: async () => {}, selectedChildId: null, selectChild: (_id: string) => {} });
 
-const ROLE_STUDENT   = 'STUDENT';
 const ROLE_PARENT    = 'PARENT';
 const ROLE_TEACHER   = 'TEACHER';
 const ROLE_DRIVER    = 'DRIVER';
@@ -48,7 +52,6 @@ export default function TabLayout() {
   const [loading, setLoading] = useState(true);
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const { userRole: role } = useAuth();
-  const headerShown = useClientOnlyValue(false, true);
 
   const fetchDashboardData = useCallback(async (childId?: string | null) => {
     // Admins still manage the school from a bigger screen. Principals do not:
@@ -126,14 +129,16 @@ export default function TabLayout() {
     void fetchDashboardData();
   }, [fetchDashboardData]);
 
-  const isStudent = role === ROLE_STUDENT || (!role && true);
-  const isParent  = role === ROLE_PARENT;
-  const isTeacher = role === ROLE_TEACHER;
-  const isPrincipal = role === ROLE_PRINCIPAL;
+  // The isStudent/isParent/isTeacher/isPrincipal booleans that used to live
+  // here existed only to feed `href:` on each Tabs.Screen. Role now decides
+  // which spokes the wheel shows, in constants/wheel.ts -- one place, instead
+  // of thirteen scattered conditionals.
 
-  // Admins only. Principals now have the approvals queue, which is the work
-  // they actually do from a phone.
-  if (role === ROLE_ADMIN) {
+  // Both oversight roles work from the web dashboard. Principals briefly had
+  // the approvals queue here, but their job is review and data entry on a
+  // bigger screen; the queue still exists at /approvals and the route is a
+  // one-line revert away if that turns out to be wrong.
+  if (role === ROLE_ADMIN || role === ROLE_PRINCIPAL) {
     return <WebOnlyRoleScreen role={role} />;
   }
 
@@ -161,176 +166,36 @@ export default function TabLayout() {
 
   return (
     <DataContext.Provider value={{ role, data, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
-      <Tabs
+      <Stack
         screenOptions={{
-          tabBarActiveTintColor:   T.brand,
-          tabBarInactiveTintColor: T.text3,
-          tabBarStyle: { backgroundColor: T.surface, borderTopColor: T.line },
           headerStyle: { backgroundColor: T.bg },
           // Was #fff, which put white text on a white header bar -- the screen
           // title was invisible on every stack screen that showed one.
           headerTintColor: T.text,
-          headerShown: headerShown,
+          contentStyle: { backgroundColor: T.bg },
         }}>
 
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Dashboard',
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'house', android: 'house', web: 'house' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
+        {/* The wheel. Its own gradient header carries the greeting and the
+            Profile/Settings corners, so the navigator draws none -- that
+            double-header over the gradient is what headerShown:true used to
+            produce here. Every other screen keeps its header, because that
+            header is what provides the back arrow now the tab bar is gone. */}
+        <Stack.Screen name="index" options={{ headerShown: false }} />
 
-        {/* Parents had eight tabs and students six, so labels truncated to
-            "Attend", "Perfor", "Messa". These five still exist as routes and
-            are reached from the dashboard's Quick Actions, the same way the
-            teacher's My Classes, Tasks, Gradebook and Timetable already are. */}
-        <Tabs.Screen
-          name="syllabus"
-          options={{
-            title: 'Syllabus',
-            href: isStudent ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'book', android: 'book', web: 'book' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="student-attendance"
-          options={{
-            title: 'Attendance',
-            href: null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="challenges"
-          options={{
-            title: 'Challenges',
-            href: isStudent ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'star.circle', android: 'military_tech', web: 'military_tech' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="quests"
-          options={{
-            title: 'Quests',
-            href: null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'star', android: 'star', web: 'star' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="attendance"
-          options={{
-            title: 'Attendance',
-            href: isParent ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'calendar', android: 'event', web: 'event' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="performance"
-          options={{
-            title: 'Performance',
-            href: null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        {/* Parents only. Fee collection is the school's job and lives on the
-            web dashboard; this tab is the family's own read-only view of what
-            they owe and what they have paid. */}
-        {/* Principals decide things while walking around a school, not at a
-            desk -- which is why this queue used to sit for days. */}
-        <Tabs.Screen
-          name="approvals"
-          options={{
-            title: 'Approvals',
-            href: isPrincipal ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'checkmark.seal', android: 'verified', web: 'verified' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="fees"
-          options={{
-            title: 'Fees',
-            href: isParent ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'creditcard', android: 'payments', web: 'payments' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="bus"
-          options={{
-            title: 'Bus',
-            href: null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="announcements"
-          options={{
-            title: 'News',
-            href: null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        {/* My Classes, Tasks, Gradebook, and Timetable are no longer tabs —
-            they live at the root stack (app/teacher.tsx, tasks.tsx,
-            gradebook.tsx, timetable.tsx) and are reachable via the
-            Dashboard's Quick Actions card grid (see index.tsx). That keeps
-            this tab bar at 3 items instead of squeezing in 7, and gives
-            those screens a proper back button via the root Stack navigator. */}
-
-        <Tabs.Screen
-          name="messages"
-          options={{
-            title: 'Messages',
-            href: (isTeacher || isParent) ? undefined : null,
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'message', android: 'chat', web: 'chat' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color }) => (
-              <SymbolView name={{ ios: 'person', android: 'person', web: 'person' }} tintColor={color} size={28} />
-            ),
-          }}
-        />
-
-      </Tabs>
+        <Stack.Screen name="syllabus" options={{ title: 'Syllabus' }} />
+        <Stack.Screen name="student-attendance" options={{ title: 'Attendance' }} />
+        <Stack.Screen name="challenges" options={{ title: 'Challenges' }} />
+        <Stack.Screen name="quests" options={{ title: 'Quests' }} />
+        <Stack.Screen name="attendance" options={{ title: 'Attendance' }} />
+        <Stack.Screen name="performance" options={{ title: 'Performance' }} />
+        <Stack.Screen name="approvals" options={{ title: 'Approvals' }} />
+        <Stack.Screen name="fees" options={{ title: 'Fees' }} />
+        <Stack.Screen name="bus" options={{ title: 'Bus' }} />
+        <Stack.Screen name="announcements" options={{ title: 'News' }} />
+        <Stack.Screen name="messages" options={{ title: 'Messages' }} />
+        <Stack.Screen name="profile" options={{ title: 'Profile' }} />
+        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+      </Stack>
     </DataContext.Provider>
   );
 }

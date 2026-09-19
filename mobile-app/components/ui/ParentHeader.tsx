@@ -14,6 +14,10 @@ import { useTheme } from '../../context/ThemeContext';
  */
 
 type Props = {
+  /** Top-left / top-right corners of the home screen. */
+  photoUri?: string | null;
+  onProfilePress?: () => void;
+  onSettingsPress?: () => void;
   parentName?: string;
   childName?: string;
   level: number;
@@ -25,6 +29,7 @@ type Props = {
 
 export default function ParentHeader({
   parentName, childName, level, schoolXp, parentXp, levelProgress, xpToNextLevel,
+  photoUri, onProfilePress, onSettingsPress,
 }: Props) {
   const T = useTheme();
   const pct = Math.max(0, Math.min(100, levelProgress));
@@ -33,6 +38,9 @@ export default function ParentHeader({
   return (
     <GradientHeader
       initial={parentName}
+      photoUri={photoUri}
+      onProfilePress={onProfilePress}
+      onSettingsPress={onSettingsPress}
       greeting={`Hello, ${parentName ?? 'there'}`}
     >
       <HeaderCard label={`${who} is Scholar Level ${level}, ${pct} percent through.`}>

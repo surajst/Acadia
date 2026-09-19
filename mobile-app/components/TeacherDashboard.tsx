@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
-import { SymbolView, SymbolViewProps } from 'expo-symbols';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import TeacherHeader from './ui/TeacherHeader';
+import HomeWheel from './HomeWheel';
+import { useProfilePhoto } from '../context/ProfilePhotoContext';
 import { SectionLabel, QuestCard, NextClassCard } from './ui/TodaySection';
 import { useTheme, type Theme } from '../context/ThemeContext';
 
@@ -30,9 +31,7 @@ export default function TeacherDashboard({
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
-
-  const classes: any[] = Array.isArray(data.classes) ? data.classes : [];
-  const tasks: any[] = Array.isArray(data.tasks) ? data.tasks : [];
+  const { photoUri } = useProfilePhoto();
   const timetable: any[] = Array.isArray(data.timetable) ? data.timetable : [];
   const summary = data.attendanceSummary ?? {};
   const marked = summary.markedToday ?? 0;
@@ -52,6 +51,9 @@ export default function TeacherDashboard({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <TeacherHeader
+        photoUri={photoUri}
+        onProfilePress={() => router.push('/profile' as never)}
+        onSettingsPress={() => router.push('/settings' as never)}
         firstName={firstName ?? undefined}
         schoolName={schoolName}
         marked={marked}
@@ -91,82 +93,15 @@ export default function TeacherDashboard({
           </View>
         )}
 
-        <View style={s.section}>
-          <SectionLabel label="QUICK ACTIONS" />
-          <View style={s.grid}>
-            <Action
-              to="/teacher"
-              icon={{ ios: 'person.badge.clock', android: 'school', web: 'school' }}
-              title="My Classes"
-              metric={`${classes.length} ${classes.length === 1 ? 'class' : 'classes'}`}
-            />
-            <Action
-              to="/tasks"
-              icon={{ ios: 'checklist', android: 'task_alt', web: 'task_alt' }}
-              title="Tasks"
-              metric={tasks.length > 0 ? `${tasks.length} assigned` : 'None assigned'}
-            />
-            <Action
-              to="/gradebook"
-              icon={{ ios: 'chart.bar.doc.horizontal', android: 'grading', web: 'grading' }}
-              title="Gradebook"
-              metric="Enter scores"
-            />
-            <Action
-              to="/timetable"
-              icon={{ ios: 'clock', android: 'schedule', web: 'schedule' }}
-              title="Timetable"
-              metric={timetable.length ? `${timetable.length} periods today` : 'Your week'}
-            />
-          </View>
+        {/* The wheel replaced the Quick Actions grid and the bottom tab
+            bar both -- one hub, and one place a destination lives. */}
+        <HomeWheel />
 
-          {/* Assigning work is the thing a teacher came here to do, so it gets
-              the full width rather than a quarter of the grid. */}
-          <TouchableOpacity
-            style={s.wide}
-            onPress={() => router.push('/task-new')}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-          >
-            <View style={s.wideIcon}>
-              <SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} tintColor={T.onBrand} size={17} />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={s.wideTitle}>Assign new task</Text>
-              <Text style={s.wideSub}>Homework, practice or a project</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
       </View>
     </ScrollView>
   );
 }
 
-function Action({ to, icon, title, metric }: {
-  to: string;
-  icon: SymbolViewProps['name'];
-  title: string;
-  metric: string;
-}) {
-  const T = useTheme();
-  const s = useMemo(() => makeStyles(T), [T]);
-  const router = useRouter();
-  return (
-    <TouchableOpacity
-      style={s.card}
-      onPress={() => router.push(to as never)}
-      activeOpacity={0.85}
-      accessibilityRole="button"
-      accessibilityLabel={`${title}, ${metric}`}
-    >
-      <View style={s.iconTile}>
-        <SymbolView name={icon} tintColor={T.brand} size={17} />
-      </View>
-      <Text style={s.cardTitle}>{title}</Text>
-      <Text style={s.cardMetric}>{metric}</Text>
-    </TouchableOpacity>
-  );
-}
 
 const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },

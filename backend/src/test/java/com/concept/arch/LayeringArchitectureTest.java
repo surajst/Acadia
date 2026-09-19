@@ -253,7 +253,15 @@ class LayeringArchitectureTest {
 
             // Has tenant_id (not null) but no academic_year_id, so it does not
             // fit BaseTenantEntity as written.
-            "TeacherVerification");
+            "TeacherVerification",
+
+            // Same shape, and for a reason worth stating: a profile photograph
+            // does not belong to an academic year -- it outlives the year it
+            // was uploaded in, and requiring one would mean reassigning every
+            // photo each July. It carries tenant_id (not null), and
+            // UserPhotoRepository exposes only findByUserIdAndTenantId, so a
+            // caller cannot reach another school's photo by guessing a user id.
+            "UserPhoto");
 
     /**
      * Every top-level package under {@code com.concept} is either covered by

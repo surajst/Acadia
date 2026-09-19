@@ -7,6 +7,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -46,6 +47,17 @@ public class User extends BaseTenantEntity {
     @Column(name = "approval_status", length = 20)
     private ApprovalStatus approvalStatus;
 
+    /**
+     * When this user's photograph was last set, or null when they have none.
+     *
+     * <p>The bytes are in {@code user_photos}, not here: a User is loaded on
+     * nearly every authenticated request, and a byte[] on this entity would be
+     * fetched with all of them. This column is what lets the profile payload
+     * report that a photo exists, and cache-bust its URL, without reading it.
+     */
+    @Column(name = "photo_updated_at")
+    private Instant photoUpdatedAt;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -66,4 +78,7 @@ public class User extends BaseTenantEntity {
 
     public ApprovalStatus getApprovalStatus() { return approvalStatus; }
     public void setApprovalStatus(ApprovalStatus approvalStatus) { this.approvalStatus = approvalStatus; }
+
+    public Instant getPhotoUpdatedAt() { return photoUpdatedAt; }
+    public void setPhotoUpdatedAt(Instant photoUpdatedAt) { this.photoUpdatedAt = photoUpdatedAt; }
 }

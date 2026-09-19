@@ -62,7 +62,14 @@
       ],
       "./plugins/withGradleMemory",
       "./plugins/withReleaseSigning",
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Acadia uses your photos so you can set a profile picture.",
+          "cameraPermission": "Acadia uses your camera so you can take a profile picture."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

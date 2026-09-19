@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
-import { SymbolView, SymbolViewProps } from 'expo-symbols';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import StudentHeader from './ui/StudentHeader';
+import HomeWheel from './HomeWheel';
+import { useProfilePhoto } from '../context/ProfilePhotoContext';
 import { SectionLabel, QuestCard, NextClassCard } from './ui/TodaySection';
 import BirthdayCard, { isBirthday, turningAge } from './ui/BirthdayCard';
 import { claimQuest } from '../services/api';
@@ -29,18 +30,17 @@ export default function StudentDashboard({ data, schoolName, refreshing, onRefre
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
+  const { photoUri } = useProfilePhoto();
   const [claiming, setClaiming] = useState<string | null>(null);
 
   const m = data.metrics ?? {};
   const schoolXp = m.schoolXp ?? 0;
   const parentXp = m.parentXp ?? 0;
-  const stats = data.quickStats ?? {};
   const today = data.today ?? {};
   const next = today.nextClass;
 
   const quests: any[] = Array.isArray(data.parentQuests) ? data.parentQuests : [];
   const claimable = quests.find((q) => (q.status ?? '').toUpperCase() === 'PENDING');
-  const spendable = schoolXp + parentXp;
 
   const onClaim = async (questId: string) => {
     setClaiming(questId);
@@ -61,6 +61,9 @@ export default function StudentDashboard({ data, schoolName, refreshing, onRefre
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <StudentHeader
+        photoUri={photoUri}
+        onProfilePress={() => router.push('/profile' as never)}
+        onSettingsPress={() => router.push('/settings' as never)}
         firstName={data.student?.firstName}
         streak={m.activeStreak ?? 0}
         level={m.scholarLevel ?? 1}
@@ -109,105 +112,15 @@ export default function StudentDashboard({ data, schoolName, refreshing, onRefre
           </View>
         )}
 
-        <View style={s.section}>
-          <SectionLabel label="QUICK ACTIONS" />
-          <View style={s.grid}>
-            <Action
-              to="/student-attendance"
-              icon={{ ios: 'calendar', android: 'event', web: 'event' }}
-              title="Attendance"
-              metric={stats.attendancePct != null ? `${stats.attendancePct}% this term` : 'No record yet'}
-              tone={stats.attendancePct != null && stats.attendancePct >= 85 ? T.success : undefined}
-            />
-            <Action
-              to="/student-results"
-              icon={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
-              title="My results"
-              metric={stats.averageMark != null
-                ? `Avg ${stats.averageMark} · ${stats.subjectCount} subjects`
-                : 'No marks yet'}
-            />
-            <Action
-              to="/student-timetable"
-              icon={{ ios: 'clock', android: 'schedule', web: 'schedule' }}
-              title="Timetable"
-              metric={today.periodsToday ? `${today.periodsToday} periods today` : 'Your class week'}
-            />
-            <Action
-              to="/marketplace"
-              icon={{ ios: 'gift', android: 'redeem', web: 'redeem' }}
-              title="Rewards"
-              metric={`${spendable} XP to spend`}
-              tone={T.brand}
-            />
-          </View>
+        {/* The wheel replaced the Quick Actions grid and the bottom tab
+            bar both -- one hub, and one place a destination lives. */}
+        <HomeWheel />
 
-          {/* Quests lost its tab when the bar was cut to four, and the grid
-              that used to link it went with the old dashboard -- leaving the
-              screen reachable only when a claimable one happened to exist. */}
-          <TouchableOpacity
-            style={s.wide}
-            onPress={() => router.push('/quests')}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-          >
-            <View style={s.iconTile}>
-              <SymbolView name={{ ios: 'star', android: 'star', web: 'star' }} tintColor={T.brand} size={17} />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={s.wideTitle}>Quests</Text>
-              <Text style={s.wideSub}>
-                {quests.length > 0 ? `${quests.length} set by your family` : 'Set by your family'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={s.wide}
-            onPress={() => router.push('/student-news')}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-          >
-            <View style={s.iconTile}>
-              <SymbolView name={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }} tintColor={T.brand} size={17} />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={s.wideTitle}>School news</Text>
-              <Text style={s.wideSub}>Notices for your class</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
       </View>
     </ScrollView>
   );
 }
 
-function Action({ to, icon, title, metric, tone }: {
-  to: string;
-  icon: SymbolViewProps['name'];
-  title: string;
-  metric: string;
-  tone?: string;
-}) {
-  const T = useTheme();
-  const s = useMemo(() => makeStyles(T), [T]);
-  const router = useRouter();
-  return (
-    <TouchableOpacity
-      style={s.card}
-      onPress={() => router.push(to as never)}
-      activeOpacity={0.85}
-      accessibilityRole="button"
-      accessibilityLabel={`${title}, ${metric}`}
-    >
-      <View style={s.iconTile}>
-        <SymbolView name={icon} tintColor={T.brand} size={17} />
-      </View>
-      <Text style={s.cardTitle}>{title}</Text>
-      <Text style={[s.cardMetric, tone ? { color: tone } : null]}>{metric}</Text>
-    </TouchableOpacity>
-  );
-}
 
 const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },

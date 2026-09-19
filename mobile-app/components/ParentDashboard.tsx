@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
-import { SymbolView, SymbolViewProps } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import ParentHeader from './ui/ParentHeader';
+import HomeWheel from './HomeWheel';
+import { useProfilePhoto } from '../context/ProfilePhotoContext';
 import { SectionLabel, QuestCard, InfoCard } from './ui/TodaySection';
 import { useTheme, type Theme } from '../context/ThemeContext';
 
@@ -33,6 +34,7 @@ export default function ParentDashboard({
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
+  const { photoUri } = useProfilePhoto();
 
   const m = data.metrics ?? {};
   const child = data.student ?? {};
@@ -51,6 +53,9 @@ export default function ParentDashboard({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
     >
       <ParentHeader
+        photoUri={photoUri}
+        onProfilePress={() => router.push('/profile' as never)}
+        onSettingsPress={() => router.push('/settings' as never)}
         parentName={parentFirstName ?? undefined}
         childName={child.firstName}
         level={m.scholarLevel ?? 1}
@@ -109,36 +114,13 @@ export default function ParentDashboard({
           </View>
         )}
 
-        <View style={s.section}>
-          <SectionLabel label="QUICK ACTIONS" />
-          <View style={s.grid}>
-            <Action
-              to="/performance"
-              icon={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
-              title="Performance"
-              metric="Marks and reports"
-            />
-            <Action
-              to="/bus"
-              icon={{ ios: 'bus', android: 'directions_bus', web: 'directions_bus' }}
-              title="Bus"
-              metric="Live pickup"
-            />
-            <Action
-              to="/announcements"
-              icon={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }}
-              title="School news"
-              metric="Notices"
-            />
-            <Action
-              to="/recognition"
-              icon={{ ios: 'rosette', android: 'workspace_premium', web: 'workspace_premium' }}
-              title="Recognition"
-              metric={awards.length > 0 ? `${awards.length} so far` : 'Nothing yet'}
-            />
-          </View>
-        </View>
+        {/* The wheel replaced the Quick Actions grid and the bottom tab
+            bar both -- one hub, and one place a destination lives. */}
+        <HomeWheel />
 
+        {/* Recognition keeps its place below the wheel: it is something to
+            read, not somewhere to go, and "See all" still reaches the full
+            list -- which is also a spoke. */}
         {awards.length > 0 && (
           <View style={s.section}>
             <SectionLabel label="RECOGNISED BY THEIR TEACHER" action="See all" onAction={() => router.push('/recognition')} />
@@ -160,28 +142,6 @@ export default function ParentDashboard({
   );
 }
 
-function Action({ to, icon, title, metric }: {
-  to: string; icon: SymbolViewProps['name']; title: string; metric: string;
-}) {
-  const T = useTheme();
-  const s = useMemo(() => makeStyles(T), [T]);
-  const router = useRouter();
-  return (
-    <TouchableOpacity
-      style={s.card}
-      onPress={() => router.push(to as never)}
-      activeOpacity={0.85}
-      accessibilityRole="button"
-      accessibilityLabel={`${title}, ${metric}`}
-    >
-      <View style={s.iconTile}>
-        <SymbolView name={icon} tintColor={T.brand} size={17} />
-      </View>
-      <Text style={s.cardTitle}>{title}</Text>
-      <Text style={s.cardMetric}>{metric}</Text>
-    </TouchableOpacity>
-  );
-}
 
 const makeStyles = (T: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: T.bg },

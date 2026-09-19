@@ -126,6 +126,39 @@ export const submitClassAttendance = async (attendanceRecord) => {
   return response.data;
 };
 
+/**
+ * The URL an <Image> loads a profile photo from.
+ *
+ * `updatedAt` is not decoration: the response is cached hard for 30 days, so
+ * without it a replaced picture would sit behind the cached copy of the old one
+ * until the cache expired.
+ */
+export const profilePhotoUrl = (userId, updatedAt) => {
+  if (!userId) return null;
+  const v = updatedAt ? `?v=${encodeURIComponent(updatedAt)}` : '';
+  return `${BASE_HOST}/api/mobile/user/photo/${userId}${v}`;
+};
+
+/** Upload a profile photo. Mirrors sendVoiceReply -- the app's one proven multipart path. */
+export const uploadProfilePhoto = async ({ uri, mimeType }) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const type = mimeType || (uri.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+  const form = new FormData();
+  form.append('photo', { uri, name: type === 'image/png' ? 'photo.png' : 'photo.jpg', type });
+  const response = await axios.post(`${BASE_HOST}/api/mobile/user/photo`, form, {
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const deleteProfilePhoto = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.delete(`${BASE_HOST}/api/mobile/user/photo`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export const getUserProfile = async () => {
   const token = await AsyncStorage.getItem('userToken');
   const response = await axios.get(`${BASE_HOST}/api/mobile/user/profile`, {
