@@ -7,6 +7,9 @@ import com.concept.recognition.data.XpAward;
 import com.concept.recognition.data.XpAwardRepository;
 import com.concept.shared.data.Student;
 import com.concept.shared.data.StudentRepository;
+import com.concept.tenant.SchoolType;
+import com.concept.tenant.Tenant;
+import com.concept.tenant.TenantRepository;
 import com.concept.user.CurrentUserService;
 import com.concept.user.User;
 import org.springframework.security.core.Authentication;
@@ -44,22 +47,33 @@ public class RecognitionService {
     private final StudentMetricRepository studentMetricRepository;
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
+    private final TenantRepository tenantRepository;
 
     public RecognitionService(XpAwardRepository xpAwardRepository,
                               StudentRepository studentRepository,
                               StudentMetricRepository studentMetricRepository,
                               CurrentUserService currentUserService,
-                              AuditLogService auditLogService) {
+                              AuditLogService auditLogService,
+                              TenantRepository tenantRepository) {
         this.xpAwardRepository = xpAwardRepository;
         this.studentRepository = studentRepository;
         this.studentMetricRepository = studentMetricRepository;
         this.currentUserService = currentUserService;
         this.auditLogService = auditLogService;
+        this.tenantRepository = tenantRepository;
     }
 
-    /** What a teacher can choose from, for rendering the picker. */
-    public List<Badge> catalogue() {
-        return List.of(Badge.values());
+    /**
+     * What a teacher can choose from, for rendering the picker.
+     *
+     * <p>Scoped to the school's own type: a Grade 11 teacher offered "Tidy-Up
+     * Star" and "Listened well at circle time" reads the whole feature as
+     * built for somebody else's school.
+     */
+    public List<Badge> catalogue(UUID tenantId) {
+        SchoolType schoolType = tenantId == null ? null
+                : tenantRepository.findById(tenantId).map(Tenant::getSchoolType).orElse(null);
+        return Badge.forSchoolType(schoolType);
     }
 
     public record AwardView(UUID id, UUID studentId, String badgeCode, String label, String emoji,

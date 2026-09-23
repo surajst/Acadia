@@ -119,12 +119,36 @@
         const DAY_ORDER = { MON: 0, TUE: 1, WED: 2, THU: 3, FRI: 4 };
         let staffById = {};
 
+        // Keyed by section id so the room can follow the class, below.
+        let roomBySection = {};
+
         async function loadClassSections() {
             const res = await fetch('/web/admin/class-sections');
             const sections = await res.json();
+            roomBySection = {};
+            sections.forEach(cs => { roomBySection[cs.id] = cs.roomNumber || ''; });
             const optionsHtml = sections.map(cs => `<option value="${cs.id}">${cs.gradeName} – ${cs.sectionName}</option>`).join('');
-            document.getElementById('classSectionId').innerHTML = optionsHtml;
+            const sectionSelect = document.getElementById('classSectionId');
+            sectionSelect.innerHTML = optionsHtml;
             document.getElementById('filterSection').innerHTML = '<option value="">All class sections</option>' + optionsHtml;
+
+            // A class already has a room; making the admin retype it for every
+            // period is how the column ended up empty on a section that has
+            // one. Still editable -- a lab period is not in the home room.
+            const roomInput = document.getElementById('roomNumber');
+            const applyRoom = () => {
+                if (!roomInput.dataset.touched) {
+                    roomInput.value = roomBySection[sectionSelect.value] || '';
+                }
+            };
+            roomInput.addEventListener('input', () => { roomInput.dataset.touched = '1'; });
+            sectionSelect.addEventListener('change', () => {
+                // Changing class re-offers that class's room, even after an
+                // edit -- otherwise one manual room sticks to every later row.
+                delete roomInput.dataset.touched;
+                applyRoom();
+            });
+            applyRoom();
         }
 
         async function loadTeachers() {

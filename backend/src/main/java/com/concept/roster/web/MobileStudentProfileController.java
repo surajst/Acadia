@@ -97,7 +97,7 @@ public class MobileStudentProfileController {
     @GetMapping("/badges")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
     public ResponseEntity<?> badges() {
-        List<Map<String, Object>> out = recognitionService.catalogue().stream()
+        List<Map<String, Object>> out = recognitionService.catalogue(tenantContext.getTenantId().orElse(null)).stream()
                 .map(b -> {
                     Map<String, Object> m = new HashMap<>();
                     m.put("code", b.getCode());

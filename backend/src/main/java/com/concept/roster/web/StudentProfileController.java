@@ -83,7 +83,7 @@ public class StudentProfileController {
         model.addAttribute("dispatchLedger", Collections.emptyList());
         // Recognising a child happens while looking at that child, so the
         // picker and their history both live on this page.
-        model.addAttribute("badges", recognitionService.catalogue());
+        model.addAttribute("badges", recognitionService.catalogue(tenantContext.getTenantId().orElse(null)));
         model.addAttribute("awards", recognitionService.history(id, tenantId));
         model.addAttribute("classList", view.classList());
         model.addAttribute("currentClassSectionId", view.currentClassSectionId());

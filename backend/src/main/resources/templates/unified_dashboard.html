@@ -222,8 +222,18 @@
                                  style="max-height:100px; padding:16px 24px; display:flex; align-items:center; gap:12px;">
                                 <span class="ico ico--sm ico--neutral">&#128269;</span>
                                 <div>
-                                    <p style="font-size:14px; font-weight:600;">No students match your search</p>
-                                    <p style="font-size:12.5px; color:var(--text-3);">Try a different name or grade filter.</p>
+                                    <!-- A school with no students yet has not run a
+                                         failed search. Telling them to try a different
+                                         name offers no way forward at all. -->
+                                    <p style="font-size:14px; font-weight:600;"
+                                       th:text="${totalStudents == 0} ? 'No students yet' : 'No students match your search'">No students yet</p>
+                                    <p style="font-size:12.5px; color:var(--text-3);"
+                                       th:if="${totalStudents != 0}">Try a different name or grade filter.</p>
+                                    <p style="font-size:12.5px; color:var(--text-3);" th:if="${totalStudents == 0}">
+                                        <a href="/web/admin/management" style="color:var(--brand);">Add a student</a>
+                                        or <a href="/web/management/upload" style="color:var(--brand);">import a CSV</a>
+                                        to get started.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -275,9 +285,15 @@
                                      style="padding:10px 12px; border-radius:12px; background:var(--danger-50); border:1px solid var(--danger-200);">
                                     <span style="width:7px; height:7px; border-radius:50%; background:var(--danger); margin-top:6px; flex-shrink:0;"></span>
                                     <div>
-                                        <p style="font-size:13px; font-weight:600;">Fees still outstanding</p>
+                                        <!-- Worded to match what the condition above
+                                             actually tests: unpaid, not past due. It
+                                             used to say "overdue" and link to a
+                                             Defaulters page reporting nothing overdue,
+                                             because an instalment due next month is
+                                             unpaid without being late. -->
+                                        <p style="font-size:13px; font-weight:600;">Unpaid invoices</p>
                                         <p style="font-size:11.5px;">
-                                            <a href="/web/admin/fees/defaulters" style="color:var(--danger); font-weight:600;">See who is overdue</a>
+                                            <a href="/web/admin/fees" style="color:var(--danger); font-weight:600;">See the ledger</a>
                                         </p>
                                     </div>
                                 </div>

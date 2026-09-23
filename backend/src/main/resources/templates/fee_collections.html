@@ -47,7 +47,7 @@
             <div class="p-4 border-b flex justify-between items-center shrink-0" style="border-color:var(--line)">
                 <h2 class="text-base font-bold text-slate-900 tracking-tight">Receipts issued</h2>
                 <span class="badge badge--neutral font-mono" data-receipt-count
-                      th:text="|${receipts.size()} receipts|">0 receipts</span>
+                      th:text="${receipts.size()} + (${receipts.size() == 1} ? ' receipt' : ' receipts')">0 receipts</span>
             </div>
 
             <div class="overflow-auto flex-1 min-h-0" data-collections-scroll>
@@ -74,7 +74,15 @@
                             </td>
                             <td class="py-3 px-5 font-mono font-medium" style="color:var(--success)"
                                 th:text="|₹ ${#numbers.formatDecimal(r.amount, 1, 'COMMA', 2, 'POINT')}|">₹ 5,000.00</td>
-                            <td class="py-3 px-5"><span class="badge badge--neutral" th:text="${r.paymentMode}">CASH</span></td>
+                            <td class="py-3 px-5">
+                                <span class="badge badge--neutral" th:text="${r.paymentMode}">CASH</span>
+                                <!-- Shown next to the mode because it is only
+                                     meaningful together with it: a number with
+                                     no UPI or cheque beside it means nothing. -->
+                                <span th:if="${r.paymentReference != null}"
+                                      class="block text-[10px] font-mono text-[var(--text-3)] mt-0.5"
+                                      th:text="${r.paymentReference}">UPI 4412</span>
+                            </td>
                             <td class="py-3 px-5 font-mono text-slate-600" th:text="${#temporals.format(r.paidAt, 'dd MMM yyyy, HH:mm')}">01 Apr 2026, 10:30</td>
                             <td class="py-3 px-5">
                                 <span th:if="${r.reversed()}" data-receipt-reversed class="badge badge--warn">Reversed</span>

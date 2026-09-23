@@ -98,7 +98,7 @@ public class AttendanceService {
             throw new IllegalArgumentException("studentIds and statuses must be present and the same length");
         }
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = resolveDate(command.attendanceDate());
         int absent = 0;
         UUID sectionId = null;
         String sectionLabel = null;
@@ -114,13 +114,23 @@ public class AttendanceService {
                 sectionLabel = label(student.getClassSection());
             }
 
-            Attendance attendance = new Attendance();
-            attendance.setId(UUID.randomUUID());
-            attendance.setTenantId(student.getTenantId());
-            attendance.setAcademicYearId(student.getAcademicYearId());
-            attendance.setStudent(student);
+            // Correct the existing entry rather than adding a second one. A
+            // register submitted twice used to leave the day holding two
+            // contradictory answers for one child, with nothing to say which
+            // was meant -- and it inflated the "how many were marked" count
+            // the dashboard now divides by.
+            Attendance attendance = attendanceRepository
+                    .findByStudent_IdAndAttendanceDateAndTenantId(student.getId(), today, command.tenantId())
+                    .orElseGet(() -> {
+                        Attendance fresh = new Attendance();
+                        fresh.setId(UUID.randomUUID());
+                        fresh.setTenantId(student.getTenantId());
+                        fresh.setAcademicYearId(student.getAcademicYearId());
+                        fresh.setStudent(student);
+                        fresh.setAttendanceDate(today);
+                        return fresh;
+                    });
             attendance.setClassSection(student.getClassSection());
-            attendance.setAttendanceDate(today);
             attendance.setStatus(status);
             attendanceRepository.saveAndFlush(attendance);
 
@@ -141,8 +151,34 @@ public class AttendanceService {
         // this is the record of why that message went out.
         auditLogService.log(authentication, "ATTENDANCE_SUBMITTED", "ClassSection", sectionId,
                 "Marked " + studentIds.size() + " student" + (studentIds.size() == 1 ? "" : "s")
-                        + " for " + today + (sectionLabel == null ? "" : " in " + sectionLabel)
+                        + " for " + today + (today.equals(LocalDate.now()) ? "" : " (backdated)")
+                        + (sectionLabel == null ? "" : " in " + sectionLabel)
                         + " — " + absent + " absent");
+    }
+
+    /**
+     * How far back a register may be taken or corrected.
+     *
+     * <p>Something has to bound it: a teacher who was off sick on Monday needs
+     * Tuesday to fix it, and nobody needs to rewrite last term. Thirty days
+     * covers a monthly reporting cycle.
+     */
+    private static final int BACKFILL_WINDOW_DAYS = 30;
+
+    private LocalDate resolveDate(LocalDate requested) {
+        LocalDate today = LocalDate.now();
+        if (requested == null) {
+            return today;
+        }
+        if (requested.isAfter(today)) {
+            throw new IllegalArgumentException("Attendance cannot be taken for a day that has not happened yet.");
+        }
+        if (requested.isBefore(today.minusDays(BACKFILL_WINDOW_DAYS))) {
+            throw new IllegalArgumentException(
+                    "Attendance can only be recorded or corrected within the last "
+                            + BACKFILL_WINDOW_DAYS + " days.");
+        }
+        return requested;
     }
 
     private AttendanceStatus parseStatus(String raw) {

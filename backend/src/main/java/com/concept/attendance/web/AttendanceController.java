@@ -7,6 +7,7 @@ import com.concept.tenant.TenantContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,9 +52,22 @@ public class AttendanceController {
     public String submitAttendance(@RequestParam("studentIds") List<UUID> studentIds,
                                    @RequestParam("statuses") List<String> statuses,
                                    @RequestParam(value = "classId", required = false) UUID classId,
-                                   Authentication authentication) {
+                                   @RequestParam(value = "attendanceDate", required = false)
+                                   @org.springframework.format.annotation.DateTimeFormat(iso =
+                                           org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+                                   java.time.LocalDate attendanceDate,
+                                   Authentication authentication,
+                                   RedirectAttributes ra) {
         UUID tenantId = tenantContext.getTenantId().orElse(null);
-        attendanceService.mark(new MarkAttendanceCommand(tenantId, studentIds, statuses), authentication);
+        try {
+            attendanceService.mark(
+                    new MarkAttendanceCommand(tenantId, studentIds, statuses, attendanceDate), authentication);
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+            return classId != null
+                    ? "redirect:/web/teacher/attendance?classId=" + classId
+                    : "redirect:/web/teacher/attendance";
+        }
 
         String redirectUrl = "redirect:/web/teacher/attendance";
         if (classId != null) {

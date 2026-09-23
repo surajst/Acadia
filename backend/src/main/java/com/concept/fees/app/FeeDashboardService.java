@@ -118,7 +118,13 @@ public class FeeDashboardService {
 
     public Integer recordPayment(UUID invoiceId, BigDecimal amount, String paymentMode,
                                  UUID tenantId, Authentication authentication) {
-        return feeManagementService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
+        return recordPayment(invoiceId, amount, paymentMode, null, tenantId, authentication);
+    }
+
+    /** @param reference the bank's reference for this payment, or null for cash */
+    public Integer recordPayment(UUID invoiceId, BigDecimal amount, String paymentMode, String reference,
+                                 UUID tenantId, Authentication authentication) {
+        return feeManagementService.recordPayment(invoiceId, amount, paymentMode, reference, tenantId, authentication);
     }
 
     public void createInvoice(UUID studentId, UUID tenantId, Authentication authentication) {

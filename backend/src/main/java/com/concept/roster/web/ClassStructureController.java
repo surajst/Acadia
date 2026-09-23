@@ -43,9 +43,17 @@ public class ClassStructureController {
                                   @RequestParam(value = "roomNumber", required = false) String roomNumber,
                                   @RequestParam(value = "totalCapacity", required = false) Integer totalCapacity,
                                   Authentication authentication) {
-        classStructureService.addSection(tenantContext.getTenantId().orElse(null),
-                tenantContext.getAcademicYearId().orElse(null), gradeName, sectionName, roomNumber,
-                totalCapacity, authentication);
+        try {
+            classStructureService.addSection(tenantContext.getTenantId().orElse(null),
+                    tenantContext.getAcademicYearId().orElse(null), gradeName, sectionName, roomNumber,
+                    totalCapacity, authentication);
+        } catch (IllegalArgumentException e) {
+            // A refused section used to escape as a 500. Both callers of this
+            // endpoint -- the management form and the onboarding wizard's fetch
+            // -- need to be able to tell "already exists" from "server broke".
+            return "redirect:/web/admin/management?sectionError="
+                    + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+        }
         return "redirect:/web/admin/management?success=class_section_added";
     }
 

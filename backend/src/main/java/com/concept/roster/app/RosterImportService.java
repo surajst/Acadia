@@ -130,7 +130,11 @@ public class RosterImportService {
                 outcomes.add(rowOutcome(rowNumber, label, "Skip", "Roll number " + rollNumber + " already exists"));
             } else {
                 willCreate++;
-                outcomes.add(rowOutcome(rowNumber, label, "Create", "Grade " + grade + " · Section " + section));
+                // The CSV's grade column already reads "Grade 6", so prefixing it
+                // again produced "Grade Grade 6 · Section B" in the preview.
+                String gradeLabel = grade.trim().toLowerCase(java.util.Locale.ROOT).startsWith("grade")
+                        ? grade.trim() : "Grade " + grade.trim();
+                outcomes.add(rowOutcome(rowNumber, label, "Create", gradeLabel + " · Section " + section));
             }
         }
 

@@ -173,7 +173,7 @@
                     </div>
                     <div class="flex items-center gap-2 text-xs">
                         <span class="px-2.5 py-1 rounded-xl bg-indigo-600/10 text-indigo-700 border border-indigo-500/20 font-semibold"><span data-testid="stat-students" th:text="${totalStudents}">0</span> Students</span>
-                        <span class="px-2.5 py-1 rounded-xl bg-emerald-600/10 text-emerald-700 border border-emerald-500/20 font-semibold"><span th:text="${totalStaff}">0</span> Staff</span>
+                        <span class="px-2.5 py-1 rounded-xl bg-emerald-600/10 text-emerald-700 border border-emerald-500/20 font-semibold"><span data-staff-count th:text="${totalStaff}">0</span> Staff</span>
                         <span class="px-2.5 py-1 rounded-xl bg-amber-600/10 text-amber-700 border border-amber-500/20 font-semibold"><span th:text="${totalClassrooms}">0</span> Classrooms</span>
                     </div>
                 </div>
@@ -199,7 +199,7 @@
                         <span class="hub-icon bg-emerald-600/10 text-emerald-600 border-emerald-500/15">&#128188;</span>
                         <span class="hub-title">Staff Registry</span>
                         <span class="hub-desc">Invite teachers, principals, admins and drivers.</span>
-                        <span class="hub-meta"><span th:text="${totalStaff}">0</span> accounts</span>
+                        <span class="hub-meta"><span data-staff-count th:text="${totalStaff}">0</span> accounts</span>
                     </button>
 
                     <button type="button" onclick="showSection('sec-buses')" class="hub-card">
@@ -974,6 +974,15 @@
             try {
                 const res = await fetch('/web/admin/staff');
                 const staff = await res.json();
+                // The header counters are rendered server-side, before the
+                // invite that just happened. Re-point them at the list this
+                // call returned, which is the same data the table shows -- the
+                // two disagreeing is what "Staff: 2" over three rows was.
+                if (Array.isArray(staff)) {
+                    document.querySelectorAll('[data-staff-count]').forEach(function (el) {
+                        el.textContent = staff.length;
+                    });
+                }
                 if (!Array.isArray(staff) || staff.length === 0) {
                     body.innerHTML = '<tr><td colspan="5" class="py-3 text-slate-500 text-xs">No staff yet. Invite your first teacher above.</td></tr>';
                     return;
