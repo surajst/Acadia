@@ -843,14 +843,21 @@
                     return;
                 }
                 body.innerHTML = staff.map(function (s) {
-                    const active = s.active
-                        ? '<span class="text-emerald-600">Active</span>'
-                        : '<span class="text-amber-600">Pending approval</span>';
+                    // Three distinct states, not one boolean wearing the other's
+                    // label: an account can be approved and switched off, or
+                    // awaiting a decision, and the two need different answers.
+                    const status = !s.active
+                        ? '<span class="text-slate-500">Deactivated</span>'
+                        : s.approvalStatus === 'PENDING'
+                            ? '<span class="text-amber-600">Pending approval</span>'
+                            : s.approvalStatus === 'REJECTED'
+                                ? '<span class="text-rose-600">Rejected</span>'
+                                : '<span class="text-emerald-600">Active</span>';
                     return '<tr class="border-b border-slate-200/40">' +
                         '<td class="py-2 pr-4 text-slate-800">' + staffEscape(s.fullName) + '</td>' +
                         '<td class="py-2 pr-4 text-slate-500">' + staffEscape(s.email) + '</td>' +
                         '<td class="py-2 pr-4 text-slate-600">' + staffEscape(s.role) + '</td>' +
-                        '<td class="py-2 pr-4 text-xs font-semibold">' + active + '</td>' +
+                        '<td class="py-2 pr-4 text-xs font-semibold">' + status + '</td>' +
                         '</tr>';
                 }).join('');
             } catch (e) {
@@ -892,7 +899,7 @@
                     : '<span data-invite-not-emailed>⚠️ <strong>Not emailed</strong> (' + staffEscape(data.emailDetail || 'unknown reason') +
                       '). Share these details yourself.</span>';
                 okBox.innerHTML = 'Invited <strong>' + staffEscape(fullName) + '</strong> as ' + staffEscape(role) +
-                    '. They can log in once approved.<br>' + sentLine + '<br>' +
+                    '. They can sign in now.<br>' + sentLine + '<br>' +
                     'Email: <strong>' + staffEscape(email) + '</strong> &nbsp; Temporary password: ' +
                     '<strong data-invite-password>' + staffEscape(data.temporaryPassword) + '</strong>';
                 okBox.classList.remove('hidden');

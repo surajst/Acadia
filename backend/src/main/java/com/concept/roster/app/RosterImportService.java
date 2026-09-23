@@ -339,6 +339,7 @@ public class RosterImportService {
                 if (role != UserRole.ADMIN && role != UserRole.PRINCIPAL && role != UserRole.TEACHER && role != UserRole.DRIVER) {
                     throw new IllegalArgumentException("Role must be TEACHER, PRINCIPAL, ADMIN, or DRIVER");
                 }
+                email = User.normaliseEmail(email);
                 if (userRepository.existsByEmail(email)) {
                     skipped++;
                     outcomes.add(rowOutcome(rowNumber, label, "Skipped", "Email already in use: " + email));
@@ -355,7 +356,10 @@ public class RosterImportService {
                 staff.setFullName(fullName);
                 staff.setRole(role);
                 staff.setActive(true);
-                staff.setApprovalStatus(User.ApprovalStatus.PENDING);
+                // Same reasoning as StaffService.addStaff: this importer runs
+                // under an authenticated ADMIN, who is one of the two roles the
+                // approval queue exists to wait for.
+                staff.setApprovalStatus(User.ApprovalStatus.APPROVED);
                 userRepository.save(staff);
 
                 created++;

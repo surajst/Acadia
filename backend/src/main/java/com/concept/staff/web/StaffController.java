@@ -57,7 +57,7 @@ public class StaffController {
             Map<String, Object> body = new java.util.LinkedHashMap<>();
             body.put("status", "created");
             body.put("id", invite.id());
-            body.put("approvalStatus", "PENDING");
+            body.put("approvalStatus", com.concept.user.User.ApprovalStatus.APPROVED.name());
             // Returned whether or not the email went: the account exists either
             // way, and an admin with no visible credential cannot recover if
             // the mail never arrives.

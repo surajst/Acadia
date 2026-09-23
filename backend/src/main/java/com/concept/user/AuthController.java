@@ -29,7 +29,7 @@ public class AuthController {
     public String loginUser(@RequestParam String email, 
                             @RequestParam String password, 
                             HttpSession session) {
-        Optional<User> userOpt = userRepository.findByEmail(email);
+        Optional<User> userOpt = userRepository.findByEmail(User.normaliseEmail(email));
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();

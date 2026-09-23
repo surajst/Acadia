@@ -54,7 +54,7 @@ public class MobileAuthRestController {
 
             if (passwordEncoder.matches(loginRequest.password, userDetails.getPassword())) {
                 // Retrieve full user for profile details + tenant/academic-year claims
-                User user = userRepository.findByEmail(loginRequest.email).orElse(null);
+                User user = userRepository.findByEmail(User.normaliseEmail(loginRequest.email)).orElse(null);
 
                 String jwt = (user != null)
                         ? jwtUtils.generateToken(userDetails, user.getTenantId(), user.getAcademicYearId())
