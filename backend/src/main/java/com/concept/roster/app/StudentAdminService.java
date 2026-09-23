@@ -309,13 +309,15 @@ public class StudentAdminService {
         User u = parent.getUserId() != null
                 ? userRepository.findByIdAndTenantId(parent.getUserId(), tenantId).orElse(null) : null;
         if (u == null) {
-            // Same story as students: keyed on the raw phone number, this threw
-            // when another school had already registered that number.
+            // Built from the guardian's own name. This passed the phone number
+            // here until the signature changed under it, which would have put
+            // the mobile number straight back into the username on any reset
+            // that had to create a login rather than reset one.
             String username = buildGuardianUsername(
-                    parent.getFirstName(), parent.getPhoneNumber(), tenantId);
+                    parent.getFirstName(), parent.getLastName(), tenantId);
             if (username == null) {
                 throw new IllegalArgumentException(
-                        "Cannot create a guardian login: a phone number and first name are required.");
+                        "Cannot create a guardian login: a name is required.");
             }
             u = new User();
             u.setId(UUID.randomUUID());

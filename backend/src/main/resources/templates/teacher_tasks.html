@@ -384,7 +384,7 @@
                 document.getElementById('tasksTableBody').innerHTML =
                     '<tr><td colspan="7" class="px-4 py-12 text-center text-rose-600">' +
                     'Could not load tasks. ' + (error && error.status === 403
-                        ? 'This page is for teachers - an admin account cannot list a teacher's tasks.'
+                        ? 'This page is for teachers. An admin account cannot list tasks here.'
                         : 'Please reload the page.') +
                     '</td></tr>';
             }

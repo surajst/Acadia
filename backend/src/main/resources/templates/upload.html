@@ -252,7 +252,15 @@
                         }
 
                         button.addEventListener('click', function () {
-                            var rows = [['Row', 'Student', 'Status', 'Login details']];
+                            // Built with push rather than a nested literal. A
+                            // nested array literal opens with two square
+                            // brackets, which is Thymeleaf's inline-expression
+                            // syntax: the engine tried to evaluate the header
+                            // row and threw on every request to this page.
+                            // PageRenderSmokeTest enforces this mechanically,
+                            // which is why even this comment avoids the pair.
+                            var rows = [];
+                            rows.push(['Row', 'Student', 'Status', 'Login details']);
                             table.querySelectorAll('tbody tr').forEach(function (tr) {
                                 var cells = tr.querySelectorAll('td');
                                 if (cells.length < 4) return;
@@ -260,7 +268,7 @@
                                     cells[2].textContent, cells[3].textContent]);
                             });
 
-                            var csv = rows.map(function (r) { return r.map(csvCell).join(','); }).join('
+                            var csv = rows.map(function (r) { return r.map(csvCell).join(','); }).join('
 ');
                             // The BOM is what makes Excel read this as UTF-8;
                             // without it Indian names come out as mojibake.

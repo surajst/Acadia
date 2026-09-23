@@ -23,7 +23,9 @@ test.describe('ACADIA Administrative Fee Management Specs', () => {
     await page.goto('/web/admin/fees');
 
     // 4. Verify presence of the three glowing analytical KPI summary cards
-    await expect(page.locator('text=Total Revenue Target')).toBeVisible();
+    // Renamed: the figure counts one-off custom invoices too, so "target"
+    // implied the grade fee plans alone.
+    await expect(page.locator('text=Total Billed')).toBeVisible();
     await expect(page.locator('text=Total Collected Invoices')).toBeVisible();
     await expect(page.locator('text=Outstanding Deficit')).toBeVisible();
 

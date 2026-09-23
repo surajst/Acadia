@@ -48,6 +48,8 @@ async function onboardSchool(page, label) {
   await page.fill('#adminFullName', `${label} Admin`);
   await page.fill('#adminEmail', school.adminEmail);
   await page.fill('#adminPassword', PW);
+  // School Type has no default any more -- see onboarding_flow.spec.js.
+  await page.selectOption('#schoolType', 'SECONDARY');
   await page.click('#submitBtn');
   await page.waitForURL(u => !u.pathname.includes('/onboard/signup'), { timeout: 30000 });
 

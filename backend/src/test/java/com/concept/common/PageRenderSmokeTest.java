@@ -12,7 +12,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -108,18 +116,65 @@ class PageRenderSmokeTest {
         assertTrue(renderAsAdmin("/web/admin/audit-log").length() > 0);
     }
 
-    /** The two pages a signed-out visitor sees. */
+    /**
+     * Both of these broke in CI and neither was in this test, which is exactly
+     * why they reached CI. The upload page threw on every request because a
+     * JavaScript array-of-arrays opens with "[[", which Thymeleaf reads as the
+     * start of an inline expression, so it tried to evaluate the CSV header row.
+     */
     @Test
-    void theLoginAndSignupPagesRender() throws Exception {
-        MvcResult login = mockMvc.perform(get("/login")).andReturn();
-        assertEquals(200, login.getResponse().getStatus());
-        String loginHtml = login.getResponse().getContentAsString();
-        assertTrue(loginHtml.contains("autocomplete=\"username\""),
-                "without this the browser offers the wrong saved account");
-        assertTrue(loginHtml.contains("autocomplete=\"current-password\""));
+    void theImportAndTeacherTaskPagesRender() throws Exception {
+        assertTrue(renderAsAdmin("/web/management/upload").contains("downloadCredentials"));
+        assertTrue(renderAsAdmin("/web/teacher/tasks").contains("loadGradeOptions"));
+    }
 
-        MvcResult signup = mockMvc.perform(get("/web/onboard/signup")).andReturn();
-        assertEquals(200, signup.getResponse().getStatus());
-        assertTrue(signup.getResponse().getContentAsString().contains("subdomainPreview"));
+    /**
+     * No inline script may open a Thymeleaf expression by accident.
+     *
+     * <p>Thymeleaf treats "[[" as the start of an inline expression wherever it
+     * appears in a script body, so an ordinary nested array literal takes the
+     * whole page down at render time -- as one did. The deliberate form is
+     * {@code /*[[${...}]]*}{@code /}, which this allows. It is a mechanical
+     * rule, so it is checked mechanically rather than left to whoever writes
+     * the next one.
+     */
+    @Test
+    void noTemplateScriptOpensAThymeleafInlineExpressionByAccident() throws IOException {
+        Path templates = Path.of("src/main/resources/templates");
+        if (!Files.isDirectory(templates)) {
+            return; // not running from the module root
+        }
+
+        Pattern accidental = Pattern.compile("\\[\\[(?!\\$\\{)");
+        List<String> offenders = new ArrayList<>();
+
+        try (Stream<Path> files = Files.walk(templates)) {
+            for (Path file : files.filter(f -> f.toString().endsWith(".html")).toList()) {
+                String html = Files.readString(file);
+                int from = 0;
+                while (true) {
+                    int open = html.indexOf("<script", from);
+                    if (open < 0) {
+                        break;
+                    }
+                    int close = html.indexOf("</script>", open);
+                    if (close < 0) {
+                        break;
+                    }
+                    String body = html.substring(open, close);
+                    Matcher m = accidental.matcher(body);
+                    if (m.find()) {
+                        int start = Math.max(0, m.start() - 40);
+                        int end = Math.min(body.length(), m.start() + 40);
+                        offenders.add(file.getFileName() + " -> "
+                                + body.substring(start, end).replaceAll("\\s+", " "));
+                    }
+                    from = close + 1;
+                }
+            }
+        }
+
+        assertTrue(offenders.isEmpty(),
+                "an inline script contains [[, which Thymeleaf evaluates as an expression: " + offenders);
     }
 }

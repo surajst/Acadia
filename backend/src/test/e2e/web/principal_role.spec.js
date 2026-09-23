@@ -28,7 +28,10 @@ test.describe('Sprint 3: PRINCIPAL role and access boundaries', () => {
       return res.json();
     }, principalEmail);
     expect(inviteResult.status).toBe('created');
-    expect(inviteResult.approvalStatus).toBe('PENDING');
+    // Invites land APPROVED: this console is only reachable by an ADMIN or
+    // PRINCIPAL, the two roles the approval queue waits for, so a pending
+    // invite waited on a decision the inviter had already made.
+    expect(inviteResult.approvalStatus).toBe('APPROVED');
 
     // New staff invites are PENDING until approved — the inviting admin approves here
     const approveResult = await page.evaluate(async (email) => {
