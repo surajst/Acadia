@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } 
 import { useRouter } from 'expo-router';
 import ParentHeader from './ui/ParentHeader';
 import HomeWheel from './HomeWheel';
+import UnreadStrip from './ui/UnreadStrip';
 import { useProfilePhoto } from '../context/ProfilePhotoContext';
 import { SectionLabel, QuestCard, InfoCard } from './ui/TodaySection';
 import { useTheme, type Theme } from '../context/ThemeContext';
@@ -117,6 +118,10 @@ export default function ParentDashboard({
         {/* The wheel replaced the Quick Actions grid and the bottom tab
             bar both -- one hub, and one place a destination lives. */}
         <HomeWheel />
+
+        {/* What happened while they were away. Renders nothing when
+            there is nothing, so it is not permanent furniture. */}
+        <UnreadStrip />
 
         {/* Recognition keeps its place below the wheel: it is something to
             read, not somewhere to go, and "See all" still reaches the full

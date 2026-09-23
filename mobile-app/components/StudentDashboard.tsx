@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-nativ
 import { useRouter } from 'expo-router';
 import StudentHeader from './ui/StudentHeader';
 import HomeWheel from './HomeWheel';
+import UnreadStrip from './ui/UnreadStrip';
 import { useProfilePhoto } from '../context/ProfilePhotoContext';
 import { SectionLabel, QuestCard, NextClassCard } from './ui/TodaySection';
 import BirthdayCard, { isBirthday, turningAge } from './ui/BirthdayCard';
@@ -115,6 +116,10 @@ export default function StudentDashboard({ data, schoolName, refreshing, onRefre
         {/* The wheel replaced the Quick Actions grid and the bottom tab
             bar both -- one hub, and one place a destination lives. */}
         <HomeWheel />
+
+        {/* What happened while they were away. Renders nothing when
+            there is nothing, so it is not permanent furniture. */}
+        <UnreadStrip />
 
       </View>
     </ScrollView>

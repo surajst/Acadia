@@ -8,6 +8,7 @@ import com.concept.fees.data.InvoiceLine;
 import com.concept.fees.data.InvoiceLineRepository;
 import com.concept.fees.data.FeeTransaction;
 import com.concept.fees.data.FeeTransactionRepository;
+import com.concept.notification.app.NotificationPublisher;
 import com.concept.shared.data.Student;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,7 @@ public class FeeDashboardService {
     private final InvoiceLineRepository invoiceLineRepository;
     private final InvoiceScheduleService invoiceScheduleService;
     private final ApprovalService approvalService;
+    private final NotificationPublisher notificationPublisher;
 
     public FeeDashboardService(FeeManagementService feeManagementService,
                                FeeInvoiceRepository feeInvoiceRepository,
@@ -46,7 +48,8 @@ public class FeeDashboardService {
                                FeeTransactionRepository feeTransactionRepository,
                                InvoiceLineRepository invoiceLineRepository,
                                InvoiceScheduleService invoiceScheduleService,
-                               ApprovalService approvalService) {
+                               ApprovalService approvalService,
+                               NotificationPublisher notificationPublisher) {
         this.feeManagementService = feeManagementService;
         this.feeInvoiceRepository = feeInvoiceRepository;
         this.studentRepository = studentRepository;
@@ -54,6 +57,7 @@ public class FeeDashboardService {
         this.invoiceLineRepository = invoiceLineRepository;
         this.invoiceScheduleService = invoiceScheduleService;
         this.approvalService = approvalService;
+        this.notificationPublisher = notificationPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -128,6 +132,34 @@ public class FeeDashboardService {
     public void createInvoice(UUID studentId, UUID tenantId, java.math.BigDecimal overrideAmount,
                               String overrideReason, Authentication authentication) {
         invoiceScheduleService.generateForStudent(studentId, tenantId, overrideAmount, overrideReason, authentication);
+        notifyGuardiansOfFees(studentId, tenantId);
+    }
+
+    /**
+     * Tell the guardians money is now owed.
+     *
+     * <p>Raising a year of instalments told the family nothing inside the app;
+     * a parent only found out by opening the fees screen unprompted. Reports
+     * the soonest unpaid instalment rather than the whole year, because that is
+     * the one they have to act on.
+     */
+    private void notifyGuardiansOfFees(UUID studentId, UUID tenantId) {
+        Student student = studentRepository.findByIdInAndTenantId(List.of(studentId), tenantId)
+                .stream().findFirst().orElse(null);
+        if (student == null) return;
+
+        FeeInvoice next = feeInvoiceRepository.findByStudentIdInAndTenantId(List.of(studentId), tenantId).stream()
+                .filter(i -> i.getDueDate() != null)
+                .filter(i -> i.getAmountPaid() == null
+                        || i.getAmountPaid().compareTo(i.getAmountDue() == null ? BigDecimal.ZERO : i.getAmountDue()) < 0)
+                .min(java.util.Comparator.comparing(FeeInvoice::getDueDate))
+                .orElse(null);
+        if (next == null) return;
+
+        notificationPublisher.feeRaised(student, tenantId, student.getAcademicYearId(),
+                next.getId(),
+                next.getAmountDue() == null ? null : "₹ " + next.getAmountDue(),
+                "due " + next.getDueDate());
     }
 
     /**
