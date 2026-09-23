@@ -188,6 +188,15 @@
     <div style="min-width:0;">
         <h1 class="page-title" th:text="${title}">Roster Hub</h1>
         <p class="page-sub" th:text="${sub}">What needs attention this morning</p>
+        <!-- Said once, plainly, to the people who can act on it. Until now the
+             only notice was a line of small print under a temporary password,
+             which an admin may already have navigated away from -- and every
+             invited teacher waits for a message nobody can send. -->
+        <p th:if="${emailNotConfigured}" data-email-warning
+           style="font-size:12px; color:var(--warn-ink, #b45309); margin-top:4px;">
+            No email is configured, so invites and reminders are not being sent.
+            Share temporary passwords yourself until it is set up.
+        </p>
     </div>
     <div class="flex items-center gap-3" style="flex-shrink:0;">
         <span class="badge badge--success"><span class="dot" style="background:var(--success)"></span> All systems operational</span>

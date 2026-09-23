@@ -137,6 +137,13 @@ public class AttendanceService {
             if (status == AttendanceStatus.ABSENT) {
                 absent++;
                 for (Parent parent : student.getParents()) {
+                    // Never dispatch to something that is not a phone number.
+                    // The manual form used to accept "abc123", and a provider
+                    // handed that either errors or, worse, normalises it into
+                    // somebody else's number.
+                    if (!com.concept.roster.app.PhoneNumbers.isValid(parent.getPhoneNumber())) {
+                        continue;
+                    }
                     notificationDeliveryService.send(parent.getPhoneNumber(),
                             "[ALERT WHATSAPP DISPATCH] Sending to " + parent.getFirstName() + " " + parent.getLastName()
                                     + " (" + parent.getPhoneNumber() + "): Alert! Student " + student.getFirstName()

@@ -21,6 +21,11 @@ public class ConsoleEmailDeliveryService implements EmailDeliveryService {
     private static final Logger log = LoggerFactory.getLogger(ConsoleEmailDeliveryService.class);
 
     @Override
+    public boolean isConfigured() {
+        return false;
+    }
+
+    @Override
     public EmailResult send(String toAddress, String subject, String body) {
         log.info("[email not configured] to={} subject={}\n{}", toAddress, subject, body);
         return EmailResult.notConfigured();

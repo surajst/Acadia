@@ -385,6 +385,9 @@ public class TasksService {
             // register would be a false alarm.
             if (entry.status() == AttendanceStatus.ABSENT && date.equals(today)) {
                 for (Parent parent : student.getParents()) {
+                    if (!com.concept.roster.app.PhoneNumbers.isValid(parent.getPhoneNumber())) {
+                        continue;
+                    }
                     notificationDeliveryService.send(parent.getPhoneNumber(),
                             "[ALERT WHATSAPP DISPATCH] Sending to "
                                     + parent.getFirstName() + " " + parent.getLastName()
