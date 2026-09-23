@@ -179,7 +179,7 @@
         </div>
     </div>
 </div>
-    <script>
+    <script th:inline="javascript">
         // Instalment rows are built here rather than rendered fixed, because how
         // many a plan has is the school's choice: three termly parts and twelve
         // monthly ones are the same form with a different number of rows.
@@ -225,7 +225,29 @@
 
         // Start with one empty row rather than a pre-filled three-term schedule:
         // suggesting a shape is how a default quietly becomes the only option.
+        //
+        // Unless the last submission was refused: then the rows come back as
+        // they were typed. A plan is a dozen figures, and clearing the form on
+        // a validation error means retyping all of them to correct one.
+        /*[# th:if="${submittedLabels != null}"]*/
+        (function restoreSubmitted() {
+            var grade = /*[[${submittedGradeLevel}]]*/ '';
+            var labels = /*[[${submittedLabels}]]*/ [];
+            var amounts = /*[[${submittedAmounts}]]*/ [];
+            var offsets = /*[[${submittedOffsets}]]*/ [];
+
+            document.querySelector('[data-plan-grade]').value = grade || '';
+            for (var i = 0; i < labels.length; i++) {
+                addInstalment(labels[i], amounts[i], offsets[i]);
+            }
+            if (labels.length === 0) {
+                addInstalment();
+            }
+        })();
+        /*[/]*/
+        /*[# th:if="${submittedLabels == null}"]*/
         addInstalment();
+        /*[/]*/
     </script>
 </body>
 </html>

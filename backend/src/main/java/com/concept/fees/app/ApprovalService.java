@@ -27,6 +27,12 @@ import java.util.UUID;
  * rule is that they always need a second person, so there is no amount to
  * configure and no line to argue about.
  *
+ * <p>The one exception is a school with no principal, where there is no second
+ * person to ask. Those actions are carried out and marked
+ * {@link ApprovalRequest.Status#AUTO_APPROVED}, which is the honest record:
+ * the school gets to operate, and the weaker control is visible rather than
+ * implied by an empty queue.
+ *
  * <p>Nothing here knows what the actions do. {@link ApprovalExecutor}
  * implementations carry that out on approval, which keeps this class free of
  * fee mechanics and lets a new gated action be added without touching it.
@@ -68,16 +74,22 @@ public class ApprovalService {
             throw new IllegalArgumentException("Could not identify who is making this request.");
         }
 
-        // A school that self-onboards gets one admin and no principal. Without
-        // this the request would be accepted and then sit in a queue nobody can
-        // ever decide -- so refuse up front, and say what to do about it. The
-        // alternative, letting it through when no principal exists, would make
-        // the whole gate optional by simply not appointing one.
-        if (userRepository.countByRoleAndTenantId(UserRole.PRINCIPAL, tenantId) == 0) {
-            throw new IllegalArgumentException(
-                    "This needs a principal to approve it, and this school does not have one yet. "
-                            + "Add a principal from the Staff Registry first.");
-        }
+        // A school that self-onboards gets one admin and no principal.
+        //
+        // This used to refuse outright, reasoning that letting it through would
+        // make the gate optional by simply never appointing a principal. That
+        // reasoning holds, but the price turned out to be too high: a new
+        // school could not price a single grade, and so could not begin
+        // charging fees at all -- while "Custom Invoice", which bills a real
+        // family a real amount, went through ungated. The control was not
+        // protecting anything, it was only stopping the ordinary path.
+        //
+        // So the action is carried out, and the absence of a second approver
+        // is recorded rather than hidden: a distinct status, a decision reason
+        // that says why, and its own audit action. Appointing a principal
+        // restores the gate with no further change, and the queue below is
+        // untouched for every school that has one.
+        boolean hasPrincipal = userRepository.countByRoleAndTenantId(UserRole.PRINCIPAL, tenantId) > 0;
 
         ApprovalRequest row = new ApprovalRequest();
         row.setId(UUID.randomUUID());
@@ -89,8 +101,24 @@ public class ApprovalService {
         row.setRequestedByUserId(requester.getId());
         row.setRequestedByEmail(requester.getEmail());
         row.setRequestedAt(LocalDateTime.now());
-        row.setStatus(ApprovalRequest.Status.PENDING);
+        row.setStatus(hasPrincipal ? ApprovalRequest.Status.PENDING : ApprovalRequest.Status.AUTO_APPROVED);
         approvalRequestRepository.saveAndFlush(row);
+
+        if (!hasPrincipal) {
+            // Executed after the row is saved, so that a failure in the action
+            // rolls back a record of it having happened -- the same ordering
+            // the approve() path relies on.
+            executorFor(action).execute(row.getPayloadJson(), tenantId, authentication);
+
+            row.setDecidedByUserId(requester.getId());
+            row.setDecidedAt(LocalDateTime.now());
+            row.setDecisionReason("Applied without a second approver: this school has no principal.");
+            approvalRequestRepository.saveAndFlush(row);
+
+            auditLogService.log(authentication, "APPROVAL_AUTO_GRANTED", "ApprovalRequest", row.getId(),
+                    action + ": " + summary + " — applied without a second approver (no principal appointed)");
+            return row;
+        }
 
         auditLogService.log(authentication, "APPROVAL_REQUESTED", "ApprovalRequest", row.getId(),
                 action + ": " + summary);

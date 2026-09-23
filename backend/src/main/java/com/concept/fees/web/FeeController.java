@@ -111,9 +111,11 @@ public class FeeController {
                                  RedirectAttributes ra) {
         UUID tenantId = tenantContext.getTenantId().orElse(null);
         try {
-            String summary = feeDashboardService.requestPaymentReversal(transactionId, reason, tenantId, authentication);
-            ra.addFlashAttribute("successMessage",
-                    "Sent to the principal for approval: " + summary + ". Nothing has changed yet.");
+            var outcome = feeDashboardService.requestPaymentReversal(transactionId, reason, tenantId, authentication);
+            ra.addFlashAttribute("successMessage", outcome.applied()
+                    ? "Done: " + outcome.summary() + ". This school has no principal, so it was "
+                            + "carried out without a second approver and recorded that way."
+                    : "Sent to the principal for approval: " + outcome.summary() + ". Nothing has changed yet.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }

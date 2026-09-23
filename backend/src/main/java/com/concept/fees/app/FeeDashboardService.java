@@ -168,17 +168,21 @@ public class FeeDashboardService {
      * receipted, which is the one fee action a single admin should not be able
      * to complete alone.
      *
-     * @return the summary the admin is shown, describing what is now pending
+     * @return what to tell the admin, and whether the reversal already took
+     *         effect -- a school with no principal has no second approver, so
+     *         the action is carried out and recorded as such
      */
-    public String requestPaymentReversal(java.util.UUID transactionId, String reason, java.util.UUID tenantId,
-                                         Authentication authentication) {
+    public FeePlanChangeRequestService.Outcome requestPaymentReversal(
+            java.util.UUID transactionId, String reason, java.util.UUID tenantId,
+            Authentication authentication) {
         FeeTransaction original = feeManagementService.validateReversalRequest(transactionId, reason, tenantId);
         String summary = "Reverse a payment of " + original.getAmountPaid()
                 + " (receipt #" + original.getReceiptNumber() + ") — " + reason.trim();
-        approvalService.request(ApprovalRequest.Action.PAYMENT_REVERSAL,
+        ApprovalRequest raised = approvalService.request(ApprovalRequest.Action.PAYMENT_REVERSAL,
                 new PaymentReversalExecutor.Payload(transactionId, reason.trim()),
                 summary, tenantId, authentication);
-        return summary;
+        return new FeePlanChangeRequestService.Outcome(
+                summary, raised.getStatus() == ApprovalRequest.Status.AUTO_APPROVED);
     }
 
     /** @return the resulting waiver status (e.g. PENDING), flattened to a string. */

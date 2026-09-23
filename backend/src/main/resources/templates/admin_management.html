@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Read by the reward edit/remove calls below. Those endpoints are not on
+         SecurityConfig's CSRF ignore list, and should not be: they change the
+         catalogue rather than reading it. -->
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}">
     <title>Student Management &middot; ACADIA</title>
     <link rel="stylesheet" href="/css/tailwind.css">
     <link rel="stylesheet" href="/css/design-system.css">
@@ -340,6 +345,7 @@
                                     <th class="py-4 px-6">Description</th>
                                     <th class="py-4 px-6">XP Cost</th>
                                     <th class="py-4 px-6">In Stock</th>
+                                    <th class="py-4 px-6 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800/40 text-sm">
@@ -349,10 +355,22 @@
                                     <td class="py-4 px-6 text-xs text-slate-500 leading-relaxed max-w-xs" th:text="${reward.description}">Receive a formal certificate of merit recognizing your achievements.</td>
                                     <td class="py-4 px-6 font-semibold text-indigo-600" th:text="${reward.xpCost}">250</td>
                                     <td class="py-4 px-6 font-mono text-emerald-600 font-bold" th:text="${reward.inventoryCount}">50</td>
+                                    <td class="py-4 px-6 text-right whitespace-nowrap">
+                                        <button type="button" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                                                th:attr="data-reward-edit=${reward.id},
+                                                         data-title=${reward.title},
+                                                         data-description=${reward.description},
+                                                         data-xp=${reward.xpCost},
+                                                         data-emoji=${reward.displayEmoji},
+                                                         data-stock=${reward.inventoryCount}">Edit</button>
+                                        <span class="text-slate-300 px-2">|</span>
+                                        <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-800"
+                                                th:attr="data-reward-delete=${reward.id}, data-title=${reward.title}">Remove</button>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(rewardInventoryList)}">
-                                    <td colspan="5" class="py-12 text-center text-slate-500 font-medium">
-                                        No active rewards registered. Seeding has not occurred or inventory is empty.
+                                    <td colspan="6" class="py-12 text-center text-slate-500 font-medium">
+                                        No rewards yet. Add one below and it appears in every student's marketplace.
                                     </td>
                                 </tr>
                             </tbody>
@@ -362,8 +380,8 @@
                     <!-- Add Reward Form -->
                     <div class="bg-[#F4F6FB]/40 border border-slate-200/60 rounded-2xl p-6 space-y-4">
                         <div>
-                            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Add Dynamic Reward Entry</h3>
-                            <p class="text-xs text-slate-500 mt-0.5">Submit new academic milestones or physical rewards to seed them into the student portals immediately.</p>
+                            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Add a reward</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">It appears in every student's marketplace straight away.</p>
                         </div>
                         <form action="/web/admin/rewards/create" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
@@ -400,6 +418,88 @@
                         </form>
                     </div>
                 </div>
+                    <div id="rewardFeedback" class="hidden text-sm rounded-xl px-4 py-3"></div>
+
+                    <script>
+                        // Edit and remove for rewards. Until these existed a reward
+                        // saved with a bad cost was permanent -- there was no way to
+                        // take one out of the marketplace.
+                        (function () {
+                            function csrfHeaders() {
+                                var t = document.querySelector('meta[name="_csrf"]');
+                                var h = document.querySelector('meta[name="_csrf_header"]');
+                                var headers = {};
+                                if (t && t.content) {
+                                    headers[(h && h.content) || 'X-CSRF-TOKEN'] = t.content;
+                                }
+                                return headers;
+                            }
+
+                            function say(message, ok) {
+                                var box = document.getElementById('rewardFeedback');
+                                box.textContent = message;
+                                box.className = ok
+                                    ? 'text-sm rounded-xl px-4 py-3 bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                    : 'text-sm rounded-xl px-4 py-3 bg-rose-50 text-rose-800 border border-rose-200';
+                            }
+
+                            async function send(url, body) {
+                                var res = await fetch(url, {
+                                    method: 'POST',
+                                    headers: Object.assign({
+                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                    }, csrfHeaders()),
+                                    body: body
+                                });
+                                var data = await res.json().catch(function () { return {}; });
+                                if (!res.ok || data.error) {
+                                    // The server's message names the rule that was
+                                    // broken, so it is shown rather than replaced
+                                    // with a generic failure.
+                                    say(data.error || 'Could not save that change.', false);
+                                    return false;
+                                }
+                                return true;
+                            }
+
+                            document.addEventListener('click', async function (e) {
+                                var edit = e.target.closest('[data-reward-edit]');
+                                if (edit) {
+                                    var cost = prompt('New XP cost for "' + edit.dataset.title + '"', edit.dataset.xp);
+                                    if (cost === null) return;
+                                    var stock = prompt('Stock for "' + edit.dataset.title + '"', edit.dataset.stock);
+                                    if (stock === null) return;
+                                    var params = new URLSearchParams({
+                                        title: edit.dataset.title,
+                                        description: edit.dataset.description || '',
+                                        xpCost: cost,
+                                        displayEmoji: edit.dataset.emoji || '',
+                                        inventoryCount: stock
+                                    });
+                                    if (await send('/web/admin/rewards/' + edit.dataset.rewardEdit + '/update', params)) {
+                                        window.location.reload();
+                                    }
+                                    return;
+                                }
+
+                                var del = e.target.closest('[data-reward-delete]');
+                                if (del) {
+                                    if (!confirm('Remove "' + del.dataset.title + '" from the marketplace? Rewards students have already redeemed are not affected.')) {
+                                        return;
+                                    }
+                                    if (await send('/web/admin/rewards/' + del.dataset.rewardDelete + '/delete', '')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+
+                            // A refused creation redirects back with the reason.
+                            var rewardError = new URLSearchParams(window.location.search).get('rewardError');
+                            if (rewardError) {
+                                say(rewardError, false);
+                            }
+                        })();
+                    </script>
                 </div><!-- /sec-rewards -->
 
                 <!-- Data Export -->
