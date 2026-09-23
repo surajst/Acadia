@@ -1,5 +1,9 @@
 package com.concept.parent.app;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.UUID;
 
 /**
@@ -8,8 +12,16 @@ import java.util.UUID;
  * service (consumes it) can share it without the app layer depending on web.
  */
 public class AssignQuestRequest {
+
+    /** A quest a parent sets is worth XP; the same bounds as a teacher task. */
+    public static final int MAX_XP_REWARD = 1000;
+
+    @NotBlank(message = "Give the quest a title.")
     private String title;
     private String description;
+
+    @Min(value = 1, message = "A quest has to be worth at least 1 XP.")
+    @Max(value = MAX_XP_REWARD, message = "A quest cannot be worth more than " + MAX_XP_REWARD + " XP.")
     private Integer xpReward;
     private UUID studentId;
 

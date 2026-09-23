@@ -41,7 +41,8 @@ public class ParentApiController {
 
     @PostMapping("/assign-quest")
     @PreAuthorize("hasRole('PARENT')")
-    public ResponseEntity<?> assignQuest(@RequestBody AssignQuestRequest dto, Authentication authentication) {
+    public ResponseEntity<?> assignQuest(@jakarta.validation.Valid @RequestBody AssignQuestRequest dto,
+                                        Authentication authentication) {
         return ResponseEntity.ok(parentService.assignQuestApi(dto, authentication));
     }
 

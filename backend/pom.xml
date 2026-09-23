@@ -30,6 +30,18 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<!--
+			Bean Validation. Not transitive through starter-web since Boot 2.3,
+			so without this the jakarta.validation annotations do not even
+			compile. Worse, an @Valid with no validator on the classpath is
+			silently a no-op. Twice now a client side guard has existed while
+			the server accepted the bad value; this is what makes the server
+			side rule actually run.
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>

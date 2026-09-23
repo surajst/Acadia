@@ -15,6 +15,27 @@ interface ParentReward {
   status?: string;
 }
 
+/**
+ * What an empty list looks like.
+ *
+ * <p>This screen used to render invented content in place of an empty state:
+ * a pending "Clean your room" quest, an "Extra Screen Time" reward for
+ * students and a redeemed "Ice Cream Trip" for parents. None of it had ever
+ * been created, and because the student and parent branches carried different
+ * fabrications, two families comparing notes would see two different fictions
+ * presented as their own child's record.
+ */
+function EmptyCard({ title, subtitle }: { title: string; subtitle: string }) {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
+  return (
+    <View style={styles.emptyCard} accessibilityRole="text">
+      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={styles.itemSubtitle}>{subtitle}</Text>
+    </View>
+  );
+}
+
 export default function QuestsScreen() {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
@@ -35,13 +56,10 @@ export default function QuestsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Parent Quests</Text>
         {!data.parentQuests || data.parentQuests.length === 0 ? (
-          <View style={styles.card}>
-            <View style={styles.cardRow}>
-              <Text style={styles.itemTitle}>Clean your room</Text>
-              <Text style={styles.badgeText}>+50 XP</Text>
-            </View>
-            <Text style={styles.itemSubtitle}>Status: PENDING</Text>
-          </View>
+          <EmptyCard
+            title="No quests yet"
+            subtitle="Quests your family sets at home will appear here."
+          />
         ) : (
           data.parentQuests?.map((q: ParentQuest, i: number) => (
             <View key={i} style={styles.card}>
@@ -60,13 +78,10 @@ export default function QuestsScreen() {
         {role === 'STUDENT' ? (
           <>
             {(!data.availableParentRewards || data.availableParentRewards.length === 0) && (!data.pendingParentRewards || data.pendingParentRewards.length === 0) ? (
-              <View style={styles.card}>
-                <View style={styles.cardRow}>
-                  <Text style={styles.itemTitle}>Extra Screen Time (1hr)</Text>
-                  <Text style={styles.badgeTextCost}>-100 XP</Text>
-                </View>
-                <Text style={styles.itemSubtitle}>Available to claim!</Text>
-              </View>
+              <EmptyCard
+                title="Nothing to claim yet"
+                subtitle="Rewards your family offers will show up here."
+              />
             ) : (
               <>
                 {data.availableParentRewards?.map((r: ParentReward, i: number) => (
@@ -93,13 +108,10 @@ export default function QuestsScreen() {
         ) : (
           <>
             {!data.parentRewards || data.parentRewards.length === 0 ? (
-              <View style={styles.card}>
-                <View style={styles.cardRow}>
-                  <Text style={styles.itemTitle}>Ice Cream Trip</Text>
-                  <Text style={styles.badgeTextCost}>200 XP</Text>
-                </View>
-                <Text style={styles.itemSubtitle}>Status: REDEEMED</Text>
-              </View>
+              <EmptyCard
+                title="No rewards set up"
+                subtitle="Rewards you offer your child will appear here."
+              />
             ) : (
               data.parentRewards?.map((r: ParentReward, i: number) => (
                 <View key={i} style={styles.card}>
@@ -143,6 +155,23 @@ const makeStyles = (T: Theme) => StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
+  },
+  // Sized to the empty-state standard in AGENTS.md: at most 100pt tall,
+  // 16/24 padding, one line of message and one of subtext.
+  emptyCard: {
+    backgroundColor: T.surface,
+    maxHeight: 100,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginBottom: 8,
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: T.text,
+    marginBottom: 2,
   },
   cardRow: {
     flexDirection: 'row',
