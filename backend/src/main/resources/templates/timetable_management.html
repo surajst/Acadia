@@ -62,7 +62,11 @@
             <!-- Add period -->
             <section class="glass-panel rounded-2xl p-6">
                 <h2 class="text-lg font-semibold text-slate-900 mb-4">Add Period</h2>
+                <!-- Carries both refusals (red) and saved-with-a-note warnings
+                     (amber, via .is-warning), so a note is not mistaken for a
+                     failure. -->
                 <div id="formError" class="text-red-600 text-xs mb-3" style="display:none"></div>
+                <style>#formError.is-warning { color: #b45309; }</style>
                 <form id="addPeriodForm" class="flex flex-wrap gap-3 items-end">
                     <div>
                         <label class="block text-xs text-slate-500 mb-1">Class Section</label>
@@ -205,6 +209,15 @@
                 errorBox.textContent = data.error;
                 errorBox.style.display = 'block';
                 return;
+            }
+            // A clash that is not impossible, only probably unintended -- the
+            // period was saved, so this reads as a note rather than a failure.
+            if (Array.isArray(data.warnings) && data.warnings.length) {
+                errorBox.textContent = data.warnings.join(' ');
+                errorBox.style.display = 'block';
+                errorBox.classList.add('is-warning');
+            } else {
+                errorBox.classList.remove('is-warning');
             }
             loadTimetable();
         });
