@@ -65,10 +65,37 @@ public class TenantOnboardingService {
         }
     }
 
+    /**
+     * The canonical form of a requested subdomain.
+     *
+     * <p>Shared with the signup form's preview so the address shown is the
+     * address created. The form only replaced spaces, so "demo@ssc" previewed
+     * as an address that cannot exist.
+     */
+    public static String normaliseSubdomain(String requested) {
+        if (requested == null) {
+            return "";
+        }
+        String slug = requested.trim().toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-+|-+$", "");
+        return slug.length() > 63 ? slug.substring(0, 63).replaceAll("-+$", "") : slug;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean subdomainTaken(String subdomain) {
+        return tenantRepository.existsBySubdomain(subdomain);
+    }
+
     @Transactional
     public NewSchool createSchool(String schoolName, String subdomain, String adminEmail,
                                    String adminPassword, String adminFullName,
                                    SchoolType schoolType) {
+        subdomain = normaliseSubdomain(subdomain);
+        if (subdomain.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Choose a web address using letters and numbers, for example silverbrook.");
+        }
         if (tenantRepository.existsBySubdomain(subdomain)) {
             throw new DuplicateSubdomainException(subdomain);
         }

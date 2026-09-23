@@ -248,7 +248,8 @@ public class TimetableService {
      * @return warnings worth showing, never null
      */
     private List<SlotWarning> validateSlot(UUID entryId, ClassSection section, User teacher, String day,
-                                           int periodNumber, String startRaw, String endRaw) {
+                                           int periodNumber, String startRaw, String endRaw,
+                                           String subjectName) {
         LocalTime start = parseTime(startRaw, "Start time");
         LocalTime end = parseTime(endRaw, "End time");
         if (!end.isAfter(start)) {
@@ -288,7 +289,7 @@ public class TimetableService {
             }
         }
 
-        return teachesThere(teacher, section, null);
+        return teachesThere(teacher, section, subjectName);
     }
 
     /**
@@ -301,19 +302,55 @@ public class TimetableService {
      * approval gate did.
      */
     private List<SlotWarning> teachesThere(User teacher, ClassSection section, String subjectName) {
-        List<SubjectAssignment> assignments = subjectAssignmentRepository.findByClassSection(section);
-        if (assignments.isEmpty()) {
-            // Nothing configured for this section at all: silence is not a
-            // signal, so say nothing.
+        // Keyed on the teacher's assignments, not the section's. Keying it on
+        // the section meant a section with nothing configured said nothing at
+        // all -- so a teacher assigned only to 6-B Science could be put on 7-A
+        // English in silence, which is exactly the case this was meant to
+        // catch. What the section has configured says nothing about whether
+        // this teacher belongs in it.
+        List<SubjectAssignment> mine = subjectAssignmentRepository.findByTeacher(teacher);
+        if (mine.isEmpty()) {
+            // Nothing configured for this teacher anywhere. Silence is not a
+            // signal, and an admin building a first timetable has usually not
+            // filled in Teacher Assignments yet.
             return List.of();
         }
-        boolean assignedHere = assignments.stream()
-                .anyMatch(a -> a.getTeacher() != null && teacher.getId().equals(a.getTeacher().getId()));
-        if (assignedHere) {
-            return List.of();
+
+        List<SubjectAssignment> here = mine.stream()
+                .filter(a -> a.getClassSection() != null
+                        && a.getClassSection().getId().equals(section.getId()))
+                .toList();
+
+        if (here.isEmpty()) {
+            String elsewhere = mine.stream()
+                    .map(SubjectAssignment::getClassSection)
+                    .filter(java.util.Objects::nonNull)
+                    .map(this::sectionLabel)
+                    .distinct()
+                    .collect(Collectors.joining(", "));
+            return List.of(new SlotWarning(teacher.getFullName() + " is not assigned to "
+                    + sectionLabel(section) + " — only " + elsewhere
+                    + ". The period was saved; fix it in Teacher Assignments if that is wrong."));
         }
-        return List.of(new SlotWarning(teacher.getFullName() + " is not assigned to "
-                + sectionLabel(section) + " in Teacher Assignments. The period was saved anyway."));
+
+        // Assigned to the class, but for a different subject. Worth saying:
+        // "Science teacher down for English" is usually a mistyped row, and
+        // occasionally a deliberate cover arrangement.
+        String subject = subjectName == null ? "" : subjectName.trim();
+        boolean teachesThisSubject = subject.isEmpty() || here.stream()
+                .anyMatch(a -> subject.equalsIgnoreCase(
+                        a.getSubjectName() == null ? "" : a.getSubjectName().trim()));
+        if (!teachesThisSubject) {
+            String subjects = here.stream()
+                    .map(SubjectAssignment::getSubjectName)
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.joining(", "));
+            return List.of(new SlotWarning(teacher.getFullName() + " is assigned to "
+                    + sectionLabel(section) + " for " + subjects + ", not " + subject
+                    + ". The period was saved anyway."));
+        }
+        return List.of();
     }
 
     public Map<String, Object> adminCreate(TimetableEntryRequest request, Authentication authentication) {
@@ -330,7 +367,8 @@ public class TimetableService {
             throw TimetableException.badRequest("dayOfWeek must be one of " + VALID_DAYS);
         }
         List<SlotWarning> warnings = validateSlot(null, classSection, teacher, request.getDayOfWeek(),
-                request.getPeriodNumber(), request.getStartTime(), request.getEndTime());
+                request.getPeriodNumber(), request.getStartTime(), request.getEndTime(),
+                request.getSubjectName());
 
         TimetableEntry entry = new TimetableEntry();
         entry.setId(UUID.randomUUID());
@@ -391,7 +429,8 @@ public class TimetableService {
         User onDuty = userRepository.findByIdAndTenantId(entry.getTeacherId(), tenantId).orElse(null);
         List<SlotWarning> warnings = onDuty == null ? List.of()
                 : validateSlot(entry.getId(), entry.getClassSection(), onDuty, entry.getDayOfWeek(),
-                        entry.getPeriodNumber(), entry.getStartTime(), entry.getEndTime());
+                        entry.getPeriodNumber(), entry.getStartTime(), entry.getEndTime(),
+                        entry.getSubjectName());
 
         timetableRepository.save(entry);
         auditLogService.log(authentication, "TIMETABLE_ENTRY_UPDATED", "TimetableEntry", entry.getId(),

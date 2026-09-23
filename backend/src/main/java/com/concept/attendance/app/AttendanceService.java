@@ -170,7 +170,8 @@ public class AttendanceService {
      * Tuesday to fix it, and nobody needs to rewrite last term. Thirty days
      * covers a monthly reporting cycle.
      */
-    private static final int BACKFILL_WINDOW_DAYS = 30;
+    /** Public so the form can bound its own date control to the same window. */
+    public static final int BACKFILL_WINDOW_DAYS = 30;
 
     private LocalDate resolveDate(LocalDate requested) {
         LocalDate today = LocalDate.now();

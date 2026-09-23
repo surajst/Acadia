@@ -228,6 +228,10 @@ public class RosterImportService {
                 student.setLastName(lastName);
                 student.setRollNumber(rollNumber);
                 student.setClassSection(classSection);
+                // Same as the single-add path: without this their fee schedule
+                // counts from the academic year rather than from them, and a
+                // mid-year import is overdue the moment it lands.
+                student.setAdmissionDate(java.time.LocalDate.now());
                 student.getParents().add(parent);
 
                 // Provision logins so imported students/parents can actually sign in.

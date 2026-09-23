@@ -81,8 +81,19 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="space-y-1.5">
                         <label for="gradeLevel" class="field-label block">Grade level</label>
+                        <!-- The school's own grades. As free text "Grade 6" and
+                             "grade 6" were two separate plans, and a plan
+                             priced against a grade with no section bills
+                             nobody. A datalist, not a select, so a grade that
+                             has no section yet can still be priced ahead of
+                             time -- the point is that the ordinary case agrees
+                             with the roster. -->
                         <input type="text" id="gradeLevel" name="gradeLevel" required
+                               list="gradeOptions" autocomplete="off"
                                placeholder="Grade 6" class="field" data-plan-grade/>
+                        <datalist id="gradeOptions">
+                            <option th:each="g : ${gradeOptions}" th:value="${g}"></option>
+                        </datalist>
                     </div>
                 </div>
 
@@ -127,7 +138,7 @@
                     <p class="text-xs text-[var(--text-3)] mt-0.5">Applies to the current academic year only.</p>
                 </div>
                 <span class="badge" data-plan-count
-                      th:text="|${feePlans.size()} grades configured|">0 grades configured</span>
+                      th:text="${feePlans.size()} + (${feePlans.size() == 1} ? ' grade configured' : ' grades configured')">0 grades configured</span>
             </div>
 
             <div class="overflow-auto flex-1 min-h-0" data-plans-scroll>

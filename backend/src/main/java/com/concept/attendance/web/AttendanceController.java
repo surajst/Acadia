@@ -45,6 +45,13 @@ public class AttendanceController {
         model.addAttribute("currentClassLabel", view.currentClassLabel());
         model.addAttribute("classList", view.classList());
         model.addAttribute("studentList", view.students());
+        // The date control had neither a value nor bounds, because currentDate
+        // was never added here -- only StudentPortalController ever set it, so
+        // the field rendered empty and would accept any date the browser
+        // allowed, leaving the server to refuse it afterwards.
+        model.addAttribute("currentDate", java.time.LocalDate.now());
+        model.addAttribute("earliestAttendanceDate",
+                java.time.LocalDate.now().minusDays(AttendanceService.BACKFILL_WINDOW_DAYS));
         return "attendance";
     }
 

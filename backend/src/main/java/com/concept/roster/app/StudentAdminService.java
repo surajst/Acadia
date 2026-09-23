@@ -362,6 +362,13 @@ public class StudentAdminService {
         student.setLastName(lastName);
         student.setRollNumber(rollNumber);
         student.setClassSection(classSection);
+        // The day their fee schedule counts from. Nothing wrote this column,
+        // so InvoiceScheduleService always fell back to the academic year's
+        // start -- and a child admitted in September was billed from June,
+        // landing on the Defaulters list on their first day for instalments
+        // that fell due before they were enrolled. The Fee plans page promises
+        // offsets "from each student's start date"; this is that date.
+        student.setAdmissionDate(java.time.LocalDate.now());
 
         if (loginEmail != null && !loginEmail.isBlank() && loginPassword != null && !loginPassword.isBlank()) {
             if (userRepository.existsByEmail(loginEmail)) {

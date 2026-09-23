@@ -1,6 +1,8 @@
 package com.concept.fees.web;
 
 import com.concept.fees.app.FeePlanChangeRequestService;
+import com.concept.roster.app.ClassSectionDto;
+import com.concept.roster.app.ClassStructureService;
 import com.concept.fees.app.FeePlanService;
 import com.concept.fees.app.FeePlanView;
 import com.concept.tenant.TenantContext;
@@ -30,13 +32,16 @@ public class FeePlanController {
     private final FeePlanService feePlanService;
     private final FeePlanChangeRequestService changeRequestService;
     private final TenantContext tenantContext;
+    private final ClassStructureService classStructureService;
 
     public FeePlanController(FeePlanService feePlanService,
                              FeePlanChangeRequestService changeRequestService,
-                             TenantContext tenantContext) {
+                             TenantContext tenantContext,
+                             ClassStructureService classStructureService) {
         this.feePlanService = feePlanService;
         this.changeRequestService = changeRequestService;
         this.tenantContext = tenantContext;
+        this.classStructureService = classStructureService;
     }
 
     @GetMapping("/web/admin/fees/settings")
@@ -49,6 +54,16 @@ public class FeePlanController {
         model.addAttribute("feePlans", FeePlanView.of(
                 feePlanService.listPlans(tenantId, yearId),
                 planId -> feePlanService.instalmentsOf(planId, tenantId)));
+        // The school's own grades. As free text, "Grade 6" and "grade 6" were
+        // two plans, and a plan priced against a grade with no section reaches
+        // nobody -- while the invoice path refuses to bill a grade with no plan.
+        model.addAttribute("gradeOptions", classStructureService.listSections(tenantId).stream()
+                .map(ClassSectionDto::gradeName)
+                .filter(g -> g != null && !g.isBlank())
+                .map(String::trim)
+                .distinct()
+                .sorted()
+                .toList());
         return "fee_settings";
     }
 
