@@ -92,6 +92,45 @@ public class StaffService {
         return new StaffInvite(id, password, result.delivered(), result.detail());
     }
 
+    /**
+     * Issues a new temporary password for a staff member and returns it.
+     *
+     * <p>Students and guardians have had this from their profile page since
+     * Sprint 1. Staff had nothing at all: a teacher who lost the password from
+     * their invite could not get back in by any route, because there is no
+     * self-service reset either and the invite endpoint refuses an address that
+     * already has an account. The only remedy was to delete the person.
+     *
+     * <p>Scoped to this school and to staff roles, so it cannot be turned on a
+     * parent or student account, or on another school's teacher.
+     *
+     * @return the new password, to relay as the invite does
+     */
+    @Transactional
+    public String resetStaffPassword(UUID userId, UUID tenantId, Authentication authentication) {
+        if (tenantId == null) {
+            throw new IllegalArgumentException("No school context for this request.");
+        }
+        User staff = staffUserRepository.findByIdAndTenantId(userId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Staff member not found."));
+        if (!STAFF_ROLES.contains(staff.getRole())) {
+            // A parent or student reset belongs on the student profile, where it
+            // shows the guardian it affects. Routing it through here would let
+            // an admin reset a family login from a screen that does not say so.
+            throw new IllegalArgumentException(
+                    "Use the student profile to reset a student or guardian login.");
+        }
+
+        String password = generateTempPassword();
+        staff.setPasswordHash(passwordEncoder.encode(password));
+        staffUserRepository.save(staff);
+
+        auditLogService.log(authentication, "STAFF_PASSWORD_RESET", "User", staff.getId(),
+                "Issued a new temporary password for " + staff.getRole().name() + " "
+                        + staff.getFullName() + " (" + staff.getEmail() + ")");
+        return password;
+    }
+
     private String inviteBody(String fullName, String email, String password, UserRole role, String schoolName) {
         String school = schoolName == null || schoolName.isBlank() ? "your school" : schoolName;
         return """

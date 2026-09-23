@@ -58,6 +58,7 @@ public class DashboardController {
         model.addAttribute("allGradeNames", view.allGradeNames());
         model.addAttribute("totalStudents", view.totalStudents());
         model.addAttribute("activeAbsences", view.activeAbsences());
+        model.addAttribute("markedToday", view.markedToday());
         model.addAttribute("attendancePercentage", view.attendancePercentage());
         model.addAttribute("filterName", nameFilter != null ? nameFilter : "");
         model.addAttribute("filterGrade", gradeLevelFilter != null ? gradeLevelFilter : "");

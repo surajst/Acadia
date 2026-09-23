@@ -482,6 +482,41 @@
                                     return;
                                 }
 
+                                var reset = e.target.closest('[data-staff-reset]');
+                                if (reset) {
+                                    if (!confirm('Issue a new temporary password for ' + reset.dataset.name
+                                            + '? Their current password stops working straight away.')) {
+                                        return;
+                                    }
+                                    var res = await fetch('/web/admin/staff/' + reset.dataset.staffReset + '/reset-password', {
+                                        method: 'POST',
+                                        headers: csrfHeaders()
+                                    });
+                                    var out = await res.json().catch(function () { return {}; });
+                                    // Reported next to the staff table, not in the
+                                    // rewards panel this handler happens to live in
+                                    // -- that panel is hidden unless the admin opened
+                                    // it, and a password nobody sees is worse than no
+                                    // reset at all.
+                                    var staffErr = document.getElementById('staffAddError');
+                                    var staffOk = document.getElementById('staffAddSuccess');
+                                    if (!res.ok || out.error) {
+                                        staffErr.textContent = out.error || 'Could not reset that password.';
+                                        staffErr.classList.remove('hidden');
+                                        return;
+                                    }
+                                    staffErr.classList.add('hidden');
+                                    // Shown once, for the same reason the invite shows
+                                    // it: email is not configured, so if the admin does
+                                    // not see it now nobody ever will.
+                                    staffOk.innerHTML = 'New temporary password for <strong>'
+                                        + staffEscape(reset.dataset.name) + '</strong>: <strong>'
+                                        + staffEscape(out.temporaryPassword)
+                                        + '</strong><br>Give it to them now — it is not shown again.';
+                                    staffOk.classList.remove('hidden');
+                                    return;
+                                }
+
                                 var del = e.target.closest('[data-reward-delete]');
                                 if (del) {
                                     if (!confirm('Remove "' + del.dataset.title + '" from the marketplace? Rewards students have already redeemed are not affected.')) {
@@ -569,6 +604,7 @@
                                     <th class="py-2 pr-4">Email</th>
                                     <th class="py-2 pr-4">Role</th>
                                     <th class="py-2 pr-4">Status</th>
+                                    <th class="py-2 pr-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="staffTableBody">
@@ -939,7 +975,7 @@
                 const res = await fetch('/web/admin/staff');
                 const staff = await res.json();
                 if (!Array.isArray(staff) || staff.length === 0) {
-                    body.innerHTML = '<tr><td colspan="4" class="py-3 text-slate-500 text-xs">No staff yet. Invite your first teacher above.</td></tr>';
+                    body.innerHTML = '<tr><td colspan="5" class="py-3 text-slate-500 text-xs">No staff yet. Invite your first teacher above.</td></tr>';
                     return;
                 }
                 body.innerHTML = staff.map(function (s) {
@@ -958,6 +994,12 @@
                         '<td class="py-2 pr-4 text-slate-500">' + staffEscape(s.email) + '</td>' +
                         '<td class="py-2 pr-4 text-slate-600">' + staffEscape(s.role) + '</td>' +
                         '<td class="py-2 pr-4 text-xs font-semibold">' + status + '</td>' +
+                        // Staff had no row actions at all, so a teacher who lost
+                        // their temporary password could not be helped by anyone.
+                        '<td class="py-2 pr-4 text-right"><button type="button" ' +
+                        'class="text-xs font-semibold text-indigo-600 hover:text-indigo-800" ' +
+                        'data-staff-reset="' + staffEscape(s.id) + '" ' +
+                        'data-name="' + staffEscape(s.fullName) + '">Reset password</button></td>' +
                         '</tr>';
                 }).join('');
             } catch (e) {

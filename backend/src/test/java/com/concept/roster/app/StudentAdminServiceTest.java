@@ -173,8 +173,10 @@ public class StudentAdminServiceTest {
         assertNotNull(creds, "credentials should be relayed back");
         assertTrue(creds.contains("Guardian login"),
                 "the guardian must still get a login when another school holds that phone number, was: " + creds);
-        assertTrue(creds.contains("gurmeet919000012345@" + subdomain),
+        assertTrue(creds.contains("gurmeet.singh@" + subdomain),
                 "guardian username should be school-qualified, was: " + creds);
+        assertFalse(creds.contains(phone.replaceAll("[^0-9]", "")),
+                "a guardian's phone number must not be published as their username, was: " + creds);
     }
 
     @Test

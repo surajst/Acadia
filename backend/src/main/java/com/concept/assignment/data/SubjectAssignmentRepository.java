@@ -19,4 +19,13 @@ public interface SubjectAssignmentRepository extends TenantScopedRepository<Subj
     List<SubjectAssignment> findByClassSection(ClassSection classSection);
 
     boolean existsByTeacherAndClassSection(User teacher, ClassSection classSection);
+
+    /**
+     * The real uniqueness key. A teacher takes a section for one subject at a
+     * time, but nothing stops them taking it for two: the old check was on
+     * (teacher, section) alone, so assigning Priya to 6-A for Mathematics made
+     * 6-A Science impossible for her.
+     */
+    boolean existsByTeacherAndClassSectionAndSubjectName(User teacher, ClassSection classSection,
+                                                        String subjectName);
 }

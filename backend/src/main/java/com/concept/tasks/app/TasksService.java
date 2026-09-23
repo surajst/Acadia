@@ -24,6 +24,7 @@ import com.concept.tasks.app.TeacherTaskService;
 import com.concept.user.CurrentUserService;
 import com.concept.user.User;
 import com.concept.user.UserRepository;
+import com.concept.user.UserRole;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -152,6 +153,65 @@ public class TasksService {
      * assignments below are the same link {@link #teacherOwnsSection} already
      * uses to gate the attendance register.
      */
+    /**
+     * The grades this caller can set a task for: the ones they are assigned to,
+     * or every grade in the school for an admin or principal.
+     *
+     * <p>The form used to offer a fixed "Class 5" to "Class 10". A secondary
+     * school running grades 6, 7, 11 and 12 was shown four classes it does not
+     * have and missing two it does, and a task set against a grade with no
+     * section reaches nobody.
+     *
+     * <p>The value stays the numeric standard the task is stored against; only
+     * the list of them is now real. A grade whose name carries no number
+     * (Nursery, LKG) cannot be expressed as a standard and is left out rather
+     * than guessed at -- see the note on TeacherTask.standard.
+     *
+     * @return {value, label} pairs, ascending, never null
+     */
+    public List<Map<String, Object>> gradeOptionsForCaller(Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        if (tenantId == null) {
+            return List.of();
+        }
+        User caller = currentUserService.getCurrentUser(authentication).orElse(null);
+        if (caller == null) {
+            return List.of();
+        }
+
+        boolean seesWholeSchool = caller.getRole() == UserRole.ADMIN || caller.getRole() == UserRole.PRINCIPAL;
+        List<ClassSection> sections = seesWholeSchool
+                ? classSectionRepository.findByTenantId(tenantId)
+                : subjectAssignmentRepository.findByTeacher(caller).stream()
+                        .map(SubjectAssignment::getClassSection)
+                        .filter(sec -> sec != null && tenantId.equals(sec.getTenantId()))
+                        .distinct()
+                        .collect(Collectors.toList());
+
+        Map<Integer, String> byStandard = new java.util.TreeMap<>();
+        for (ClassSection section : sections) {
+            Integer standard = standardOf(section.getGradeName());
+            if (standard != null) {
+                byStandard.putIfAbsent(standard, section.getGradeName().trim());
+            }
+        }
+        return byStandard.entrySet().stream()
+                .map(e -> Map.<String, Object>of("value", e.getKey(), "label", e.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    /** The digits in a grade name, or null when it has none. */
+    private static Integer standardOf(String gradeName) {
+        if (gradeName == null) {
+            return null;
+        }
+        String digits = gradeName.replaceAll("[^0-9]", "");
+        if (digits.isEmpty() || digits.length() > 2) {
+            return null;
+        }
+        return Integer.valueOf(digits);
+    }
+
     public List<Map<String, String>> searchMyStudents(String query, Authentication authentication) {
         String username = authentication != null ? authentication.getName() : null;
         User teacher = username == null ? null : userRepository.findByEmail(username).orElse(null);

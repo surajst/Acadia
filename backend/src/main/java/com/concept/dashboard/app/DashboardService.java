@@ -177,16 +177,26 @@ public class DashboardService {
 
         long totalStudents = 0;
         long activeAbsences = 0;
+        long markedToday = 0;
         try {
             totalStudents = tenantId != null ? studentRepository.countByTenantId(tenantId) : 0;
             activeAbsences = tenantId != null
                     ? attendanceRepository.countByTenantIdAndAttendanceDateAndStatus(tenantId, LocalDate.now(), AttendanceStatus.ABSENT)
                     : 0;
+            markedToday = tenantId != null
+                    ? attendanceRepository.countByTenantIdAndAttendanceDate(tenantId, LocalDate.now())
+                    : 0;
         } catch (Exception e) {
             // gracefully catch
         }
-        int attendancePercentage = totalStudents == 0 ? 0
-                : (int) Math.round(((double) (totalStudents - activeAbsences) / totalStudents) * 100);
+        // Out of the children whose register was actually taken, not out of the
+        // whole school. Dividing by every enrolled student meant a morning
+        // before anyone had touched the register read "100% · 2 of 2 present",
+        // and taking one section then read the other section as present too.
+        // The student's own profile had it right all along ("No attendance
+        // recorded yet"); only this rollup disagreed.
+        int attendancePercentage = markedToday == 0 ? 0
+                : (int) Math.round(((double) (markedToday - activeAbsences) / markedToday) * 100);
 
         Map<String, Object> schoolProgress = Collections.emptyMap();
         if (principal) {
@@ -220,7 +230,7 @@ public class DashboardService {
                 .collect(Collectors.toList());
 
         return new RosterDashboardView(roster, allGradeNames, totalStudents, activeAbsences,
-                attendancePercentage, totalRosterPages, totalRosterItems, schoolProgress, feeSummary);
+                markedToday, attendancePercentage, totalRosterPages, totalRosterItems, schoolProgress, feeSummary);
     }
 
     @Transactional(readOnly = true)

@@ -12,6 +12,8 @@ public record RosterDashboardView(List<StudentRow> roster,
                                   List<String> allGradeNames,
                                   long totalStudents,
                                   long activeAbsences,
+                                  /** Register entries recorded today, of any status. */
+                                  long markedToday,
                                   int attendancePercentage,
                                   int totalPages,
                                   long totalRosterItems,

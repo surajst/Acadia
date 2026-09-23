@@ -87,13 +87,11 @@
 
                     <div class="space-y-1">
                         <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Class</label>
+                        <!-- Filled from the school's own class sections. A fixed
+                             Class 5-10 list showed grades the school does not run
+                             and hid the ones it does. -->
                         <select id="standard" required class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
-                            <option value="5">Class 5</option>
-                            <option value="6">Class 6</option>
-                            <option value="7">Class 7</option>
-                            <option value="8">Class 8</option>
-                            <option value="9">Class 9</option>
-                            <option value="10">Class 10</option>
+                            <option value="">Loading classes...</option>
                         </select>
                     </div>
 
@@ -347,7 +345,13 @@
         async function loadTasks() {
             try {
                 const response = await fetch('/api/teacher/tasks/my-tasks');
-                if (!response.ok) throw new Error('Fetch failed');
+                if (!response.ok) {
+                    // The status has to travel with the error, or the branch
+                    // below that explains a 403 can never be reached.
+                    const failure = new Error('Fetch failed');
+                    failure.status = response.status;
+                    throw failure;
+                }
                 
                 const tasks = await response.json();
                 const tbody = document.getElementById('tasksTableBody');
@@ -374,9 +378,38 @@
                     `;
                 }).join('');
             } catch (error) {
+                // Leaving the table on "Loading tasks..." forever is how a 403
+                // looked like a slow page. Say what happened instead.
                 console.error(error);
+                document.getElementById('tasksTableBody').innerHTML =
+                    '<tr><td colspan="7" class="px-4 py-12 text-center text-rose-600">' +
+                    'Could not load tasks. ' + (error && error.status === 403
+                        ? 'This page is for teachers - an admin account cannot list a teacher's tasks.'
+                        : 'Please reload the page.') +
+                    '</td></tr>';
             }
         }
+
+        async function loadGradeOptions() {
+            const select = document.getElementById('standard');
+            try {
+                const response = await fetch('/api/teacher/grade-options');
+                if (!response.ok) throw new Error('Fetch failed');
+                const grades = await response.json();
+                if (!grades.length) {
+                    select.innerHTML = '<option value="">No classes set up yet</option>';
+                    return;
+                }
+                select.innerHTML = grades
+                    .map(function (g) { return '<option value="' + g.value + '">' + g.label + '</option>'; })
+                    .join('');
+            } catch (error) {
+                console.error(error);
+                select.innerHTML = '<option value="">Could not load classes</option>';
+            }
+        }
+
+        loadGradeOptions();
     </script>
 
 

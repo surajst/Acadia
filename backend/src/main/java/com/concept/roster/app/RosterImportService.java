@@ -115,7 +115,7 @@ public class RosterImportService {
             if (firstName.isEmpty() || lastName.isEmpty()) {
                 willFail++;
                 outcomes.add(rowOutcome(rowNumber, label, "Error", "First and last name are required"));
-            } else if (parentPhone.isEmpty() || !parentPhone.matches("^\\+?[0-9\\s\\-()]{7,}$")) {
+            } else if (!PhoneNumbers.isValid(parentPhone)) {
                 willFail++;
                 outcomes.add(rowOutcome(rowNumber, label, "Error", "Invalid phone number format for parent"));
             } else if (grade.isEmpty() || section.isEmpty()) {
@@ -171,7 +171,7 @@ public class RosterImportService {
                 if (firstName.isEmpty() || lastName.isEmpty()) {
                     throw new IllegalArgumentException("First and last name are required");
                 }
-                if (parentPhone.isEmpty() || !parentPhone.matches("^\\+?[0-9\\s\\-()]{7,}$")) {
+                if (!PhoneNumbers.isValid(parentPhone)) {
                     throw new IllegalArgumentException("Invalid phone number format for parent");
                 }
                 if (grade.isEmpty() || section.isEmpty()) {
@@ -259,7 +259,8 @@ public class RosterImportService {
                 // Only create a parent login if this parent doesn't already have one
                 // (a reused parent from a prior row/upload keeps their existing login).
                 if (parent.getUserId() == null) {
-                    String parentUsername = schoolUsernames.forGuardian(parent.getFirstName(), parentPhone, tenantId);
+                    String parentUsername = schoolUsernames.forGuardian(
+                            parent.getFirstName(), parent.getLastName(), tenantId);
                     if (parentUsername != null) {
                         String parentPassword = generateTempPassword();
                         User parentUser = new User();

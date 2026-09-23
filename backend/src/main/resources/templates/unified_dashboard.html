@@ -59,7 +59,16 @@
                             <div class="track track--xs" style="margin-top:7px;">
                                 <div class="fill" th:style="'background:var(--success); width:' + ${attendancePercentage ?: 0} + '%'"></div>
                             </div>
-                            <p class="kpi-note" th:text="|${(totalStudents ?: 0) - (activeAbsences ?: 0)} of ${totalStudents ?: 0} present|">487 of 505 present</p>
+                            <!-- Says how many registers have been taken, not how many
+                                 children are enrolled. Before a register is taken
+                                 there is nothing to report, and reporting everyone
+                                 present is the one answer that is certainly wrong. -->
+                            <p class="kpi-note"
+                               th:with="marked=${markedToday ?: 0},total=${totalStudents ?: 0}"
+                               th:text="${marked == 0}
+                                          ? (${total} + ' students · register not taken yet')
+                                          : (${marked - (activeAbsences ?: 0)} + ' of ' + ${marked} + ' marked present'
+                                             + (${total > marked} ? ' · ' + ${total - marked} + ' not marked yet' : ''))">487 of 505 present</p>
                         </div>
 
                         <div class="kpi-cell">
@@ -359,12 +368,12 @@
                 <div class="space-y-1.5">
                     <label for="announcementGrade" class="field-label block">Target grade</label>
                     <select id="announcementGrade" name="targetGrade" required class="field">
+                        <!-- The school's own grades, the same list the roster
+                             filter above already uses. The fixed 6-10 showed a
+                             6-12 school two grades it does not have and hid the
+                             two it does. -->
                         <option value="ALL">All grades (school-wide)</option>
-                        <option value="Grade 6">Grade 6</option>
-                        <option value="Grade 7">Grade 7</option>
-                        <option value="Grade 8">Grade 8</option>
-                        <option value="Grade 9">Grade 9</option>
-                        <option value="Grade 10">Grade 10</option>
+                        <option th:each="grade : ${allGradeNames}" th:value="${grade}" th:text="${grade}">Grade 6</option>
                     </select>
                 </div>
                 <div class="space-y-1.5">

@@ -105,8 +105,13 @@ public class RosterImportServiceTest {
     }
 
     /** The guardian equivalent: first name + digits of the phone, school-qualified. */
-    private String guardianLogin(User admin, String firstName, String phone) {
-        return firstName.toLowerCase() + phone.replaceAll("[^0-9]", "") + "@" + subdomain(admin);
+    /**
+     * A guardian's login is their own name, school-qualified. It used to carry
+     * their full phone number -- "rohan9812345670@school" -- which published a
+     * parent's mobile as their username on a credentials sheet.
+     */
+    private String guardianLogin(User admin, String firstName, String lastName) {
+        return firstName.toLowerCase() + "." + lastName.toLowerCase() + "@" + subdomain(admin);
     }
 
     private String subdomain(User admin) {
@@ -133,10 +138,12 @@ public class RosterImportServiceTest {
         // pinned the very namespace collision that stopped the second school to
         // import a given roll number from getting any login at all.
         assertTrue(userRepository.existsByEmail(studentLogin(admin, "Aarav", "R1")));
-        assertTrue(userRepository.existsByEmail(guardianLogin(admin, "Rohan", "+91 9812345670")));
-        // And emphatically not under the bare values.
+        assertTrue(userRepository.existsByEmail(guardianLogin(admin, "Rohan", "Mehta")));
+        // And emphatically not under the bare values, nor under the phone number
+        // in any form -- that was the username until it was taken out of it.
         assertFalse(userRepository.existsByEmail("R1"));
         assertFalse(userRepository.existsByEmail("+91 9812345670"));
+        assertFalse(userRepository.existsByEmail("rohan9812345670@" + subdomain(admin)));
     }
 
     /**
@@ -171,8 +178,8 @@ public class RosterImportServiceTest {
                 "first school's pupil must keep their login");
         assertTrue(userRepository.existsByEmail(studentLogin(second, "Aarav", "R1")),
                 "second school's pupil must get a login of their own");
-        assertTrue(userRepository.existsByEmail(guardianLogin(first, "Rohan", "+91 9812345670")));
-        assertTrue(userRepository.existsByEmail(guardianLogin(second, "Rohan", "+91 9812345670")));
+        assertTrue(userRepository.existsByEmail(guardianLogin(first, "Rohan", "Mehta")));
+        assertTrue(userRepository.existsByEmail(guardianLogin(second, "Rohan", "Mehta")));
 
         // The row must say what was provisioned, so a blank credentials cell can
         // never again be the only sign that a login was skipped.
