@@ -298,8 +298,32 @@
                                     </div>
                                 </div>
 
-                                <p th:if="${(activeAbsences == null or activeAbsences == 0) and (feeSummary == null or feeSummary.get('totalInvoices') == null or feeSummary.get('totalInvoices') == 0 or feeSummary.get('collectionPercent') == null or feeSummary.get('collectionPercent') &gt;= 100)}"
+                                <p th:if="${totalStudents != null and totalStudents > 0 and (activeAbsences == null or activeAbsences == 0) and (feeSummary == null or feeSummary.get('totalInvoices') == null or feeSummary.get('totalInvoices') == 0 or feeSummary.get('collectionPercent') == null or feeSummary.get('collectionPercent') &gt;= 100)}"
                                    style="font-size:12.5px; color:var(--text-3);">Nothing needs you right now.</p>
+
+                                <!-- A school with nobody enrolled does not need
+                                     "Nothing needs you right now" -- it needs the
+                                     next step. This replaces an empty dashboard
+                                     with the order the work actually goes in, and
+                                     disappears the moment there are students. -->
+                                <div th:if="${totalStudents == null or totalStudents == 0}"
+                                     data-setup-checklist style="display:flex; flex-direction:column; gap:6px;">
+                                    <p style="font-size:12.5px; color:var(--text-3); margin-bottom:2px;">
+                                        Your school has no students yet. The usual order:
+                                    </p>
+                                    <a href="/web/onboard/setup" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        1 &middot; Classes and sections</a>
+                                    <a href="/web/admin/management" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        2 &middot; Invite your teachers</a>
+                                    <a href="/web/admin/assignments" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        3 &middot; Assign them to classes</a>
+                                    <a href="/web/management/upload" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        4 &middot; Add students</a>
+                                    <a href="/web/admin/timetable" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        5 &middot; Build the timetable</a>
+                                    <a href="/web/admin/fees/settings" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        6 &middot; Set fee plans</a>
+                                </div>
                             </div>
                         </div>
 
@@ -307,7 +331,7 @@
                             <p class="eyebrow" style="margin-bottom:8px;">Quick actions</p>
                             <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;">
                                 <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="qa-tile">
-                                    <span class="ico ico--sm ico--brand">&#9881;</span><span class="qa-label">School setup</span>
+                                    <span class="ico ico--sm ico--brand">&#9881;</span><span class="qa-label">School management</span>
                                 </a>
                                 <a th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}" href="/web/admin/fees" class="qa-tile">
                                     <span class="ico ico--sm ico--success">&#128179;</span><span class="qa-label">Fee ledger</span>
