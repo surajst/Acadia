@@ -34,7 +34,9 @@ public class SubjectAssignmentService {
      * @param isHomeClass    true if this teacher is the class teacher for this section
      * @return the saved SubjectAssignment
      * @throws IllegalArgumentException if teacher or section not found
-     * @throws IllegalStateException    if assignment already exists for this pair
+     * @throws IllegalStateException    if this teacher already has this section for
+     *                                  this subject, or the section already has a
+     *                                  different home class teacher
      */
     public SubjectAssignment assignSubject(UUID teacherId,
                                            UUID classSectionId,
@@ -47,16 +49,36 @@ public class SubjectAssignmentService {
         ClassSection section = classSectionRepository.findByIdAndTenantId(classSectionId, currentTenantId)
                 .orElseThrow(() -> new IllegalArgumentException("ClassSection not found: " + classSectionId));
 
-        if (assignmentRepository.existsByTeacherAndClassSection(teacher, section)) {
+        String subject = subjectName == null ? "" : subjectName.trim();
+        String sectionLabel = (section.getGradeName() + " " + section.getSectionName()).trim();
+
+        // Keyed on the subject too. Without it, giving Priya 6-A Mathematics
+        // made 6-A Science impossible for her -- a teacher who takes two
+        // subjects for one class is ordinary, not a duplicate.
+        if (assignmentRepository.existsByTeacherAndClassSectionAndSubjectName(teacher, section, subject)) {
             throw new IllegalStateException(
-                    "Assignment already exists for teacher " + teacherId + " and section " + classSectionId);
+                    teacher.getFullName() + " is already assigned to " + sectionLabel + " for " + subject + ".");
+        }
+
+        // A section has one home class teacher. That is the part the old rule
+        // was really protecting, and it was protecting it by accident.
+        if (isHomeClass) {
+            SubjectAssignment existingHome = assignmentRepository.findByClassSection(section).stream()
+                    .filter(SubjectAssignment::isHomeClass)
+                    .filter(a -> a.getTeacher() != null && !a.getTeacher().getId().equals(teacher.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (existingHome != null) {
+                throw new IllegalStateException(existingHome.getTeacher().getFullName()
+                        + " is already the home class teacher for " + sectionLabel + ".");
+            }
         }
 
         SubjectAssignment assignment = new SubjectAssignment();
         assignment.setId(UUID.randomUUID());
         assignment.setTeacher(teacher);
         assignment.setClassSection(section);
-        assignment.setSubjectName(subjectName);
+        assignment.setSubjectName(subject);
         assignment.setHomeClass(isHomeClass);
         // Inherit tenant/academic-year from the teacher's own context
         assignment.setTenantId(teacher.getTenantId());

@@ -50,12 +50,25 @@ public class SchoolUsernames {
     }
 
     /**
-     * Guardian login: first name + phone number, qualified by the school.
+     * Guardian login: the guardian's own name, qualified by the school --
+     * "rakesh.sharma@silverbrook", with a numeric suffix if that is taken.
+     *
+     * <p>This used to be first name + phone number, which published a parent's
+     * full mobile number as their username: "anil919876543210@demo", printed on
+     * the credentials banner, visible to anyone the sheet is handed to, and
+     * unchangeable afterwards because it is the login. A phone number also
+     * changes, and a username must not.
+     *
+     * <p>Existing guardians keep the username they were issued -- it is stored,
+     * not derived -- so this changes only who is created from here on.
      *
      * @return the username, or null when one cannot be formed or stays taken
      */
-    public String forGuardian(String firstName, String phoneNumber, UUID tenantId) {
-        return qualified(sanitise(firstName) + sanitise(phoneNumber), tenantId);
+    public String forGuardian(String firstName, String lastName, UUID tenantId) {
+        String first = sanitise(firstName);
+        String last = sanitise(lastName);
+        String seed = last.isEmpty() ? first : first + "." + last;
+        return qualified(seed, tenantId);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.concept.tenant;
 
+import com.concept.common.EmailDeliveryService;
 import com.concept.user.CurrentUserService;
 import com.concept.user.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,10 +26,32 @@ public class ShellAdvice {
 
     private final TenantRepository tenantRepository;
     private final CurrentUserService currentUserService;
+    private final EmailDeliveryService emailDeliveryService;
 
-    public ShellAdvice(TenantRepository tenantRepository, CurrentUserService currentUserService) {
+    public ShellAdvice(TenantRepository tenantRepository, CurrentUserService currentUserService,
+                       EmailDeliveryService emailDeliveryService) {
         this.tenantRepository = tenantRepository;
         this.currentUserService = currentUserService;
+        this.emailDeliveryService = emailDeliveryService;
+    }
+
+    /**
+     * Whether to warn an admin that no mail can leave this deployment.
+     *
+     * <p>Every invite currently says "Not emailed" in small print beneath a
+     * temporary password, which is the first and only notice an admin gets --
+     * and by then they may already have navigated away from the credential.
+     * Shown to ADMIN and PRINCIPAL only: a teacher cannot configure SMTP and
+     * does not need to be told the school has not.
+     */
+    @ModelAttribute("emailNotConfigured")
+    public boolean emailNotConfigured(org.springframework.security.core.Authentication authentication) {
+        if (emailDeliveryService.isConfigured() || authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equals("ROLE_ADMIN") || a.equals("ROLE_PRINCIPAL"));
     }
 
     /**

@@ -37,7 +37,15 @@ public class ApprovalRequest extends BaseTenantEntity {
     public enum Status {
         PENDING,
         APPROVED,
-        REJECTED
+        REJECTED,
+        /**
+         * Carried out without a second pair of eyes, because the school has no
+         * principal to provide one. Distinct from APPROVED so that a weaker
+         * control is visible in the record rather than indistinguishable from
+         * a decision somebody actually made. The column is varchar(20) with no
+         * check constraint, so this needs no migration.
+         */
+        AUTO_APPROVED
     }
 
     @Id

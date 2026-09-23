@@ -106,7 +106,11 @@ public class StudentAdminService {
             String guardianEmail = null;
             String guardianPassword = null;
             if (guardianPhone != null && !guardianPhone.isBlank()) {
-                guardianEmail = buildGuardianUsername(guardianFirstName, guardianPhone, tenantId);
+                // The same rule the CSV importer has always applied. This form
+                // had none, so "abc123" was accepted here and rejected from a
+                // spreadsheet -- and absence alerts then went nowhere.
+                PhoneNumbers.require(guardianPhone, "guardian");
+                guardianEmail = buildGuardianUsername(guardianFirstName, guardianLastName, tenantId);
                 if (guardianEmail != null) {
                     guardianPassword = generateTempPassword();
                 }
@@ -135,9 +139,9 @@ public class StudentAdminService {
         return schoolUsernames.forStudent(firstName, rollNumber, tenantId);
     }
 
-    /** Guardian login: first name + phone number, qualified by the school. */
-    private String buildGuardianUsername(String firstName, String phoneNumber, UUID tenantId) {
-        return schoolUsernames.forGuardian(firstName, phoneNumber, tenantId);
+    /** Guardian login: the guardian's own name, qualified by the school. */
+    private String buildGuardianUsername(String firstName, String lastName, UUID tenantId) {
+        return schoolUsernames.forGuardian(firstName, lastName, tenantId);
     }
 
     /**
@@ -202,7 +206,10 @@ public class StudentAdminService {
             if (existing != null) {
                 existing.setFirstName(guardianFirstName.trim());
                 existing.setLastName(guardianLastName != null ? guardianLastName.trim() : "");
-                if (guardianPhone != null) existing.setPhoneNumber(guardianPhone.trim());
+                if (guardianPhone != null && !guardianPhone.isBlank()) {
+                    PhoneNumbers.require(guardianPhone, "guardian");
+                    existing.setPhoneNumber(guardianPhone.trim());
+                }
                 parentRepository.save(existing);
                 auditLogService.log(authentication, "PARENT_UPDATED", "Parent", existing.getId(),
                         "Updated guardian for student " + firstName + " " + lastName);
@@ -210,7 +217,8 @@ public class StudentAdminService {
                 String gEmail = null;
                 String gPass = null;
                 if (guardianPhone != null && !guardianPhone.isBlank()) {
-                    gEmail = buildGuardianUsername(guardianFirstName, guardianPhone, tenantId);
+                    PhoneNumbers.require(guardianPhone, "guardian");
+                    gEmail = buildGuardianUsername(guardianFirstName, guardianLastName, tenantId);
                     if (gEmail != null) {
                         gPass = generateTempPassword();
                     }
@@ -301,13 +309,15 @@ public class StudentAdminService {
         User u = parent.getUserId() != null
                 ? userRepository.findByIdAndTenantId(parent.getUserId(), tenantId).orElse(null) : null;
         if (u == null) {
-            // Same story as students: keyed on the raw phone number, this threw
-            // when another school had already registered that number.
+            // Built from the guardian's own name. This passed the phone number
+            // here until the signature changed under it, which would have put
+            // the mobile number straight back into the username on any reset
+            // that had to create a login rather than reset one.
             String username = buildGuardianUsername(
-                    parent.getFirstName(), parent.getPhoneNumber(), tenantId);
+                    parent.getFirstName(), parent.getLastName(), tenantId);
             if (username == null) {
                 throw new IllegalArgumentException(
-                        "Cannot create a guardian login: a phone number and first name are required.");
+                        "Cannot create a guardian login: a name is required.");
             }
             u = new User();
             u.setId(UUID.randomUUID());

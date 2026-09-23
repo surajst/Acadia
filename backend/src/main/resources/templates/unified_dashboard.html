@@ -59,7 +59,16 @@
                             <div class="track track--xs" style="margin-top:7px;">
                                 <div class="fill" th:style="'background:var(--success); width:' + ${attendancePercentage ?: 0} + '%'"></div>
                             </div>
-                            <p class="kpi-note" th:text="|${(totalStudents ?: 0) - (activeAbsences ?: 0)} of ${totalStudents ?: 0} present|">487 of 505 present</p>
+                            <!-- Says how many registers have been taken, not how many
+                                 children are enrolled. Before a register is taken
+                                 there is nothing to report, and reporting everyone
+                                 present is the one answer that is certainly wrong. -->
+                            <p class="kpi-note"
+                               th:with="marked=${markedToday ?: 0},total=${totalStudents ?: 0}"
+                               th:text="${marked == 0}
+                                          ? (${total} + ' students · register not taken yet')
+                                          : (${marked - (activeAbsences ?: 0)} + ' of ' + ${marked} + ' marked present'
+                                             + (${total > marked} ? ' · ' + ${total - marked} + ' not marked yet' : ''))">487 of 505 present</p>
                         </div>
 
                         <div class="kpi-cell">
@@ -213,8 +222,18 @@
                                  style="max-height:100px; padding:16px 24px; display:flex; align-items:center; gap:12px;">
                                 <span class="ico ico--sm ico--neutral">&#128269;</span>
                                 <div>
-                                    <p style="font-size:14px; font-weight:600;">No students match your search</p>
-                                    <p style="font-size:12.5px; color:var(--text-3);">Try a different name or grade filter.</p>
+                                    <!-- A school with no students yet has not run a
+                                         failed search. Telling them to try a different
+                                         name offers no way forward at all. -->
+                                    <p style="font-size:14px; font-weight:600;"
+                                       th:text="${totalStudents == 0} ? 'No students yet' : 'No students match your search'">No students yet</p>
+                                    <p style="font-size:12.5px; color:var(--text-3);"
+                                       th:if="${totalStudents != 0}">Try a different name or grade filter.</p>
+                                    <p style="font-size:12.5px; color:var(--text-3);" th:if="${totalStudents == 0}">
+                                        <a href="/web/admin/management" style="color:var(--brand);">Add a student</a>
+                                        or <a href="/web/management/upload" style="color:var(--brand);">import a CSV</a>
+                                        to get started.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -266,15 +285,45 @@
                                      style="padding:10px 12px; border-radius:12px; background:var(--danger-50); border:1px solid var(--danger-200);">
                                     <span style="width:7px; height:7px; border-radius:50%; background:var(--danger); margin-top:6px; flex-shrink:0;"></span>
                                     <div>
-                                        <p style="font-size:13px; font-weight:600;">Fees still outstanding</p>
+                                        <!-- Worded to match what the condition above
+                                             actually tests: unpaid, not past due. It
+                                             used to say "overdue" and link to a
+                                             Defaulters page reporting nothing overdue,
+                                             because an instalment due next month is
+                                             unpaid without being late. -->
+                                        <p style="font-size:13px; font-weight:600;">Unpaid invoices</p>
                                         <p style="font-size:11.5px;">
-                                            <a href="/web/admin/fees/defaulters" style="color:var(--danger); font-weight:600;">See who is overdue</a>
+                                            <a href="/web/admin/fees" style="color:var(--danger); font-weight:600;">See the ledger</a>
                                         </p>
                                     </div>
                                 </div>
 
-                                <p th:if="${(activeAbsences == null or activeAbsences == 0) and (feeSummary == null or feeSummary.get('totalInvoices') == null or feeSummary.get('totalInvoices') == 0 or feeSummary.get('collectionPercent') == null or feeSummary.get('collectionPercent') &gt;= 100)}"
+                                <p th:if="${totalStudents != null and totalStudents > 0 and (activeAbsences == null or activeAbsences == 0) and (feeSummary == null or feeSummary.get('totalInvoices') == null or feeSummary.get('totalInvoices') == 0 or feeSummary.get('collectionPercent') == null or feeSummary.get('collectionPercent') &gt;= 100)}"
                                    style="font-size:12.5px; color:var(--text-3);">Nothing needs you right now.</p>
+
+                                <!-- A school with nobody enrolled does not need
+                                     "Nothing needs you right now" -- it needs the
+                                     next step. This replaces an empty dashboard
+                                     with the order the work actually goes in, and
+                                     disappears the moment there are students. -->
+                                <div th:if="${totalStudents == null or totalStudents == 0}"
+                                     data-setup-checklist style="display:flex; flex-direction:column; gap:6px;">
+                                    <p style="font-size:12.5px; color:var(--text-3); margin-bottom:2px;">
+                                        Your school has no students yet. The usual order:
+                                    </p>
+                                    <a href="/web/onboard/setup" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        1 &middot; Classes and sections</a>
+                                    <a href="/web/admin/management" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        2 &middot; Invite your teachers</a>
+                                    <a href="/web/admin/assignments" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        3 &middot; Assign them to classes</a>
+                                    <a href="/web/management/upload" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        4 &middot; Add students</a>
+                                    <a href="/web/admin/timetable" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        5 &middot; Build the timetable</a>
+                                    <a href="/web/admin/fees/settings" style="font-size:12.5px; color:var(--brand); font-weight:600;">
+                                        6 &middot; Set fee plans</a>
+                                </div>
                             </div>
                         </div>
 
@@ -282,7 +331,7 @@
                             <p class="eyebrow" style="margin-bottom:8px;">Quick actions</p>
                             <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;">
                                 <a th:if="${currentUserRole == 'ADMIN'}" href="/web/admin/management" class="qa-tile">
-                                    <span class="ico ico--sm ico--brand">&#9881;</span><span class="qa-label">School setup</span>
+                                    <span class="ico ico--sm ico--brand">&#9881;</span><span class="qa-label">School management</span>
                                 </a>
                                 <a th:if="${currentUserRole == 'ADMIN' or currentUserRole == 'PRINCIPAL'}" href="/web/admin/fees" class="qa-tile">
                                     <span class="ico ico--sm ico--success">&#128179;</span><span class="qa-label">Fee ledger</span>
@@ -359,12 +408,12 @@
                 <div class="space-y-1.5">
                     <label for="announcementGrade" class="field-label block">Target grade</label>
                     <select id="announcementGrade" name="targetGrade" required class="field">
+                        <!-- The school's own grades, the same list the roster
+                             filter above already uses. The fixed 6-10 showed a
+                             6-12 school two grades it does not have and hid the
+                             two it does. -->
                         <option value="ALL">All grades (school-wide)</option>
-                        <option value="Grade 6">Grade 6</option>
-                        <option value="Grade 7">Grade 7</option>
-                        <option value="Grade 8">Grade 8</option>
-                        <option value="Grade 9">Grade 9</option>
-                        <option value="Grade 10">Grade 10</option>
+                        <option th:each="grade : ${allGradeNames}" th:value="${grade}" th:text="${grade}">Grade 6</option>
                     </select>
                 </div>
                 <div class="space-y-1.5">

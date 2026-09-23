@@ -57,7 +57,9 @@ test.describe.serial('Real User Journey E2E Specs', () => {
     
     // Open fee management page, assert KPI cards are visible
     await page.goto('/web/admin/fees');
-    await expect(page.locator('text=Total Revenue Target')).toBeVisible();
+    // "Total Revenue Target" implied the fee plans alone; the figure also
+    // counts one-off custom invoices, so the card says Total Billed.
+    await expect(page.locator('text=Total Billed')).toBeVisible();
     await expect(page.locator('text=Total Collected Invoices')).toBeVisible();
 
     // Post a new announcement, assert it appears in the list

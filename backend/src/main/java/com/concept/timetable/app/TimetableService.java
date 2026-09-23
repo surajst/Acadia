@@ -1,5 +1,7 @@
 package com.concept.timetable.app;
 
+import com.concept.assignment.data.SubjectAssignment;
+import com.concept.assignment.data.SubjectAssignmentRepository;
 import com.concept.common.AuditLogService;
 import com.concept.shared.data.Attendance;
 import com.concept.shared.data.AttendanceRepository;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -64,6 +68,7 @@ public class TimetableService {
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
     private final CurrentUserService currentUserService;
+    private final SubjectAssignmentRepository subjectAssignmentRepository;
     private final boolean devMode;
 
     public TimetableService(TimetableRepository timetableRepository,
@@ -72,6 +77,7 @@ public class TimetableService {
                             UserRepository userRepository,
                             AuditLogService auditLogService,
                             CurrentUserService currentUserService,
+                            SubjectAssignmentRepository subjectAssignmentRepository,
                             @Value("${app.dev-mode:false}") boolean devMode) {
         this.timetableRepository = timetableRepository;
         this.classSectionRepository = classSectionRepository;
@@ -79,6 +85,7 @@ public class TimetableService {
         this.userRepository = userRepository;
         this.auditLogService = auditLogService;
         this.currentUserService = currentUserService;
+        this.subjectAssignmentRepository = subjectAssignmentRepository;
         this.devMode = devMode;
     }
 
@@ -188,6 +195,127 @@ public class TimetableService {
         return entries.stream().map(this::toMap).collect(Collectors.toList());
     }
 
+
+    // ─── Slot validation ────────────────────────────────────────────────────
+    //
+    // A timetable had no server-side rules at all: the same teacher could be
+    // put in two rooms at once, a class could be given two subjects in the
+    // same period, and a period could run from 10:00 to 09:00. None of that is
+    // a preference -- each one describes something that cannot happen -- so it
+    // is refused here rather than in the form, which an HTTP client ignores.
+
+    /**
+     * A clash the admin should know about but which is not, by itself,
+     * impossible. Returned alongside the saved entry rather than thrown.
+     */
+    public record SlotWarning(String message) {}
+
+    private LocalTime parseTime(String raw, String field) {
+        if (raw == null || raw.isBlank()) {
+            throw TimetableException.badRequest(field + " is required, as HH:mm.");
+        }
+        try {
+            return LocalTime.parse(raw.trim());
+        } catch (DateTimeParseException e) {
+            throw TimetableException.badRequest(field + " must look like 09:30, got \"" + raw + "\".");
+        }
+    }
+
+    /** Half-open overlap: touching at an edge (08:45-09:30 after 08:00-08:45) is fine. */
+    private boolean overlaps(LocalTime aStart, LocalTime aEnd, String bStartRaw, String bEndRaw) {
+        LocalTime bStart;
+        LocalTime bEnd;
+        try {
+            bStart = LocalTime.parse(bStartRaw.trim());
+            bEnd = LocalTime.parse(bEndRaw.trim());
+        } catch (RuntimeException e) {
+            // A pre-existing row with unparseable times cannot be compared, and
+            // must not block a new entry that is itself valid.
+            return false;
+        }
+        return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
+    }
+
+    private String sectionLabel(ClassSection section) {
+        return (section.getGradeName() + " " + section.getSectionName()).trim();
+    }
+
+    /**
+     * Checks a slot against everything already on the timetable.
+     *
+     * @param entryId the row being edited, excluded from the clash search so
+     *                that saving an entry unchanged does not clash with itself
+     * @return warnings worth showing, never null
+     */
+    private List<SlotWarning> validateSlot(UUID entryId, ClassSection section, User teacher, String day,
+                                           int periodNumber, String startRaw, String endRaw) {
+        LocalTime start = parseTime(startRaw, "Start time");
+        LocalTime end = parseTime(endRaw, "End time");
+        if (!end.isAfter(start)) {
+            throw TimetableException.badRequest(
+                    "A period has to end after it starts — " + startRaw + " to " + endRaw + " does not.");
+        }
+
+        // The same teacher cannot be in two places at once. Checked across every
+        // section, which is the whole point: the clash the admin cannot see is
+        // the one in the class they are not looking at.
+        for (TimetableEntry other : timetableRepository
+                .findByTeacherIdAndDayOfWeekOrderByPeriodNumber(teacher.getId(), day)) {
+            if (other.getId().equals(entryId)) continue;
+            if (overlaps(start, end, other.getStartTime(), other.getEndTime())) {
+                String where = other.getClassSection() != null
+                        ? sectionLabel(other.getClassSection()) : "another class";
+                throw TimetableException.badRequest(teacher.getFullName() + " is already teaching "
+                        + where + " on " + day + " from " + other.getStartTime() + " to " + other.getEndTime() + ".");
+            }
+        }
+
+        // And a class cannot be taught two things at once. Same period number
+        // counts as a clash even if the times were typed differently, because
+        // the period is what the rest of the school day is organised around.
+        for (TimetableEntry other : timetableRepository.findByClassSectionId(section.getId())) {
+            if (other.getId().equals(entryId)) continue;
+            if (!day.equals(other.getDayOfWeek())) continue;
+
+            if (other.getPeriodNumber() == periodNumber) {
+                throw TimetableException.badRequest(sectionLabel(section) + " already has "
+                        + other.getSubjectName() + " in period " + periodNumber + " on " + day + ".");
+            }
+            if (overlaps(start, end, other.getStartTime(), other.getEndTime())) {
+                throw TimetableException.badRequest(sectionLabel(section) + " already has "
+                        + other.getSubjectName() + " on " + day + " from " + other.getStartTime()
+                        + " to " + other.getEndTime() + ".");
+            }
+        }
+
+        return teachesThere(teacher, section, null);
+    }
+
+    /**
+     * Whether this teacher is assigned to this section.
+     *
+     * <p>Deliberately a warning rather than a refusal. Schools really do put a
+     * colleague in front of a class for a term, and an admin building their
+     * first timetable has usually not filled in Teacher Assignments yet —
+     * refusing here would block the ordinary path exactly the way the fee
+     * approval gate did.
+     */
+    private List<SlotWarning> teachesThere(User teacher, ClassSection section, String subjectName) {
+        List<SubjectAssignment> assignments = subjectAssignmentRepository.findByClassSection(section);
+        if (assignments.isEmpty()) {
+            // Nothing configured for this section at all: silence is not a
+            // signal, so say nothing.
+            return List.of();
+        }
+        boolean assignedHere = assignments.stream()
+                .anyMatch(a -> a.getTeacher() != null && teacher.getId().equals(a.getTeacher().getId()));
+        if (assignedHere) {
+            return List.of();
+        }
+        return List.of(new SlotWarning(teacher.getFullName() + " is not assigned to "
+                + sectionLabel(section) + " in Teacher Assignments. The period was saved anyway."));
+    }
+
     public Map<String, Object> adminCreate(TimetableEntryRequest request, Authentication authentication) {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         ClassSection classSection = classSectionRepository.findByIdAndTenantId(request.getClassSectionId(), tenantId).orElse(null);
@@ -201,6 +329,8 @@ public class TimetableService {
         if (!VALID_DAYS.contains(request.getDayOfWeek())) {
             throw TimetableException.badRequest("dayOfWeek must be one of " + VALID_DAYS);
         }
+        List<SlotWarning> warnings = validateSlot(null, classSection, teacher, request.getDayOfWeek(),
+                request.getPeriodNumber(), request.getStartTime(), request.getEndTime());
 
         TimetableEntry entry = new TimetableEntry();
         entry.setId(UUID.randomUUID());
@@ -219,7 +349,7 @@ public class TimetableService {
         auditLogService.log(authentication, "TIMETABLE_ENTRY_ADDED", "TimetableEntry", entry.getId(),
                 "Added " + entry.getDayOfWeek() + " period " + entry.getPeriodNumber() + " (" + entry.getSubjectName()
                         + ") for " + classSection.getGradeName() + " - " + classSection.getSectionName());
-        return toMap(entry);
+        return withWarnings(toMap(entry), warnings);
     }
 
     public Map<String, Object> adminUpdate(UUID id, TimetableEntryRequest request, Authentication authentication) {
@@ -254,10 +384,28 @@ public class TimetableService {
         if (request.getSubjectName() != null) entry.setSubjectName(request.getSubjectName());
         if (request.getRoomNumber() != null) entry.setRoomNumber(request.getRoomNumber());
 
+        // Validated after the merge rather than from the request: every field
+        // on an update is optional, so only the resulting row says what this
+        // period will actually be. The entry's own id is excluded, or moving a
+        // period by five minutes would clash with where it already is.
+        User onDuty = userRepository.findByIdAndTenantId(entry.getTeacherId(), tenantId).orElse(null);
+        List<SlotWarning> warnings = onDuty == null ? List.of()
+                : validateSlot(entry.getId(), entry.getClassSection(), onDuty, entry.getDayOfWeek(),
+                        entry.getPeriodNumber(), entry.getStartTime(), entry.getEndTime());
+
         timetableRepository.save(entry);
         auditLogService.log(authentication, "TIMETABLE_ENTRY_UPDATED", "TimetableEntry", entry.getId(),
                 "Updated " + entry.getDayOfWeek() + " period " + entry.getPeriodNumber() + " (" + entry.getSubjectName() + ")");
-        return toMap(entry);
+        return withWarnings(toMap(entry), warnings);
+    }
+
+    private Map<String, Object> withWarnings(Map<String, Object> body, List<SlotWarning> warnings) {
+        if (warnings.isEmpty()) {
+            return body;
+        }
+        Map<String, Object> withWarnings = new LinkedHashMap<>(body);
+        withWarnings.put("warnings", warnings.stream().map(SlotWarning::message).collect(Collectors.toList()));
+        return withWarnings;
     }
 
     public Map<String, Object> adminDelete(UUID id, Authentication authentication) {

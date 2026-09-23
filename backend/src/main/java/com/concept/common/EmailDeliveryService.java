@@ -22,6 +22,18 @@ public interface EmailDeliveryService {
     EmailResult send(String toAddress, String subject, String body);
 
     /**
+     * Whether this deployment can actually send mail.
+     *
+     * <p>Separate from {@link #send} so an admin can be told before they invite
+     * anybody, rather than after: today the first sign is a line of small print
+     * under a temporary password they may already have navigated away from.
+     * Defaults to true, so a real provider does not have to remember to say so.
+     */
+    default boolean isConfigured() {
+        return true;
+    }
+
+    /**
      * @param delivered whether the provider accepted the message
      * @param detail    human-readable outcome, shown to an admin when it failed
      */

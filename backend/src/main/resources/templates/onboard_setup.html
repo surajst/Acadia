@@ -58,6 +58,7 @@
                 <div class="step-dot" data-step="2"></div>
                 <div class="step-dot" data-step="3"></div>
                 <div class="step-dot" data-step="4"></div>
+                <div class="step-dot" data-step="5"></div>
             </div>
 
             <!-- Step 1: Grades & Sections -->
@@ -94,8 +95,17 @@
                         <label class="block text-xs text-slate-500 mb-1">Room (optional)</label>
                         <input id="roomNumber" class="form-field rounded-xl text-sm px-3 py-2" placeholder="Room 101">
                     </div>
+                    <div>
+                        <!-- Asked for here because this is the only place most
+                             sections are ever created. Without it every class
+                             showed "0 / 0" on the Classrooms page forever. -->
+                        <label class="block text-xs text-slate-500 mb-1">Seats (optional)</label>
+                        <input id="totalCapacity" type="number" min="1"
+                               class="form-field rounded-xl text-sm px-3 py-2 w-24" placeholder="30">
+                    </div>
                     <button type="submit" class="btn-primary text-sm font-medium px-4 py-2 rounded-xl transition-colors">Add</button>
                 </form>
+                <p id="classSectionError" class="hidden text-sm text-rose-600 mt-2"></p>
 
                 <div class="flex justify-end mt-6">
                     <button onclick="goToStep(2)" class="btn-primary text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
@@ -107,8 +117,8 @@
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Step 2 &middot; Subjects</h2>
                 <p class="text-sm text-slate-500 mb-4">
                     Every ACADIA school starts with 5 default subjects (Math, Science, Social Science, English, Language)
-                    already active — this step is optional. Add, rename, or deactivate subjects, and assign them per grade,
-                    on the Subjects page.
+                    already active — this step is optional. You can add, rename or deactivate them here, or later
+                    from <a href="/web/admin/subjects" class="text-indigo-600 font-medium">Subjects</a> in the sidebar.
                 </p>
                 <button type="button" id="toggleSubjectsBtn" onclick="toggleSubjectsManager()" class="inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors border border-slate-300">
                     Manage Subjects
@@ -129,8 +139,8 @@
             <section class="step-panel glass-panel rounded-2xl p-6" data-step-panel="3">
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Step 3 &middot; Invite Staff</h2>
                 <p class="text-sm text-slate-500 mb-4">
-                    Add teachers and additional admins to your school. Invited staff need a PRINCIPAL or ADMIN to approve
-                    them before they can log in — you can do that later from the Staff page.
+                    Add teachers and additional admins to your school. Each one can sign in straight away with the
+                    temporary password shown here — inviting them from this console is the approval.
                 </p>
 
                 <table class="w-full text-sm mb-6">
@@ -173,10 +183,35 @@
                 </div>
             </section>
 
-            <!-- Step 4: Done -->
-            <section class="step-panel glass-panel rounded-2xl p-6 text-center" data-step-panel="4">
+            <!-- Step 4: Students.
+                 The wizard walked an admin through classes, subjects and staff
+                 and then stopped, leaving the one thing a school is actually
+                 for to be discovered later. It links to the two real routes
+                 rather than duplicating either form, so there is one place
+                 each of them is maintained. -->
+            <section class="step-panel glass-panel rounded-2xl p-6" data-step-panel="4">
+                <h2 class="text-lg font-semibold text-slate-900 mb-1">Step 4 &middot; Students</h2>
+                <p class="text-sm text-slate-500 mb-4">
+                    Add your first students, one at a time or from a spreadsheet. Each one gets a login,
+                    and so does their guardian — you will be shown both once, so keep them.
+                </p>
+                <div class="flex flex-wrap gap-3">
+                    <a href="/web/management/upload" target="_blank"
+                       class="btn-primary text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors">Import a spreadsheet</a>
+                    <a href="/web/admin/management" target="_blank"
+                       class="text-sm font-medium px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors">Add one student</a>
+                </div>
+                <p class="text-xs text-slate-400 mt-3">Opens in a new tab, so you keep your place here.</p>
+                <div class="flex justify-between mt-6">
+                    <button onclick="goToStep(3)" class="text-slate-500 hover:text-slate-900 text-sm px-4 py-2">&larr; Back</button>
+                    <button onclick="goToStep(5)" class="btn-primary text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Continue &rarr;</button>
+                </div>
+            </section>
+
+            <!-- Step 5: Done -->
+            <section class="step-panel glass-panel rounded-2xl p-6 text-center" data-step-panel="5">
                 <h2 class="text-2xl font-bold text-slate-900 mb-2">You're all set!</h2>
-                <p class="text-sm text-slate-500 mb-6">Your school is ready. You can add students and parents from the Admin Dashboard.</p>
+                <p class="text-sm text-slate-500 mb-6">Your school is ready. Fee plans and the timetable are on the dashboard whenever you want them.</p>
                 <a href="/web/onboard/complete" class="inline-block btn-primary text-sm font-semibold px-6 py-3 rounded-xl transition-colors">Go to Dashboard</a>
             </section>
         </main>
@@ -279,17 +314,39 @@
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalLabel = submitBtn.textContent;
             submitBtn.textContent = 'Adding…'; submitBtn.disabled = true;
+            const errorBox = document.getElementById('classSectionError');
+            errorBox.classList.add('hidden');
             const params = new URLSearchParams({
                 gradeName: document.getElementById('gradeName').value.trim(),
                 sectionName: document.getElementById('sectionName').value.trim(),
                 roomNumber: document.getElementById('roomNumber').value.trim(),
             });
+            const capacity = document.getElementById('totalCapacity').value.trim();
+            if (capacity) {
+                params.set('totalCapacity', capacity);
+            }
             try {
-                await fetch('/web/admin/class-sections/add', {
+                const res = await fetch('/web/admin/class-sections/add', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: params.toString(),
                 });
+                // The response was thrown away, so a refused section -- a
+                // duplicate, say -- looked exactly like a successful one and
+                // the form reset as if it had worked. The endpoint answers with
+                // a redirect either way (the management page posts a real
+                // form), so the outcome is in the URL fetch landed on, not in
+                // the status.
+                var landed = res.url || '';
+                var failed = landed.indexOf('sectionError=') !== -1;
+                if (!res.ok || failed) {
+                    var reason = failed
+                        ? decodeURIComponent(landed.split('sectionError=')[1].split('&')[0].replace(/\+/g, ' '))
+                        : 'Could not add that class. Please try again.';
+                    errorBox.textContent = reason;
+                    errorBox.classList.remove('hidden');
+                    return;
+                }
                 e.target.reset();
                 await loadClassSections();
             } finally {

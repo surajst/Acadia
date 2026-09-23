@@ -72,6 +72,10 @@ public class TenantOnboardingService {
         if (tenantRepository.existsBySubdomain(subdomain)) {
             throw new DuplicateSubdomainException(subdomain);
         }
+        // The signup form is where mixed case entered in the first place: the
+        // founding admin registered as "Suraj10@gmail.com" and could then only
+        // sign in in lowercase.
+        adminEmail = User.normaliseEmail(adminEmail);
         if (userRepository.existsByEmail(adminEmail)) {
             throw new DuplicateEmailException(adminEmail);
         }

@@ -115,7 +115,7 @@ public class RosterImportService {
             if (firstName.isEmpty() || lastName.isEmpty()) {
                 willFail++;
                 outcomes.add(rowOutcome(rowNumber, label, "Error", "First and last name are required"));
-            } else if (parentPhone.isEmpty() || !parentPhone.matches("^\\+?[0-9\\s\\-()]{7,}$")) {
+            } else if (!PhoneNumbers.isValid(parentPhone)) {
                 willFail++;
                 outcomes.add(rowOutcome(rowNumber, label, "Error", "Invalid phone number format for parent"));
             } else if (grade.isEmpty() || section.isEmpty()) {
@@ -130,7 +130,11 @@ public class RosterImportService {
                 outcomes.add(rowOutcome(rowNumber, label, "Skip", "Roll number " + rollNumber + " already exists"));
             } else {
                 willCreate++;
-                outcomes.add(rowOutcome(rowNumber, label, "Create", "Grade " + grade + " · Section " + section));
+                // The CSV's grade column already reads "Grade 6", so prefixing it
+                // again produced "Grade Grade 6 · Section B" in the preview.
+                String gradeLabel = grade.trim().toLowerCase(java.util.Locale.ROOT).startsWith("grade")
+                        ? grade.trim() : "Grade " + grade.trim();
+                outcomes.add(rowOutcome(rowNumber, label, "Create", gradeLabel + " · Section " + section));
             }
         }
 
@@ -171,7 +175,7 @@ public class RosterImportService {
                 if (firstName.isEmpty() || lastName.isEmpty()) {
                     throw new IllegalArgumentException("First and last name are required");
                 }
-                if (parentPhone.isEmpty() || !parentPhone.matches("^\\+?[0-9\\s\\-()]{7,}$")) {
+                if (!PhoneNumbers.isValid(parentPhone)) {
                     throw new IllegalArgumentException("Invalid phone number format for parent");
                 }
                 if (grade.isEmpty() || section.isEmpty()) {
@@ -259,7 +263,8 @@ public class RosterImportService {
                 // Only create a parent login if this parent doesn't already have one
                 // (a reused parent from a prior row/upload keeps their existing login).
                 if (parent.getUserId() == null) {
-                    String parentUsername = schoolUsernames.forGuardian(parent.getFirstName(), parentPhone, tenantId);
+                    String parentUsername = schoolUsernames.forGuardian(
+                            parent.getFirstName(), parent.getLastName(), tenantId);
                     if (parentUsername != null) {
                         String parentPassword = generateTempPassword();
                         User parentUser = new User();
@@ -339,6 +344,7 @@ public class RosterImportService {
                 if (role != UserRole.ADMIN && role != UserRole.PRINCIPAL && role != UserRole.TEACHER && role != UserRole.DRIVER) {
                     throw new IllegalArgumentException("Role must be TEACHER, PRINCIPAL, ADMIN, or DRIVER");
                 }
+                email = User.normaliseEmail(email);
                 if (userRepository.existsByEmail(email)) {
                     skipped++;
                     outcomes.add(rowOutcome(rowNumber, label, "Skipped", "Email already in use: " + email));
@@ -355,7 +361,10 @@ public class RosterImportService {
                 staff.setFullName(fullName);
                 staff.setRole(role);
                 staff.setActive(true);
-                staff.setApprovalStatus(User.ApprovalStatus.PENDING);
+                // Same reasoning as StaffService.addStaff: this importer runs
+                // under an authenticated ADMIN, who is one of the two roles the
+                // approval queue exists to wait for.
+                staff.setApprovalStatus(User.ApprovalStatus.APPROVED);
                 userRepository.save(staff);
 
                 created++;

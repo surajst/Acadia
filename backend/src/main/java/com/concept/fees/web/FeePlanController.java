@@ -74,15 +74,26 @@ public class FeePlanController {
             for (int i = 0; i < labels.size(); i++) {
                 specs.add(new FeePlanService.InstalmentSpec(labels.get(i), amounts.get(i), offsets.get(i)));
             }
-            changeRequestService.requestPlanSave(gradeLevel, specs,
+            FeePlanChangeRequestService.Outcome outcome = changeRequestService.requestPlanSave(
+                    gradeLevel, specs,
                     tenantContext.getTenantId().orElse(null),
                     tenantContext.getAcademicYearId().orElse(null),
                     authentication);
-            ra.addFlashAttribute("successMessage",
-                    "Sent to the principal for approval. The current plan for " + gradeLevel.trim()
+            ra.addFlashAttribute("successMessage", outcome.applied()
+                    ? "Saved. " + gradeLevel.trim() + " fees are in force now. This school has no "
+                            + "principal, so the change was applied without a second approver and "
+                            + "recorded that way in the audit log."
+                    : "Sent to the principal for approval. The current plan for " + gradeLevel.trim()
                             + " is unchanged until they agree.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
+            // Hand the submitted rows back so the page can refill the form. A
+            // plan is a dozen typed figures, and clearing them on a validation
+            // error means retyping all of it to fix one.
+            ra.addFlashAttribute("submittedGradeLevel", gradeLevel);
+            ra.addFlashAttribute("submittedLabels", labels);
+            ra.addFlashAttribute("submittedAmounts", amounts);
+            ra.addFlashAttribute("submittedOffsets", offsets);
         }
         return "redirect:/web/admin/fees/settings";
     }
@@ -92,9 +103,12 @@ public class FeePlanController {
     public String deletePlan(@PathVariable("id") UUID id, Authentication authentication,
                              RedirectAttributes ra) {
         try {
-            changeRequestService.requestPlanDelete(id, tenantContext.getTenantId().orElse(null), authentication);
-            ra.addFlashAttribute("successMessage",
-                    "Sent to the principal for approval. The plan is still in place until they agree.");
+            FeePlanChangeRequestService.Outcome outcome = changeRequestService.requestPlanDelete(
+                    id, tenantContext.getTenantId().orElse(null), authentication);
+            ra.addFlashAttribute("successMessage", outcome.applied()
+                    ? "Removed. This school has no principal, so the change was applied without a "
+                            + "second approver and recorded that way in the audit log."
+                    : "Sent to the principal for approval. The plan is still in place until they agree.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }

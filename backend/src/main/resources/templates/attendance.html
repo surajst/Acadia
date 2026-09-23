@@ -82,6 +82,17 @@
 
         function openModal(e) {
             e.preventDefault();
+            // The dialog names the date being saved, so it has to follow the
+            // picker -- confirming "21 May" and saving 18 May is the kind of
+            // mistake nobody notices until a parent asks.
+            var picked = document.getElementById('attendanceDatePicker');
+            var label = document.querySelector('[data-confirm-date]');
+            if (picked && picked.value && label) {
+                var parts = picked.value.split('-');
+                var months = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+                label.textContent = Number(parts[2]) + ' ' + months[Number(parts[1]) - 1] + ' ' + parts[0];
+            }
             document.getElementById('confirmModal').classList.remove('hidden');
         }
 
@@ -226,7 +237,7 @@
                                 Take Daily Attendance
                             </h2>
                             <p class="text-sm text-slate-500 mt-2 max-w-2xl leading-relaxed">
-                                Mark and review daily attendance logs for active classroom profiles. High-contrast indicators ensure correct entry.
+                                Take today's register, or go back and correct one from the last 30 days.
                             </p>
                         </div>
                         
@@ -235,9 +246,16 @@
                             <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#F4F6FB]/80 text-indigo-700 border border-indigo-500/20" th:text="${currentClassLabel != null ? currentClassLabel : 'All Classes'}">
                                 Grade 6 - A
                             </span>
-                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#F4F6FB]/80 text-emerald-700 border border-emerald-500/20" th:text="${#temporals.format(currentDate, 'MMMM dd, yyyy')}">
-                                May 21, 2026
-                            </span>
+                            <!-- A date, not a label. A teacher who was off on
+                                 Monday had no way to enter Monday's register,
+                                 and no way to correct a mistake afterwards. -->
+                            <label class="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-semibold bg-[#F4F6FB]/80 text-emerald-700 border border-emerald-500/20">
+                                <span>Date</span>
+                                <input type="date" id="attendanceDatePicker" form="attendanceForm" name="attendanceDate"
+                                       class="bg-transparent text-emerald-800 font-semibold outline-none"
+                                       th:value="${#temporals.format(currentDate, 'yyyy-MM-dd')}"
+                                       th:max="${#temporals.format(currentDate, 'yyyy-MM-dd')}">
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -273,7 +291,7 @@
                 <div class="p-6 border-b border-slate-200/60 bg-[#F4F6FB]/90 flex justify-between items-center">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900 tracking-tight">Student Roll Call Ledger</h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Toggle markers to switch student attendance state natively</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Tap a name to change whether they are present</p>
                     </div>
                 </div>
 
@@ -366,7 +384,14 @@
             </div>
             <h3 class="text-2xl font-black text-center text-slate-900 mb-2 tracking-tight">Confirm Submission</h3>
             <p class="text-center text-slate-500 mb-6 text-sm leading-relaxed">
-                This action is final. Parent alerts and WhatsApp notifications will be immediately dispatched for any students marked <strong class="text-rose-400">ABSENT</strong>. Are you sure you want to save this attendance log?
+                <!-- It is not final: a register can be corrected within 30 days
+                     by submitting it again for the same date. Saying otherwise
+                     made teachers afraid to record anything they were unsure of,
+                     which is how a register ends up blank. -->
+                Guardians of any child marked <strong class="text-rose-400">ABSENT</strong> are notified
+                straight away. You can correct this register later by saving it again for the same date.</p>
+            <p class="text-center text-slate-500 mb-6 text-sm leading-relaxed">
+                Save attendance for <strong data-confirm-date th:text="${#temporals.format(currentDate, 'd MMMM yyyy')}">21 May 2026</strong>?
             </p>
             <div class="flex gap-4">
                 <button type="button" onclick="closeModal()" class="flex-1 bg-[#F4F6FB] text-slate-600 hover:bg-white font-bold py-3 border border-slate-200/60 rounded-xl transition-colors cursor-pointer text-sm">

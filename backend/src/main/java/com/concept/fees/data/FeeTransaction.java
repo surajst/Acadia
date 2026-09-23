@@ -42,6 +42,14 @@ public class FeeTransaction extends BaseTenantEntity {
     private String note;
 
     /**
+     * The bank's own reference: a UPI transaction id, a cheque number, an NEFT
+     * UTR. Separate from {@link #note}, which says why a payment was reversed.
+     * Null for cash, and for every row taken before the field existed.
+     */
+    @Column(name = "payment_reference", length = 64)
+    private String paymentReference;
+
+    /**
      * Sequential per school per year, starting at 1. Null on a reversal: it is
      * a correction to a payment already receipted, not a new one collected
      * across the counter, and giving it its own number would make the
@@ -114,6 +122,14 @@ public class FeeTransaction extends BaseTenantEntity {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public String getPaymentReference() {
+        return paymentReference;
+    }
+
+    public void setPaymentReference(String paymentReference) {
+        this.paymentReference = paymentReference;
     }
 
     public boolean isReversal() {

@@ -263,8 +263,11 @@ test.describe('UI: Teacher Assignments nav link in admin_management', () => {
     await page.goto('/web/admin/management');
     await page.waitForLoadState('load');
 
-    // Scope to the sidebar nav link, not the hub card (a.hub-card) that shares the href.
-    const navLink = page.locator('a[href="/web/admin/assignments"]:not(.hub-card)');
+    // Two links share this href now: the page's own in-page nav, and the shell
+    // sidebar entry added so the page is reachable from anywhere rather than
+    // only from a card on this one. Assert the shell one, which is the global
+    // navigation the rest of the app uses.
+    const navLink = page.locator('.navlink[href="/web/admin/assignments"]');
     await expect(navLink).toBeVisible();
   });
 

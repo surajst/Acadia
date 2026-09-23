@@ -92,6 +92,16 @@ public class FeeManagementService {
 
     @Transactional
     public Integer recordPayment(UUID invoiceId, BigDecimal paymentAmount, String mode, UUID currentTenantId, Authentication authentication) {
+        return recordPayment(invoiceId, paymentAmount, mode, null, currentTenantId, authentication);
+    }
+
+    /**
+     * @param reference the bank's reference for this payment -- a UPI id, a
+     *                  cheque number -- or null for cash. Kept so a receipt can
+     *                  be matched against the statement later.
+     */
+    public Integer recordPayment(UUID invoiceId, BigDecimal paymentAmount, String mode, String reference,
+                                 UUID currentTenantId, Authentication authentication) {
         if (paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Payment amount must be greater than zero");
         }
@@ -121,6 +131,7 @@ public class FeeManagementService {
         txn.setInvoiceId(invoiceId);
         txn.setAmountPaid(paymentAmount);
         txn.setPaymentMode(mode);
+        txn.setPaymentReference(reference == null || reference.isBlank() ? null : reference.trim());
         txn.setPaidAt(LocalDateTime.now());
         
         // Satisfy BaseTenantEntity keys

@@ -48,6 +48,8 @@ async function onboardSchool(page, label) {
   await page.fill('#adminFullName', `${label} Admin`);
   await page.fill('#adminEmail', school.adminEmail);
   await page.fill('#adminPassword', PW);
+  // School Type has no default any more -- see onboarding_flow.spec.js.
+  await page.selectOption('#schoolType', 'SECONDARY');
   await page.click('#submitBtn');
   await page.waitForURL(u => !u.pathname.includes('/onboard/signup'), { timeout: 30000 });
 
@@ -228,12 +230,12 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
       const invite = await (await form('/web/admin/staff/add',
         { fullName: 'Ravi Teacher', email, role: 'TEACHER' })).json();
 
-      // Staff arrive PENDING; an unapproved teacher must not be able to work.
+      // Staff invited from the admin console are usable straight away: the
+      // console is only reachable by the two roles the approval queue waits
+      // for, so there is no second decision to make.
       const staff = await (await fetch('/web/admin/staff')).json();
       const teacher = staff.find(s => s.email === email);
       if (!teacher) return { error: 'teacher not created', staff };
-      const approve = await (await fetch(`/api/principal/staff/${teacher.id}/approve`,
-        { method: 'POST' })).json();
 
       const sections = await (await fetch('/web/admin/class-sections')).json();
       const assign = await (await fetch('/api/admin/assignments/assign', {
@@ -247,11 +249,11 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
         }),
       })).json();
 
-      return { approve, assign, sectionId: sections[0].id, teacherPassword: invite.temporaryPassword };
+      return { teacher, assign, sectionId: sections[0].id, teacherPassword: invite.temporaryPassword };
     }, [school.teacherEmail, PW]);
 
     expect(result.error).toBeUndefined();
-    expect(result.approve.status).toBe('approved');
+    expect(result.teacher.approvalStatus).toBe('APPROVED');
     expect(result.assign).toBeTruthy();
     expect(result.teacherPassword, 'the server must issue the staff credential').toBeTruthy();
     school.sectionId = result.sectionId;
@@ -366,9 +368,8 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ fullName: 'Head Teacher', email, role: 'PRINCIPAL' }).toString(),
       })).json();
-      const staff = await (await fetch('/web/admin/staff')).json();
-      const row = staff.find(s => s.email === email);
-      await fetch(`/api/principal/staff/${row.id}/approve`, { method: 'POST' });
+      // No approval call: the invite is already approved, and /approve refuses
+      // an account that is not pending.
       return { email, password: invite.temporaryPassword || invite.password };
     }, head);
     expect(principal.password, 'principal needs a usable password').toBeTruthy();

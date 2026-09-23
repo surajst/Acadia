@@ -7,7 +7,9 @@ import com.concept.tenant.TenantContext;
 import com.concept.user.UserRole;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -38,6 +40,23 @@ public class StaffController {
     }
 
     /**
+     * Issues a fresh temporary password for a staff member. ADMIN and PRINCIPAL
+     * only -- the same two roles that can invite one in the first place.
+     */
+    @PostMapping("/web/admin/staff/{id}/reset-password")
+    @ResponseBody
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRINCIPAL')")
+    public Object resetStaffPassword(@PathVariable("id") UUID id, Authentication authentication) {
+        try {
+            String password = staffService.resetStaffPassword(
+                    id, tenantContext.getTenantId().orElse(null), authentication);
+            return Map.of("status", "reset", "temporaryPassword", password);
+        } catch (IllegalArgumentException e) {
+            return Map.of("error", e.getMessage());
+        }
+    }
+
+    /**
      * The temporary password is generated server-side and is no longer accepted
      * from the request. It used to be produced in browser JavaScript, which put
      * a security property in the client's hands and used Math.random rather
@@ -57,7 +76,7 @@ public class StaffController {
             Map<String, Object> body = new java.util.LinkedHashMap<>();
             body.put("status", "created");
             body.put("id", invite.id());
-            body.put("approvalStatus", "PENDING");
+            body.put("approvalStatus", com.concept.user.User.ApprovalStatus.APPROVED.name());
             // Returned whether or not the email went: the account exists either
             // way, and an admin with no visible credential cannot recover if
             // the mail never arrives.

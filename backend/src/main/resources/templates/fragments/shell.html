@@ -97,15 +97,34 @@
         <div class="shell-group" th:if="${shell != null and (shell.role() == 'ADMIN' or shell.role() == 'PRINCIPAL')}">
             <p class="shell-grouplabel">People</p>
 
+            <!-- Named for what it opens. Under "Verification Queue" an admin
+                 expected staff approvals and got the teacher's XP and syllabus
+                 review; the teacher's own nav still calls it that, which is
+                 right, because for them that is exactly what it is. -->
             <a class="navlink" href="/web/teacher/dashboard"
                th:classappend="${shell != null and shell.on('/web/teacher/dashboard')} ? 'active' : ''">
-                <span class="dot"></span> Verification Queue
+                <span class="dot"></span> Student Work Review
                 <span class="count" th:if="${navCountQueue != null and navCountQueue > 0}" th:text="${navCountQueue}">6</span>
             </a>
             <a class="navlink" href="/web/admin/management"
                th:classappend="${shell != null and shell.on('/web/admin/management')} ? 'active' : ''">
-                <span class="dot"></span> Staff &amp; Invites
+                <span class="dot"></span> School Management
                 <span class="count" th:if="${navCountStaff != null and navCountStaff > 0}" th:text="${navCountStaff}">3</span>
+            </a>
+
+            <!-- These six were reachable only from cards on the management
+                 page, so nothing in the navigation said they existed. -->
+            <a class="navlink" href="/web/admin/assignments"
+               th:classappend="${shell != null and shell.on('/web/admin/assignments')} ? 'active' : ''">
+                <span class="dot"></span> Teacher Assignments
+            </a>
+            <a class="navlink" href="/web/management/upload"
+               th:classappend="${shell != null and shell.on('/web/management/upload')} ? 'active' : ''">
+                <span class="dot"></span> Import &amp; Export
+            </a>
+            <a class="navlink" href="/web/admin/bus-routes"
+               th:classappend="${shell != null and shell.on('/web/admin/bus-routes')} ? 'active' : ''">
+                <span class="dot"></span> Bus Routes
             </a>
         </div>
 
@@ -116,9 +135,12 @@
                th:classappend="${shell != null and shell.on('/web/admin/audit-log')} ? 'active' : ''">
                 <span class="dot"></span> Audit Log
             </a>
+            <!-- This is the setup wizard, not a settings page. Calling it
+                 Settings while a dashboard quick action called the management
+                 page "School setup" made the two read as swapped. -->
             <a class="navlink" href="/web/onboard/setup"
                th:classappend="${shell != null and shell.on('/web/onboard/setup')} ? 'active' : ''">
-                <span class="dot"></span> Settings
+                <span class="dot"></span> Setup Wizard
             </a>
         </div>
     </nav>
@@ -166,6 +188,15 @@
     <div style="min-width:0;">
         <h1 class="page-title" th:text="${title}">Roster Hub</h1>
         <p class="page-sub" th:text="${sub}">What needs attention this morning</p>
+        <!-- Said once, plainly, to the people who can act on it. Until now the
+             only notice was a line of small print under a temporary password,
+             which an admin may already have navigated away from -- and every
+             invited teacher waits for a message nobody can send. -->
+        <p th:if="${emailNotConfigured}" data-email-warning
+           style="font-size:12px; color:var(--warn-ink, #b45309); margin-top:4px;">
+            No email is configured, so invites and reminders are not being sent.
+            Share temporary passwords yourself until it is set up.
+        </p>
     </div>
     <div class="flex items-center gap-3" style="flex-shrink:0;">
         <span class="badge badge--success"><span class="dot" style="background:var(--success)"></span> All systems operational</span>

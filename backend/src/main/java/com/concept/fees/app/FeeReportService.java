@@ -72,6 +72,8 @@ public class FeeReportService {
     /** One payment actually collected, with the receipt number it was given. */
     public record ReceiptRow(Integer receiptNumber, String studentName, String rollNumber,
                              java.math.BigDecimal amount, String paymentMode,
+                             /** The bank's reference, or null for cash. */
+                             String paymentReference,
                              java.time.LocalDateTime paidAt, boolean reversed) {}
 
     /**
@@ -111,8 +113,8 @@ public class FeeReportService {
                             txn.getReceiptNumber(),
                             student != null ? student.getFirstName() + " " + student.getLastName() : "Unknown Student",
                             student != null && student.getRollNumber() != null ? student.getRollNumber() : "--",
-                            txn.getAmountPaid(), txn.getPaymentMode(), txn.getPaidAt(),
-                            reversedIds.contains(txn.getId()));
+                            txn.getAmountPaid(), txn.getPaymentMode(), txn.getPaymentReference(),
+                            txn.getPaidAt(), reversedIds.contains(txn.getId()));
                 })
                 .collect(Collectors.toList());
     }

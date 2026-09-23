@@ -21,6 +21,10 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     await page.fill('#adminFullName', 'Test Admin');
     await page.fill('#adminEmail', adminEmail);
     await page.fill('#adminPassword', 'PilotLaunchSecure2026!');
+    // School Type has no default any more: it decides what the school's pages
+    // call things and which features exist, and it cannot be changed later, so
+    // a silent "Secondary" was that decision made on the school's behalf.
+    await page.selectOption('#schoolType', 'SECONDARY');
     await page.click('#submitBtn');
 
     await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/onboard/signup'), { timeout: 30000 });
@@ -34,6 +38,10 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     await page.fill('#adminFullName', 'Another Admin');
     await page.fill('#adminEmail', `another-${suffix}@testschool.com`);
     await page.fill('#adminPassword', 'PilotLaunchSecure2026!');
+    // School Type has no default any more: it decides what the school's pages
+    // call things and which features exist, and it cannot be changed later, so
+    // a silent "Secondary" was that decision made on the school's behalf.
+    await page.selectOption('#schoolType', 'SECONDARY');
     await page.click('#submitBtn');
 
     const errorMsg = page.locator('#errorMsg');
@@ -54,6 +62,10 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     await page.fill('#adminFullName', 'Wizard Admin');
     await page.fill('#adminEmail', adminEmail);
     await page.fill('#adminPassword', 'PilotLaunchSecure2026!');
+    // School Type has no default any more: it decides what the school's pages
+    // call things and which features exist, and it cannot be changed later, so
+    // a silent "Secondary" was that decision made on the school's behalf.
+    await page.selectOption('#schoolType', 'SECONDARY');
     await page.click('#submitBtn');
     await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/onboard/signup'), { timeout: 30000 });
 
@@ -81,15 +93,13 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     const teacherPassword = await page.locator('[data-invite-password]').first().innerText();
     expect(teacherPassword.length).toBeGreaterThan(8);
 
-    // New staff invites are PENDING until PRINCIPAL/ADMIN approves — the inviting
-    // admin can do that themselves since ADMIN is included in the approval role check.
-    const approveResult = await page.evaluate(async (email) => {
+    // An invited teacher is usable immediately -- inviting from this console is
+    // the approval, so there is no separate step to perform here.
+    const registryStatus = await page.evaluate(async (email) => {
       const staff = await (await fetch('/web/admin/staff')).json();
-      const teacher = staff.find(s => s.email === email);
-      const res = await fetch(`/api/principal/staff/${teacher.id}/approve`, { method: 'POST' });
-      return res.json();
+      return staff.find(s => s.email === email);
     }, teacherEmail);
-    expect(approveResult.status).toBe('approved');
+    expect(registryStatus.approvalStatus).toBe('APPROVED');
 
     // The invited teacher can independently log in and reach their own dashboard
     await page.context().clearCookies();

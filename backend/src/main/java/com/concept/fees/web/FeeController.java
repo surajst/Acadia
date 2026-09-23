@@ -44,11 +44,16 @@ public class FeeController {
     }
 
     @GetMapping("/web/admin/fees")
-    public String showFeeDashboard(@RequestParam(value = "page", defaultValue = "0") int page,
-                                   @RequestParam(value = "size", defaultValue = "20") int size,
+    public String showFeeDashboard(@RequestParam(value = "page", defaultValue = "0") int pageParam,
+                                   @RequestParam(value = "size", defaultValue = "20") int sizeParam,
                                    Model model, Authentication authentication) {
         String role = requireAdmin(authentication, "view the financial ledger");
         UUID tenantId = tenantContext.getTenantId().orElse(null);
+
+        // Same clamp as the roster: the greyed-out Prev link still carries
+        // page=-1, and a negative offset is a bad Pageable, not an empty page.
+        int page = Math.max(0, pageParam);
+        int size = Math.min(Math.max(1, sizeParam), 200);
 
         FeeDashboardView view = feeDashboardService.buildDashboard(tenantId, page, size);
 
@@ -70,12 +75,14 @@ public class FeeController {
     public String collectPayment(@RequestParam("invoiceId") UUID invoiceId,
                                  @RequestParam("amount") BigDecimal amount,
                                  @RequestParam("paymentMode") String paymentMode,
+                                 @RequestParam(value = "reference", required = false) String reference,
                                  Authentication authentication,
                                  RedirectAttributes ra) {
         requireAdmin(authentication, "record dynamic payments");
         UUID tenantId = tenantContext.getTenantId().orElse(null);
         try {
-            Integer receiptNumber = feeDashboardService.recordPayment(invoiceId, amount, paymentMode, tenantId, authentication);
+            Integer receiptNumber = feeDashboardService.recordPayment(
+                    invoiceId, amount, paymentMode, reference, tenantId, authentication);
             ra.addFlashAttribute("successMessage", "Payment recorded — Receipt #" + receiptNumber + ".");
             return "redirect:/web/admin/fees?success=payment_recorded";
         } catch (IllegalArgumentException e) {
@@ -111,9 +118,11 @@ public class FeeController {
                                  RedirectAttributes ra) {
         UUID tenantId = tenantContext.getTenantId().orElse(null);
         try {
-            String summary = feeDashboardService.requestPaymentReversal(transactionId, reason, tenantId, authentication);
-            ra.addFlashAttribute("successMessage",
-                    "Sent to the principal for approval: " + summary + ". Nothing has changed yet.");
+            var outcome = feeDashboardService.requestPaymentReversal(transactionId, reason, tenantId, authentication);
+            ra.addFlashAttribute("successMessage", outcome.applied()
+                    ? "Done: " + outcome.summary() + ". This school has no principal, so it was "
+                            + "carried out without a second approver and recorded that way."
+                    : "Sent to the principal for approval: " + outcome.summary() + ". Nothing has changed yet.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }

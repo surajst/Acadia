@@ -50,6 +50,16 @@ public class TaskApiController {
         return ResponseEntity.ok(tasksService.testStudents());
     }
 
+    /**
+     * The grades this caller can actually set a task for. The form used to
+     * offer a fixed Class 5-10 regardless of what the school runs.
+     */
+    @GetMapping("/teacher/grade-options")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
+    public ResponseEntity<?> gradeOptions(Authentication authentication) {
+        return ResponseEntity.ok(tasksService.gradeOptionsForCaller(authentication));
+    }
+
     @GetMapping("/teacher/tasks/my-tasks")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ResponseEntity<?> myTasks(Authentication authentication) {

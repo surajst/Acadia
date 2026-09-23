@@ -84,6 +84,8 @@ public class StudentApiController {
                     .body(Map.of("error", "Not enough XP for this one yet."));
             case NO_LINKED_PARENT -> ResponseEntity.badRequest()
                     .body(Map.of("error", "This reward needs a parent linked to your account."));
+            case UNAVAILABLE -> ResponseEntity.badRequest()
+                    .body(Map.of("error", "This reward is not available. Ask your teacher."));
         };
     }
 

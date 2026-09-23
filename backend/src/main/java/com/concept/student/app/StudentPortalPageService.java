@@ -36,7 +36,7 @@ public class StudentPortalPageService {
         this.currentUserService = currentUserService;
     }
 
-    public enum RedeemResult { SUCCESS, INSUFFICIENT_XP, NO_LINKED_PARENT }
+    public enum RedeemResult { SUCCESS, INSUFFICIENT_XP, NO_LINKED_PARENT, UNAVAILABLE }
 
     public record StudentView(String firstName, String lastName, String className) {}
 
@@ -117,6 +117,7 @@ public class StudentPortalPageService {
         return switch (outcome) {
             case INSUFFICIENT_XP -> RedeemResult.INSUFFICIENT_XP;
             case NO_LINKED_PARENT -> RedeemResult.NO_LINKED_PARENT;
+            case UNAVAILABLE -> RedeemResult.UNAVAILABLE;
             case REDEEMED -> RedeemResult.SUCCESS;
         };
     }

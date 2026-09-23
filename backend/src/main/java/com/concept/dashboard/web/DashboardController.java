@@ -42,11 +42,17 @@ public class DashboardController {
             @RequestParam(value = "classId", required = false) UUID classId,
             @RequestParam(value = "name", required = false) String nameFilter,
             @RequestParam(value = "gradeLevel", required = false) String gradeLevelFilter,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "page", defaultValue = "0") int pageParam,
+            @RequestParam(value = "size", defaultValue = "20") int sizeParam,
             Model model, Authentication authentication) {
         String role = resolveRole(authentication);
         String username = authentication != null ? authentication.getName() : null;
+
+        // Clamped where it enters, not where it is rendered. The Prev link is
+        // greyed out on the first page but still carries page=-1 in its href,
+        // and a negative offset reaches the repository as a bad Pageable.
+        int page = Math.max(0, pageParam);
+        int size = Math.min(Math.max(1, sizeParam), 200);
 
         RosterDashboardView view = dashboardService.buildRosterDashboard(
                 tenantContext.getTenantId().orElse(null), username, classId,
@@ -58,6 +64,7 @@ public class DashboardController {
         model.addAttribute("allGradeNames", view.allGradeNames());
         model.addAttribute("totalStudents", view.totalStudents());
         model.addAttribute("activeAbsences", view.activeAbsences());
+        model.addAttribute("markedToday", view.markedToday());
         model.addAttribute("attendancePercentage", view.attendancePercentage());
         model.addAttribute("filterName", nameFilter != null ? nameFilter : "");
         model.addAttribute("filterGrade", gradeLevelFilter != null ? gradeLevelFilter : "");

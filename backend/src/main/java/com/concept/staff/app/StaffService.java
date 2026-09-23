@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 /**
  * Application layer for admin staff management: listing staff and inviting new
- * staff (who land PENDING, awaiting PRINCIPAL/ADMIN approval). Owns the tenant
+ * staff (who can sign in straight away — see addStaff). Owns the tenant
  * scoping, role whitelist, login creation, and audit trail; the web layer only
  * binds and shapes the JSON response (ADR 0001).
  */
@@ -50,12 +50,16 @@ public class StaffService {
             return Collections.emptyList();
         }
         return staffUserRepository.findByTenantIdAndRoleIn(tenantId, STAFF_ROLES).stream()
-                .map(u -> new StaffView(u.getId(), u.getFullName(), u.getEmail(), u.getRole().name(), u.isActive()))
+                .map(u -> new StaffView(u.getId(), u.getFullName(), u.getEmail(), u.getRole().name(),
+                        u.isActive(),
+                        // Null predates the column and has always been treated
+                        // as approved; say so rather than rendering a blank.
+                        (u.getApprovalStatus() == null ? User.ApprovalStatus.APPROVED : u.getApprovalStatus()).name()))
                 .collect(Collectors.toList());
     }
 
     /**
-     * Invite a staff member (created PENDING). Throws
+     * Invite a staff member. Throws
      * {@link IllegalArgumentException} for a non-staff role or a taken email;
      * the web layer maps that to an error response.
      */
@@ -88,6 +92,45 @@ public class StaffService {
         return new StaffInvite(id, password, result.delivered(), result.detail());
     }
 
+    /**
+     * Issues a new temporary password for a staff member and returns it.
+     *
+     * <p>Students and guardians have had this from their profile page since
+     * Sprint 1. Staff had nothing at all: a teacher who lost the password from
+     * their invite could not get back in by any route, because there is no
+     * self-service reset either and the invite endpoint refuses an address that
+     * already has an account. The only remedy was to delete the person.
+     *
+     * <p>Scoped to this school and to staff roles, so it cannot be turned on a
+     * parent or student account, or on another school's teacher.
+     *
+     * @return the new password, to relay as the invite does
+     */
+    @Transactional
+    public String resetStaffPassword(UUID userId, UUID tenantId, Authentication authentication) {
+        if (tenantId == null) {
+            throw new IllegalArgumentException("No school context for this request.");
+        }
+        User staff = staffUserRepository.findByIdAndTenantId(userId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Staff member not found."));
+        if (!STAFF_ROLES.contains(staff.getRole())) {
+            // A parent or student reset belongs on the student profile, where it
+            // shows the guardian it affects. Routing it through here would let
+            // an admin reset a family login from a screen that does not say so.
+            throw new IllegalArgumentException(
+                    "Use the student profile to reset a student or guardian login.");
+        }
+
+        String password = generateTempPassword();
+        staff.setPasswordHash(passwordEncoder.encode(password));
+        staffUserRepository.save(staff);
+
+        auditLogService.log(authentication, "STAFF_PASSWORD_RESET", "User", staff.getId(),
+                "Issued a new temporary password for " + staff.getRole().name() + " "
+                        + staff.getFullName() + " (" + staff.getEmail() + ")");
+        return password;
+    }
+
     private String inviteBody(String fullName, String email, String password, UserRole role, String schoolName) {
         String school = schoolName == null || schoolName.isBlank() ? "your school" : schoolName;
         return """
@@ -98,8 +141,7 @@ public class StaffService {
                 Username: %s
                 Temporary password: %s
 
-                Please sign in and change your password. Your account needs to be approved
-                by a principal or administrator before you can use it.
+                Please sign in and change your password.
                 """.formatted(fullName, school, role.name(), email, password);
     }
 
@@ -116,6 +158,10 @@ public class StaffService {
         if (!STAFF_ROLES.contains(role)) {
             throw new IllegalArgumentException("Staff role must be ADMIN, PRINCIPAL, TEACHER, or DRIVER");
         }
+        // Canonicalised before the check, not after: the setter stores the
+        // normalised form, so testing the raw one would let the same person be
+        // invited twice in two different cases and fail on the unique index.
+        email = User.normaliseEmail(email);
         if (staffUserRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email already in use: " + email);
         }
@@ -129,10 +175,21 @@ public class StaffService {
         staff.setFullName(fullName);
         staff.setRole(role);
         staff.setActive(true);
-        staff.setApprovalStatus(User.ApprovalStatus.PENDING);
+        // Approved by the act of inviting. This console is reachable only by an
+        // ADMIN or PRINCIPAL -- the same two roles the approval queue waits
+        // for -- so landing PENDING left the invitee waiting on a decision the
+        // inviter had already made, and in a brand-new school that had not
+        // appointed a principal yet, on nobody at all. The admin was shown a
+        // temporary password and a status of "Active" while the account could
+        // not be signed into; the sign-in failed as "Invalid username or
+        // password", which named the wrong thing entirely.
+        //
+        // The queue is not dead: it still gates anything created without an
+        // authenticated approver behind it, and decideStaff() is unchanged.
+        staff.setApprovalStatus(User.ApprovalStatus.APPROVED);
         staffUserRepository.save(staff);
         auditLogService.log(authentication, "STAFF_INVITED", "User", staff.getId(),
-                "Invited " + role.name() + " " + fullName + " (" + email + ") — awaiting PRINCIPAL/ADMIN approval");
+                "Invited " + role.name() + " " + fullName + " (" + email + ") — approved by the inviter");
         return staff.getId();
     }
 }

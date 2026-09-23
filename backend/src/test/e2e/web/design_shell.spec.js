@@ -104,14 +104,21 @@ test.describe('Recognition', () => {
 
     const before = Number((await page.locator('[data-recognition] .badge--brand').innerText()).replace(/\D/g, ''));
 
-    await page.locator('[data-award-form] [data-badge-option] input[value="KIND_HANDS"]').check();
-    await page.fill('[data-award-form] input[name="reason"]', 'Helped tidy the paint pots');
+    // The badge picker is scoped to the school type now, and this tenant has
+    // none set -- which Tenant.getSchoolType() reads as SECONDARY, so the
+    // early-years badges are deliberately not offered here. Same points value.
+    // Click the label, which is what a user clicks: the radio itself is sr-only
+    // and its own label intercepts the pointer. This test passed before only
+    // because KIND_HANDS happened to be the pre-checked first option, so
+    // check() short-circuited and never exercised selection at all.
+    await page.locator('[data-award-form] [data-badge-option]:has(input[value="HELPED_A_CLASSMATE"])').click();
+    await page.fill('[data-award-form] input[name="reason"]', 'Talked a classmate through the homework');
     await page.click('[data-award-form] button[type="submit"]');
     await page.waitForURL(/\/web\/teacher\/student\//);
 
     // The reason is the point of the feature, so assert the words, not a count.
-    await expect(page.locator('[data-award-row]').first()).toContainText('Helped tidy the paint pots');
-    await expect(page.locator('[data-award-row]').first()).toContainText('Kind Hands');
+    await expect(page.locator('[data-award-row]').first()).toContainText('Talked a classmate through the homework');
+    await expect(page.locator('[data-award-row]').first()).toContainText('Helped a Classmate');
 
     const after = Number((await page.locator('[data-recognition] .badge--brand').innerText()).replace(/\D/g, ''));
     expect(after).toBe(before + 10);

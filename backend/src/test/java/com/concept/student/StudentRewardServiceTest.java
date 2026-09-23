@@ -268,4 +268,55 @@ public class StudentRewardServiceTest {
         assertEquals(30, m.getSchoolXp());  // remaining 70 from school XP -> 100-70
         assertEquals("CLAIMED_AWAITING_DELIVERY", parentRewardRepository.findById(r.getId()).orElseThrow().getStatus());
     }
+
+    /**
+     * P0-6. The create form carried min="1" on the XP input, which only a
+     * browser honours, so the catalogue could hold a reward priced at -50.
+     * Redemption subtracts the cost, which makes a negative price a way to
+     * mint XP: the affordability check passes trivially and the child ends up
+     * richer, as often as they care to press the button.
+     *
+     * <p>Rows like that already exist in at least one production school, so
+     * validating new ones is not enough -- this pins the redemption side.
+     */
+    @Test
+    public void aRewardPricedBelowOneXpCannotBeRedeemed() {
+        Student student = linkParent(newStudent("Aarav"));
+        metricFor(student, 100, 0);
+        RewardItem freeMoney = rewardItem(-50);
+
+        StudentRewardService.RedeemOutcome outcome =
+                studentRewardService.redeemReward(freeMoney.getId(), student);
+
+        assertEquals(StudentRewardService.RedeemOutcome.UNAVAILABLE, outcome);
+
+        StudentMetric after = studentMetricRepository.findByStudentId(student.getId()).orElseThrow();
+        assertEquals(100, after.getSchoolXp(),
+                "a refused redemption must leave the balance exactly as it was");
+    }
+
+    /** Zero is the same trick with a smaller number: it buys something for nothing. */
+    @Test
+    public void aFreeRewardCannotBeRedeemed() {
+        Student student = linkParent(newStudent("Diya"));
+        metricFor(student, 10, 0);
+        RewardItem free = rewardItem(0);
+
+        assertEquals(StudentRewardService.RedeemOutcome.UNAVAILABLE,
+                studentRewardService.redeemReward(free.getId(), student));
+    }
+
+    /** The guard must not block the ordinary case it sits in front of. */
+    @Test
+    public void aNormallyPricedRewardStillRedeems() {
+        Student student = linkParent(newStudent("Kabir"));
+        metricFor(student, 100, 0);
+        RewardItem normal = rewardItem(40);
+
+        assertEquals(StudentRewardService.RedeemOutcome.REDEEMED,
+                studentRewardService.redeemReward(normal.getId(), student));
+
+        StudentMetric after = studentMetricRepository.findByStudentId(student.getId()).orElseThrow();
+        assertEquals(60, after.getSchoolXp(), "the cost must come off, not go on");
+    }
 }

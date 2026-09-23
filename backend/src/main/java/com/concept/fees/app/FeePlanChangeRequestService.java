@@ -35,13 +35,21 @@ public class FeePlanChangeRequestService {
     }
 
     /**
-     * Asks for a plan change rather than making one. Re-pricing a grade affects
-     * every family in it at once, so it waits for a principal. The current plan
-     * is untouched until then.
-     *
-     * @return the summary the admin is shown, describing what is now pending
+     * What happened to a request, so the page can say the right thing. A school
+     * with no principal has the change applied immediately (see
+     * {@link ApprovalService}), and telling that admin their plan is "waiting
+     * for the principal" would be false twice over.
      */
-    public String requestPlanSave(String gradeLevel, List<FeePlanService.InstalmentSpec> instalments,
+    public record Outcome(String summary, boolean applied) {}
+
+    /**
+     * Asks for a plan change rather than making one. Re-pricing a grade affects
+     * every family in it at once, so it waits for a principal -- unless the
+     * school has none, in which case it is applied and recorded as such.
+     *
+     * @return what to tell the admin, and whether the plan is already in force
+     */
+    public Outcome requestPlanSave(String gradeLevel, List<FeePlanService.InstalmentSpec> instalments,
                                   UUID tenantId, UUID academicYearId, Authentication authentication) {
         // Checked now rather than at approval time, so a plan that could never
         // be saved is refused while the admin can still fix it.
@@ -49,21 +57,21 @@ public class FeePlanChangeRequestService {
         String grade = gradeLevel.trim();
         String summary = "Set " + grade + " fees to " + total
                 + " across " + instalments.size() + " instalments";
-        approvalService.request(ApprovalRequest.Action.FEE_PLAN_SAVE,
+        ApprovalRequest raised = approvalService.request(ApprovalRequest.Action.FEE_PLAN_SAVE,
                 new FeePlanSaveExecutor.Payload(grade, instalments, academicYearId),
                 summary, tenantId, authentication);
-        return summary;
+        return new Outcome(summary, raised.getStatus() == ApprovalRequest.Status.AUTO_APPROVED);
     }
 
     /** Asks to remove a plan. Approval-gated for the same reason as a change. */
-    public String requestPlanDelete(UUID planId, UUID tenantId, Authentication authentication) {
+    public Outcome requestPlanDelete(UUID planId, UUID tenantId, Authentication authentication) {
         FeePlan plan = feePlanRepository.findByIdAndTenantId(planId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Fee plan not found."));
         String summary = "Remove the fee plan for " + plan.getGradeLevel()
                 + " (" + plan.getAnnualAmount() + ")";
-        approvalService.request(ApprovalRequest.Action.FEE_PLAN_DELETE,
+        ApprovalRequest raised = approvalService.request(ApprovalRequest.Action.FEE_PLAN_DELETE,
                 new FeePlanDeleteExecutor.Payload(planId),
                 summary, tenantId, authentication);
-        return summary;
+        return new Outcome(summary, raised.getStatus() == ApprovalRequest.Status.AUTO_APPROVED);
     }
 }

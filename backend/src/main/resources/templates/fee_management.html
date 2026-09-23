@@ -38,11 +38,13 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 shrink-0">
             <div class="card p-4">
                 <div class="flex items-center justify-between">
-                    <span class="eyebrow">Total Revenue Target</span>
+                    <span class="eyebrow">Total Billed</span>
                     <span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--brand-50); color:var(--brand)">🎯</span>
                 </div>
                 <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-1" th:text="|₹ ${#numbers.formatDecimal(totalExpectedRevenue, 1, 'COMMA', 2, 'POINT')}|">₹ 10,000,000.00</h3>
-                <p class="text-[11px] text-[var(--text-3)] mt-1">Sum of all grade-level fee structures</p>
+                <!-- Every invoice raised, which includes one-off custom
+                     invoices. Calling it a target implied the fee plans alone. -->
+                <p class="text-[11px] text-[var(--text-3)] mt-1">Every invoice raised, including one-off charges</p>
             </div>
             <div class="card p-4">
                 <div class="flex items-center justify-between">
@@ -234,11 +236,24 @@
                 </div>
                 <div class="space-y-1.5">
                     <label for="paymentModeSelect" class="field-label block">Payment mode</label>
+                    <!-- UPI is how most school fees are actually paid here, and
+                         "CHECK" is not how the instrument is spelled. The stored
+                         values stay as they are; only the labels changed, except
+                         UPI which is new. -->
                     <select id="paymentModeSelect" name="paymentMode" class="field">
-                        <option value="CASH">CASH</option>
-                        <option value="ONLINE">ONLINE</option>
-                        <option value="CHECK">CHECK</option>
+                        <option value="CASH">Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="ONLINE">Bank transfer / card</option>
+                        <option value="CHEQUE">Cheque</option>
                     </select>
+                </div>
+                <div class="space-y-1.5">
+                    <label for="referenceInput" class="field-label block">Reference (optional)</label>
+                    <!-- A UPI or transfer without its reference cannot be matched
+                         against the bank statement later, which is the whole job
+                         of reconciling a receipt. -->
+                    <input type="text" id="referenceInput" name="reference" maxlength="64"
+                           placeholder="UPI ref / cheque no." class="field"/>
                 </div>
                 <div class="space-y-1.5">
                     <label for="amountInput" class="field-label block">Payment amount (INR)</label>

@@ -92,6 +92,9 @@ public class StudentPortalController {
         if (outcome == RedeemResult.NO_LINKED_PARENT) {
             return "redirect:/web/student/portal?tab=rewards&error=no_linked_parent";
         }
+        if (outcome == RedeemResult.UNAVAILABLE) {
+            return "redirect:/web/student/portal?tab=rewards&error=reward_unavailable";
+        }
         return "redirect:/web/student/portal?tab=rewards&success=redeemed";
     }
 
@@ -106,6 +109,9 @@ public class StudentPortalController {
         RedeemResult outcome = studentPortalPageService.redeemParentReward(id, authentication);
         if (outcome == RedeemResult.INSUFFICIENT_XP) {
             return "redirect:/web/student/portal?tab=rewards&error=insufficient_xp";
+        }
+        if (outcome == RedeemResult.UNAVAILABLE) {
+            return "redirect:/web/student/portal?tab=rewards&error=reward_unavailable";
         }
         return "redirect:/web/student/portal?tab=rewards&success=reward_redeemed";
     }
