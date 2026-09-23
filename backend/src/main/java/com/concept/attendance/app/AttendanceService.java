@@ -3,12 +3,14 @@ package com.concept.attendance.app;
 import com.concept.attendance.data.AttendanceClassSectionRepository;
 import com.concept.attendance.data.AttendanceRecordRepository;
 import com.concept.attendance.data.AttendanceStudentRepository;
+import com.concept.common.AuditLogService;
 import com.concept.common.NotificationDeliveryService;
 import com.concept.shared.data.Attendance;
 import com.concept.shared.data.AttendanceStatus;
 import com.concept.shared.data.Parent;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.Student;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +32,18 @@ public class AttendanceService {
     private final AttendanceRecordRepository attendanceRepository;
     private final AttendanceClassSectionRepository classSectionRepository;
     private final NotificationDeliveryService notificationDeliveryService;
+    private final AuditLogService auditLogService;
 
     public AttendanceService(AttendanceStudentRepository studentRepository,
                              AttendanceRecordRepository attendanceRepository,
                              AttendanceClassSectionRepository classSectionRepository,
-                             NotificationDeliveryService notificationDeliveryService) {
+                             NotificationDeliveryService notificationDeliveryService,
+                             AuditLogService auditLogService) {
         this.studentRepository = studentRepository;
         this.attendanceRepository = attendanceRepository;
         this.classSectionRepository = classSectionRepository;
         this.notificationDeliveryService = notificationDeliveryService;
+        this.auditLogService = auditLogService;
     }
 
     /**
@@ -86,7 +91,7 @@ public class AttendanceService {
      * foreign student id is rejected outright rather than written into its tenant.
      */
     @Transactional
-    public void mark(MarkAttendanceCommand command) {
+    public void mark(MarkAttendanceCommand command, Authentication authentication) {
         List<UUID> studentIds = command.studentIds();
         List<String> statuses = command.statuses();
         if (studentIds == null || statuses == null || studentIds.size() != statuses.size()) {
@@ -94,12 +99,20 @@ public class AttendanceService {
         }
 
         LocalDate today = LocalDate.now();
+        int absent = 0;
+        UUID sectionId = null;
+        String sectionLabel = null;
         for (int i = 0; i < studentIds.size(); i++) {
             UUID studentId = studentIds.get(i);
             AttendanceStatus status = parseStatus(statuses.get(i));
 
             Student student = studentRepository.findByIdAndTenantId(studentId, command.tenantId())
                     .orElseThrow(() -> new IllegalArgumentException("Not authorized for student: " + studentId));
+
+            if (sectionId == null && student.getClassSection() != null) {
+                sectionId = student.getClassSection().getId();
+                sectionLabel = label(student.getClassSection());
+            }
 
             Attendance attendance = new Attendance();
             attendance.setId(UUID.randomUUID());
@@ -112,6 +125,7 @@ public class AttendanceService {
             attendanceRepository.saveAndFlush(attendance);
 
             if (status == AttendanceStatus.ABSENT) {
+                absent++;
                 for (Parent parent : student.getParents()) {
                     notificationDeliveryService.send(parent.getPhoneNumber(),
                             "[ALERT WHATSAPP DISPATCH] Sending to " + parent.getFirstName() + " " + parent.getLastName()
@@ -120,6 +134,15 @@ public class AttendanceService {
                 }
             }
         }
+
+        // One row for the submission, not one per child: the register is taken
+        // as a single act, and thirty rows a day would bury every other entry
+        // in the log. Marking a child absent also messages their guardian, so
+        // this is the record of why that message went out.
+        auditLogService.log(authentication, "ATTENDANCE_SUBMITTED", "ClassSection", sectionId,
+                "Marked " + studentIds.size() + " student" + (studentIds.size() == 1 ? "" : "s")
+                        + " for " + today + (sectionLabel == null ? "" : " in " + sectionLabel)
+                        + " — " + absent + " absent");
     }
 
     private AttendanceStatus parseStatus(String raw) {

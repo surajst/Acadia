@@ -42,10 +42,12 @@ public class StudentRewardService {
 
     /**
      * Soft result of a redeem attempt — these are normal user outcomes, not errors:
-     * a shortfall ({@code INSUFFICIENT_XP}) or a school-XP reward that can't be routed
-     * because the student has no parent linked ({@code NO_LINKED_PARENT}).
+     * a shortfall ({@code INSUFFICIENT_XP}), a school-XP reward that can't be routed
+     * because the student has no parent linked ({@code NO_LINKED_PARENT}), or a
+     * reward that is not redeemable at all ({@code UNAVAILABLE}) — currently one
+     * priced at or below zero XP, which predates the catalogue validation.
      */
-    public enum RedeemOutcome { REDEEMED, INSUFFICIENT_XP, NO_LINKED_PARENT }
+    public enum RedeemOutcome { REDEEMED, INSUFFICIENT_XP, NO_LINKED_PARENT, UNAVAILABLE }
 
     /**
      * Mark a parent quest as completed-awaiting-approval. The caller must own the
@@ -100,6 +102,14 @@ public class StudentRewardService {
 
         int currentXp = metric.getSchoolXp() != null ? metric.getSchoolXp() : 0;
         int cost = reward.getXpCost();
+        // A second lock on the same door as RewardsService.validate. The cost
+        // is subtracted below, so a reward priced at or below zero is a way to
+        // mint XP: the affordability check passes trivially and the deduction
+        // becomes an addition. The catalogue can no longer store one, and rows
+        // saved before it could must not be redeemable either.
+        if (cost < 1) {
+            return RedeemOutcome.UNAVAILABLE;
+        }
         if (currentXp < cost) {
             return RedeemOutcome.INSUFFICIENT_XP;
         }
@@ -148,6 +158,9 @@ public class StudentRewardService {
         int parentXp = metric.getParentXp() != null ? metric.getParentXp() : 0;
         int cost = reward.getXpCost();
 
+        if (cost < 1) {
+            return RedeemOutcome.UNAVAILABLE;
+        }
         if (schoolXp + parentXp < cost) {
             return RedeemOutcome.INSUFFICIENT_XP;
         }

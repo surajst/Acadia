@@ -50,9 +50,10 @@ public class AttendanceController {
     @PostMapping("/web/teacher/attendance/submit")
     public String submitAttendance(@RequestParam("studentIds") List<UUID> studentIds,
                                    @RequestParam("statuses") List<String> statuses,
-                                   @RequestParam(value = "classId", required = false) UUID classId) {
+                                   @RequestParam(value = "classId", required = false) UUID classId,
+                                   Authentication authentication) {
         UUID tenantId = tenantContext.getTenantId().orElse(null);
-        attendanceService.mark(new MarkAttendanceCommand(tenantId, studentIds, statuses));
+        attendanceService.mark(new MarkAttendanceCommand(tenantId, studentIds, statuses), authentication);
 
         String redirectUrl = "redirect:/web/teacher/attendance";
         if (classId != null) {
