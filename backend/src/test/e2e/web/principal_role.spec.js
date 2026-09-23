@@ -33,14 +33,15 @@ test.describe('Sprint 3: PRINCIPAL role and access boundaries', () => {
     // invite waited on a decision the inviter had already made.
     expect(inviteResult.approvalStatus).toBe('APPROVED');
 
-    // New staff invites are PENDING until approved — the inviting admin approves here
-    const approveResult = await page.evaluate(async (email) => {
+    // No approval step any more: inviting from this console is the approval, so
+    // the queue has nothing to decide and /approve refuses a non-pending
+    // account. What matters is that the registry reports the account usable.
+    const registryStatus = await page.evaluate(async (email) => {
       const staff = await (await fetch('/web/admin/staff')).json();
-      const principal = staff.find(s => s.email === email);
-      const res = await fetch(`/api/principal/staff/${principal.id}/approve`, { method: 'POST' });
-      return res.json();
+      return staff.find(s => s.email === email);
     }, principalEmail);
-    expect(approveResult.status).toBe('approved');
+    expect(registryStatus.approvalStatus).toBe('APPROVED');
+    expect(registryStatus.active).toBe(true);
 
     // Log in as the new principal
     await page.context().clearCookies();

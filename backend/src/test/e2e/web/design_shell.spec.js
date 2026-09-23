@@ -107,7 +107,11 @@ test.describe('Recognition', () => {
     // The badge picker is scoped to the school type now, and this tenant has
     // none set -- which Tenant.getSchoolType() reads as SECONDARY, so the
     // early-years badges are deliberately not offered here. Same points value.
-    await page.locator('[data-award-form] [data-badge-option] input[value="HELPED_A_CLASSMATE"]').check();
+    // Click the label, which is what a user clicks: the radio itself is sr-only
+    // and its own label intercepts the pointer. This test passed before only
+    // because KIND_HANDS happened to be the pre-checked first option, so
+    // check() short-circuited and never exercised selection at all.
+    await page.locator('[data-award-form] [data-badge-option]:has(input[value="HELPED_A_CLASSMATE"])').click();
     await page.fill('[data-award-form] input[name="reason"]', 'Talked a classmate through the homework');
     await page.click('[data-award-form] button[type="submit"]');
     await page.waitForURL(/\/web\/teacher\/student\//);

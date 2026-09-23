@@ -40,7 +40,10 @@ test.describe('Admin console hub cards', () => {
       await page.goto('/web/admin/management');
       await expect(page.locator('#hubGrid')).toBeVisible();
 
-      await page.getByText(label, { exact: true }).first().click();
+      // Scoped to the hub grid. "Bus Routes" and the rest are now also shell
+      // sidebar links, and an unscoped match picked one of those first and
+      // navigated away from this page entirely.
+      await page.locator('#hubGrid').getByText(label, { exact: true }).first().click();
 
       await expect(page.locator('#' + sectionId)).toBeVisible();
       await expect(page.locator('#hubGrid')).toBeHidden();
@@ -84,7 +87,9 @@ test.describe('Admin console hub cards', () => {
     // and returns false. This is the path an admin actually clicks.
     for (const [label, sectionId] of [['Staff Registry', 'sec-staff'], ['Bus Routes', 'sec-buses']]) {
       await page.goto('/web/admin/management');
-      await page.locator('a', { hasText: label }).first().click();
+      // The page's own left nav, not the shell sidebar -- the sidebar entries
+      // are real links to other pages, while these call showSection() inline.
+      await page.locator('a:not(.navlink)', { hasText: label }).first().click();
       await expect(page.locator('#' + sectionId)).toBeVisible();
     }
   });

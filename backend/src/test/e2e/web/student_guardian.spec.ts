@@ -148,7 +148,8 @@ test.describe('Student guardian capture & profile display', () => {
     // The newly added guardian now shows, empty state is gone, and its login is surfaced.
     await expect(page.locator('body')).toContainText('Editadded Guardian');
     await expect(page.locator('body')).not.toContainText('No guardian linked yet');
-    await expect(page.locator('body')).toContainText('Guardian login — editadded919000044444@');
+    await expect(page.locator('body')).toContainText('Guardian login — editadded.guardian@');
+    await expect(page.locator('body')).not.toContainText('919000044444@');
 
     // Editing again pre-fills the guardian and updates it in place.
     await page.click('button:has-text("Edit")');
