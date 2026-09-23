@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,6 +42,33 @@ public class TenantOnboardingApiController {
         public String adminFullName;
         /** Optional; absent means a conventional school. */
         public String schoolType;
+    }
+
+    /**
+     * Whether a subdomain is free, and what it will actually be.
+     *
+     * <p>The signup form previewed the typed value with only spaces replaced,
+     * so "demo@ssc" was shown as an address that cannot exist -- and nothing
+     * told anyone it was taken until the whole form came back rejected. Both
+     * answers come from the server so the preview and the eventual create
+     * cannot disagree about what the address is.
+     */
+    @GetMapping("/subdomain-available")
+    public ResponseEntity<?> subdomainAvailable(@RequestParam("subdomain") String requested) {
+        String normalised = TenantOnboardingService.normaliseSubdomain(requested);
+        if (normalised.isEmpty()) {
+            return ResponseEntity.ok(Map.of(
+                    "subdomain", "", "available", false,
+                    "reason", "Use letters and numbers, for example silverbrook."));
+        }
+        boolean taken = onboardingService.subdomainTaken(normalised);
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("subdomain", normalised);
+        body.put("available", !taken);
+        if (taken) {
+            body.put("reason", "That address is already taken.");
+        }
+        return ResponseEntity.ok(body);
     }
 
     @PostMapping("/create-school")

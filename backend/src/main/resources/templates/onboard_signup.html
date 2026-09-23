@@ -108,6 +108,7 @@
                     <p style="font-size:11px;color:#64748B;margin-top:5px;text-align:left">
                         Your address will be
                         <strong id="subdomainPreview" style="color:#4F46E5">your-school-name</strong>.concept-edu.com
+                        <span id="subdomainStatus" style="font-weight:600; margin-left:6px"></span>
                     </p>
                 </div>
                 <div class="form-group">
@@ -138,18 +139,54 @@
     </form>
 
     <script>
-        // One normalisation, used by the preview and by the submit -- so the
-        // address shown is the address created.
+        // Mirrors TenantOnboardingService.normaliseSubdomain. Replacing only
+        // spaces meant "demo@ssc" previewed as an address that cannot exist,
+        // and the field then submitted something different again.
         function normaliseSubdomain(raw) {
-            return String(raw || '').trim().toLowerCase().replace(/\s+/g, '-');
+            return String(raw || '')
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 63)
+                .replace(/-+$/g, '');
         }
 
         (function () {
             var field = document.getElementById('subdomain');
             var preview = document.getElementById('subdomainPreview');
+            var status = document.getElementById('subdomainStatus');
             if (!field || !preview) return;
+
+            var timer = null;
+            var lastAsked = '';
+
+            async function check(slug) {
+                if (!status) return;
+                if (!slug) { status.textContent = ''; return; }
+                try {
+                    var res = await fetch('/api/onboard/subdomain-available?subdomain='
+                        + encodeURIComponent(slug));
+                    if (!res.ok) { status.textContent = ''; return; }
+                    var data = await res.json();
+                    // A slow reply for an address the user has since changed
+                    // must not overwrite the answer for what they typed last.
+                    if (data.subdomain !== normaliseSubdomain(field.value)) return;
+                    status.textContent = data.available ? 'Available' : (data.reason || 'Not available');
+                    status.style.color = data.available ? '#047857' : '#B91C1C';
+                } catch (e) {
+                    // Availability is a courtesy; signup still validates it.
+                    status.textContent = '';
+                }
+            }
+
             field.addEventListener('input', function () {
-                preview.textContent = normaliseSubdomain(field.value) || 'your-school-name';
+                var slug = normaliseSubdomain(field.value);
+                preview.textContent = slug || 'your-school-name';
+                if (status) { status.textContent = ''; }
+                clearTimeout(timer);
+                if (!slug || slug === lastAsked) return;
+                timer = setTimeout(function () { lastAsked = slug; check(slug); }, 400);
             });
         })();
 

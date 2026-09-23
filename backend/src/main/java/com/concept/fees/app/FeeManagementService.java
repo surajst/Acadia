@@ -25,6 +25,29 @@ public class FeeManagementService {
     @Autowired
     private StudentRepository studentRepository;
 
+    /**
+     * Who an invoice belongs to, for the audit trail.
+     *
+     * <p>The summaries printed the invoice's UUID, which tells a head teacher
+     * reading the log nothing at all -- and the log is the one place they
+     * would go to answer "who paid what". Falls back to the id only when the
+     * student cannot be resolved, which is better than an empty sentence.
+     */
+    private String who(FeeInvoice invoice) {
+        if (invoice == null) {
+            return "an unknown invoice";
+        }
+        // Scoped to the invoice's own tenant: a bare findById on a tenant-scoped
+        // repository would resolve a name from another school.
+        return studentRepository.findByIdAndTenantId(invoice.getStudentId(), invoice.getTenantId())
+                .map(st -> {
+                    String roll = st.getRollNumber();
+                    return (st.getFirstName() + " " + st.getLastName()).trim()
+                            + (roll == null || roll.isBlank() ? "" : " (" + roll + ")");
+                })
+                .orElse("invoice " + invoice.getId());
+    }
+
 
     @Autowired
     private FeeInvoiceRepository feeInvoiceRepository;
@@ -152,7 +175,7 @@ public class FeeManagementService {
         feeTransactionRepository.saveAndFlush(txn);
 
         auditLogService.log(authentication, "FEE_PAYMENT_RECORDED", "FeeInvoice", invoiceId,
-                "Recorded payment of " + paymentAmount + " (" + mode + ") on invoice " + invoiceId
+                "Recorded payment of " + paymentAmount + " (" + mode + ") for " + who(invoice)
                         + " — receipt #" + txn.getReceiptNumber());
 
         return txn.getReceiptNumber();
@@ -174,7 +197,7 @@ public class FeeManagementService {
         feeInvoiceRepository.saveAndFlush(invoice);
 
         auditLogService.log(authentication, "FEE_WAIVER_REQUESTED", "FeeInvoice", invoiceId,
-                "Requested a waiver of " + waiverAmount + " on invoice " + invoiceId + " (" + reason + ")");
+                "Requested a waiver of " + waiverAmount + " for " + who(invoice) + " (" + reason + ")");
 
         return invoice;
     }
@@ -205,7 +228,8 @@ public class FeeManagementService {
 
         auditLogService.log(authentication, approve ? "FEE_WAIVER_APPROVED" : "FEE_WAIVER_REJECTED",
                 "FeeInvoice", invoiceId,
-                (approve ? "Approved" : "Rejected") + " waiver of " + invoice.getWaiverAmount() + " on invoice " + invoiceId);
+                (approve ? "Approved" : "Rejected") + " waiver of " + invoice.getWaiverAmount()
+                        + " for " + who(invoice));
 
         return invoice;
     }

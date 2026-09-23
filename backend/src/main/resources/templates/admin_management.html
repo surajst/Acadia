@@ -482,6 +482,28 @@
                                     return;
                                 }
 
+                                var approve = e.target.closest('[data-staff-approve]');
+                                if (approve) {
+                                    var approveErr = document.getElementById('staffAddError');
+                                    var approveOk = document.getElementById('staffAddSuccess');
+                                    var res = await fetch('/api/principal/staff/' + approve.dataset.staffApprove + '/approve', {
+                                        method: 'POST',
+                                        headers: csrfHeaders()
+                                    });
+                                    var out = await res.json().catch(function () { return {}; });
+                                    if (!res.ok || out.error) {
+                                        approveErr.textContent = out.error || 'Could not approve that account.';
+                                        approveErr.classList.remove('hidden');
+                                        return;
+                                    }
+                                    approveErr.classList.add('hidden');
+                                    approveOk.innerHTML = staffEscape(approve.dataset.name)
+                                        + ' can sign in now.';
+                                    approveOk.classList.remove('hidden');
+                                    await loadStaff();
+                                    return;
+                                }
+
                                 var reset = e.target.closest('[data-staff-reset]');
                                 if (reset) {
                                     if (!confirm('Issue a new temporary password for ' + reset.dataset.name
@@ -1005,7 +1027,18 @@
                         '<td class="py-2 pr-4 text-xs font-semibold">' + status + '</td>' +
                         // Staff had no row actions at all, so a teacher who lost
                         // their temporary password could not be helped by anyone.
-                        '<td class="py-2 pr-4 text-right"><button type="button" ' +
+                        // Approve appears only where it means something: an
+                        // account that is still waiting. Resetting a password
+                        // does not release one -- that was the other half of
+                        // why invited teachers looked unfixable.
+                        '<td class="py-2 pr-4 text-right whitespace-nowrap">' +
+                        (s.approvalStatus === 'PENDING'
+                            ? '<button type="button" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900" ' +
+                              'data-staff-approve="' + staffEscape(s.id) + '" ' +
+                              'data-name="' + staffEscape(s.fullName) + '">Approve</button>' +
+                              '<span class="text-slate-300 px-2">|</span>'
+                            : '') +
+                        '<button type="button" ' +
                         'class="text-xs font-semibold text-indigo-600 hover:text-indigo-800" ' +
                         'data-staff-reset="' + staffEscape(s.id) + '" ' +
                         'data-name="' + staffEscape(s.fullName) + '">Reset password</button></td>' +

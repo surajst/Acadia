@@ -26,7 +26,9 @@
         <div th:if="${param.success != null or successMessage != null}" data-flash data-autohide="6000"
              class="mb-5 p-3.5 pr-10 rounded-xl text-sm font-medium flex items-center gap-2 border"
              style="background:var(--success-50); border-color:var(--success-200); color:var(--success);">
-            <span>✨</span> <span th:text="${successMessage} ?: 'Payment transaction recorded successfully! Roster balances updated.'">Done</span>
+            <span>✨</span> <!-- A neutral fallback. Naming a payment here meant any action that
+                 redirected with ?success= claimed money had changed hands. -->
+            <span th:text="${successMessage} ?: 'Done.'">Done</span>
         </div>
         <div th:if="${errorMessage != null}" data-flash data-autohide="8000"
              class="mb-5 p-3.5 pr-10 rounded-xl text-sm font-medium flex items-center gap-2 border"

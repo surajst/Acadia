@@ -30,6 +30,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -52,6 +53,7 @@ class TimetableValidationTest {
     @Autowired private AcademicYearRepository academicYearRepository;
     @Autowired private ClassSectionRepository classSectionRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private com.concept.assignment.app.SubjectAssignmentService assignmentService;
 
     private UUID tenantId;
     private UUID yearId;
@@ -229,5 +231,55 @@ class TimetableValidationTest {
         move.setEndTime("08:50");
 
         assertDoesNotThrow(() -> timetableService.adminUpdate(id, move, admin));
+    }
+
+    /**
+     * The reported case: Neha is assigned 6-B Science and was accepted onto
+     * 7-A English without a word.
+     *
+     * <p>The first version of this check keyed on the section's assignments,
+     * so a section with none configured said nothing at all -- which is
+     * exactly the section she was wrongly put on. What the section has
+     * configured says nothing about whether this teacher belongs in it, so it
+     * keys on the teacher now.
+     */
+    @Test
+    void aTeacherOnASectionTheyAreNotAssignedToIsFlagged() {
+        ClassSection sectionC = section("Grade 7", "A");
+        User neha = user("neha.teacher@example.com", "Neha Test", UserRole.TEACHER);
+        assignmentService.assignSubject(neha.getId(), sectionB.getId(), "Science", true, tenantId);
+
+        Map<String, Object> saved = create(slot(sectionC, neha, "MON", 1, "08:00", "08:45", "English"));
+
+        @SuppressWarnings("unchecked")
+        List<String> warnings = (List<String>) saved.get("warnings");
+        assertNotNull(warnings, "this is the case the check exists for");
+        assertTrue(warnings.get(0).contains("Neha Test"), warnings.get(0));
+        assertTrue(warnings.get(0).contains("Grade 7 A"), warnings.get(0));
+        assertTrue(warnings.get(0).contains("Grade 6 B"), "say where they are assigned: " + warnings.get(0));
+    }
+
+    /** Right class, wrong subject, is worth saying too. */
+    @Test
+    void aTeacherAssignedForAnotherSubjectIsFlagged() {
+        User neha = user("neha2@example.com", "Neha Test", UserRole.TEACHER);
+        assignmentService.assignSubject(neha.getId(), sectionA.getId(), "Science", false, tenantId);
+
+        Map<String, Object> saved = create(slot(sectionA, neha, "MON", 1, "08:00", "08:45", "English"));
+
+        @SuppressWarnings("unchecked")
+        List<String> warnings = (List<String>) saved.get("warnings");
+        assertNotNull(warnings, "a Science teacher down for English is usually a mistyped row");
+        assertTrue(warnings.get(0).contains("Science"), warnings.get(0));
+    }
+
+    /** The assignment they actually hold must pass without comment. */
+    @Test
+    void aTeacherOnTheirOwnAssignedSubjectIsNotFlagged() {
+        User neha = user("neha3@example.com", "Neha Test", UserRole.TEACHER);
+        assignmentService.assignSubject(neha.getId(), sectionA.getId(), "Science", false, tenantId);
+
+        Map<String, Object> saved = create(slot(sectionA, neha, "TUE", 1, "08:00", "08:45", "Science"));
+        assertFalse(saved.containsKey("warnings"), "this is the ordinary, correct case");
     }
 }

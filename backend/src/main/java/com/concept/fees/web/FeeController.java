@@ -139,6 +139,10 @@ public class FeeController {
         UUID tenantId = tenantContext.getTenantId().orElse(null);
         try {
             feeDashboardService.createInvoice(studentId, tenantId, overrideAmount, overrideReason, authentication);
+            // Said explicitly, because the banner's fallback text described a
+            // payment -- so raising an invoice reported "Payment transaction
+            // recorded successfully", which is a different and alarming claim.
+            ra.addFlashAttribute("successMessage", "Invoice raised.");
             return "redirect:/web/admin/fees?success=invoice_created";
         } catch (IllegalArgumentException e) {
             // A rejected override (no reason, negative amount) is user error,

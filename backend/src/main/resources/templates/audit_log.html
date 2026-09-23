@@ -63,11 +63,32 @@
         const pageSize = 50;
 
         async function loadAuditLog() {
-            const res = await fetch(`/web/admin/audit-log/data?page=${currentPage}&size=${pageSize}`);
-            const entries = await res.json();
+            const tbodyEl = document.getElementById('auditRows');
+            const emptyEl = document.getElementById('emptyState');
 
-            const tbody = document.getElementById('auditRows');
-            const emptyState = document.getElementById('emptyState');
+            // Until this, the table started empty with the empty state hidden,
+            // so a school with a full trail looked like a school with none for
+            // as long as the fetch took -- and a failed fetch looked the same
+            // forever.
+            emptyEl.style.display = 'none';
+            tbodyEl.innerHTML =
+                '<tr><td colspan="5" class="py-6 text-center text-slate-400 text-sm">Loading…</td></tr>';
+
+            let entries;
+            try {
+                const res = await fetch(`/web/admin/audit-log/data?page=${currentPage}&size=${pageSize}`);
+                if (!res.ok) throw new Error('Fetch failed');
+                entries = await res.json();
+            } catch (err) {
+                console.error(err);
+                tbodyEl.innerHTML =
+                    '<tr><td colspan="5" class="py-6 text-center text-rose-600 text-sm">' +
+                    'Could not load the audit log. Please reload the page.</td></tr>';
+                return;
+            }
+
+            const tbody = tbodyEl;
+            const emptyState = emptyEl;
 
             if (entries.length === 0) {
                 tbody.innerHTML = '';
