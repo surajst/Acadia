@@ -19,6 +19,7 @@ import com.concept.tasks.data.TaskType;
 import com.concept.tasks.data.TeacherTask;
 import com.concept.tasks.data.TeacherTaskRepository;
 import com.concept.tasks.data.TeacherTaskRequest;
+import com.concept.notification.app.NotificationPublisher;
 import com.concept.tasks.app.TeacherTaskService;
 import com.concept.user.CurrentUserService;
 import com.concept.user.User;
@@ -58,6 +59,7 @@ public class TasksService {
     private final UserRepository userRepository;
     private final AcademicSubmissionRepository submissionRepository;
     private final TeacherTaskRepository teacherTaskRepository;
+    private final NotificationPublisher notificationPublisher;
     private final NotificationDeliveryService notificationDeliveryService;
     private final CurrentUserService currentUserService;
     private final boolean devMode;
@@ -71,6 +73,7 @@ public class TasksService {
                         UserRepository userRepository,
                         AcademicSubmissionRepository submissionRepository,
                         TeacherTaskRepository teacherTaskRepository,
+                        NotificationPublisher notificationPublisher,
                         NotificationDeliveryService notificationDeliveryService,
                         CurrentUserService currentUserService,
                         @Value("${app.dev-mode:false}") boolean devMode) {
@@ -83,6 +86,7 @@ public class TasksService {
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
         this.teacherTaskRepository = teacherTaskRepository;
+        this.notificationPublisher = notificationPublisher;
         this.notificationDeliveryService = notificationDeliveryService;
         this.currentUserService = currentUserService;
         this.devMode = devMode;
@@ -95,10 +99,38 @@ public class TasksService {
             String username = authentication != null ? authentication.getName() : "teacher_1";
             UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
             UUID academicYearId = currentUserService.getCurrentAcademicYearId(authentication).orElse(null);
-            return teacherTaskService.createTask(toManagementRequest(request), username, tenantId, academicYearId);
+            TeacherTask created = teacherTaskService.createTask(
+                    toManagementRequest(request), username, tenantId, academicYearId);
+            notifyAssignedStudents(created, tenantId, academicYearId);
+            return created;
         } catch (Exception e) {
             throw TasksException.badRequest(e.getMessage());
         }
+    }
+
+    /**
+     * Tell the pupils a task was set for them.
+     *
+     * <p>Setting homework raised nothing before this, so the only way a child
+     * found out was opening the app and looking. Resolved the same way
+     * {@code getTasksForStudent} resolves the other direction: a class task goes
+     * to everyone in that grade, a personal one to that pupil alone.
+     */
+    private void notifyAssignedStudents(TeacherTask task, UUID tenantId, UUID academicYearId) {
+        if (task == null || tenantId == null) return;
+        List<Student> recipients;
+        if (Boolean.FALSE.equals(task.getAssignedToClass()) && task.getStudentId() != null) {
+            recipients = studentRepository.findByIdAndTenantId(task.getStudentId(), tenantId)
+                    .map(List::of).orElse(List.of());
+        } else {
+            recipients = studentRepository.findByTenantId(tenantId).stream()
+                    .filter(s -> s.getClassSection() != null
+                            && task.getStandard() != null
+                            && task.getStandard() == GradeLevel.parse(s.getClassSection().getGradeName()))
+                    .collect(Collectors.toList());
+        }
+        notificationPublisher.taskAssigned(recipients, tenantId, academicYearId,
+                task.getId(), task.getTitle(), task.getSubjectCode());
     }
 
     public Object myTasks(Authentication authentication) {

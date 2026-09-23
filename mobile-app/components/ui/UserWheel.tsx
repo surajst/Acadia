@@ -53,7 +53,10 @@ export default function UserWheel({ options, hub, onHubPress, hubLabel }: Props)
     // clear a whole label box plus a gap, or labels collide from n=6 up. Also
     // keep the rim clear of the hub. n<=1 would divide by zero.
     const spread = n <= 1 ? 0 : (slotW + GAP) / (2 * Math.sin(Math.PI / n));
-    const clearsHub = HUB / 2 + item / 2 + 18;
+    // 34, not a token gap: the dashed connectors run through this space, and
+    // at 18 they came out 5-6px long on the low spoke counts -- specks rather
+    // than lines. Checked across n=2..8 at 320/360/412dp.
+    const clearsHub = HUB / 2 + item / 2 + 34;
     let r = Math.max(spread, clearsHub);
 
     let boxW = 2 * r + slotW + 8;
@@ -113,15 +116,30 @@ export default function UserWheel({ options, hub, onHubPress, hubLabel }: Props)
 
   return (
     <View style={[styles.wrap, { width: boxW, height: boxH }]}>
-      {/* The orbit itself, purely decorative -- borderColor, so it is a line and
-          never mistaken for a text colour by the contrast gate. */}
-      <View
-        pointerEvents="none"
-        style={[styles.orbit, {
-          width: 2 * r, height: 2 * r, borderRadius: r,
-          left: cx - r, top: cy - r,
-        }]}
-      />
+      {/* A dashed spoke out to each destination. Drawn as a thin bordered
+          View rotated to the angle rather than an SVG path: the wheel is
+          already Views, and borderStyle 'dashed' gives the dashes for free.
+          Rotation is about the View's own centre, so each line is positioned
+          at the midpoint of the run it covers -- no transformOrigin needed. */}
+      {options.map((o, i) => {
+        const angle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+        const from = HUB / 2 + 4;          // clear of the hub
+        const to = r - item / 2 - 4;       // stop short of the spoke
+        const length = Math.max(0, to - from);
+        const mid = from + length / 2;
+        return (
+          <View
+            key={`connector-${o.key}`}
+            pointerEvents="none"
+            style={[styles.connector, {
+              width: length,
+              left: cx + mid * Math.cos(angle) - length / 2,
+              top: cy + mid * Math.sin(angle),
+              transform: [{ rotate: `${(angle * 180) / Math.PI}deg` }],
+            }]}
+          />
+        );
+      })}
 
       <TouchableOpacity
         style={[styles.hub, { width: HUB, height: HUB, borderRadius: HUB / 2, left: cx - HUB / 2, top: cy - HUB / 2 }]}
@@ -167,16 +185,28 @@ export default function UserWheel({ options, hub, onHubPress, hubLabel }: Props)
 }
 
 const makeStyles = (T: Theme) => StyleSheet.create({
-  wrap: { alignSelf: 'center', marginVertical: 8 },
-  orbit: { position: 'absolute', borderWidth: 1, borderColor: T.line },
+  // marginTop gives the wheel room to breathe under the summary card.
+  wrap: { alignSelf: 'center', marginTop: 18, marginBottom: 8 },
+  connector: {
+    position: 'absolute', height: 0,
+    borderTopWidth: 1, borderStyle: 'dashed', borderColor: T.lineStrong,
+  },
+  // Solid brand disc, not a tint: the hub is the one thing on this screen that
+  // should read as the person rather than as a control.
   hub: {
     position: 'absolute', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: T.surface, borderWidth: 2, borderColor: T.line, overflow: 'hidden',
+    backgroundColor: T.brand, overflow: 'hidden',
+    shadowColor: '#101828', shadowOpacity: 0.18, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
   slot: { position: 'absolute', alignItems: 'center' },
+  // quest50/quest200 rather than the brand tints: the quest family is the
+  // design system's existing "something good is waiting for you" warm accent,
+  // so the rim stays warm on every palette instead of turning pale teal on one
+  // and pale violet on another.
   spoke: {
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: T.surface, borderWidth: 1, borderColor: T.line,
+    backgroundColor: T.quest50, borderWidth: 1, borderColor: T.quest200,
   },
   label: { marginTop: 4, fontSize: 12, lineHeight: 15, fontWeight: '600', color: T.text, textAlign: 'center' },
   fallbackGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },

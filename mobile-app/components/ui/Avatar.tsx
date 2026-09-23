@@ -11,12 +11,14 @@ import { useTheme, type Theme } from '../../context/ThemeContext';
  * not one of them able to show a photograph. This renders the photo when there
  * is one and falls back to the same letter-on-tint disc the app already had.
  *
- * <p>`tone` exists because the old copies split into two families: on the
+ * <p>`tone` exists because the copies it replaces split into families: on the
  * gradient header the disc is translucent white, and on a page it is a brand
- * tint. Both are kept rather than flattened, since the gradient one has to sit
- * on top of an arbitrary brand colour.
+ * tint. `onBrand` is the third -- no disc at all, just a white letter, for when
+ * the caller has already painted a solid brand circle underneath (the wheel's
+ * hub). Flattening them would mean one of the three sitting on the wrong
+ * ground.
  */
-export type AvatarTone = 'onGradient' | 'onSurface';
+export type AvatarTone = 'onGradient' | 'onSurface' | 'onBrand';
 
 export default function Avatar({
   uri, initial, size = 44, radius, tone = 'onSurface',
@@ -36,7 +38,8 @@ export default function Avatar({
   return (
     <View
       style={[
-        tone === 'onGradient' ? styles.discOnGradient : styles.discOnSurface,
+        tone === 'onGradient' ? styles.discOnGradient
+          : tone === 'onBrand' ? styles.discOnBrand : styles.discOnSurface,
         { width: size, height: size, borderRadius: r },
       ]}
     >
@@ -49,7 +52,7 @@ export default function Avatar({
       ) : (
         <Text
           style={[
-            tone === 'onGradient' ? styles.letterOnGradient : styles.letterOnSurface,
+            tone === 'onSurface' ? styles.letterOnSurface : styles.letterOnBrandSurface,
             { fontSize: Math.round(size * 0.4) },
           ]}
         >
@@ -70,6 +73,8 @@ const makeStyles = (T: Theme) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
     backgroundColor: T.brand50, borderWidth: 1, borderColor: T.brand100,
   },
-  letterOnGradient: { fontWeight: '800', color: T.onBrand },
+  discOnBrand: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  // Shared by onGradient and onBrand: both sit on a brand-coloured ground.
+  letterOnBrandSurface: { fontWeight: '800', color: T.onBrand },
   letterOnSurface: { fontWeight: '700', color: T.brandInk },
 });

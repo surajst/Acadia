@@ -282,6 +282,36 @@ test.describe('Native Web App E2E Tests', () => {
     await expect(page.locator('text="This section is available for parent accounts." >> visible=true')).toBeVisible();
   });
 
+  test('Unread notifications appear under the wheel and open what they are about', async ({ page }) => {
+    // /test/reset seeds three unread notifications for this teacher --
+    // ATTENDANCE, TASK and ANNOUNCEMENT.
+    await page.goto('http://localhost:8080/test/reset');
+
+    await page.goto('/');
+    await page.getByPlaceholder('Email / Username').fill('teacher@greenwood.com');
+    await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+    await page.getByText('Log In').click();
+    await page.waitForLoadState('networkidle');
+
+    // 1. The strip renders what is waiting, under the wheel.
+    await expect(page.locator('text="WAITING FOR YOU" >> visible=true')).toBeVisible();
+    await expect(page.locator('text="Attendance Reminder" >> visible=true')).toBeVisible();
+
+    // 2. Tapping one opens the screen it is about. A teacher's attendance
+    //    notification means "you still have a register open", which is
+    //    answered from their class list.
+    await page.locator('text="Attendance Reminder" >> visible=true').click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('text="My Classes" >> visible=true').first()).toBeVisible();
+
+    // 3. And it is marked read: coming back, that row is gone while the
+    //    two that were not tapped remain.
+    await page.goBack();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('text="Attendance Reminder" >> visible=true')).toHaveCount(0);
+    await expect(page.locator('text="New Task Submitted" >> visible=true')).toBeVisible();
+  });
+
   test('TEACHER PORTAL TAB SMOKE TEST', async ({ page }) => {
     // Reset database to a clean state
     await page.goto('http://localhost:8080/test/reset');

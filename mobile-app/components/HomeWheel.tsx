@@ -30,7 +30,7 @@ export default function HomeWheel({ onHubPress }: { onHubPress?: () => void }) {
   return (
     <UserWheel
       options={options}
-      hub={<Avatar uri={photoUri} initial={name} size={92} />}
+      hub={<Avatar uri={photoUri} initial={name} size={92} tone="onBrand" />}
       hubLabel={photoUri ? 'Your profile picture' : 'Add a profile picture'}
       onHubPress={onHubPress ?? pickAndUpload}
     />
