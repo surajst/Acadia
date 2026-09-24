@@ -166,9 +166,17 @@ test.describe('Endpoints added for these screens', () => {
     await page.goto('/test/reset');
     await loginAsAdmin(page);
 
-    const grades = await page.evaluate(async () =>
-      (await fetch('/api/teacher/grade-options')).json());
+    // An admin must be able to read this: /web/teacher/tasks admits ADMIN, and
+    // the dropdown on it is filled from here. The chain used to refuse them
+    // regardless of the method annotation, so the page offered "Could not load
+    // classes" to the one role most likely to be setting a school up.
+    const response = await page.evaluate(async () => {
+      const res = await fetch('/api/teacher/grade-options');
+      return { status: res.status, body: await res.json() };
+    });
+    expect(response.status, 'an admin must not be refused this endpoint').toBe(200);
 
+    const grades = response.body;
     expect(Array.isArray(grades)).toBe(true);
     // Whatever the school runs, every option must carry both halves -- the
     // numeric standard a task is stored against and a label to show.
@@ -188,10 +196,34 @@ test.describe('Endpoints added for these screens', () => {
       (await fetch('/api/onboard/subdomain-available?subdomain=' + encodeURIComponent('Demo@SSC'))).json());
     expect(messy.subdomain).toBe('demo-ssc');
 
-    // greenwood_static is seeded by /test/reset, so it is taken.
-    const taken = await page.evaluate(async () =>
-      (await fetch('/api/onboard/subdomain-available?subdomain=greenwood_static')).json());
+    // A name this test creates, rather than a seeded one: the seeded
+    // subdomains contain underscores ("greenwood_static"), and an underscore
+    // is not a legal hostname character, so normalisation rewrites it to
+    // "greenwood-static" -- a different name, which really is available. That
+    // is correct behaviour and a misleading thing to assert against.
+    const slug = `pw-taken-${Date.now()}`;
+    const created = await page.evaluate(async (sub) => {
+      const res = await fetch('/api/onboard/create-school', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          schoolName: 'PW Availability School', subdomain: sub,
+          adminEmail: `${sub}@example.com`, adminPassword: 'PilotLaunchSecure2026!',
+          adminFullName: 'PW Admin', schoolType: 'SECONDARY',
+        }),
+      });
+      return res.ok;
+    }, slug);
+    expect(created, 'the fixture school must be created').toBe(true);
+
+    const taken = await page.evaluate(async (sub) =>
+      (await fetch('/api/onboard/subdomain-available?subdomain=' + encodeURIComponent(sub))).json(), slug);
     expect(taken.available).toBe(false);
     expect(taken.reason).toBeTruthy();
+
+    // And a name nobody has taken reads as free.
+    const free = await page.evaluate(async (sub) =>
+      (await fetch('/api/onboard/subdomain-available?subdomain=' + encodeURIComponent(sub + '-x'))).json(), slug);
+    expect(free.available).toBe(true);
   });
 });

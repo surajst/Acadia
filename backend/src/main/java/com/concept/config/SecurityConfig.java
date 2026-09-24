@@ -56,6 +56,22 @@ public class SecurityConfig {
                         .requestMatchers("/api/onboard/**").permitAll() // public self-serve school signup
                         .requestMatchers("/api/principal/**").hasAnyRole("ADMIN", "PRINCIPAL") // read-only oversight
                         .requestMatchers("/api/teacher/timetable/seed").hasRole("ADMIN") // DEV ONLY seed - ADMIN only
+                        // Three endpoints under /api/teacher that an admin is
+                        // meant to reach, listed before the broad rule below
+                        // because the chain decides first and the method
+                        // annotation never gets a say.
+                        //
+                        // This is the real cause of the round-1 finding that an
+                        // ADMIN opening /web/teacher/tasks got 403 on
+                        // my-tasks: /web/teacher/** admits ADMIN, the method
+                        // annotations here say ADMIN, and the URL rule refused
+                        // them anyway. That round fixed how the failure was
+                        // displayed and left the failure in place.
+                        .requestMatchers("/api/teacher/tasks/my-tasks",
+                                         "/api/teacher/tasks/create")
+                                .hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/teacher/grade-options")
+                                .hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/mobile/driver/**").hasRole("DRIVER")
                         // The mobile surface, guarded by URL rather than by
