@@ -89,8 +89,14 @@ test.describe('Native Web App E2E Tests', () => {
     // hidden behind this screen, so .first() resolved to one of those and failed
     // the visibility check. Reward costs are the only place that renders a
     // negative XP figure, so match that shape instead.
+    // "No rewards available yet." never existed in the app, so this only ever
+    // passed through the negative-XP branch -- which was satisfied by a
+    // hardcoded "Extra Screen Time -100 XP" card standing in for the empty
+    // state. That invented card is gone, so the test was resting on data no
+    // school had. It now accepts the real empty state or a real reward cost.
     await expect(
-      page.getByText('No rewards available yet.')
+      page.getByText('Nothing to claim yet')
+        .or(page.getByText('No rewards set up'))
         .or(page.getByText(/-\d+ XP/).first())
     ).toBeVisible();
 

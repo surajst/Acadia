@@ -13,7 +13,9 @@ const { test, expect } = require('@playwright/test');
  *    The backend round trip was never at fault -- StudentHandInTest covers
  *    that half.
  *  - Saving gradebook scores gave no confirmation, for the same Alert reason,
- *    and a score above the maximum was accepted.
+ *    and a score above the maximum was accepted. The rule itself is pinned by
+ *    ScoreBoundsTest at the service; what this covers is that the teacher is
+ *    shown the refusal rather than left guessing.
  */
 test.describe('App actions that need a real browser', () => {
   test.use({ baseURL: 'http://localhost:8081' });
@@ -93,6 +95,11 @@ test.describe('App actions that need a real browser', () => {
     test.skip(!ready, 'this teacher has no assigned class with pupils in the seed, so there is nothing to score');
 
     await scoreField.fill('150');
+    // The button sits below a ScrollView, so it is present but not in view.
+    // Playwright's auto-scroll does not reach inside a React Native Web
+    // ScrollView, which is why clicking it timed out on "visible, enabled and
+    // stable" rather than on the element being missing.
+    await saveBtn.scrollIntoViewIfNeeded();
     await saveBtn.click();
     await page.waitForLoadState('networkidle');
 
@@ -103,6 +110,7 @@ test.describe('App actions that need a real browser', () => {
 
     // A mark inside the range saves, and says so in the page.
     await scoreField.fill('18');
+    await saveBtn.scrollIntoViewIfNeeded();
     await saveBtn.click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text=/score.* saved/ >> visible=true').first())
