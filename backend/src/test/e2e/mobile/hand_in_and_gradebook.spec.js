@@ -84,13 +84,16 @@ test.describe('App actions that need a real browser', () => {
     await page.getByRole('button', { name: 'Create assessment' }).click();
     await page.waitForLoadState('networkidle');
 
+    // Guard on the Save button as well as a score field: the detail panel only
+    // renders when the teacher has an assigned class with pupils in it, and
+    // checking a proxy for it is how this timed out waiting to click Save.
+    const saveBtn = page.getByRole('button', { name: 'Save all scores' });
     const scoreField = page.locator('input[aria-label*="Score for"]').first();
-    if (await scoreField.count() === 0) {
-      test.skip(true, 'no pupils in this class section in the seed; nothing to score');
-    }
+    const ready = (await scoreField.count()) > 0 && (await saveBtn.count()) > 0;
+    test.skip(!ready, 'this teacher has no assigned class with pupils in the seed, so there is nothing to score');
 
     await scoreField.fill('150');
-    await page.getByRole('button', { name: 'Save all scores' }).click();
+    await saveBtn.click();
     await page.waitForLoadState('networkidle');
 
     // The server refuses it and names the pupil and the maximum; the screen
@@ -100,7 +103,7 @@ test.describe('App actions that need a real browser', () => {
 
     // A mark inside the range saves, and says so in the page.
     await scoreField.fill('18');
-    await page.getByRole('button', { name: 'Save all scores' }).click();
+    await saveBtn.click();
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text=/score.* saved/ >> visible=true').first())
       .toBeVisible({ timeout: 30000 });
@@ -113,10 +116,23 @@ test.describe('App actions that need a real browser', () => {
     await page.goto('/quests');
     await page.waitForLoadState('networkidle');
 
-    // The invented cards that used to stand in for an empty state. A family
-    // comparing notes would have been comparing two different fictions.
-    await expect(page.locator('text=Clean your room')).toHaveCount(0);
+    // Two of the three fabrications. "Extra Screen Time" and "Ice Cream Trip"
+    // existed nowhere but the hardcoded empty state, so their absence is the
+    // assertion.
+    //
+    // "Clean your room" is deliberately not checked: the dev harness seeds a
+    // real ParentQuest with that description, so after /test/reset it appears
+    // here legitimately. The same words had two origins -- a real row in dev,
+    // an invented card in production -- which is worth keeping straight rather
+    // than asserting away.
     await expect(page.locator('text=Extra Screen Time')).toHaveCount(0);
     await expect(page.locator('text=Ice Cream Trip')).toHaveCount(0);
+
+    // And whatever is on screen came from the API: either real quests, or the
+    // empty state that replaced the invented ones.
+    const realOrEmpty = await page.locator(
+      'text=/No quests yet|Nothing to claim yet|No rewards set up|Status:/').count();
+    expect(realOrEmpty, 'the screen must show real quests or an honest empty state')
+      .toBeGreaterThan(0);
   });
 });
