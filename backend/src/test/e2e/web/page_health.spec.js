@@ -45,6 +45,31 @@ test.describe('Admin Page Health', () => {
     await assertPageHealth(page, '/web/admin/assignments');
     await expect(page.locator('h2:has-text("Teacher Assignments")')).toBeVisible();
   });
+
+  // Four admin pages that were never in here, all of which the QA rounds
+  // changed: the fee plan form, the audit log, the timetable grid and the
+  // roster importer. The importer is the pointed one -- it threw on every
+  // request for a day because a JavaScript array literal opened with the two
+  // characters Thymeleaf reads as an inline expression, and nothing here
+  // opened the page to notice.
+  test('Admin Fee Settings', async ({ page }) => {
+    await assertPageHealth(page, '/web/admin/fees/settings');
+  });
+
+  test('Admin Audit Log', async ({ page }) => {
+    await assertPageHealth(page, '/web/admin/audit-log');
+  });
+
+  test('Admin Timetable', async ({ page }) => {
+    await assertPageHealth(page, '/web/admin/timetable');
+  });
+
+  test('Roster Importer', async ({ page }) => {
+    await assertPageHealth(page, '/web/management/upload');
+    // The file input lives inside a th:if block; an unclosed tag above it once
+    // swallowed the whole form on first load, when no import had run yet.
+    await expect(page.locator('section[data-panel="students"] input[type="file"]')).toHaveCount(1);
+  });
 });
 
 test.describe('Teacher Page Health', () => {
