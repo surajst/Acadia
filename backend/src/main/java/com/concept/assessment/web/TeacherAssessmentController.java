@@ -35,7 +35,8 @@ public class TeacherAssessmentController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> createAssessment(@RequestBody CreateAssessmentRequest request, Authentication authentication) {
+    public ResponseEntity<?> createAssessment(@jakarta.validation.Valid @RequestBody CreateAssessmentRequest request,
+                                             Authentication authentication) {
         return ResponseEntity.ok(assessmentService.createAssessment(request, authentication));
     }
 

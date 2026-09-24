@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Alert,
 } from 'react-native';
 import { useContext, useState, useEffect, useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,6 +50,8 @@ export default function ChallengesScreen() {
   const [answers, setAnswers] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [handedIn, setHandedIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchChallenges = async () => {
     setLoading(true);
@@ -98,17 +99,35 @@ export default function ChallengesScreen() {
   const hand_in = async () => {
     if (!openTask) return;
     setSubmitting(true);
+    setError(null);
     try {
       await submitTask({ taskId: openTask.id, notes, answers });
-      setOpenTask(null);
-      Alert.alert('Handed in', 'Your teacher will review it and award the XP.');
+      // The sheet stays open and openTask stays set. Clearing it here is what
+      // blanked the header to " · + XP": visible={openTask !== null} starts the
+      // slide-out, but the optional chaining renders empty on the very next
+      // frame, so the child watched the task they had just handed in dissolve.
+      //
+      // And the confirmation was an Alert, which does nothing at all on React
+      // Native Web -- so on the build being tested, a successful hand-in looked
+      // exactly like nothing happening. It is in the sheet now, where both
+      // platforms show it.
+      setHandedIn(true);
       await fetchChallenges();
     } catch (err: any) {
-      const message = err?.response?.data?.error || 'Could not hand this in. Please try again.';
-      Alert.alert('Not submitted', message);
+      setError(err?.response?.data?.error || 'Could not hand this in. Please try again.');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  /** Dismiss the sheet and forget the attempt, ready for the next task. */
+  const closeSheet = () => {
+    setOpenTask(null);
+    setHandedIn(false);
+    setError(null);
+    setNotes('');
+    setAnswers([]);
+    setQuestions([]);
   };
 
   const answered = questions.length === 0 || answers.every((a) => a.trim().length > 0);
@@ -162,7 +181,7 @@ export default function ChallengesScreen() {
         visible={openTask !== null}
         transparent
         animationType="slide"
-        onRequestClose={() => setOpenTask(null)}
+        onRequestClose={closeSheet}
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { paddingBottom: T.space.lg + insets.bottom }]}>
@@ -206,20 +225,52 @@ export default function ChallengesScreen() {
               </View>
             </ScrollView>
 
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.secondaryBtn} onPress={() => setOpenTask(null)}>
-                <Text style={styles.secondaryBtnText}>Close</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.primaryBtn, (!answered || submitting) && styles.primaryBtnDisabled]}
-                onPress={hand_in}
-                disabled={!answered || submitting}
-              >
-                <Text style={styles.primaryBtnText}>{submitting ? 'Sending…' : 'Hand in'}</Text>
-              </TouchableOpacity>
-            </View>
-            {!answered && (
-              <Text style={styles.hintText}>Answer every question to hand this in.</Text>
+            {/* The one thing a child needs to see after pressing Hand in.
+                It lives in the sheet because Alert does nothing on web. */}
+            {handedIn ? (
+              <View style={styles.handedInPanel} accessibilityRole="alert">
+                <Text style={styles.handedInTitle}>Handed in</Text>
+                <Text style={styles.handedInBody}>
+                  Waiting for your teacher. They will award the XP once they have looked at it.
+                </Text>
+                <TouchableOpacity
+                  style={styles.primaryBtn}
+                  onPress={closeSheet}
+                  accessibilityRole="button"
+                  accessibilityLabel="Done"
+                >
+                  <Text style={styles.primaryBtnText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                {!!error && (
+                  <Text style={styles.errorText} accessibilityRole="alert">{error}</Text>
+                )}
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={styles.secondaryBtn}
+                    onPress={closeSheet}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close without handing in"
+                  >
+                    <Text style={styles.secondaryBtnText}>Close</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.primaryBtn, (!answered || submitting) && styles.primaryBtnDisabled]}
+                    onPress={hand_in}
+                    disabled={!answered || submitting}
+                    accessibilityRole="button"
+                    accessibilityLabel="Hand in"
+                    accessibilityState={{ disabled: !answered || submitting }}
+                  >
+                    <Text style={styles.primaryBtnText}>{submitting ? 'Sending…' : 'Hand in'}</Text>
+                  </TouchableOpacity>
+                </View>
+                {!answered && (
+                  <Text style={styles.hintText}>Answer every question to hand this in.</Text>
+                )}
+              </>
             )}
           </View>
         </View>
@@ -402,6 +453,25 @@ const makeStyles = (T: Theme) => StyleSheet.create({
     color: T.onBrand,
     fontWeight: '700',
     fontSize: 14,
+  },
+  handedInPanel: {
+    paddingTop: 4,
+    gap: 8,
+  },
+  handedInTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: T.successInk,
+  },
+  handedInBody: {
+    fontSize: 13,
+    color: T.text2,
+    marginBottom: 4,
+  },
+  errorText: {
+    color: T.danger,
+    fontSize: 12.5,
+    marginBottom: 8,
   },
   hintText: {
     color: T.text3,
