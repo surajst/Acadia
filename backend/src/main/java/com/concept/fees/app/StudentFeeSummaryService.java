@@ -90,6 +90,13 @@ public class StudentFeeSummaryService {
         List<StudentFeeSummary.PaymentLine> payments = new ArrayList<>();
 
         for (FeeInvoice inv : own) {
+            // A cancelled invoice is out of every figure here. Its amount due is
+            // zero, so without this it would fall into the branch below and be
+            // counted as an instalment the family has paid -- telling a parent
+            // they have settled a bill that was withdrawn.
+            if (!inv.isCountable()) {
+                continue;
+            }
             billed = billed.add(nz(inv.getTotalAmount()));
             paid = paid.add(nz(inv.getAmountPaid()));
             BigDecimal owing = nz(inv.getAmountDue());
@@ -121,7 +128,8 @@ public class StudentFeeSummaryService {
         dues.sort((a, b) -> compareNullsLast(a.dueDate(), b.dueDate()));
         payments.sort((a, b) -> compareNullsLast(b.paidOn(), a.paidOn()));
 
-        return new StudentFeeSummary(billed, paid, due, own.size(), paidCount, overdue,
+        long countedInvoices = own.stream().filter(FeeInvoice::isCountable).count();
+        return new StudentFeeSummary(billed, paid, due, (int) countedInvoices, paidCount, overdue,
                 next == null ? null : next.getInstalmentLabel(),
                 next == null ? null : next.getDueDate(),
                 next == null ? null : nz(next.getAmountDue()),

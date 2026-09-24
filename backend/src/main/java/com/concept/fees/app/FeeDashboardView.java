@@ -23,7 +23,7 @@ public record FeeDashboardView(
             String initials,
             String rollNumber,
             String gradeLevel,
-            String status,        // PAID | PARTIALLY_PAID | UNPAID
+            String status,        // PAID | PARTIALLY_PAID | UNPAID | CANCELLED
             BigDecimal totalAmount,
             BigDecimal amountPaid,
             BigDecimal amountDue,
@@ -45,7 +45,9 @@ public record FeeDashboardView(
             boolean overdue,
             // What the invoice is actually charging for. Empty for a plan
             // instalment, whose label already says what it is.
-            List<Line> lines
+            List<Line> lines,
+            // Why this bill was withdrawn. Null on every invoice that stands.
+            String cancellationReason
     ) {
         public boolean overridden() {
             return baseAmount != null;
@@ -57,6 +59,22 @@ public record FeeDashboardView(
 
         public boolean hasLines() {
             return lines != null && !lines.isEmpty();
+        }
+
+        public boolean cancelled() {
+            return "CANCELLED".equals(status);
+        }
+
+        /**
+         * Whether to offer the Cancel action on this row.
+         *
+         * <p>Not once anything has been paid: the invoice is then evidence of a
+         * receipt, and that case is a payment reversal first. The server decides
+         * this too -- the button only saves the admin a refusal.
+         */
+        public boolean cancellable() {
+            return !cancelled()
+                    && (amountPaid == null || amountPaid.compareTo(BigDecimal.ZERO) == 0);
         }
     }
 

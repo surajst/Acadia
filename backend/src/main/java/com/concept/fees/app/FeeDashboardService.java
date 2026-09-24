@@ -191,6 +191,25 @@ public class FeeDashboardService {
                 summary, raised.getStatus() == ApprovalRequest.Status.AUTO_APPROVED);
     }
 
+    /**
+     * Cancels an invoice and flattens the outcome, so the web layer never holds
+     * an entity (ADR 0001).
+     *
+     * @return the amount that came off the family's balance, as a plain string
+     */
+    @Transactional
+    public String cancelInvoice(UUID invoiceId, String reason, UUID tenantId, Authentication authentication) {
+        FeeInvoice cancelled = feeManagementService.cancelInvoice(invoiceId, reason, tenantId, authentication);
+        return cancelled.getTotalAmount() == null ? "0" : cancelled.getTotalAmount().toPlainString();
+    }
+
+    /** Passthrough for the one-off due-date correction; the record is already flat. */
+    @Transactional
+    public InvoiceScheduleService.DueDateRecalculation recalculateDueDates(
+            UUID tenantId, Authentication authentication) {
+        return invoiceScheduleService.recalculateDueDates(tenantId, authentication);
+    }
+
     /** @return the resulting waiver status (e.g. PENDING), flattened to a string. */
     public String requestWaiver(UUID invoiceId, BigDecimal waiverAmount, String reason,
                                 UUID tenantId, Authentication authentication) {
@@ -232,7 +251,11 @@ public class FeeDashboardService {
         String rollNumber = student != null && student.getRollNumber() != null ? student.getRollNumber() : "--";
         String gradeLevel = student != null && student.getClassSection() != null
                 ? student.getClassSection().getGradeName() : "—";
-        String status = inv.getStatus() != null ? inv.getStatus().name() : "UNPAID";
+        // Cancellation is its own column, not a fourth status value (see
+        // FeeInvoice.cancelledAt), so the row says so here for the badge.
+        String status = inv.isCancelled()
+                ? "CANCELLED"
+                : (inv.getStatus() != null ? inv.getStatus().name() : "UNPAID");
         String waiverStatus = inv.getWaiverStatus() != null ? inv.getWaiverStatus().name() : "NONE";
         return new FeeDashboardView.InvoiceRow(
                 inv.getId(), studentName, initials, rollNumber, gradeLevel, status,
@@ -242,7 +265,7 @@ public class FeeDashboardService {
                 reversible != null ? reversible.getAmountPaid() : null,
                 inv.getInstalmentLabel(), inv.getDueDate(),
                 inv.isOverdue(java.time.LocalDate.now()),
-                lines);
+                lines, inv.getCancellationReason());
     }
 
     private String initial(String s) {

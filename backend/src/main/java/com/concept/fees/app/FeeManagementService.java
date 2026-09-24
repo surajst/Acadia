@@ -87,6 +87,11 @@ public class FeeManagementService {
         long overdueCount = 0;
 
         for (FeeInvoice invoice : invoices) {
+            // A withdrawn bill is not money the school expects, is owed, or
+            // failed to collect. Leaving it in would keep it in the collection
+            // percentage, which is the whole reason a cancellation exists
+            // rather than a waiver.
+            if (!invoice.isCountable()) continue;
             if (invoice.getTotalAmount() != null) totalExpected = totalExpected.add(invoice.getTotalAmount());
             if (invoice.getAmountPaid() != null) totalCollected = totalCollected.add(invoice.getAmountPaid());
             if (invoice.getAmountDue() != null) totalOutstanding = totalOutstanding.add(invoice.getAmountDue());
@@ -97,7 +102,9 @@ public class FeeManagementService {
                 ? totalCollected.multiply(BigDecimal.valueOf(100)).divide(totalExpected, 0, java.math.RoundingMode.HALF_UP).intValue()
                 : 0;
 
-        return new FeeSummary(invoices.size(), totalExpected, totalCollected, totalOutstanding, collectionPercent, overdueCount);
+        long counted = invoices.stream().filter(FeeInvoice::isCountable).count();
+        return new FeeSummary((int) counted, totalExpected, totalCollected, totalOutstanding,
+                collectionPercent, overdueCount);
     }
 
     /** Backwards-compatible map view of {@link #getFeeSummary} for JSON/API consumers. */
@@ -232,6 +239,83 @@ public class FeeManagementService {
                         + " for " + who(invoice));
 
         return invoice;
+    }
+
+    /**
+     * Withdraw an invoice that should never have been raised.
+     *
+     * <p>Nothing could do this. The only actions on an invoice were record a
+     * payment, request a waiver and reverse a payment, so a bill raised in
+     * error stayed on the family's ledger and in the school's outstanding
+     * total for good. A waiver is the wrong instrument for it: a waiver records
+     * that the school forgave a debt it was owed, which is a different fact
+     * from the debt never being owed, and it leaves the original amount in the
+     * expected total.
+     *
+     * <p>Only with nothing paid. Once money has changed hands the invoice is
+     * evidence of a receipt, and cancelling it would leave a payment attached
+     * to a withdrawn bill; that case is a payment reversal first, which is
+     * already a principal-approved action. The message says so rather than just
+     * refusing.
+     *
+     * <p>ADMIN and PRINCIPAL only, and a reason is required -- a cancellation
+     * with no name and no reason against it is indistinguishable from a bug
+     * later on.
+     */
+    @Transactional
+    public FeeInvoice cancelInvoice(UUID invoiceId, String reason, UUID currentTenantId,
+                                    Authentication authentication) {
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("A reason is required to cancel an invoice.");
+        }
+
+        com.concept.user.User actor = currentUserService.getCurrentUser(authentication).orElse(null);
+        // Checked here rather than left to the URL rule alone: this is the only
+        // action that makes a bill disappear from the ledger, and the rule has
+        // to hold for any caller that reaches the service.
+        if (actor == null || actor.getRole() == null
+                || (actor.getRole() != com.concept.user.UserRole.ADMIN
+                    && actor.getRole() != com.concept.user.UserRole.PRINCIPAL)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Only an admin or the principal can cancel an invoice.");
+        }
+
+        FeeInvoice invoice = feeInvoiceRepository.findByIdAndTenantId(invoiceId, currentTenantId)
+                .orElseThrow(() -> new IllegalArgumentException("FeeInvoice not found with ID: " + invoiceId));
+
+        if (invoice.isCancelled()) {
+            throw new IllegalArgumentException("This invoice is already cancelled.");
+        }
+
+        BigDecimal paid = invoice.getAmountPaid() == null ? BigDecimal.ZERO : invoice.getAmountPaid();
+        if (paid.compareTo(BigDecimal.ZERO) > 0) {
+            throw new IllegalArgumentException(
+                    "This invoice has " + paid + " paid against it, so it cannot be cancelled. "
+                            + "Reverse the payment first, then cancel it.");
+        }
+
+        // Order matters: cancelledAt is what makes the invoice cancelled, and
+        // updateBalances reads it to stop the amounts putting the balance back.
+        // Set it before touching them.
+        invoice.setCancelledAt(java.time.Instant.now());
+        invoice.setAmountPaid(BigDecimal.ZERO);
+        invoice.setAmountDue(BigDecimal.ZERO);
+        invoice.setCancelledBy(authentication != null && authentication.getName() != null
+                ? authentication.getName() : "system");
+        invoice.setCancellationReason(reason.trim());
+        feeInvoiceRepository.saveAndFlush(invoice);
+
+        auditLogService.log(authentication, "FEE_INVOICE_CANCELLED", "FeeInvoice", invoiceId,
+                "Cancelled " + label(invoice) + " of " + invoice.getTotalAmount()
+                        + " for " + who(invoice) + " - " + reason.trim());
+
+        return invoice;
+    }
+
+    /** How an invoice reads in a log line: its instalment name, or just "invoice". */
+    private String label(FeeInvoice invoice) {
+        String instalment = invoice.getInstalmentLabel();
+        return instalment == null || instalment.isBlank() ? "invoice" : instalment;
     }
 
     /**

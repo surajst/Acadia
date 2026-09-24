@@ -100,6 +100,28 @@ public class FeeInvoice extends BaseTenantEntity {
     @Column(name = "source", length = 20)
     private String source;
 
+    /**
+     * When this invoice was withdrawn, and the fact that makes it cancelled.
+     *
+     * <p>Deliberately not a fourth value of {@code status}: the baseline puts a
+     * CHECK constraint on that column listing the three payment states, and
+     * widening it would mean dropping and recreating a constraint whose
+     * generated name differs between H2 and Postgres. Keeping cancellation as
+     * its own fact also keeps the status honest about what the bill was when it
+     * was withdrawn, which is what a ledger should record.
+     *
+     * <p>Set together with the name and the reason, or not at all: a
+     * cancellation missing any of the three is not an audit trail.
+     */
+    @Column(name = "cancelled_at")
+    private java.time.Instant cancelledAt;
+
+    @Column(name = "cancelled_by", length = 255)
+    private String cancelledBy;
+
+    @Column(name = "cancellation_reason", length = 500)
+    private String cancellationReason;
+
     public FeeInvoice() {}
 
     public FeeInvoice(UUID id, UUID studentId, BigDecimal totalAmount, BigDecimal amountPaid) {
@@ -111,6 +133,13 @@ public class FeeInvoice extends BaseTenantEntity {
     }
 
     public void updateBalances() {
+        // A cancelled invoice is settled by being withdrawn, and this method is
+        // reached from every amount setter -- without this guard, touching the
+        // total would put the amount back on the family's balance.
+        if (this.cancelledAt != null) {
+            this.amountDue = BigDecimal.ZERO;
+            return;
+        }
         BigDecimal paid = this.amountPaid != null ? this.amountPaid : BigDecimal.ZERO;
         BigDecimal total = this.totalAmount != null ? this.totalAmount : BigDecimal.ZERO;
         BigDecimal waiver = (this.waiverStatus == FeeWaiverStatus.APPROVED && this.waiverAmount != null)
@@ -268,6 +297,7 @@ public class FeeInvoice extends BaseTenantEntity {
     public boolean isOverdue(java.time.LocalDate today) {
         return dueDate != null
                 && status != FeeStatus.PAID
+                && cancelledAt == null
                 && dueDate.isBefore(today);
     }
 
@@ -281,5 +311,44 @@ public class FeeInvoice extends BaseTenantEntity {
 
     public boolean isCustom() {
         return "CUSTOM".equals(source);
+    }
+
+    public java.time.Instant getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public void setCancelledAt(java.time.Instant cancelledAt) {
+        this.cancelledAt = cancelledAt;
+    }
+
+    public String getCancelledBy() {
+        return cancelledBy;
+    }
+
+    public void setCancelledBy(String cancelledBy) {
+        this.cancelledBy = cancelledBy;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
+    }
+
+    public boolean isCancelled() {
+        return cancelledAt != null;
+    }
+
+    /**
+     * Whether this invoice belongs in the school's expected/outstanding totals.
+     *
+     * <p>A cancelled one does not: leaving it in would keep a bill the school
+     * has withdrawn in its collection percentage, which is the reason a
+     * cancellation exists rather than a waiver.
+     */
+    public boolean isCountable() {
+        return !isCancelled();
     }
 }

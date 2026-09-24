@@ -119,6 +119,18 @@ public class SecurityConfig {
                         .requestMatchers("/web/onboard/setup", "/web/onboard/complete").hasRole("ADMIN") // setup wizard is data-entry — ADMIN only, principals are read-only
                         .requestMatchers("/web/admin/dashboard").hasAnyRole("ADMIN", "TEACHER", "PRINCIPAL")
                         .requestMatchers("/web/admin/audit-log", "/web/admin/audit-log/**").hasAnyRole("ADMIN", "PRINCIPAL")
+                        // A URL rule is evaluated before any @PreAuthorize, so the
+                        // broad ADMIN rule below silently overrides a more
+                        // permissive annotation. These two actions are open to the
+                        // principal by design -- withdrawing a bill raised in
+                        // error, and correcting instalment dates -- and without a
+                        // rule of their own the annotation says so while the
+                        // principal gets a 403 nobody can explain. This is the
+                        // third time that mismatch has been the real cause of a
+                        // reported bug.
+                        .requestMatchers("/web/admin/fees/invoice/*/cancel",
+                                         "/web/admin/fees/due-dates/recalculate")
+                                .hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers("/web/admin/**").hasRole("ADMIN")
                         .requestMatchers("/web/management/upload/**").hasRole("ADMIN")
                         .requestMatchers("/web/teacher/dashboard").hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
