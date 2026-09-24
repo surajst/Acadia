@@ -267,7 +267,7 @@
                 <div class="flex items-center gap-3">
                     <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Roster Scope:</label>
                     <div class="relative">
-                        <select onchange="location = this.value;" class="bg-[#F4F6FB]/80 border border-slate-200 text-slate-800 text-sm font-semibold rounded-xl px-4 py-2.5 pr-10 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer">
+                        <select id="attendanceClassSelect" onchange="location = this.value;" class="bg-[#F4F6FB]/80 border border-slate-200 text-slate-800 text-sm font-semibold rounded-xl px-4 py-2.5 pr-10 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer">
                             <option th:each="cls : ${classList}" 
                                     th:value="@{/web/teacher/attendance(classId=${cls.id})}"
                                     th:text="${cls.label}"
@@ -284,6 +284,21 @@
                 
                 <div class="text-xs text-slate-500 font-medium">
                     Total Active Students in View: <span class="text-slate-900 font-bold" th:text="${#lists.size(studentList)}">0</span>
+                </div>
+            </div>
+
+            <!-- A teacher now only sees the sections they are assigned to, so an
+                 empty register is a missing assignment, not a missing feature.
+                 Kept to the empty-state card standard: one line, one subtext. -->
+            <div th:if="${#lists.isEmpty(classList)}"
+                 data-empty-state="no-assigned-sections"
+                 class="glass-panel rounded-2xl py-4 px-6 shadow-lg shadow-slate-300/30 flex items-center gap-4"
+                 style="max-height:100px">
+                <span class="text-2xl" aria-hidden="true">&#128203;</span>
+                <div>
+                    <p class="text-sm font-semibold text-slate-900">No classes assigned to you yet</p>
+                    <p class="text-xs text-slate-500 mt-0.5">A register is taken by the teacher assigned to the
+                        section. Ask an admin to add you under Teacher Assignments.</p>
                 </div>
             </div>
 

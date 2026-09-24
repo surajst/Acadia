@@ -13,7 +13,12 @@ import com.concept.tenant.AcademicYear;
 import com.concept.tenant.AcademicYearRepository;
 import com.concept.tenant.Tenant;
 import com.concept.tenant.TenantRepository;
+import com.concept.user.User;
+import com.concept.user.UserRepository;
+import com.concept.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,9 +56,17 @@ class AttendanceCorrectionTest {
     @Autowired private ClassSectionRepository classSectionRepository;
     @Autowired private TenantRepository tenantRepository;
     @Autowired private AcademicYearRepository academicYearRepository;
+    @Autowired private UserRepository userRepository;
 
     private UUID tenantId;
     private Student aarav;
+    /**
+     * Taking a register is now scoped to the caller's own sections. This test
+     * is about correcting and backdating, not about who may do it, so it marks
+     * as an admin -- who may mark any section. AttendanceScopeTest owns the
+     * permission rule.
+     */
+    private Authentication admin;
 
     @BeforeEach
     void setup() {
@@ -90,11 +103,22 @@ class AttendanceCorrectionTest {
         aarav.setLastName("Verma");
         aarav.setClassSection(section);
         aarav = studentRepository.saveAndFlush(aarav);
+
+        User principal = new User();
+        principal.setId(UUID.randomUUID());
+        principal.setTenantId(tenantId);
+        principal.setAcademicYearId(yearId);
+        principal.setEmail("head-" + UUID.randomUUID() + "@example.com");
+        principal.setPasswordHash("irrelevant");
+        principal.setFullName("Head Teacher");
+        principal.setRole(UserRole.ADMIN);
+        principal = userRepository.saveAndFlush(principal);
+        admin = new UsernamePasswordAuthenticationToken(principal.getEmail(), "n/a");
     }
 
     private void mark(String status, LocalDate on) {
         attendanceService.mark(
-                new MarkAttendanceCommand(tenantId, List.of(aarav.getId()), List.of(status), on), null);
+                new MarkAttendanceCommand(tenantId, List.of(aarav.getId()), List.of(status), on), admin);
     }
 
     private List<Attendance> entriesOn(LocalDate date) {

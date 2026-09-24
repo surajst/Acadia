@@ -293,3 +293,71 @@ test.describe('UI: Teacher Assignments nav link in admin_management', () => {
     await expect(page.locator('h2:has-text("Teacher Assignments")')).toBeVisible();
   });
 });
+
+// ─── R2-P1-1: the register is scoped to the teacher's own sections ────────────
+
+test.describe('Attendance scope: a teacher is offered only her own sections', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/test/reset');
+  });
+
+  /**
+   * The dropdown used to list every section in the school, and the submit
+   * accepted whichever came back. The backend owns the rule (AttendanceScopeTest
+   * posts another section's student id straight at the endpoint and expects a
+   * 403); this checks the page a teacher actually sees agrees with it, by
+   * comparing the options against the teacher's own assignment list.
+   */
+  test('the register dropdown offers exactly the sections the teacher is assigned', async ({ page, request }) => {
+    const loginRes = await request.post('/api/mobile/auth/login', {
+      data: { email: 'teacher@greenwood.com', password: 'PilotLaunchSecure2026!' }
+    });
+    const { token } = await loginRes.json();
+    const assigned = await (await request.get('/api/teacher/classes', {
+      headers: { Authorization: `Bearer ${token}` }
+    })).json();
+
+    // The endpoint answers with an {error, classes} object when a teacher has
+    // no assignments at all, in which case there is nothing to compare.
+    test.skip(!Array.isArray(assigned), 'the seeded teacher has no assignments');
+    const assignedIds = new Set(assigned.map(c => String(c.id)));
+
+    await loginAsTeacher(page);
+    await page.goto('/web/teacher/attendance');
+    await page.waitForLoadState('networkidle');
+
+    const optionValues = await page.locator('#attendanceClassSelect option')
+      .evaluateAll(nodes => nodes.map(n => n.getAttribute('value') || ''));
+    const offered = optionValues
+      .map(v => (v.match(/classId=([0-9a-fA-F-]{36})/) || [])[1])
+      .filter(Boolean);
+
+    expect(offered.length).toBeGreaterThan(0);
+    for (const id of offered) {
+      expect(assignedIds.has(id),
+        `the register offered ${id}, which this teacher is not assigned to`).toBeTruthy();
+    }
+  });
+
+  /** An admin covering for an absent teacher still sees the whole school. */
+  test('an admin is still offered more sections than a single teacher', async ({ page, request }) => {
+    const loginRes = await request.post('/api/mobile/auth/login', {
+      data: { email: 'teacher@greenwood.com', password: 'PilotLaunchSecure2026!' }
+    });
+    const { token } = await loginRes.json();
+    const assigned = await (await request.get('/api/teacher/classes', {
+      headers: { Authorization: `Bearer ${token}` }
+    })).json();
+    const teacherCount = Array.isArray(assigned) ? assigned.length : 0;
+
+    await loginAsAdmin(page);
+    await page.goto('/web/teacher/attendance');
+    await page.waitForLoadState('networkidle');
+
+    const optionValues = await page.locator('#attendanceClassSelect option')
+      .evaluateAll(nodes => nodes.map(n => n.getAttribute('value') || ''));
+    const offered = optionValues.filter(v => /classId=[0-9a-fA-F-]{36}/.test(v));
+
+    expect(offered.length).toBeGreaterThanOrEqual(teacherCount);
+  });
+});

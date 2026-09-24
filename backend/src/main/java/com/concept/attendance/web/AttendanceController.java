@@ -37,7 +37,7 @@ public class AttendanceController {
     public String showAttendanceForm(@RequestParam(value = "classId", required = false) UUID classId,
                                      Model model, Authentication authentication) {
         UUID tenantId = tenantContext.getTenantId().orElse(null);
-        AttendanceFormView view = attendanceService.buildForm(tenantId, classId);
+        AttendanceFormView view = attendanceService.buildForm(tenantId, classId, authentication);
 
         model.addAttribute("currentUserRole", resolveRole(authentication));
         model.addAttribute("systemScope", "RESTRICTED_VIEW");
