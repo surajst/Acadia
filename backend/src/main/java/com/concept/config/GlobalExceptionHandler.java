@@ -4,6 +4,11 @@ import io.sentry.Sentry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.validation.FieldError;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -78,6 +83,41 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public void handleAccessDenied(AccessDeniedException ex) {
         throw ex;
+    }
+
+    /**
+     * A failed {@code @Valid} is a 400 the caller can show a person, not a 500.
+     *
+     * <p>It lives in this class rather than its own advice on purpose: the
+     * catch-all below matches Exception, and ordering between separate advice
+     * beans is unspecified -- a second advice lost the race and every
+     * validation failure still rendered the 500 error page. Within one advice
+     * the most specific handler wins, which is the only version of this that
+     * is reliably true.
+     *
+     * <p>Returns {@code error} because that is the field every client here
+     * already reads; a body they cannot parse is why server-side validation
+     * looked useless and kept being written in the browser instead.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> handleInvalidBody(MethodArgumentNotValidException ex) {
+        String summary = ex.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .orElse("Some of those details are not valid.");
+
+        Map<String, String> byField = new LinkedHashMap<>();
+        for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
+            byField.putIfAbsent(fe.getField(),
+                    fe.getDefaultMessage() == null ? "Invalid" : fe.getDefaultMessage());
+        }
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("error", summary);
+        body.put("fieldErrors", byField);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(Exception.class)

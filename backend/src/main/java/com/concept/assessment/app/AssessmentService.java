@@ -140,6 +140,35 @@ public class AssessmentService {
         }
         UUID teacherId = resolveTeacherId(authentication != null ? authentication.getName() : null);
 
+        // Validated in full before anything is written. A partial save on a bulk
+        // entry is worse than a refusal: the teacher is told it worked, half
+        // the class is graded, and nothing says which half.
+        int maxScore = assessment.getMaxScore() == null ? 0 : assessment.getMaxScore();
+        for (BulkScoreEntryRequest.ScoreEntry entry : request.getScores()) {
+            Student student = studentRepository.findByIdAndTenantId(entry.getStudentId(), tenantId).orElse(null);
+            if (student == null) {
+                // Previously skipped in silence, so a score a teacher typed
+                // simply never existed and the save still reported success.
+                throw AssessmentException.badRequest(
+                        "One of those students is not in this school, so nothing was saved.");
+            }
+            Integer value = entry.getScore();
+            String who = (student.getFirstName() + " " + student.getLastName()).trim();
+            if (value == null) {
+                throw AssessmentException.badRequest("Enter a score for " + who + ", or remove them.");
+            }
+            // Rejected, not clamped: silently turning 150 into 100 is a mark
+            // the teacher never gave, on a record a parent will read.
+            if (value < 0) {
+                throw AssessmentException.badRequest(
+                        who + " cannot score below 0.");
+            }
+            if (maxScore > 0 && value > maxScore) {
+                throw AssessmentException.badRequest(
+                        who + " scored " + value + ", but this assessment is out of " + maxScore + ".");
+            }
+        }
+
         List<Map<String, Object>> saved = request.getScores().stream().map(entry -> {
             Student student = studentRepository.findByIdAndTenantId(entry.getStudentId(), tenantId).orElse(null);
             if (student == null) return null;

@@ -44,11 +44,34 @@ Data table cards:
 - Table scrolls within its container, never the whole page
 
 ## Viewport Architecture Rule (MANDATORY)
-Every new page must follow this exactly:
-<html style="height:100vh; overflow:hidden">
-<body style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+There are two classes of page, and the rule differs between them. Getting
+them the wrong way round is invisible until someone opens the page on a
+short window.
+
+### Signed-in portal pages (sidebar layout)
+The outer layout fills the screen and does not scroll. Only the main content
+area scrolls; the sidebar and header stay put.
+<html style="height:100vh; height:100dvh; overflow:hidden">
+<body style="height:100vh; height:100dvh; overflow:hidden; display:flex; flex-direction:column">
   <header> -- shrink-0, fixed height --</header>
-  <main style="flex:1; overflow-y:auto"> -- only this scrolls --</main>
+  <main style="flex:1; overflow-y:auto; min-height:0"> -- only this scrolls --</main>
 </body>
-These rules apply to every page. No exceptions.
-Agents must verify scroll compliance before marking any page task complete.
+`100vh` first, `100dvh` second: the second wins where supported, and the
+first is the fallback for browsers that do not.
+
+### Standalone pages (login, signup, onboarding/setup wizard, error pages)
+The page scrolls normally. Use `min-height: 100dvh` (with `100vh` as a
+fallback) to centre short content; never `overflow: hidden` on html/body.
+Every field and button must be reachable at 200% zoom and on a 360x640
+screen with the keyboard open.
+
+These have no sidebar to keep still, so locking them buys nothing and costs
+the bottom of the form: a scrollbar inside the card hid the password field
+on signup.
+
+### Never nest scroll areas in a form card
+No scrollbar inside a scrollbar. A data table may scroll inside its own
+container (see the data table standard); a form card may not.
+
+PageRenderSmokeTest enforces both classes mechanically. Agents must verify
+scroll compliance before marking any page task complete.

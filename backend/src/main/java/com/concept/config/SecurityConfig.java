@@ -56,8 +56,38 @@ public class SecurityConfig {
                         .requestMatchers("/api/onboard/**").permitAll() // public self-serve school signup
                         .requestMatchers("/api/principal/**").hasAnyRole("ADMIN", "PRINCIPAL") // read-only oversight
                         .requestMatchers("/api/teacher/timetable/seed").hasRole("ADMIN") // DEV ONLY seed - ADMIN only
+                        // Three endpoints under /api/teacher that an admin is
+                        // meant to reach, listed before the broad rule below
+                        // because the chain decides first and the method
+                        // annotation never gets a say.
+                        //
+                        // This is the real cause of the round-1 finding that an
+                        // ADMIN opening /web/teacher/tasks got 403 on
+                        // my-tasks: /web/teacher/** admits ADMIN, the method
+                        // annotations here say ADMIN, and the URL rule refused
+                        // them anyway. That round fixed how the failure was
+                        // displayed and left the failure in place.
+                        .requestMatchers("/api/teacher/tasks/my-tasks",
+                                         "/api/teacher/tasks/create")
+                                .hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/teacher/grade-options")
+                                .hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/mobile/driver/**").hasRole("DRIVER")
+                        // The mobile surface, guarded by URL rather than by
+                        // remembering an annotation on each method. Only
+                        // /api/mobile/driver had a rule here, so the student
+                        // and parent trees relied on @PreAuthorize -- and it
+                        // was applied unevenly: /api/mobile/student/dashboard,
+                        // /attendance and /syllabus had none at all, so a
+                        // parent's token fetched a student's dashboard and got
+                        // data rather than a 403. A rule here cannot be
+                        // forgotten by the next endpoint added to the tree.
+                        .requestMatchers("/api/mobile/student/**").hasRole("STUDENT")
+                        .requestMatchers("/api/mobile/parent/**").hasRole("PARENT")
+                        .requestMatchers("/api/mobile/teacher/**").hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
+                        // Own profile and photo: every signed-in role has one.
+                        .requestMatchers("/api/mobile/user/**").authenticated()
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
                         .requestMatchers("/api/parent/**").hasRole("PARENT")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

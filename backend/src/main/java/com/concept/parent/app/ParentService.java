@@ -176,9 +176,24 @@ public class ParentService {
         List<ParentQuest> parentQuests = parentQuestRepository.findByStudentId(studentId);
         List<ParentReward> parentRewards = parentRewardRepository.findByStudentId(studentId);
 
-        List<AttendanceRecord> allAttendance = sisDataProvider.getAttendance(studentId,
-                new DateRange(LocalDate.of(2000, 1, 1), LocalDate.now()));
-        String attendanceStatus = allAttendance.isEmpty() ? "NOT MARKED" : allAttendance.get(0).status();
+        // Today only, in the school's own timezone.
+        //
+        // This asked for every record since the year 2000 and then reported
+        // get(0) as today's status -- so a child marked absent yesterday was
+        // still "absent today" on the parent's home screen this morning, on a
+        // day nobody had taken the register. Whatever that first row happened
+        // to be became the answer.
+        //
+        // LocalDate.now() is the school's date because SchoolTimeZoneConfig
+        // pins the JVM zone; under UTC this would flip a day early each
+        // evening, which is the boundary case the same bug hides behind.
+        LocalDate today = LocalDate.now();
+        List<AttendanceRecord> todaysAttendance =
+                sisDataProvider.getAttendance(studentId, new DateRange(today, today));
+        String attendanceStatus = todaysAttendance.isEmpty()
+                ? "NOT MARKED"
+                : todaysAttendance.get(0).status();
+
 
         Map<String, Object> response = new HashMap<>();
 

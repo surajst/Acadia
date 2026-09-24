@@ -13,6 +13,13 @@ public class CreateAssessmentRequest {
     private String subjectCode;
     private UUID classSectionId;
     private String term;
+    /**
+     * What the assessment is out of. Bounded because it is the ceiling every
+     * score is then checked against: a max of 0 makes every mark invalid, and
+     * a negative one makes the check meaningless.
+     */
+    @jakarta.validation.constraints.Min(value = 1, message = "An assessment has to be out of at least 1 mark.")
+    @jakarta.validation.constraints.Max(value = 1000, message = "An assessment cannot be out of more than 1000 marks.")
     private Integer maxScore;
     private LocalDate assessmentDate;
 

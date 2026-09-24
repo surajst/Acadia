@@ -11,6 +11,25 @@ import {
 } from '@/services/api';
 import { useTheme, type Theme } from '../context/ThemeContext';
 
+/** What a school actually marks things out of. */
+const MAX_SCORE_CHOICES = [20, 25, 50, 100];
+
+/**
+ * Whether a typed score is outside the assessment's range.
+ *
+ * <p>A blank is not wrong -- it means "not marked yet" -- and neither is a
+ * half-typed number, so only a complete value out of range is flagged. The
+ * server refuses these too; this is so the teacher sees which cell before
+ * they press Save.
+ */
+function outOfRange(raw: string | undefined, maxScore: number | undefined): boolean {
+  if (raw == null || raw.trim() === '') return false;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return true;
+  if (n < 0) return true;
+  return typeof maxScore === 'number' && maxScore > 0 && n > maxScore;
+}
+
 export default function GradebookScreen() {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
@@ -23,6 +42,8 @@ export default function GradebookScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [newMaxScore, setNewMaxScore] = useState<number>(100);
+  const [notice, setNotice] = useState<{ kind: 'ok' | 'bad'; text: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -78,7 +99,7 @@ export default function GradebookScreen() {
         subjectCode: selectedClass.subject,
         classSectionId: selectedClass.id,
         term: 'TERM1',
-        maxScore: 100,
+        maxScore: newMaxScore,
         assessmentDate: new Date().toISOString().split('T')[0],
       });
       setNewTitle('');
@@ -92,14 +113,20 @@ export default function GradebookScreen() {
   const handleSaveScores = async () => {
     if (!selectedAssessment) return;
     setSaving(true);
+    setNotice(null);
     try {
       const payload = Object.entries(scores)
         .filter(([, v]) => v !== '')
         .map(([studentId, v]) => ({ studentId, score: parseInt(v, 10) }));
       await submitAssessmentScores(selectedAssessment, payload);
-      Alert.alert('Saved', 'Scores saved successfully.');
-    } catch {
-      Alert.alert('Error', 'Could not save scores.');
+      // Shown in the page, not through Alert: Alert does nothing at all on
+      // React Native Web, which is why saving appeared to give no
+      // confirmation on the build being tested.
+      setNotice({ kind: 'ok', text: `${payload.length} score${payload.length === 1 ? '' : 's'} saved.` });
+    } catch (e: any) {
+      // The server names the student and the maximum. Replacing that with
+      // "Could not save scores" is why an out-of-range mark looked accepted.
+      setNotice({ kind: 'bad', text: e?.response?.data?.error ?? 'Could not save scores.' });
     } finally {
       setSaving(false);
     }
@@ -144,10 +171,35 @@ export default function GradebookScreen() {
           placeholderTextColor={T.text3}
           value={newTitle}
           onChangeText={setNewTitle}
+          accessibilityLabel="New assessment title"
         />
-        <TouchableOpacity style={styles.createBtn} onPress={handleCreateAssessment}>
+        <TouchableOpacity
+          style={styles.createBtn}
+          onPress={handleCreateAssessment}
+          accessibilityRole="button"
+          accessibilityLabel="Create assessment"
+        >
           <Text style={styles.createBtnText}>Create</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* What the assessment is out of. It was fixed at 100, so a 20-mark
+          quiz had to be entered as if it were a percentage -- and the score
+          check has nothing meaningful to check against. */}
+      <View style={styles.maxRow}>
+        <Text style={styles.maxLabel}>Out of</Text>
+        {MAX_SCORE_CHOICES.map((m) => (
+          <TouchableOpacity
+            key={m}
+            style={[styles.maxChip, newMaxScore === m && styles.maxChipActive]}
+            onPress={() => setNewMaxScore(m)}
+            accessibilityRole="button"
+            accessibilityLabel={`Out of ${m} marks`}
+            accessibilityState={{ selected: newMaxScore === m }}
+          >
+            <Text style={[styles.maxChipText, newMaxScore === m && styles.maxChipTextActive]}>{m}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.assessmentChips} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
@@ -185,15 +237,31 @@ export default function GradebookScreen() {
                   <Text style={styles.rosterRoll}>{r.rollNumber}</Text>
                 </View>
                 <TextInput
-                  style={styles.scoreInput}
+                  style={[styles.scoreInput, outOfRange(scores[r.studentId], detail.maxScore) && styles.scoreInputBad]}
                   keyboardType="numeric"
                   value={scores[r.studentId] ?? ''}
                   onChangeText={(v) => setScores((prev) => ({ ...prev, [r.studentId]: v }))}
+                  accessibilityLabel={`Score for ${r.studentName}, out of ${detail.maxScore}`}
                 />
               </View>
             ))}
           </ScrollView>
-          <TouchableOpacity style={styles.saveBtn} onPress={handleSaveScores} disabled={saving}>
+          {!!notice && (
+            <Text
+              style={[styles.notice, notice.kind === 'bad' ? styles.noticeBad : styles.noticeOk]}
+              accessibilityRole="alert"
+            >
+              {notice.text}
+            </Text>
+          )}
+          <TouchableOpacity
+            style={styles.saveBtn}
+            onPress={handleSaveScores}
+            disabled={saving}
+            accessibilityRole="button"
+            accessibilityLabel="Save all scores"
+            accessibilityState={{ disabled: saving }}
+          >
             <Text style={styles.saveBtnText}>{saving ? 'Saving...' : 'Save All Scores'}</Text>
           </TouchableOpacity>
         </>
@@ -237,6 +305,29 @@ const makeStyles = (T: Theme) => StyleSheet.create({
     width: 60, backgroundColor: T.bg, borderRadius: 8, borderWidth: 1, borderColor: T.line,
     color: T.text, textAlign: 'center', paddingVertical: 6,
   },
+  // Colour is not the only signal -- the server refuses the save and names the
+  // student -- but it is the one that says which cell.
+  scoreInputBad: {
+    borderColor: T.danger,
+    borderWidth: 2,
+    color: T.danger,
+  },
+  maxRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 16, paddingBottom: 12,
+  },
+  maxLabel: { fontSize: 12, fontWeight: '600', color: T.text3, marginRight: 2 },
+  maxChip: {
+    minHeight: 32, justifyContent: 'center', paddingHorizontal: 12,
+    borderRadius: T.pill, backgroundColor: T.surface,
+    borderWidth: 1, borderColor: T.line,
+  },
+  maxChipActive: { backgroundColor: T.brand50, borderColor: T.brand },
+  maxChipText: { fontSize: 12.5, fontWeight: '600', color: T.text2 },
+  maxChipTextActive: { color: T.brand },
+  notice: { marginHorizontal: 16, marginTop: 8, fontSize: 13, fontWeight: '600' },
+  noticeOk: { color: T.successInk },
+  noticeBad: { color: T.danger },
   saveBtn: { backgroundColor: T.brand, margin: 16, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   saveBtnText: { color: T.surface, fontWeight: '700', fontSize: 14 },
 });

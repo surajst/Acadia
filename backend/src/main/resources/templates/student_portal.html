@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; overflow:hidden">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; height:100dvh; overflow:hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -9,7 +9,7 @@
     <style>
 
         html, body {
-            height: 100vh;
+            height: 100vh; height:100dvh;
             overflow: hidden;
             margin: 0;
             padding: 0;
@@ -188,7 +188,7 @@
     <link rel="icon" type="image/png" href="/images/acadia-logo.png">
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body class="bg-indigo-900 font-sans text-slate-900 antialiased" style="height:100vh; overflow:hidden; display:flex; flex-direction:column">
+<body class="bg-indigo-900 font-sans text-slate-900 antialiased" style="height:100vh; height:100dvh; overflow:hidden; display:flex; flex-direction:column">
     <input type="hidden" id="csrf-token" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
 
     <!-- Ambient blobs -->

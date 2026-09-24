@@ -34,7 +34,8 @@ public class TaskApiController {
 
     @PostMapping("/teacher/tasks/create")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> createTask(@RequestBody CreateTaskRequest request, Authentication authentication) {
+    public ResponseEntity<?> createTask(@jakarta.validation.Valid @RequestBody CreateTaskRequest request,
+                                       Authentication authentication) {
         return ResponseEntity.ok(tasksService.createTask(request, authentication));
     }
 

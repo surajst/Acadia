@@ -100,6 +100,34 @@ public class TestHarnessController {
      * every run; it is not the basis for a product offboarding feature. See
      * {@link TenantPurgeService} for why that needs its own design.
      */
+    /**
+     * Puts an existing staff member back into PENDING. Dev-mode only.
+     *
+     * <p>It exists because the Approve button in the Staff Registry cannot
+     * otherwise be tested: V17 released every stuck account, and an invite now
+     * lands APPROVED, so nothing in the product creates a pending row any more.
+     * The QA pass recorded the button as untestable for exactly that reason.
+     *
+     * <p>Only ever moves an account INTO pending, never out of it -- approving
+     * is the thing under test, and a hook that could approve would be a hook
+     * that bypasses it.
+     */
+    @PostMapping("/test/staff/{email}/pending")
+    @ResponseBody
+    public Map<String, Object> makeStaffPending(@PathVariable("email") String email) {
+        if (!devMode) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Test fixtures are disabled in production");
+        }
+        return userRepository.findByEmail(com.concept.user.User.normaliseEmail(email))
+                .map(user -> {
+                    user.setApprovalStatus(com.concept.user.User.ApprovalStatus.PENDING);
+                    userRepository.save(user);
+                    return Map.<String, Object>of("status", "pending", "email", user.getEmail());
+                })
+                .orElse(Map.of("status", "not_found", "email", email));
+    }
+
     @PostMapping("/test/tenant/{subdomain}/purge")
     @ResponseBody
     public Map<String, Object> purgeTenant(@PathVariable("subdomain") String subdomain) {

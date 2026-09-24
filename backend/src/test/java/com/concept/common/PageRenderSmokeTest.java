@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -176,5 +177,57 @@ class PageRenderSmokeTest {
 
         assertTrue(offenders.isEmpty(),
                 "an inline script contains [[, which Thymeleaf evaluates as an expression: " + offenders);
+    }
+
+    /**
+     * Standalone pages scroll with the window; portal pages do not.
+     *
+     * <p>Two classes of page, two different rules, and getting them the wrong
+     * way round is invisible until somebody opens the page on a short window.
+     * A signed-in portal page fills the screen and scrolls only its main
+     * content, so the sidebar and header stay put. A standalone page -- login,
+     * signup, the setup wizard, an error page -- has no sidebar to keep still,
+     * and locking it puts a scrollbar inside the form card: at 200% zoom, or
+     * on a 360x640 screen with the keyboard open, the last field ends up
+     * behind it. That is what hid the password field on signup.
+     *
+     * <p>Checked mechanically because it is a mechanical rule, and because the
+     * symptom only appears at a window size nobody tests at by default.
+     */
+    @Test
+    void standalonePagesScrollWithTheWindowAndPortalPagesDoNot() throws IOException {
+        Path templates = Path.of("src/main/resources/templates");
+        if (!Files.isDirectory(templates)) {
+            return; // not running from the module root
+        }
+
+        Set<String> standalone = Set.of(
+                "login.html", "onboard_signup.html", "onboard_setup.html", "error.html");
+
+        List<String> problems = new ArrayList<>();
+        try (Stream<Path> files = Files.list(templates)) {
+            for (Path file : files.filter(f -> f.toString().endsWith(".html")).toList()) {
+                String html = Files.readString(file);
+                // Only the opening html/body tags and the first style block
+                // decide this; an overflow:hidden on some logo crop does not.
+                int bodyOpen = html.indexOf("<body");
+                String frame = bodyOpen < 0 ? html : html.substring(0, Math.min(html.length(), bodyOpen + 400));
+                String squashed = frame.replaceAll("\\s+", " ");
+                boolean locksViewport = squashed.contains("height:100vh; overflow:hidden")
+                        || squashed.contains("height: 100%; overflow: hidden");
+
+                if (standalone.contains(file.getFileName().toString())) {
+                    if (locksViewport) {
+                        problems.add(file.getFileName() + " is a standalone page and must scroll "
+                                + "with the window, but locks html/body");
+                    }
+                } else if (html.contains("height:100vh") && !html.contains("height:100dvh")) {
+                    problems.add(file.getFileName() + " locks the viewport with 100vh but has no "
+                            + "100dvh upgrade, so a mobile URL bar crops it");
+                }
+            }
+        }
+
+        assertTrue(problems.isEmpty(), String.join(" | ", problems));
     }
 }
