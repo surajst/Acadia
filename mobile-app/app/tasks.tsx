@@ -4,6 +4,7 @@ import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/context/AuthContext';
 import { getApiHost } from '../services/api';
 import { useTheme, type Theme } from '../context/ThemeContext';
+import { plural } from '../utils/plural';
 
 interface Task {
   id: string;
@@ -12,6 +13,7 @@ interface Task {
   taskType?: string;
   status?: string;
   createdAt?: string;
+  dueDate?: string;
 }
 
 // Functions, not plain objects: HOMEWORK's colour is T.brand, which changes
@@ -81,7 +83,7 @@ export default function TasksScreen() {
         <Text style={styles.sectionLabel}>ALL TASKS</Text>
         {(tasks ?? []).length > 0 && (
           <View style={styles.sectionBadge}>
-            <Text style={styles.sectionBadgeText}>{(tasks ?? []).length} Tasks</Text>
+            <Text style={styles.sectionBadgeText}>{plural((tasks ?? []).length, 'Task')}</Text>
           </View>
         )}
       </View>
@@ -120,9 +122,19 @@ export default function TasksScreen() {
                   <Text style={styles.cardTitle}>
                     {task.title ?? task.taskDescription ?? 'Untitled Task'}
                   </Text>
+                  {/* The due date, not the creation date. The list showed
+                      "24/9" for a task due on the 30th, so a teacher checking
+                      what was outstanding read the wrong number entirely. When
+                      a task has no due date, saying so beats showing the day it
+                      was typed as though it meant something. */}
+                  <Text style={styles.cardDate}>
+                    {task.dueDate
+                      ? `Due ${formatDate(task.dueDate)}`
+                      : 'No due date'}
+                  </Text>
                   {task.createdAt && (
-                    <Text style={styles.cardDate}>
-                      {new Date(task.createdAt).toLocaleDateString('en-IN')}
+                    <Text style={styles.cardDateSecondary}>
+                      {`Set ${formatDate(task.createdAt)}`}
                     </Text>
                   )}
                 </View>
@@ -134,6 +146,21 @@ export default function TasksScreen() {
       )}
     </View>
   );
+}
+
+/**
+ * A date the way a school reads it, or nothing.
+ *
+ * <p>The server sends a plain ISO date for dueDate and an offset-less date-time
+ * for createdAt; `new Date()` on a bad value yields Invalid Date, which renders
+ * to a teacher as the literal words. Better to show no date than that.
+ */
+function formatDate(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleDateString('en-IN');
 }
 
 const makeStyles = (T: Theme) => StyleSheet.create({
@@ -176,6 +203,9 @@ const makeStyles = (T: Theme) => StyleSheet.create({
   typeBadge: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
   typeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
   cardTitle: { fontSize: 14, fontWeight: '600', color: T.text, lineHeight: 20 },
-  cardDate: { fontSize: 11, color: T.text3, marginTop: 4 },
+  cardDate: { fontSize: 11, color: T.text2, marginTop: 4, fontWeight: '600' },
+  // The creation date is context, not the answer -- one step quieter than
+  // the due date above it so the two cannot be confused again.
+  cardDateSecondary: { fontSize: 10, color: T.text3, marginTop: 1 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
 });

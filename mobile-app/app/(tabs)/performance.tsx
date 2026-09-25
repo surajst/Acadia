@@ -18,6 +18,17 @@ import { useTheme, type Theme } from '../../context/ThemeContext';
 import baseT from '../../constants/theme';
 
 const TERMS = ['TERM1', 'TERM2', 'FINAL'] as const;
+
+/**
+ * What a parent should see on each chip. The API's own values are shouted
+ * enum names, and they made the row look like tabs onto three sets of data --
+ * with one subject score under them, which is why they read as broken.
+ */
+const TERM_LABELS: Record<(typeof TERMS)[number], string> = {
+  TERM1: 'Term 1',
+  TERM2: 'Term 2',
+  FINAL: 'Final',
+};
 type Term = typeof TERMS[number];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -149,19 +160,38 @@ export default function PerformanceScreen() {
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Report Card</Text>
-        <View style={styles.termRow}>
+        {/* This row chooses which report card to download -- it is not three tabs
+            onto data, which is how it read with a single subject score beneath
+            it. Saying so is the whole fix; the chips were never broken. */}
+        <Text style={styles.termHint}>Choose a term, then download its report card.</Text>
+        <View
+          style={styles.termRow}
+          accessibilityRole="radiogroup"
+          accessibilityLabel="Which term's report card to download"
+        >
           {TERMS.map((term) => (
             <TouchableOpacity
               key={term}
               style={[styles.termChip, selectedTerm === term && styles.termChipActive]}
               onPress={() => setSelectedTerm(term)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: selectedTerm === term }}
+              accessibilityLabel={`${TERM_LABELS[term]} report card`}
+              hitSlop={8}
             >
               <Text style={[styles.termChipText, selectedTerm === term && styles.termChipTextActive]}>
-                {term}
+                {TERM_LABELS[term]}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
+        {/* And what fills one, which nothing said. A term a school has not
+            assessed yet downloads as a card with nothing on it, and a parent had
+            no way to know that was expected rather than a fault. */}
+        <Text style={styles.termNote}>
+          A term fills up as teachers enter marks for it. One with no marks yet
+          downloads with nothing in it.
+        </Text>
         <TouchableOpacity
           style={styles.downloadButton}
           onPress={handleDownloadReportCard}
@@ -250,6 +280,8 @@ const makeStyles = (T: Theme) => StyleSheet.create({
   },
 
   termRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  termHint: { fontSize: 12, color: T.text2, marginBottom: 8 },
+  termNote: { fontSize: 11, color: T.text3, marginTop: 8, lineHeight: 15 },
   termChip: {
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -257,6 +289,9 @@ const makeStyles = (T: Theme) => StyleSheet.create({
     backgroundColor: T.surface,
     borderWidth: 1,
     borderColor: T.line,
+    // With hitSlop above this clears 44dp; the chips were 33dp tall.
+    minHeight: 40,
+    justifyContent: 'center',
   },
   termChipActive: { backgroundColor: T.brand, borderColor: T.brand },
   termChipText: { color: T.text3, fontSize: 13, fontWeight: '600' },
