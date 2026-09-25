@@ -1,7 +1,5 @@
 package com.concept.fees;
 
-import com.concept.common.AuditLog;
-import com.concept.common.AuditLogRepository;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.Student;
@@ -23,7 +21,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,6 +43,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * report the same "nothing changed". So NULL is the case that matters, and these
  * tests cover it first.
  *
+ * <p>Every date here is written and read as <em>text</em>, never through a Java
+ * date type. Two of these tests first passed locally and failed in CI with
+ * one-day shifts (an admission date of 2026-07-15 read back as 07-14, and the
+ * academic year's start reading a day early), because JPA's LocalDate conversion
+ * depends on the JVM and session timezone and CI runs UTC where this machine runs
+ * IST. The Postgres job was immune to exactly the same bug because it compares
+ * with psql as text, which is the lesson taken here: assert what the database
+ * holds, not what a date type round-trips to.
+ *
  * <p>The SQL is read off the classpath and executed, so this tests the shipped
  * file. It is the <em>H2</em> file: the Postgres one uses a DO block,
  * GET DIAGNOSTICS and UPDATE ... FROM, none of which H2 has, and it is verified
@@ -63,10 +69,10 @@ class AdmissionDateBackfillTest {
     @Autowired private ClassSectionRepository classSectionRepository;
     @Autowired private TenantRepository tenantRepository;
     @Autowired private AcademicYearRepository academicYearRepository;
-    @Autowired private AuditLogRepository auditLogRepository;
 
-    private static final LocalDate YEAR_START = LocalDate.of(2026, 6, 1);
-    private static final LocalDate JOINED = LocalDate.of(2026, 9, 23);
+    /** As text, because that is how every comparison below is made. */
+    private static final String YEAR_START = "2026-06-01";
+    private static final String JOINED = "2026-09-23";
 
     private UUID tenantId;
     private UUID yearId;
@@ -88,10 +94,16 @@ class AdmissionDateBackfillTest {
         year.setId(UUID.randomUUID());
         year.setTenantId(tenantId);
         year.setName("2026-27");
-        year.setStartDate(YEAR_START);
-        year.setEndDate(YEAR_START.plusYears(1).minusDays(1));
+        // Placeholders: start_date is overwritten by the literal below, and
+        // end_date is not read by this migration at all.
+        year.setStartDate(LocalDate.of(2027, 3, 31));
+        year.setEndDate(LocalDate.of(2027, 3, 31));
         year.setCurrent(true);
         yearId = academicYearRepository.saveAndFlush(year).getId();
+        // Written as a literal afterwards, so the stored value is exactly
+        // YEAR_START rather than whatever JPA's timezone handling makes of it.
+        jdbcTemplate.update("update academic_years set start_date = cast(? as date) where id = ?",
+                YEAR_START, yearId);
 
         section = new ClassSection();
         section.setId(UUID.randomUUID());
@@ -111,7 +123,8 @@ class AdmissionDateBackfillTest {
         jdbcTemplate.execute(sql);
     }
 
-    private Student student(String firstName, LocalDate admissionDate) {
+    /** @param admissionDate an ISO date as text, or null for the gap case */
+    private Student student(String firstName, String admissionDate) {
         Student s = new Student();
         s.setId(UUID.randomUUID());
         s.setTenantId(tenantId);
@@ -119,29 +132,35 @@ class AdmissionDateBackfillTest {
         s.setFirstName(firstName);
         s.setLastName("Singh");
         s.setClassSection(section);
-        s.setAdmissionDate(admissionDate);
-        return studentRepository.saveAndFlush(s);
+        Student saved = studentRepository.saveAndFlush(s);
+        // Set through SQL for the same reason as the year start above.
+        jdbcTemplate.update("update students set admission_date = cast(? as date) where id = ?",
+                admissionDate, saved.getId());
+        return saved;
     }
 
-    /** A student-scoped audit row, which is the only evidence of when anyone joined. */
-    private void trace(UUID studentId, String action, LocalDate on) {
-        AuditLog row = new AuditLog();
-        row.setId(UUID.randomUUID());
-        row.setAction(action);
-        row.setEntityType("Student");
-        row.setEntityId(studentId);
-        row.setSummary("test");
-        row.setCreatedAt(on.atTime(9, 30));
-        // AuditLog extends BaseTenantEntity, so both of these are NOT NULL.
-        row.setTenantId(tenantId);
-        row.setAcademicYearId(yearId);
-        auditLogRepository.saveAndFlush(row);
+    /**
+     * A student-scoped audit row, which is the only evidence of when anyone
+     * joined. Inserted with SQL so created_at is exactly the given date at
+     * midday -- far enough from either midnight that no timezone offset could
+     * move it onto an adjacent day.
+     *
+     * @param on an ISO date as text
+     */
+    private void trace(UUID studentId, String action, String on) {
+        jdbcTemplate.update(
+                "insert into audit_logs (id, tenant_id, academic_year_id, action, entity_type,"
+                        + " entity_id, summary, created_at)"
+                        + " values (?, ?, ?, ?, 'Student', ?, 'test', cast(? as timestamp))",
+                UUID.randomUUID(), tenantId, yearId, action, studentId, on + " 12:00:00");
     }
 
-    private LocalDate admissionDateOf(Student s) {
+    /** As text: a LocalDate here is what shifted by a day between IST and UTC. */
+    private String admissionDateOf(Student s) {
         studentRepository.flush();
         return jdbcTemplate.queryForObject(
-                "select admission_date from students where id = ?", LocalDate.class, s.getId());
+                "select cast(admission_date as varchar) from students where id = ?",
+                String.class, s.getId());
     }
 
     // ── The reported case ─────────────────────────────────────────────────────
@@ -180,9 +199,9 @@ class AdmissionDateBackfillTest {
     @Test
     void theEarliestTraceIsTheOneUsed() throws IOException {
         Student riya = student("Riya", null);
-        trace(riya.getId(), "STUDENT_UPDATED", LocalDate.of(2026, 12, 4));
+        trace(riya.getId(), "STUDENT_UPDATED", "2026-12-04");
         trace(riya.getId(), "FEE_SCHEDULE_GENERATED", JOINED);
-        trace(riya.getId(), "XP_AWARDED", LocalDate.of(2026, 10, 1));
+        trace(riya.getId(), "XP_AWARDED", "2026-10-01");
 
         runV21();
 
@@ -197,9 +216,9 @@ class AdmissionDateBackfillTest {
      */
     @Test
     void aDeliberatelySetAdmissionDateIsLeftAlone() throws IOException {
-        LocalDate stated = LocalDate.of(2026, 7, 15);
+        String stated = "2026-07-15";
         Student aarav = student("Aarav", stated);
-        trace(aarav.getId(), "STUDENT_UPDATED", LocalDate.of(2026, 11, 2));
+        trace(aarav.getId(), "STUDENT_UPDATED", "2026-11-02");
 
         runV21();
 
@@ -216,7 +235,7 @@ class AdmissionDateBackfillTest {
         Student aarav = student("Aarav", null);
         // A trace from before the year even opened -- a row imported from a
         // previous year, or a clock problem.
-        trace(aarav.getId(), "ROSTER_BULK_IMPORT", LocalDate.of(2026, 3, 1));
+        trace(aarav.getId(), "ROSTER_BULK_IMPORT", "2026-03-01");
 
         runV21();
 
@@ -271,17 +290,13 @@ class AdmissionDateBackfillTest {
     @Test
     void anAuditRowForADifferentEntityTypeIsIgnored() throws IOException {
         Student riya = student("Riya", null);
-        AuditLog notAStudent = new AuditLog();
-        notAStudent.setId(UUID.randomUUID());
-        notAStudent.setAction("FEE_INVOICE_CANCELLED");
-        notAStudent.setEntityType("FeeInvoice");
         // Deliberately her id in the entity_id column of a row about an invoice.
-        notAStudent.setEntityId(riya.getId());
-        notAStudent.setSummary("test");
-        notAStudent.setCreatedAt(JOINED.atTime(9, 30));
-        notAStudent.setTenantId(tenantId);
-        notAStudent.setAcademicYearId(yearId);
-        auditLogRepository.saveAndFlush(notAStudent);
+        jdbcTemplate.update(
+                "insert into audit_logs (id, tenant_id, academic_year_id, action, entity_type,"
+                        + " entity_id, summary, created_at)"
+                        + " values (?, ?, ?, 'FEE_INVOICE_CANCELLED', 'FeeInvoice', ?, 'test',"
+                        + " cast(? as timestamp))",
+                UUID.randomUUID(), tenantId, yearId, riya.getId(), JOINED + " 12:00:00");
 
         runV21();
 
@@ -295,7 +310,7 @@ class AdmissionDateBackfillTest {
         trace(riya.getId(), "FEE_SCHEDULE_GENERATED", JOINED);
 
         runV21();
-        LocalDate afterFirst = admissionDateOf(riya);
+        String afterFirst = admissionDateOf(riya);
         runV21();
 
         assertEquals(afterFirst, admissionDateOf(riya));
