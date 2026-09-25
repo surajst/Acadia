@@ -39,7 +39,8 @@ test.describe('Teacher Task Creation', () => {
         await page.fill('#taskTitle', 'Test Homework Task');
         await page.selectOption('#subjectType', 'SCIENCE');
         await page.selectOption('#taskType', 'HOMEWORK');
-        await page.selectOption('#standard', '6');
+        // A section, not a grade -- see R2-P1-2.
+        await page.selectOption('#classSectionId', { label: 'Grade 6 - A' });
         
         // "Whole Class" is default, but explicitly click it
         await page.locator('input[name="assignedToClass"][value="true"]').check();
@@ -204,7 +205,8 @@ test.describe('Teacher Task Creation', () => {
         // Fill form
         await page.fill('#taskTitle', 'Read Chapter 1');
         await page.selectOption('#subjectType', 'ENGLISH');
-        await page.selectOption('#standard', '6');
+        // A section, not a grade -- see R2-P1-2.
+        await page.selectOption('#classSectionId', { label: 'Grade 6 - A' });
         await page.fill('#xpReward', '50');
         
         await page.fill('#question1', 'What is the main theme?');

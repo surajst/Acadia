@@ -68,7 +68,17 @@ public class SecurityConfig {
                         // them anyway. That round fixed how the failure was
                         // displayed and left the failure in place.
                         .requestMatchers("/api/teacher/tasks/my-tasks",
-                                         "/api/teacher/tasks/create")
+                                         "/api/teacher/tasks/create",
+                                         // Managing a task after it is set. Listed
+                                         // here for the same reason as the two
+                                         // above: the broad rule below would
+                                         // refuse an ADMIN whatever the
+                                         // annotation says.
+                                         "/api/teacher/tasks/*/update",
+                                         "/api/teacher/tasks/*/close",
+                                         "/api/teacher/tasks/*/reopen",
+                                         "/api/teacher/tasks/*/delete",
+                                         "/api/teacher/tasks/*/submissions")
                                 .hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/api/teacher/grade-options", "/api/teacher/section-options")
                                 .hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
