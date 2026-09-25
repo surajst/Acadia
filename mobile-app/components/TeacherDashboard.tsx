@@ -61,6 +61,9 @@ export default function TeacherDashboard({
         total={total}
         unread={unreadCount}
         onBellPress={() => router.push('/notifications')}
+        // The card reported the day's register and led nowhere, which read as a
+        // broken control rather than a summary.
+        onRegisterPress={() => router.push('/attendance')}
       />
 
       <View style={s.body}>

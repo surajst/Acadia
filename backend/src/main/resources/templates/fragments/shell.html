@@ -30,7 +30,12 @@
         <img src="/images/acadia-logo.png" alt="" style="height:26px;">
         <div style="line-height:1.1; min-width:0;">
             <div style="font-size:14px; font-weight:700; letter-spacing:.16em; color:var(--text);">ACADIA</div>
-            <div style="font-size:10.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+            <!-- The school's own name, as the school typed it. This was
+                 text-transform:uppercase, so a school stored as "Demo SSC" read
+                 as "DEMO SSC" here and "Demo SSC" in the app -- two different
+                 answers to what the place is called, from one stored value. A
+                 proper noun somebody chose is not a label to shout. -->
+            <div style="font-size:10.5px; font-weight:600; letter-spacing:.04em; color:var(--text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
                  th:text="${shell?.schoolName()}">Sunshine Montessori</div>
         </div>
     </a>

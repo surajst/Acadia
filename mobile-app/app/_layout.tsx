@@ -94,7 +94,17 @@ function ProtectedStack() {
           title and back arrow were white on near-white -- invisible. That is
           why the child profile and recognition screens appeared to have no
           heading at all. */}
-      <Stack screenOptions={{ contentStyle: { backgroundColor: T.bg }, headerStyle: { backgroundColor: T.bg }, headerTintColor: T.text }}>
+      {/* headerBackTitle is set once here rather than per screen: without it the
+          back control is named after the route it returns to, so a screen reader
+          announced "(tabs), back" on the teacher Gradebook and "index, back" on
+          student Challenges. Route names are not words for a person. */}
+      <Stack screenOptions={{
+        contentStyle: { backgroundColor: T.bg },
+        headerStyle: { backgroundColor: T.bg },
+        headerTintColor: T.text,
+        headerBackTitle: 'Back',
+        headerBackButtonDisplayMode: 'minimal',
+      }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         {/* Had no title anywhere -- not declared here, and no inline

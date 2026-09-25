@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { getTeacherClasses, createTeacherTask, searchMyStudents, getSubjects } from '@/services/api';
