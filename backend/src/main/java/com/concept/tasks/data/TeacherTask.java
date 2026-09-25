@@ -40,6 +40,18 @@ public class TeacherTask {
     @Column(name = "assigned_to_class", nullable = false)
     private Boolean assignedToClass = true;
 
+    /**
+     * Which section a class task was set for.
+     *
+     * <p>Null means grade-wide, and that is what every task raised before this
+     * column existed is: there was no section recorded and nothing can recover
+     * which one was meant, so they keep the reach they have always had rather
+     * than being guessed at. A task created since carries its section, and a
+     * student in another section of the same grade does not see it.
+     */
+    @Column(name = "class_section_id")
+    private UUID classSectionId;
+
     @Column(name = "student_id")
     private UUID studentId;
 
@@ -93,6 +105,9 @@ public class TeacherTask {
     public Integer getStandard() { return standard; }
     public void setStandard(Integer standard) { this.standard = standard; }
     
+    public UUID getClassSectionId() { return classSectionId; }
+    public void setClassSectionId(UUID classSectionId) { this.classSectionId = classSectionId; }
+
     public Boolean getAssignedToClass() { return assignedToClass; }
     public void setAssignedToClass(Boolean assignedToClass) { this.assignedToClass = assignedToClass; }
     

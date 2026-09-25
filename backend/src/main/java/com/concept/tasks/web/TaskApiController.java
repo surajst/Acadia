@@ -61,6 +61,17 @@ public class TaskApiController {
         return ResponseEntity.ok(tasksService.gradeOptionsForCaller(authentication));
     }
 
+    /**
+     * The sections this caller can set a task for. The task form asks for a
+     * section rather than a grade now: a grade covers every section in it, which
+     * is how a task set for 6-A reached 6-B.
+     */
+    @GetMapping("/teacher/section-options")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'PRINCIPAL')")
+    public ResponseEntity<?> sectionOptions(Authentication authentication) {
+        return ResponseEntity.ok(tasksService.sectionOptionsForCaller(authentication));
+    }
+
     @GetMapping("/teacher/tasks/my-tasks")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ResponseEntity<?> myTasks(Authentication authentication) {

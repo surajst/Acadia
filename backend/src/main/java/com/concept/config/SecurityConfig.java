@@ -70,7 +70,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/teacher/tasks/my-tasks",
                                          "/api/teacher/tasks/create")
                                 .hasAnyRole("TEACHER", "ADMIN")
-                        .requestMatchers("/api/teacher/grade-options")
+                        .requestMatchers("/api/teacher/grade-options", "/api/teacher/section-options")
                                 .hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/mobile/driver/**").hasRole("DRIVER")

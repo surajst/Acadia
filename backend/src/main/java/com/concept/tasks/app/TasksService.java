@@ -96,6 +96,7 @@ public class TasksService {
     // ─── Teacher tasks ──────────────────────────────────────────────────────
 
     public Object createTask(CreateTaskRequest request, Authentication authentication) {
+        validateTaskTarget(request, authentication);
         try {
             String username = authentication != null ? authentication.getName() : "teacher_1";
             UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
@@ -123,7 +124,15 @@ public class TasksService {
         if (Boolean.FALSE.equals(task.getAssignedToClass()) && task.getStudentId() != null) {
             recipients = studentRepository.findByIdAndTenantId(task.getStudentId(), tenantId)
                     .map(List::of).orElse(List.of());
+        } else if (task.getClassSectionId() != null) {
+            // The section, so a 6-B family is not told about 6-A's homework.
+            recipients = studentRepository.findByTenantId(tenantId).stream()
+                    .filter(s -> s.getClassSection() != null
+                            && task.getClassSectionId().equals(s.getClassSection().getId()))
+                    .collect(Collectors.toList());
         } else {
+            // No section recorded: a legacy grade-wide task, matching what
+            // getTasksForStudent shows for the same row.
             recipients = studentRepository.findByTenantId(tenantId).stream()
                     .filter(s -> s.getClassSection() != null
                             && task.getStandard() != null
@@ -197,6 +206,46 @@ public class TasksService {
         }
         return byStandard.entrySet().stream()
                 .map(e -> Map.<String, Object>of("value", e.getKey(), "label", e.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * The sections this caller can set a task for.
+     *
+     * <p>Replaces the grade list on the task form. A grade is not narrow enough
+     * to say who a task is for: a task set against "Grade 6" reached 6-A and
+     * 6-B alike, and Priya, who teaches only 6-A, could set work that landed on
+     * Neha's list. The standard the task is stored against is derived from the
+     * section server-side, so the form no longer sends it at all.
+     *
+     * <p>Every section, including one whose grade name carries no number --
+     * unlike the grade list, which has to drop those because a standard cannot
+     * express "Nursery". That is the other reason to key on the section.
+     *
+     * @return {value, label} pairs sorted by label, never null
+     */
+    public List<Map<String, Object>> sectionOptionsForCaller(Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        User caller = tenantId == null ? null
+                : currentUserService.getCurrentUser(authentication).orElse(null);
+        if (caller == null || caller.getRole() == null) {
+            return List.of();
+        }
+
+        boolean seesWholeSchool = caller.getRole() == UserRole.ADMIN || caller.getRole() == UserRole.PRINCIPAL;
+        List<ClassSection> sections = seesWholeSchool
+                ? classSectionRepository.findByTenantId(tenantId)
+                : subjectAssignmentRepository.findByTeacher(caller).stream()
+                        .map(SubjectAssignment::getClassSection)
+                        .filter(sec -> sec != null && tenantId.equals(sec.getTenantId()))
+                        .distinct()
+                        .collect(Collectors.toList());
+
+        return sections.stream()
+                .map(sec -> Map.<String, Object>of(
+                        "value", sec.getId(),
+                        "label", (sec.getGradeName() + " - " + sec.getSectionName()).trim()))
+                .sorted(java.util.Comparator.comparing(m -> String.valueOf(m.get("label"))))
                 .collect(Collectors.toList());
     }
 
@@ -310,7 +359,12 @@ public class TasksService {
 
     public Object studentTasks(Authentication authentication) {
         Student student = requireStudent(authentication);
-        return teacherTaskService.getTasksForStudent(student.getId(), extractStandard(student), student.getTenantId());
+        // The section, not just the grade: a class task set for 6-A used to
+        // appear on every 6-B child's list, because the grade was all the
+        // student's tasks were ever matched on.
+        return teacherTaskService.getTasksForStudent(student.getId(), extractStandard(student),
+                student.getClassSection() != null ? student.getClassSection().getId() : null,
+                student.getTenantId());
     }
 
     public Object taskQuestions(UUID taskId, Authentication authentication) {
@@ -499,6 +553,60 @@ public class TasksService {
 
     // ─── helpers ────────────────────────────────────────────────────────────
 
+    /**
+     * Which class a task is being set for, checked before anything is written.
+     *
+     * <p>A task carried a numeric standard and nothing narrower, so one Priya set
+     * for 6-A appeared on every 6-B child's list: they could hand in work their
+     * teacher never set them, and Priya saw submissions from children she does
+     * not teach. A section is now required on a class task, and it has to be one
+     * the caller actually teaches -- an id a client can put in the body is not a
+     * permission.
+     *
+     * <p>Thrown outside the try below on purpose. That block turns every
+     * exception into TasksException.badRequest with the original message, which
+     * would flatten a permission refusal into the same 400 as a typo.
+     */
+    private void validateTaskTarget(CreateTaskRequest request, Authentication authentication) {
+        if (request == null) {
+            throw TasksException.badRequest("No task was submitted.");
+        }
+        boolean forWholeClass = !Boolean.FALSE.equals(request.getAssignedToClass());
+        if (!forWholeClass) {
+            return; // a task for one named student is scoped by that student
+        }
+
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        if (request.getClassSectionId() == null) {
+            throw TasksException.badRequest(
+                    "Choose which class this task is for. Without a section it would go to every "
+                            + "section of the grade.");
+        }
+
+        ClassSection section = tenantId == null ? null
+                : classSectionRepository.findByIdAndTenantId(request.getClassSectionId(), tenantId).orElse(null);
+        if (section == null) {
+            throw TasksException.badRequest("That class was not found.");
+        }
+
+        User caller = currentUserService.getCurrentUser(authentication).orElse(null);
+        boolean unrestricted = caller != null && caller.getRole() != null
+                && (caller.getRole() == UserRole.ADMIN || caller.getRole() == UserRole.PRINCIPAL);
+        if (!unrestricted && (caller == null || !teacherOwnsSection(caller, section))) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You are not assigned to " + section.getGradeName() + " - " + section.getSectionName()
+                            + ", so you cannot set work for it.");
+        }
+
+        // The standard is what the task is stored against and what a student is
+        // matched on, so it has to agree with the section or the task reaches
+        // nobody. Derived rather than trusted: the client sends both.
+        Integer fromSection = GradeLevel.parse(section.getGradeName());
+        if (fromSection != null && fromSection != GradeLevel.UNKNOWN) {
+            request.setStandard(fromSection);
+        }
+    }
+
     private boolean teacherOwnsSection(User teacher, ClassSection section) {
         return subjectAssignmentRepository.existsByTeacherAndClassSection(teacher, section);
     }
@@ -525,6 +633,7 @@ public class TasksService {
         }
         tr.setStandard(req.getStandard());
         tr.setAssignedToClass(req.getAssignedToClass());
+        tr.setClassSectionId(req.getClassSectionId());
         tr.setStudentId(req.getStudentId());
         tr.setXpReward(req.getXpReward());
         tr.setDueDate(req.getDueDate());

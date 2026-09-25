@@ -39,6 +39,14 @@ public class CreateTaskRequest {
     private String taskType;
     private Integer standard;
     private Boolean assignedToClass;
+
+    /**
+     * Which section a class task is for. Required on a new class task: without
+     * it the task reaches every section of the grade, which is how a task Priya
+     * set for 6-A ended up on every 6-B child's list. Ignored when the task is
+     * set for one named student.
+     */
+    private UUID classSectionId;
     private UUID studentId;
     private LocalDate dueDate;
     private String question1;
@@ -57,6 +65,8 @@ public class CreateTaskRequest {
     public void setStandard(Integer standard) { this.standard = standard; }
     public Boolean getAssignedToClass() { return assignedToClass; }
     public void setAssignedToClass(Boolean assignedToClass) { this.assignedToClass = assignedToClass; }
+    public UUID getClassSectionId() { return classSectionId; }
+    public void setClassSectionId(UUID classSectionId) { this.classSectionId = classSectionId; }
     public UUID getStudentId() { return studentId; }
     public void setStudentId(UUID studentId) { this.studentId = studentId; }
     public Integer getXpReward() { return xpReward; }

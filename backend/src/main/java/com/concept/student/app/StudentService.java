@@ -297,7 +297,12 @@ public class StudentService {
 
     public Object mobileTasks(Authentication authentication) {
         Student student = requireStudent(authentication);
-        return teacherTaskService.getTasksForStudent(student.getId(), extractStandard(student), student.getTenantId());
+        // The section, not just the grade: a class task set for 6-A used to
+        // appear on every 6-B child's list, because the grade was all the
+        // student's tasks were ever matched on.
+        return teacherTaskService.getTasksForStudent(student.getId(), extractStandard(student),
+                student.getClassSection() != null ? student.getClassSection().getId() : null,
+                student.getTenantId());
     }
 
     public List<Map<String, Object>> mobileSyllabus(Authentication authentication) {

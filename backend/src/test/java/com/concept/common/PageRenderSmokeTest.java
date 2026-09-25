@@ -126,7 +126,9 @@ class PageRenderSmokeTest {
     @Test
     void theImportAndTeacherTaskPagesRender() throws Exception {
         assertTrue(renderAsAdmin("/web/management/upload").contains("downloadCredentials"));
-        assertTrue(renderAsAdmin("/web/teacher/tasks").contains("loadGradeOptions"));
+        // The picker asks for a section now, not a grade: a task set against
+        // "Grade 6" reached 6-A and 6-B alike.
+        assertTrue(renderAsAdmin("/web/teacher/tasks").contains("loadSectionOptions"));
     }
 
     /**

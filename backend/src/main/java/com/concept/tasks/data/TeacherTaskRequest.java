@@ -10,6 +10,7 @@ public class TeacherTaskRequest {
     private TaskType taskType;
     private Integer standard;
     private Boolean assignedToClass;
+    private UUID classSectionId;
     private UUID studentId;
     private Integer xpReward;
     private LocalDate dueDate;
@@ -34,6 +35,9 @@ public class TeacherTaskRequest {
 
     public Boolean getAssignedToClass() { return assignedToClass; }
     public void setAssignedToClass(Boolean assignedToClass) { this.assignedToClass = assignedToClass; }
+
+    public UUID getClassSectionId() { return classSectionId; }
+    public void setClassSectionId(UUID classSectionId) { this.classSectionId = classSectionId; }
 
     public UUID getStudentId() { return studentId; }
     public void setStudentId(UUID studentId) { this.studentId = studentId; }

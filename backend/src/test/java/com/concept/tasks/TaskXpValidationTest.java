@@ -1,7 +1,13 @@
 package com.concept.tasks;
 
+import com.concept.assignment.app.SubjectAssignmentService;
+import com.concept.shared.data.ClassSection;
+import com.concept.shared.data.ClassSectionRepository;
 import com.concept.tenant.SchoolType;
 import com.concept.tenant.TenantOnboardingService;
+import com.concept.user.User;
+import com.concept.user.UserRepository;
+import com.concept.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,23 +52,55 @@ class TaskXpValidationTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private TenantOnboardingService onboardingService;
+    @Autowired private ClassSectionRepository classSectionRepository;
+    @Autowired private SubjectAssignmentService assignmentService;
+    @Autowired private UserRepository userRepository;
 
     private String teacherEmail;
+    /**
+     * A class task names the section it is for now. The teacher has to be a real
+     * row assigned to a real section, or every post here would be refused for
+     * that reason instead -- and the XP assertions below would pass whether or
+     * not the XP rule existed at all.
+     */
+    private UUID sectionId;
 
     @BeforeEach
     void setup() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         teacherEmail = "teacher-" + suffix + "@example.com";
-        onboardingService.createSchool("Demo SSC " + suffix, "xp" + suffix,
+        var school = onboardingService.createSchool("Demo SSC " + suffix, "xp" + suffix,
                 "admin-" + suffix + "@example.com", "AdminPass123!", "Suraj Demo", SchoolType.SECONDARY);
+
+        UUID tenantId = school.tenant.getId();
+        UUID yearId = school.academicYear.getId();
+
+        ClassSection section = new ClassSection();
+        section.setId(UUID.randomUUID());
+        section.setTenantId(tenantId);
+        section.setAcademicYearId(yearId);
+        section.setGradeName("Grade 6");
+        section.setSectionName("A");
+        sectionId = classSectionRepository.saveAndFlush(section).getId();
+
+        User priya = new User();
+        priya.setId(UUID.randomUUID());
+        priya.setTenantId(tenantId);
+        priya.setAcademicYearId(yearId);
+        priya.setEmail(teacherEmail);
+        priya.setPasswordHash("irrelevant");
+        priya.setFullName("Priya Demo");
+        priya.setRole(UserRole.TEACHER);
+        priya = userRepository.saveAndFlush(priya);
+        assignmentService.assignSubject(priya.getId(), sectionId, "Mathematics", true, tenantId);
     }
 
     private MvcResult postTask(String xpReward) throws Exception {
         String body = """
                 {"title":"QA Fractions worksheet","description":"Practice",
                  "subjectCode":"MATH","taskType":"HOMEWORK","standard":6,
-                 "assignedToClass":true,"xpReward":%s}
-                """.formatted(xpReward);
+                 "assignedToClass":true,"classSectionId":"%s","xpReward":%s}
+                """.formatted(sectionId, xpReward);
         return mockMvc.perform(post("/api/teacher/tasks/create")
                         .with(user(teacherEmail).roles("TEACHER"))
                         .with(csrf())
@@ -108,8 +146,9 @@ class TaskXpValidationTest {
     void aTaskWithNoTitleIsRefused() throws Exception {
         String body = """
                 {"title":"  ","description":"Practice","subjectCode":"MATH",
-                 "taskType":"HOMEWORK","standard":6,"assignedToClass":true,"xpReward":10}
-                """;
+                 "taskType":"HOMEWORK","standard":6,"assignedToClass":true,
+                 "classSectionId":"%s","xpReward":10}
+                """.formatted(sectionId);
         MvcResult result = mockMvc.perform(post("/api/teacher/tasks/create")
                         .with(user(teacherEmail).roles("TEACHER"))
                         .with(csrf())

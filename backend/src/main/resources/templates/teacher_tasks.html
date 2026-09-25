@@ -86,11 +86,14 @@
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Class</label>
-                        <!-- Filled from the school's own class sections. A fixed
-                             Class 5-10 list showed grades the school does not run
-                             and hid the ones it does. -->
-                        <select id="standard" required class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
+                        <label for="classSectionId" class="text-xs font-bold uppercase tracking-wider text-slate-500">Class</label>
+                        <!-- A section, not a grade. A task set against "Grade 6"
+                             reached 6-A and 6-B alike, so Priya, who teaches only
+                             6-A, could set work that landed on Neha's list. The
+                             standard the task is stored against is derived from
+                             this server-side, so the form no longer sends it. -->
+                        <select id="classSectionId" required data-section-picker
+                                class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                             <option value="">Loading classes...</option>
                         </select>
                     </div>
@@ -294,7 +297,8 @@
                     description: document.getElementById('taskDescription').value,
                     subjectCode: document.getElementById('subjectType').value,
                     taskType: document.getElementById('taskType').value,
-                    standard: parseInt(document.getElementById('standard').value),
+                    classSectionId: isAssignedToClass
+                        ? document.getElementById('classSectionId').value : null,
                     assignedToClass: isAssignedToClass,
                     studentId: !isAssignedToClass ? document.getElementById('studentId').value : null,
                     xpReward: parseInt(document.getElementById('xpReward').value),
@@ -303,6 +307,10 @@
                 
                 if (!isAssignedToClass && !request.studentId) {
                     alert('Please select a student from the search results.');
+                    return;
+                }
+                if (isAssignedToClass && !request.classSectionId) {
+                    alert('Choose which class this task is for.');
                     return;
                 }
 
@@ -390,18 +398,18 @@
             }
         }
 
-        async function loadGradeOptions() {
-            const select = document.getElementById('standard');
+        async function loadSectionOptions() {
+            const select = document.getElementById('classSectionId');
             try {
-                const response = await fetch('/api/teacher/grade-options');
+                const response = await fetch('/api/teacher/section-options');
                 if (!response.ok) throw new Error('Fetch failed');
-                const grades = await response.json();
-                if (!grades.length) {
-                    select.innerHTML = '<option value="">No classes set up yet</option>';
+                const sections = await response.json();
+                if (!sections.length) {
+                    select.innerHTML = '<option value="">No classes assigned to you</option>';
                     return;
                 }
-                select.innerHTML = grades
-                    .map(function (g) { return '<option value="' + g.value + '">' + g.label + '</option>'; })
+                select.innerHTML = sections
+                    .map(function (s) { return '<option value="' + s.value + '">' + s.label + '</option>'; })
                     .join('');
             } catch (error) {
                 console.error(error);
@@ -409,7 +417,7 @@
             }
         }
 
-        loadGradeOptions();
+        loadSectionOptions();
     </script>
 
 
