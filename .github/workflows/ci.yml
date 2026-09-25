@@ -68,12 +68,17 @@ jobs:
         # rather than waiting out a timeout that would explain nothing.
         run: |
           set -x
-          docker pull minio/minio:latest
+          # quay.io, not Docker Hub: `docker pull minio/minio` now answers
+          # "pull access denied ... may require 'docker login'" for an anonymous
+          # puller, which is what broke the first two attempts at this job.
+          # quay.io/minio/minio is MinIO's own published registry and needs no
+          # credentials.
+          docker pull quay.io/minio/minio:latest
 
           docker run -d --name minio -p 9000:9000 \
             -e MINIO_ROOT_USER=ci-access-key \
             -e MINIO_ROOT_PASSWORD=ci-secret-key \
-            minio/minio:latest server /data --address :9000
+            quay.io/minio/minio:latest server /data --address :9000
 
           for i in $(seq 1 40); do
             if curl -sf http://localhost:9000/minio/health/live >/dev/null; then
