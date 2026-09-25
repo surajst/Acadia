@@ -77,3 +77,77 @@ test.describe('ACADIA Administrative Fee Management Specs', () => {
   });
 
 });
+
+// ─── R2-P1-3: cancelling an invoice, and correcting due dates ─────────────────
+
+test.describe('Invoice cancellation and due-date correction', () => {
+
+  /**
+   * The Cancel action goes through a prompt() for the reason, mirroring Reverse
+   * last payment. The rules live in InvoiceCancellationTest, which posts the bad
+   * cases straight at the endpoint; this covers the click path the admin
+   * actually uses, per the feature-coverage rule.
+   */
+  test('an admin can cancel an unpaid invoice from the ledger', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await page.goto('/web/admin/fees');
+    await page.waitForLoadState('networkidle');
+
+    // Only an invoice with nothing paid against it offers the action, which is
+    // the rule the server enforces too.
+    const cancelBtn = page.locator('button[data-cancel-invoice]').first();
+    await expect(cancelBtn).toBeVisible();
+    await cancelBtn.scrollIntoViewIfNeeded();
+
+    page.once('dialog', dialog => dialog.accept('Raised in error — QA'));
+    await cancelBtn.click();
+
+    await page.waitForURL(url => url.pathname.includes('/web/admin/fees'), { timeout: 90000 });
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('[data-flash]')).toContainText(/cancelled/i);
+    await expect(page.locator('[data-cancelled-badge]').first()).toBeVisible();
+  });
+
+  /** Backing out of the prompt must not cancel anything. */
+  test('dismissing the reason prompt cancels nothing', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await page.goto('/web/admin/fees');
+    await page.waitForLoadState('networkidle');
+
+    const before = await page.locator('[data-cancelled-badge]').count();
+
+    const cancelBtn = page.locator('button[data-cancel-invoice]').first();
+    await cancelBtn.scrollIntoViewIfNeeded();
+    page.once('dialog', dialog => dialog.dismiss());
+    await cancelBtn.click();
+
+    await page.waitForLoadState('networkidle');
+    expect(await page.locator('[data-cancelled-badge]').count()).toBe(before);
+  });
+
+  /**
+   * The due-date correction is idempotent, so the assertion is on it reporting
+   * what it did rather than on a particular number: a second run legitimately
+   * reports that nothing changed.
+   */
+  test('the due-date correction reports what it changed and is safe to repeat', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await page.goto('/web/admin/fees');
+    await page.waitForLoadState('networkidle');
+
+    await page.locator('button[data-recalculate-due-dates]').click();
+    await page.waitForURL(url => url.pathname.includes('/web/admin/fees'), { timeout: 90000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('[data-flash]')).toContainText(/due date|already count/i);
+
+    // Second run: whatever the first one did, this one must find nothing left.
+    await page.locator('button[data-recalculate-due-dates]').click();
+    await page.waitForURL(url => url.pathname.includes('/web/admin/fees'), { timeout: 90000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('[data-flash]')).toContainText(/nothing changed/i);
+  });
+});

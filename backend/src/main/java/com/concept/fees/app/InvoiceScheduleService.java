@@ -163,6 +163,90 @@ public class InvoiceScheduleService {
         return created;
     }
 
+    /** What a recalculation changed, so the page can say something specific. */
+    public record DueDateRecalculation(int invoicesExamined, int invoicesCorrected, int studentsAffected) {}
+
+    /**
+     * Re-derive the due dates on invoices that were already raised.
+     *
+     * <p>V18 gave existing students the admission date nothing had ever
+     * recorded, but it says in its own last line that invoices already raised
+     * keep the dates they were given. Those are the rows a family is actually
+     * looking at: Riya Singh's Term 1 reads "overdue 01 Jun 2026" because it was
+     * raised from the academic year's start, before her admission date existed.
+     * Re-raising the schedule is not an option -- generateForStudent refuses a
+     * student who already has one, and rightly, since that would double the
+     * bill.
+     *
+     * <p>Idempotent by construction: it computes what the due date should be and
+     * writes it only when it differs, so a second run corrects nothing and says
+     * so. That matters because this is the kind of fix somebody runs twice
+     * because they are not sure the first one worked.
+     *
+     * <p>Only the date moves. Amounts, payments and waivers are untouched, and a
+     * cancelled invoice is skipped: nothing is owed on it, so moving its date
+     * would only make the audit line confusing.
+     */
+    @Transactional
+    public DueDateRecalculation recalculateDueDates(UUID tenantId, Authentication authentication) {
+        if (tenantId == null) {
+            return new DueDateRecalculation(0, 0, 0);
+        }
+
+        List<FeeInvoice> planned = feeInvoiceRepository.findByTenantId(tenantId).stream()
+                .filter(inv -> inv.getFeePlanInstalmentId() != null)
+                .filter(FeeInvoice::isCountable)
+                .toList();
+
+        int corrected = 0;
+        java.util.Set<UUID> studentsTouched = new java.util.HashSet<>();
+        java.util.Map<UUID, LocalDate> startByStudent = new java.util.HashMap<>();
+
+        for (FeeInvoice invoice : planned) {
+            FeePlanInstalment instalment = instalmentRepository
+                    .findByIdAndTenantId(invoice.getFeePlanInstalmentId(), tenantId).orElse(null);
+            if (instalment == null) {
+                // The plan was rewritten since this invoice was raised, so there
+                // is no offset left to count from. Leaving the date alone is the
+                // only honest answer; inventing one would be worse than wrong.
+                continue;
+            }
+
+            LocalDate start = startByStudent.get(invoice.getStudentId());
+            if (start == null) {
+                Student student = studentRepository
+                        .findByIdAndTenantId(invoice.getStudentId(), tenantId).orElse(null);
+                if (student == null) {
+                    continue;
+                }
+                try {
+                    start = billingStartFor(student);
+                } catch (IllegalArgumentException e) {
+                    continue; // no year start to count from; same reasoning as above
+                }
+                startByStudent.put(invoice.getStudentId(), start);
+            }
+
+            LocalDate shouldBe = start.plusDays(instalment.getDueOffsetDays());
+            if (!shouldBe.equals(invoice.getDueDate())) {
+                invoice.setDueDate(shouldBe);
+                feeInvoiceRepository.saveAndFlush(invoice);
+                corrected++;
+                studentsTouched.add(invoice.getStudentId());
+            }
+        }
+
+        // Logged even when nothing changed: "I ran it and it found nothing" is
+        // the answer somebody needs from the trail on the second run.
+        auditLogService.log(authentication, "FEE_DUE_DATES_RECALCULATED", "Tenant", tenantId,
+                corrected == 0
+                        ? "Checked " + planned.size() + " invoices; every due date already matched"
+                        : "Corrected " + corrected + " of " + planned.size() + " invoice due dates across "
+                                + studentsTouched.size() + " students, from each student's start date");
+
+        return new DueDateRecalculation(planned.size(), corrected, studentsTouched.size());
+    }
+
     /**
      * The date a student's schedule counts from.
      *

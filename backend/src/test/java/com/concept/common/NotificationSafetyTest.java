@@ -12,11 +12,16 @@ import com.concept.tenant.AcademicYear;
 import com.concept.tenant.AcademicYearRepository;
 import com.concept.tenant.Tenant;
 import com.concept.tenant.TenantRepository;
+import com.concept.user.User;
+import com.concept.user.UserRepository;
+import com.concept.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,12 +58,15 @@ class NotificationSafetyTest {
     @Autowired private ClassSectionRepository classSectionRepository;
     @Autowired private TenantRepository tenantRepository;
     @Autowired private AcademicYearRepository academicYearRepository;
+    @Autowired private UserRepository userRepository;
 
     @MockBean private NotificationDeliveryService notificationDeliveryService;
 
     private UUID tenantId;
     private UUID yearId;
     private ClassSection section;
+    /** Who may take a register is AttendanceScopeTest's subject, not this one. */
+    private Authentication admin;
 
     @BeforeEach
     void setup() {
@@ -86,6 +94,17 @@ class NotificationSafetyTest {
         section.setGradeName("Grade 6");
         section.setSectionName("A");
         section = classSectionRepository.saveAndFlush(section);
+
+        User head = new User();
+        head.setId(UUID.randomUUID());
+        head.setTenantId(tenantId);
+        head.setAcademicYearId(yearId);
+        head.setEmail("head-" + UUID.randomUUID() + "@example.com");
+        head.setPasswordHash("irrelevant");
+        head.setFullName("Head Teacher");
+        head.setRole(UserRole.ADMIN);
+        head = userRepository.saveAndFlush(head);
+        admin = new UsernamePasswordAuthenticationToken(head.getEmail(), "n/a");
     }
 
     private Student studentWithGuardianPhone(String phone) {
@@ -112,7 +131,7 @@ class NotificationSafetyTest {
 
     private void markAbsent(Student student) {
         attendanceService.mark(
-                new MarkAttendanceCommand(tenantId, List.of(student.getId()), List.of("ABSENT")), null);
+                new MarkAttendanceCommand(tenantId, List.of(student.getId()), List.of("ABSENT")), admin);
     }
 
     @Test
@@ -138,7 +157,7 @@ class NotificationSafetyTest {
     void aChildMarkedPresentTriggersNothing() {
         Student student = studentWithGuardianPhone("+91 9876543210");
         attendanceService.mark(
-                new MarkAttendanceCommand(tenantId, List.of(student.getId()), List.of("PRESENT")), null);
+                new MarkAttendanceCommand(tenantId, List.of(student.getId()), List.of("PRESENT")), admin);
         verify(notificationDeliveryService, never()).send(any(), any());
     }
 

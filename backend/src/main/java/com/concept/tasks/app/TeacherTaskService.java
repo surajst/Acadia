@@ -38,6 +38,10 @@ public class TeacherTaskService {
         if (isAssignedToClass == null) isAssignedToClass = true;
         task.setAssignedToClass(isAssignedToClass);
 
+        // Which section it was set for. Null on a personal task, and null on
+        // every task raised before the column existed -- where it still means
+        // grade-wide, see TeacherTask.classSectionId.
+        task.setClassSectionId(request.getClassSectionId());
         task.setStudentId(request.getStudentId());
         task.setCreatedByTeacherId(resolveTeacherId(teacherUsername));
         task.setXpReward(request.getXpReward() != null ? request.getXpReward() : 50);
@@ -52,9 +56,40 @@ public class TeacherTaskService {
         return teacherTaskRepository.save(task);
     }
 
+    /**
+     * @deprecated a student's grade is not narrow enough to decide which class
+     *     tasks are theirs -- it returns every section's. Kept only for a
+     *     student who is in no section. Use
+     *     {@link #getTasksForStudent(UUID, int, UUID, UUID)}.
+     */
+    @Deprecated
     @Transactional
     public List<TeacherTask> getTasksForStudent(UUID studentId, int standard, UUID tenantId) {
-        List<TeacherTask> classTasks = teacherTaskRepository.findByStandardAndAssignedToClassTrueAndTenantId(standard, tenantId);
+        return getTasksForStudent(studentId, standard, null, tenantId);
+    }
+
+    /**
+     * A student's task list, scoped to their own section.
+     *
+     * <p>This used to ask for every class task in the grade, so a task Priya set
+     * for 6-A appeared on every 6-B child's list -- they could hand in work
+     * their teacher never set them, and the teacher saw submissions from
+     * children they do not teach.
+     *
+     * <p>A task with no section recorded still reaches the whole grade. Those are
+     * the rows raised before the column existed, and nothing can recover which
+     * section was meant, so they keep the reach they have always had rather than
+     * disappearing from lists children are working from.
+     *
+     * @param sectionId the student's section, or null when they are in none, in
+     *                  which case there is nothing to match on and the grade is
+     *                  the only answer available
+     */
+    @Transactional
+    public List<TeacherTask> getTasksForStudent(UUID studentId, int standard, UUID sectionId, UUID tenantId) {
+        List<TeacherTask> classTasks = sectionId != null
+                ? teacherTaskRepository.findClassTasksForSection(standard, sectionId, tenantId)
+                : teacherTaskRepository.findByStandardAndAssignedToClassTrueAndTenantId(standard, tenantId);
         List<TeacherTask> studentTasks = teacherTaskRepository.findByStudentIdAndTenantId(studentId, tenantId);
 
         Set<TeacherTask> allTasks = new HashSet<>(classTasks);

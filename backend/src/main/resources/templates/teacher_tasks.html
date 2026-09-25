@@ -86,11 +86,14 @@
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Class</label>
-                        <!-- Filled from the school's own class sections. A fixed
-                             Class 5-10 list showed grades the school does not run
-                             and hid the ones it does. -->
-                        <select id="standard" required class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
+                        <label for="classSectionId" class="text-xs font-bold uppercase tracking-wider text-slate-500">Class</label>
+                        <!-- A section, not a grade. A task set against "Grade 6"
+                             reached 6-A and 6-B alike, so Priya, who teaches only
+                             6-A, could set work that landed on Neha's list. The
+                             standard the task is stored against is derived from
+                             this server-side, so the form no longer sends it. -->
+                        <select id="classSectionId" required data-section-picker
+                                class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-800 outline-none">
                             <option value="">Loading classes...</option>
                         </select>
                     </div>
@@ -163,6 +166,10 @@
         <!-- Tasks Table -->
         <section class="glass-panel rounded-3xl p-4 md:p-6 shadow-xl shadow-black/30">
             <h2 class="text-xl font-bold text-slate-900 mb-4">My Created Tasks</h2>
+            <!-- Where the row actions report. Without it every outcome would be
+                 an alert(), which is what the app's own hand-in screen was
+                 pulled off for. -->
+            <div id="taskNotice" data-task-notice class="hidden" role="status" aria-live="polite"></div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
                     <thead class="text-xs uppercase bg-[#F4F6FB]/60 text-slate-500 font-semibold tracking-wider">
@@ -174,11 +181,12 @@
                             <th class="px-4 py-4">Assigned To</th>
                             <th class="px-4 py-4">Due Date</th>
                             <th class="px-4 py-4 rounded-tr-xl">Status</th>
-                        </tr>
+                        <th class="px-4 py-3 text-right">Actions</th>
+                                </tr>
                     </thead>
                     <tbody id="tasksTableBody" class="divide-y divide-slate-800/50">
                         <tr>
-                            <td colspan="7" class="px-4 py-12 text-center text-slate-500 italic">Loading tasks...</td>
+                            <td colspan="8" class="px-4 py-12 text-center text-slate-500 italic">Loading tasks...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -186,6 +194,79 @@
         </section>
         </div>
     </main>
+
+    <!-- Edit a task. Title, wording, due date and XP only: moving a task to a
+         different class or child after work has been handed in would leave
+         those submissions attached to a task those pupils can no longer see. -->
+    <div id="editTaskModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            <div class="px-5 py-4 flex items-center justify-between border-b border-slate-200">
+                <h3 class="text-sm font-bold text-slate-900 tracking-wide uppercase">Edit task</h3>
+                <button type="button" onclick="closeEditTask()" aria-label="Close"
+                        class="text-slate-500 hover:text-slate-900 cursor-pointer p-1 rounded-lg hover:bg-slate-100">&#10005;</button>
+            </div>
+            <form onsubmit="saveEditTask(event)" class="p-4 space-y-3">
+                <input type="hidden" id="editTaskId">
+                <div class="space-y-1">
+                    <label for="editTitle" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Title</label>
+                    <input type="text" id="editTitle" required
+                           class="w-full px-3 py-2 bg-[#F4F6FB]/60 border border-slate-200 rounded-xl text-slate-800 text-sm outline-none focus:border-indigo-500">
+                </div>
+                <div class="space-y-1">
+                    <label for="editDescription" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Description</label>
+                    <textarea id="editDescription" rows="3"
+                              class="w-full px-3 py-2 bg-[#F4F6FB]/60 border border-slate-200 rounded-xl text-slate-800 text-sm outline-none focus:border-indigo-500"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label for="editDueDate" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Due date</label>
+                        <input type="date" id="editDueDate"
+                               class="w-full px-3 py-2 bg-[#F4F6FB]/60 border border-slate-200 rounded-xl text-slate-800 text-sm outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label for="editXpReward" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">XP reward</label>
+                        <input type="number" id="editXpReward" min="1" max="1000" required
+                               class="w-full px-3 py-2 bg-[#F4F6FB]/60 border border-slate-200 rounded-xl text-slate-800 text-sm outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-200">
+                    <button type="button" onclick="closeEditTask()"
+                            class="px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer">Cancel</button>
+                    <button type="submit" data-save-task
+                            class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Who has handed a task in. The only review surface before this was one
+         undifferentiated pending queue for the whole school, which cannot answer
+         "which of my pupils still owes me this". -->
+    <div id="submissionsModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="px-5 py-4 flex items-center justify-between border-b border-slate-200">
+                <div>
+                    <h3 id="submissionsTitle" class="text-sm font-bold text-slate-900">Task</h3>
+                    <p id="submissionsCount" class="text-xs text-slate-500 mt-0.5"></p>
+                </div>
+                <button type="button" onclick="closeSubmissions()" aria-label="Close"
+                        class="text-slate-500 hover:text-slate-900 cursor-pointer p-1 rounded-lg hover:bg-slate-100">&#10005;</button>
+            </div>
+            <!-- The table scrolls inside its own container, not the page. -->
+            <div class="overflow-y-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="text-xs uppercase bg-[#F4F6FB]/60 text-slate-500 font-semibold tracking-wider sticky top-0">
+                        <tr>
+                            <th class="px-4 py-3">Pupil</th>
+                            <th class="px-4 py-3">Roll</th>
+                            <th class="px-4 py-3">Handed in</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissionsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <script>
         async function loadSubjectOptions() {
@@ -294,7 +375,8 @@
                     description: document.getElementById('taskDescription').value,
                     subjectCode: document.getElementById('subjectType').value,
                     taskType: document.getElementById('taskType').value,
-                    standard: parseInt(document.getElementById('standard').value),
+                    classSectionId: isAssignedToClass
+                        ? document.getElementById('classSectionId').value : null,
                     assignedToClass: isAssignedToClass,
                     studentId: !isAssignedToClass ? document.getElementById('studentId').value : null,
                     xpReward: parseInt(document.getElementById('xpReward').value),
@@ -303,6 +385,10 @@
                 
                 if (!isAssignedToClass && !request.studentId) {
                     alert('Please select a student from the search results.');
+                    return;
+                }
+                if (isAssignedToClass && !request.classSectionId) {
+                    alert('Choose which class this task is for.');
                     return;
                 }
 
@@ -357,7 +443,7 @@
                 const tbody = document.getElementById('tasksTableBody');
                 
                 if (tasks.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-12 text-center text-slate-500">No tasks created yet — create your first task above.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-12 text-center text-slate-500">No tasks created yet — create your first task above.</td></tr>`;
                     return;
                 }
 
@@ -374,6 +460,23 @@
                             <td class="px-4 py-4">
                                 <span class="px-2 py-1 text-[10px] uppercase font-bold rounded border ${statusClass}">${task.taskStatus}</span>
                             </td>
+                            <td class="px-4 py-4 text-right whitespace-nowrap space-x-1">
+                                <button type="button" data-task-submissions data-id="${task.id}" data-title="${escapeAttr(task.title)}"
+                                        onclick="openSubmissions(this.dataset.id, this.dataset.title)"
+                                        class="px-2 py-1 text-[10px] font-bold rounded bg-indigo-500/10 text-indigo-700 hover:bg-indigo-500/20 cursor-pointer">Who handed in</button>
+                                <button type="button" data-task-edit data-id="${task.id}" data-title="${escapeAttr(task.title)}"
+                                        data-description="${escapeAttr(task.description)}" data-due="${task.dueDate || ''}" data-xp="${task.xpReward || ''}"
+                                        onclick="openEditTask(this.dataset)"
+                                        class="px-2 py-1 text-[10px] font-bold rounded bg-slate-500/10 text-slate-700 hover:bg-slate-500/20 cursor-pointer">Edit</button>
+                                ${task.taskStatus === 'CLOSED'
+                                    ? `<button type="button" data-task-reopen data-id="${task.id}" onclick="taskAction(this.dataset.id, 'reopen')"
+                                               class="px-2 py-1 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 cursor-pointer">Reopen</button>`
+                                    : `<button type="button" data-task-close data-id="${task.id}" onclick="taskAction(this.dataset.id, 'close')"
+                                               class="px-2 py-1 text-[10px] font-bold rounded bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 cursor-pointer">Close</button>`}
+                                <button type="button" data-task-delete data-id="${task.id}" data-title="${escapeAttr(task.title)}"
+                                        onclick="deleteTask(this.dataset.id, this.dataset.title)"
+                                        class="px-2 py-1 text-[10px] font-bold rounded bg-rose-500/10 text-rose-700 hover:bg-rose-500/20 cursor-pointer">Delete</button>
+                            </td>
                         </tr>
                     `;
                 }).join('');
@@ -382,7 +485,7 @@
                 // looked like a slow page. Say what happened instead.
                 console.error(error);
                 document.getElementById('tasksTableBody').innerHTML =
-                    '<tr><td colspan="7" class="px-4 py-12 text-center text-rose-600">' +
+                    '<tr><td colspan="8" class="px-4 py-12 text-center text-rose-600">' +
                     'Could not load tasks. ' + (error && error.status === 403
                         ? 'This page is for teachers. An admin account cannot list tasks here.'
                         : 'Please reload the page.') +
@@ -390,18 +493,18 @@
             }
         }
 
-        async function loadGradeOptions() {
-            const select = document.getElementById('standard');
+        async function loadSectionOptions() {
+            const select = document.getElementById('classSectionId');
             try {
-                const response = await fetch('/api/teacher/grade-options');
+                const response = await fetch('/api/teacher/section-options');
                 if (!response.ok) throw new Error('Fetch failed');
-                const grades = await response.json();
-                if (!grades.length) {
-                    select.innerHTML = '<option value="">No classes set up yet</option>';
+                const sections = await response.json();
+                if (!sections.length) {
+                    select.innerHTML = '<option value="">No classes assigned to you</option>';
                     return;
                 }
-                select.innerHTML = grades
-                    .map(function (g) { return '<option value="' + g.value + '">' + g.label + '</option>'; })
+                select.innerHTML = sections
+                    .map(function (s) { return '<option value="' + s.value + '">' + s.label + '</option>'; })
                     .join('');
             } catch (error) {
                 console.error(error);
@@ -409,7 +512,151 @@
             }
         }
 
-        loadGradeOptions();
+        // A title can contain a quote, and these values go into data attributes
+        // in a template string -- so they are escaped here rather than trusted.
+        function escapeAttr(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function csrfHeaders() {
+            var headers = { 'Content-Type': 'application/json' };
+            var token = document.getElementById('csrfToken');
+            if (token) headers['X-CSRF-TOKEN'] = token.value;
+            return headers;
+        }
+
+        function showTaskNotice(message, ok) {
+            var box = document.getElementById('taskNotice');
+            if (!box) { if (!ok) alert(message); return; }
+            box.textContent = message;
+            box.className = 'mb-3 px-4 py-2.5 rounded-xl text-xs font-semibold border ' + (ok
+                ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
+                : 'bg-rose-500/10 text-rose-700 border-rose-500/20');
+            box.classList.remove('hidden');
+        }
+
+        async function taskAction(taskId, action) {
+            try {
+                const response = await fetch('/api/teacher/tasks/' + taskId + '/' + action, {
+                    method: 'POST', headers: csrfHeaders()
+                });
+                const body = await response.json().catch(function () { return {}; });
+                if (!response.ok) {
+                    // The server's own words: it is the only thing that knows why,
+                    // and "something went wrong" sends a teacher to support.
+                    showTaskNotice(body.error || ('Could not ' + action + ' that task.'), false);
+                    return;
+                }
+                showTaskNotice('Task ' + body.status + '.', true);
+                loadTasks();
+            } catch (error) {
+                showTaskNotice('Network error.', false);
+            }
+        }
+
+        async function deleteTask(taskId, title) {
+            if (!confirm('Delete "' + title + '"? This cannot be undone.\n\n'
+                    + 'If pupils have already handed it in, close it instead -- their work stays on record.')) {
+                return;
+            }
+            await taskAction(taskId, 'delete');
+        }
+
+        function openEditTask(data) {
+            document.getElementById('editTaskId').value = data.id;
+            document.getElementById('editTitle').value = data.title || '';
+            document.getElementById('editDescription').value = data.description === 'undefined' ? '' : (data.description || '');
+            document.getElementById('editDueDate').value = data.due || '';
+            document.getElementById('editXpReward').value = data.xp || 50;
+            var modal = document.getElementById('editTaskModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditTask() {
+            var modal = document.getElementById('editTaskModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function saveEditTask(event) {
+            event.preventDefault();
+            var taskId = document.getElementById('editTaskId').value;
+            var payload = {
+                title: document.getElementById('editTitle').value,
+                description: document.getElementById('editDescription').value,
+                dueDate: document.getElementById('editDueDate').value || null,
+                xpReward: parseInt(document.getElementById('editXpReward').value, 10)
+            };
+            try {
+                const response = await fetch('/api/teacher/tasks/' + taskId + '/update', {
+                    method: 'POST', headers: csrfHeaders(), body: JSON.stringify(payload)
+                });
+                const body = await response.json().catch(function () { return {}; });
+                if (!response.ok) {
+                    showTaskNotice(body.error || 'Could not save that task.', false);
+                    return;
+                }
+                closeEditTask();
+                showTaskNotice('Task updated.', true);
+                loadTasks();
+            } catch (error) {
+                showTaskNotice('Network error.', false);
+            }
+        }
+
+        async function openSubmissions(taskId, title) {
+            var modal = document.getElementById('submissionsModal');
+            var body = document.getElementById('submissionsBody');
+            document.getElementById('submissionsTitle').textContent = title;
+            document.getElementById('submissionsCount').textContent = '';
+            body.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-slate-500">Loading…</td></tr>';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            try {
+                const response = await fetch('/api/teacher/tasks/' + taskId + '/submissions');
+                if (!response.ok) {
+                    body.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-rose-600">'
+                        + 'Could not load who has handed this in.</td></tr>';
+                    return;
+                }
+                const data = await response.json();
+                document.getElementById('submissionsCount').textContent =
+                    data.handedIn + ' of ' + data.expected + ' handed in';
+                if (!data.rows || !data.rows.length) {
+                    // The section has no pupils in it -- a different thing from
+                    // nobody having handed in, and worth saying so.
+                    body.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-slate-500">'
+                        + 'No pupils are in the class this task was set for.</td></tr>';
+                    return;
+                }
+                body.innerHTML = data.rows.map(function (row) {
+                    var label = row.handedIn
+                        ? '<span class="px-2 py-1 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-700">'
+                            + row.status + '</span>'
+                        : '<span class="px-2 py-1 text-[10px] font-bold rounded bg-slate-500/10 text-slate-600">'
+                            + 'Not handed in</span>';
+                    return '<tr class="border-b border-slate-200/40">'
+                        + '<td class="px-4 py-2 font-semibold text-slate-900">' + escapeAttr(row.studentName) + '</td>'
+                        + '<td class="px-4 py-2 font-mono text-xs text-slate-500">' + escapeAttr(row.rollNumber) + '</td>'
+                        + '<td class="px-4 py-2">' + label + '</td>'
+                        + '</tr>';
+                }).join('');
+            } catch (error) {
+                body.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-rose-600">Network error.</td></tr>';
+            }
+        }
+
+        function closeSubmissions() {
+            var modal = document.getElementById('submissionsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        loadSectionOptions();
     </script>
 
 

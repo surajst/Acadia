@@ -102,7 +102,22 @@ export default function AnnouncementsScreen() {
           <Text style={styles.headerTitle}>Announcements</Text>
           <Text style={styles.headerSubtitle}>From your school</Text>
         </View>
-        <TouchableOpacity style={styles.langBtn} onPress={() => setPickerVisible(true)}>
+        {/* This is the language control, not a label -- an unexplained
+            "English" in the corner of an empty News screen reads as stray text
+            left behind by something. The globe and the accessible name say what
+            it does; screen readers got nothing at all before. */}
+        <TouchableOpacity
+          style={styles.langBtn}
+          onPress={() => setPickerVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`Language: ${selectedLanguageName}. Change the language announcements are shown in.`}
+          hitSlop={10}
+        >
+          <SymbolView
+            name={{ ios: 'globe', android: 'language', web: 'language' }}
+            tintColor={T.brand}
+            size={14}
+          />
           <Text style={styles.langBtnText}>{selectedLanguageName}</Text>
         </TouchableOpacity>
       </View>
@@ -111,6 +126,7 @@ export default function AnnouncementsScreen() {
         <View style={styles.center}>
           <SymbolView name={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }} tintColor={T.text2} size={48} />
           <Text style={styles.emptyTitle}>No announcements yet</Text>
+          <Text style={styles.emptySubtext}>Notices from your school will appear here.</Text>
         </View>
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -173,9 +189,17 @@ const makeStyles = (T: Theme) => StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: T.line,
   },
   headerIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: T.brand50, justifyContent: 'center', alignItems: 'center' },
+  emptySubtext: { fontSize: 13, color: T.text3, marginTop: 6, textAlign: 'center' },
   headerTitle: { fontSize: 17, fontWeight: '700', color: T.text },
   headerSubtitle: { fontSize: 12, color: T.text3, marginTop: 2 },
-  langBtn: { backgroundColor: T.brand50, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: T.brand100 },
+  // A row now that it carries a globe, and at least 44dp tall so it is a
+  // real target rather than a word you have to aim at.
+  langBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: T.brand50, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8, minHeight: 44,
+    borderWidth: 1, borderColor: T.brand100,
+  },
   langBtnText: { color: T.brand, fontSize: 12, fontWeight: '600' },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: T.text, marginTop: 16 },
   scroll: { flex: 1 },

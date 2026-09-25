@@ -192,6 +192,62 @@ public class FeeController {
         return "redirect:/web/admin/fees";
     }
 
+    /**
+     * Withdraws an invoice raised in error.
+     *
+     * <p>PRINCIPAL is on the annotation as well as ADMIN because the service
+     * allows both, and an annotation narrower than the rule it fronts is the
+     * kind of mismatch that shows up as a 403 nobody can explain. The service
+     * checks the role again -- the URL rule is not the only way in.
+     */
+    @PostMapping("/web/admin/fees/invoice/{invoiceId}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN','PRINCIPAL')")
+    public String cancelInvoice(@PathVariable("invoiceId") UUID invoiceId,
+                               @RequestParam("reason") String reason,
+                               Authentication authentication,
+                               RedirectAttributes ra) {
+        UUID tenantId = tenantContext.getTenantId().orElse(null);
+        try {
+            String amount = feeDashboardService.cancelInvoice(invoiceId, reason, tenantId, authentication);
+            ra.addFlashAttribute("successMessage",
+                    "Invoice cancelled. " + amount
+                            + " has come off this family's balance, and the reason is on the audit log.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/web/admin/fees";
+    }
+
+    /**
+     * Re-derives due dates on invoices that were already raised.
+     *
+     * <p>V18 backfilled the admission dates but says in its own last line that
+     * invoices already raised keep the dates they were given -- and those are
+     * the rows a family sees. Re-raising is not available (it would double the
+     * bill), so this exists to correct them in place. Idempotent, so running it
+     * twice is safe, and it says how many it changed rather than just "done".
+     */
+    @PostMapping("/web/admin/fees/due-dates/recalculate")
+    @PreAuthorize("hasAnyRole('ADMIN','PRINCIPAL')")
+    public String recalculateDueDates(Authentication authentication, RedirectAttributes ra) {
+        UUID tenantId = tenantContext.getTenantId().orElse(null);
+        var outcome = feeDashboardService.recalculateDueDates(tenantId, authentication);
+        if (outcome.invoicesCorrected() == 0) {
+            ra.addFlashAttribute("successMessage",
+                    "Checked " + outcome.invoicesExamined()
+                            + " scheduled invoices. Every due date already counts from the "
+                            + "student's own start date, so nothing changed.");
+        } else {
+            ra.addFlashAttribute("successMessage",
+                    "Corrected " + outcome.invoicesCorrected() + " due date"
+                            + (outcome.invoicesCorrected() == 1 ? "" : "s") + " across "
+                            + outcome.studentsAffected() + " student"
+                            + (outcome.studentsAffected() == 1 ? "" : "s")
+                            + ", counted from each student's start date. Amounts are unchanged.");
+        }
+        return "redirect:/web/admin/fees";
+    }
+
     @PostMapping("/api/admin/fees/{invoiceId}/waiver/request")
     @ResponseBody
     @PreAuthorize("hasRole('ADMIN')")

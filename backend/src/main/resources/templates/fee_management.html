@@ -85,6 +85,17 @@
                 <a href="/web/admin/fees/settings" style="text-decoration:none;" data-fee-settings-link>Fee plans</a>
             </div>
             <div class="flex items-center gap-2">
+                <!-- Invoices raised before students had admission dates count
+                     their instalments from the academic year's start, so a child
+                     admitted in September reads as overdue from June. The
+                     schedule cannot be re-raised (that would double the bill),
+                     so this corrects the dates in place. Idempotent: running it
+                     again reports that nothing needed changing. -->
+                <form th:action="@{/web/admin/fees/due-dates/recalculate}" method="POST" class="inline">
+                    <button type="submit" class="btn btn-secondary btn-sm" data-recalculate-due-dates
+                            title="Re-derive instalment due dates from each student's own start date">
+                        Fix due dates</button>
+                </form>
                 <button type="button" onclick="openCustomInvoiceModal()"
                         class="btn btn-secondary btn-sm" data-open-custom-invoice>Custom Invoice</button>
                 <button type="button" onclick="openCreateInvoiceModal()"
@@ -173,16 +184,25 @@
                                         <span th:if="${dto.status == 'PAID'}" class="badge badge--success"><span class="dot bg-[var(--success)]"></span> Paid</span>
                                         <span th:if="${dto.status == 'PARTIALLY_PAID'}" class="badge badge--warn"><span class="dot bg-[var(--warn)]"></span> Partial</span>
                                         <span th:if="${dto.status == 'UNPAID'}" class="badge badge--danger"><span class="dot bg-[var(--danger)]"></span> Unpaid</span>
+                                        <!-- A withdrawn bill stays on the ledger rather than vanishing:
+                                             the family was shown it, so the record has to say what
+                                             happened to it. -->
+                                        <span th:if="${dto.cancelled()}" class="badge" data-cancelled-badge
+                                              style="background:var(--surface-2); color:var(--text-3)">
+                                            <span class="dot" style="background:var(--text-3)"></span> Cancelled</span>
+                                        <p th:if="${dto.cancelled() and dto.cancellationReason != null}"
+                                           class="text-[10px] text-[var(--text-3)] mt-1 italic"
+                                           th:text="${dto.cancellationReason}">Raised in error</p>
                                     </td>
                                     <td class="py-3 px-5 text-center space-y-1.5">
-                                        <button th:if="${dto.status != 'PAID'}"
+                                        <button th:if="${dto.status != 'PAID' and !dto.cancelled()}"
                                                 th:data-id="${dto.invoiceId}"
                                                 th:data-name="${dto.studentName}"
                                                 th:data-due="${dto.amountDue}"
                                                 onclick="openPaymentModal(this.getAttribute('data-id'), this.getAttribute('data-name'), this.getAttribute('data-due'))"
                                                 class="btn btn-success-soft btn-xs w-full">Record Payment</button>
                                         <span th:if="${dto.status == 'PAID'}" class="text-xs text-[var(--text-3)] font-semibold italic">Settled</span>
-                                        <button th:if="${dto.status != 'PAID' and (dto.waiverStatus == 'NONE' or dto.waiverStatus == 'REJECTED')}"
+                                        <button th:if="${dto.status != 'PAID' and !dto.cancelled() and (dto.waiverStatus == 'NONE' or dto.waiverStatus == 'REJECTED')}"
                                                 th:data-id="${dto.invoiceId}" onclick="requestWaiver(this.getAttribute('data-id'))"
                                                 class="btn btn-secondary btn-xs w-full">Request Waiver</button>
                                         <!-- Correcting a counter mistake: offered for the most recent
@@ -194,6 +214,17 @@
                                                 onclick="reversePayment(this.getAttribute('data-txn'), this.getAttribute('data-amount'), this.getAttribute('data-name'))"
                                                 data-reverse-payment
                                                 class="btn btn-secondary btn-xs w-full">Reverse last payment</button>
+                                        <!-- Withdrawing a bill that should never have been raised.
+                                             Offered only with nothing paid; once money has changed
+                                             hands the correction is a reversal first. The id goes in
+                                             a data attribute, never into the onclick. -->
+                                        <button th:if="${dto.cancellable()}"
+                                                th:data-id="${dto.invoiceId}"
+                                                th:data-name="${dto.studentName}"
+                                                th:data-total="${dto.totalAmount}"
+                                                onclick="cancelInvoice(this.dataset.id, this.dataset.name, this.dataset.total)"
+                                                data-cancel-invoice
+                                                class="btn btn-secondary btn-xs w-full">Cancel invoice</button>
                                         <span th:if="${dto.waiverStatus == 'PENDING'}" class="badge badge--warn">Waiver Pending</span>
                                         <span th:if="${dto.waiverStatus == 'APPROVED'}" class="badge badge--success">Waiver Applied</span>
                                     </td>
@@ -408,6 +439,28 @@
             var form = document.createElement('form');
             form.method = 'POST';
             form.action = '/web/admin/fees/payment/' + txnId + '/reverse';
+            var r = document.createElement('input');
+            r.type = 'hidden'; r.name = 'reason'; r.value = reason.trim();
+            form.appendChild(r);
+            var csrfName = document.querySelector('input[name="_csrf"]');
+            if (csrfName) {
+                var c = document.createElement('input');
+                c.type = 'hidden'; c.name = '_csrf'; c.value = csrfName.value;
+                form.appendChild(c);
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
+        function cancelInvoice(invoiceId, studentName, total) {
+            var reason = prompt('Cancelling an invoice of ₹' + total + ' for ' + studentName
+                + '.\n\nThe invoice stays on the ledger marked cancelled, comes off this'
+                + ' family’s balance, and the reason is recorded against your account.'
+                + '\n\nReason:');
+            if (reason === null) return;
+            if (!reason.trim()) { alert('A reason is required to cancel an invoice.'); return; }
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/web/admin/fees/invoice/' + invoiceId + '/cancel';
             var r = document.createElement('input');
             r.type = 'hidden'; r.name = 'reason'; r.value = reason.trim();
             form.appendChild(r);

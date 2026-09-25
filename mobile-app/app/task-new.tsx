@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { getTeacherClasses, createTeacherTask, searchMyStudents, getSubjects } from '@/services/api';
@@ -33,6 +33,8 @@ export default function NewTaskScreen() {
   const [cls, setCls] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // In-screen feedback, because Alert.alert does nothing on the web build.
+  const [notice, setNotice] = useState<{ kind: 'ok' | 'bad'; text: string } | null>(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -92,23 +94,37 @@ export default function NewTaskScreen() {
         subjectCode: match?.code ?? cls.subject,
         taskType: type,
         standard: cls.standard,
+        // The section, not just the grade. A task set against "Grade 6" reached
+        // 6-A and 6-B alike, so the server requires this now -- without it every
+        // class task from this screen comes back 400.
+        classSectionId: toClass ? cls.id : null,
         assignedToClass: toClass,
         studentId: toClass ? null : student?.id,
         xpReward: parseInt(xp, 10) || 0,
         dueDate: iso(due),
       });
-      Alert.alert(
-        'Task assigned',
-        toClass
+      // Not Alert.alert: it is a no-op on React Native Web, which is why this
+      // screen appeared to do nothing at all while creating the task every time.
+      // The same fault was fixed on the hand-in and gradebook screens.
+      setNotice({
+        kind: 'ok',
+        text: toClass
           ? `${title.trim()} went to everyone in ${cls.gradeName ?? cls.className}.`
           : `${title.trim()} went to ${student?.name}.`,
-        [{ text: 'Done', onPress: () => router.back() }],
-      );
+      });
+      // Then out to the list, so the teacher sees the task they just set rather
+      // than a form still holding it. Long enough to read the confirmation.
+      setTimeout(() => router.replace('/tasks'), 900);
     } catch (e: any) {
-      Alert.alert('Could not assign', e?.response?.data?.error ?? 'Please try again.');
-    } finally {
+      setNotice({
+        kind: 'bad',
+        text: e?.response?.data?.error ?? 'Could not assign that task. Please try again.',
+      });
       setSaving(false);
+      return;
     }
+    // Deliberately no finally: on success the button stays disabled until the
+    // screen goes away, so a second tap cannot set the task twice.
   };
 
   if (loading) {
@@ -240,11 +256,25 @@ export default function NewTaskScreen() {
         </View>
       )}
 
+      {notice && (
+        <View
+          style={[s.notice, notice.kind === 'ok' ? s.noticeOk : s.noticeBad]}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
+          <Text style={[s.noticeText, notice.kind === 'ok' ? s.noticeTextOk : s.noticeTextBad]}>
+            {notice.text}
+          </Text>
+        </View>
+      )}
+
       <TouchableOpacity
         style={[s.submit, !canSave && s.submitOff]}
         onPress={submit}
         disabled={!canSave}
         accessibilityRole="button"
+        accessibilityLabel="Assign task"
+        accessibilityState={{ disabled: !canSave, busy: saving }}
       >
         <Text style={[s.submitText, !canSave && s.submitTextOff]}>
           {saving ? 'Assigning…' : 'Assign task'}
@@ -341,4 +371,16 @@ const makeStyles = (T: Theme) => StyleSheet.create({
   submitOff: { backgroundColor: T.track },
   submitText: { fontSize: 15, fontWeight: '700', color: T.onBrand },
   submitTextOff: { color: T.text3 },
+
+  // On screen, not in an Alert: Alert.alert does nothing on the web build, which
+  // is why assigning a task looked like it had failed while succeeding.
+  notice: { borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginTop: 8, borderWidth: 1 },
+  noticeOk: { backgroundColor: T.success50, borderColor: T.success },
+  noticeBad: { backgroundColor: T.danger50, borderColor: T.danger },
+  noticeText: { fontSize: 13, fontWeight: '600' },
+  // The ink steps, not the base colours: success on success50 is 3.6:1, under
+  // the 4.5:1 floor for small text. The theme carries readable weights for
+  // exactly this pairing.
+  noticeTextOk: { color: T.successInk },
+  noticeTextBad: { color: T.dangerInk },
 });

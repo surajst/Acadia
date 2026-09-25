@@ -96,12 +96,37 @@ export default function GradientHeader({
   );
 }
 
-/** The translucent card that sits inside the gradient. */
-export function HeaderCard({ children, label }: { children: React.ReactNode; label?: string }) {
+/**
+ * The translucent card that sits inside the gradient.
+ *
+ * <p>With {@code onPress} it becomes a button, announced as one. The teacher's
+ * "Today's register" card looked like something you could tap and did nothing --
+ * QA flagged exactly that, and a summary that reads as a control has to either
+ * behave as one or stop looking like one.
+ */
+export function HeaderCard({ children, label, onPress }: {
+  children: React.ReactNode;
+  label?: string;
+  onPress?: () => void;
+}) {
+  if (!onPress) {
+    return (
+      <View style={s.card} accessible accessibilityLabel={label}>
+        {children}
+      </View>
+    );
+  }
   return (
-    <View style={s.card} accessible accessibilityLabel={label}>
+    <TouchableOpacity
+      style={s.card}
+      onPress={onPress}
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      activeOpacity={0.85}
+    >
       {children}
-    </View>
+    </TouchableOpacity>
   );
 }
 

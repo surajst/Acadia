@@ -126,7 +126,9 @@ class PageRenderSmokeTest {
     @Test
     void theImportAndTeacherTaskPagesRender() throws Exception {
         assertTrue(renderAsAdmin("/web/management/upload").contains("downloadCredentials"));
-        assertTrue(renderAsAdmin("/web/teacher/tasks").contains("loadGradeOptions"));
+        // The picker asks for a section now, not a grade: a task set against
+        // "Grade 6" reached 6-A and 6-B alike.
+        assertTrue(renderAsAdmin("/web/teacher/tasks").contains("loadSectionOptions"));
     }
 
     /**
@@ -177,6 +179,184 @@ class PageRenderSmokeTest {
 
         assertTrue(offenders.isEmpty(),
                 "an inline script contains [[, which Thymeleaf evaluates as an expression: " + offenders);
+    }
+
+    /**
+     * No inline script may leave a quoted string open at a line break.
+     *
+     * <p>A JavaScript string in single or double quotes cannot span lines, so one
+     * that does is a syntax error -- and a syntax error anywhere in a script
+     * block takes down <em>every</em> inline handler on the page. That is how one
+     * mistyped prompt() broke Record Payment, Reverse last payment and the
+     * billing override toggle at once, none of which it touched: four Playwright
+     * tests failed ten minutes into CI and none of them named the real fault.
+     *
+     * <p>It happens when a {@code \n} meant for the string is interpreted before
+     * it reaches the file. That is a tooling accident rather than a thinking
+     * error, which is exactly the kind worth catching mechanically instead of
+     * carefully. It has now happened twice.
+     *
+     * <p>Template literals are excluded because backticks legitimately span
+     * lines, and comments are stripped first because an apostrophe in prose
+     * ("don't") is not an open string.
+     */
+    @Test
+    void noInlineScriptLeavesAQuotedStringOpenAtALineBreak() throws IOException {
+        Path templates = Path.of("src/main/resources/templates");
+        if (!Files.isDirectory(templates)) {
+            return; // not running from the module root
+        }
+
+        List<String> offenders = new ArrayList<>();
+        try (Stream<Path> files = Files.walk(templates)) {
+            for (Path file : files.filter(f -> f.toString().endsWith(".html")).toList()) {
+                String html = Files.readString(file);
+                int from = 0;
+                while (true) {
+                    int open = html.indexOf("<script", from);
+                    if (open < 0) {
+                        break;
+                    }
+                    int bodyStart = html.indexOf('>', open);
+                    int close = html.indexOf("</script>", open);
+                    if (bodyStart < 0 || close < 0) {
+                        break;
+                    }
+                    scanScript(html.substring(bodyStart + 1, close), file.getFileName().toString(), offenders);
+                    from = close + 1;
+                }
+            }
+        }
+
+        assertTrue(offenders.isEmpty(),
+                "a quoted JavaScript string is left open at a line break, which makes the whole "
+                        + "script block a syntax error and silently disables every inline handler "
+                        + "on the page: " + offenders);
+    }
+
+    /**
+     * Walks one script body tracking block comments and template literals, and
+     * records any line where a quote opens and does not close.
+     */
+    private static void scanScript(String body, String fileName, List<String> offenders) {
+        boolean inBlockComment = false;
+        boolean inTemplate = false;
+        int lineNumber = 0;
+
+        for (String rawLine : body.split("\n", -1)) {
+            lineNumber++;
+            String line = rawLine;
+
+            // Strip what is not code, in the order the parser would see it.
+            if (inBlockComment) {
+                int end = line.indexOf("*/");
+                if (end < 0) {
+                    continue;
+                }
+                line = line.substring(end + 2);
+                inBlockComment = false;
+            }
+
+            StringBuilder code = new StringBuilder();
+            char quote = 0;
+            for (int i = 0; i < line.length(); i++) {
+                char c = line.charAt(i);
+
+                if (inTemplate) {
+                    // Backticks may span lines, so they are not this test's
+                    // business -- only note where one ends.
+                    if (c == '`' && !isEscaped(line, i)) {
+                        inTemplate = false;
+                    }
+                    continue;
+                }
+                if (quote != 0) {
+                    code.append(c);
+                    if (c == quote && !isEscaped(line, i)) {
+                        quote = 0;
+                    }
+                    continue;
+                }
+                if (c == '/' && i + 1 < line.length() && line.charAt(i + 1) == '/') {
+                    break; // line comment: the rest is prose
+                }
+                if (c == '/' && i + 1 < line.length() && line.charAt(i + 1) == '*') {
+                    inBlockComment = true;
+                    int end = line.indexOf("*/", i + 2);
+                    if (end < 0) {
+                        break;
+                    }
+                    inBlockComment = false;
+                    i = end + 1;
+                    continue;
+                }
+                if (c == '`') {
+                    inTemplate = true;
+                    continue;
+                }
+                // A regex literal can hold a quote character -- .replace(/"/g,
+                // ...) is all over these templates -- so it has to be skipped or
+                // every one reads as an unterminated string. A slash starts a
+                // regex only where a value is expected, which is what the
+                // previous significant character tells us; anywhere else it is
+                // division. Regex literals cannot span lines, so a run to the
+                // end of the line means this was division after all.
+                if (c == '/' && startsRegex(code)) {
+                    int end = -1;
+                    for (int j = i + 1; j < line.length(); j++) {
+                        if (line.charAt(j) == '/' && !isEscaped(line, j)) {
+                            end = j;
+                            break;
+                        }
+                    }
+                    if (end > 0) {
+                        i = end;
+                        code.append('/');
+                        continue;
+                    }
+                }
+                if (c == '\'' || c == '"') {
+                    quote = c;
+                    code.append(c);
+                    continue;
+                }
+                code.append(c);
+            }
+
+            if (quote != 0) {
+                offenders.add(fileName + ":" + lineNumber + " -> "
+                        + line.strip().substring(0, Math.min(70, line.strip().length())));
+            }
+        }
+    }
+
+    /**
+     * Whether a slash here opens a regex literal rather than dividing.
+     *
+     * <p>Decided by the last significant character of the code seen so far: after
+     * an operator, an opening bracket, a comma or nothing at all, a value is
+     * expected and a slash begins a regex. After an identifier, a number or a
+     * closing bracket, it is division. Good enough for template scripts, and it
+     * only has to be right about {@code .replace(/"/g, ...)} and its relatives.
+     */
+    private static boolean startsRegex(CharSequence codeSoFar) {
+        for (int i = codeSoFar.length() - 1; i >= 0; i--) {
+            char c = codeSoFar.charAt(i);
+            if (Character.isWhitespace(c)) {
+                continue;
+            }
+            return "(,=:[!&|?{};+-*%~^<>".indexOf(c) >= 0;
+        }
+        return true; // nothing before it: a value is expected
+    }
+
+    /** Whether the character at {@code index} is preceded by an odd run of backslashes. */
+    private static boolean isEscaped(String line, int index) {
+        int backslashes = 0;
+        for (int i = index - 1; i >= 0 && line.charAt(i) == '\\'; i--) {
+            backslashes++;
+        }
+        return backslashes % 2 == 1;
     }
 
     /**

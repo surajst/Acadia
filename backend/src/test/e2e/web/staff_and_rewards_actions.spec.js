@@ -187,6 +187,32 @@ test.describe('Endpoints added for these screens', () => {
     }
   });
 
+  test('section options are what the task form asks for now', async ({ page }) => {
+    await page.goto('/test/reset');
+    await loginAsAdmin(page);
+
+    // The task form asks for a section rather than a grade: a task set against
+    // "Grade 6" reached 6-A and 6-B alike, which is how one teacher's homework
+    // landed on another teacher's class list.
+    const response = await page.evaluate(async () => {
+      const res = await fetch('/api/teacher/section-options');
+      return { status: res.status, body: await res.json() };
+    });
+    expect(response.status, 'an admin fills this dropdown too').toBe(200);
+
+    const sections = response.body;
+    expect(Array.isArray(sections)).toBe(true);
+    expect(sections.length, 'the seeded school runs at least one section').toBeGreaterThan(0);
+    for (const s of sections) {
+      // A section id, not a number: the numeric standard is what reached two
+      // sections at once.
+      expect(typeof s.value).toBe('string');
+      expect(s.value).toMatch(/^[0-9a-fA-F-]{36}$/);
+      expect(typeof s.label).toBe('string');
+      expect(s.label.length).toBeGreaterThan(0);
+    }
+  });
+
   test('subdomain availability normalises and reports honestly', async ({ page }) => {
     await page.goto('/web/onboard/signup');
     await page.waitForLoadState('networkidle');

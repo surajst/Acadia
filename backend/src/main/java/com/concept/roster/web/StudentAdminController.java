@@ -49,17 +49,45 @@ public class StudentAdminController {
                              Authentication authentication,
                              RedirectAttributes redirectAttributes) {
         requireAdmin(authentication, "register students");
-        String credentials = studentAdminService.addStudent(firstName, lastName, rollNumber, schoolClassId,
-                loginEmail, loginPassword, guardianFirstName, guardianLastName, guardianPhone,
-                tenantContext.getTenantId().orElse(null), tenantContext.getAcademicYearId().orElse(null),
-                authentication);
-        if (credentials != null) {
-            // Flash attribute (server-side, not in the URL) so the one-time
-            // credentials render without leaking into the address bar/history.
-            redirectAttributes.addFlashAttribute("newCredentials", credentials);
+        try {
+            String credentials = studentAdminService.addStudent(firstName, lastName, rollNumber, schoolClassId,
+                    loginEmail, loginPassword, guardianFirstName, guardianLastName, guardianPhone,
+                    tenantContext.getTenantId().orElse(null), tenantContext.getAcademicYearId().orElse(null),
+                    authentication);
+            if (credentials != null) {
+                // Flash attribute (server-side, not in the URL) so the one-time
+                // credentials render without leaking into the address bar/history.
+                redirectAttributes.addFlashAttribute("newCredentials", credentials);
+            }
+            return "redirect:/web/admin/management?success=student_added";
+        } catch (IllegalArgumentException e) {
+            // There was no catch here at all, so a duplicate roll number or an
+            // unusable guardian phone threw straight past this layer and
+            // rendered the plain error page -- taking the modal and everything
+            // the admin had typed with it. Re-entering nine fields to find out
+            // the tenth was the problem is how a roster gets abandoned
+            // half-entered.
+            //
+            // Flashed rather than put in the query string: a guardian's name and
+            // phone number do not belong in the address bar or in history.
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            redirectAttributes.addFlashAttribute("registerStudentForm",
+                    new SubmittedStudent(firstName, lastName, rollNumber, schoolClassId,
+                            guardianFirstName, guardianLastName, guardianPhone));
+            return "redirect:/web/admin/management";
         }
-        return "redirect:/web/admin/management?success=student_added";
     }
+
+    /**
+     * What the admin typed, handed back so the form can be refilled.
+     *
+     * <p>No password: a submitted credential is never echoed into a rendered
+     * page, even the admin's own. The field is optional on this form anyway, so
+     * a blank one costs nothing to retype.
+     */
+    public record SubmittedStudent(String firstName, String lastName, String rollNumber,
+                                   UUID schoolClassId, String guardianFirstName,
+                                   String guardianLastName, String guardianPhone) {}
 
     @PostMapping("/web/admin/parent/add")
     @ResponseBody

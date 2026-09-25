@@ -16,7 +16,9 @@ async function createHomeworkTask(page, title) {
     return s && s.options.length > 0 && s.options[0].value !== '';
   }, { timeout: 10000 });
   await page.selectOption('#taskType', 'HOMEWORK');
-  await page.selectOption('#standard', '6');
+  // The task form asks for a section now, not a grade: a grade covers every
+  // section in it, which is how a task set for 6-A reached 6-B.
+  await page.selectOption('#classSectionId', { label: 'Grade 6 - A' });
   await page.fill('#xpReward', '30');
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);

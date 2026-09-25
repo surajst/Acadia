@@ -96,6 +96,7 @@ public class TasksService {
     // ─── Teacher tasks ──────────────────────────────────────────────────────
 
     public Object createTask(CreateTaskRequest request, Authentication authentication) {
+        validateTaskTarget(request, authentication);
         try {
             String username = authentication != null ? authentication.getName() : "teacher_1";
             UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
@@ -123,7 +124,15 @@ public class TasksService {
         if (Boolean.FALSE.equals(task.getAssignedToClass()) && task.getStudentId() != null) {
             recipients = studentRepository.findByIdAndTenantId(task.getStudentId(), tenantId)
                     .map(List::of).orElse(List.of());
+        } else if (task.getClassSectionId() != null) {
+            // The section, so a 6-B family is not told about 6-A's homework.
+            recipients = studentRepository.findByTenantId(tenantId).stream()
+                    .filter(s -> s.getClassSection() != null
+                            && task.getClassSectionId().equals(s.getClassSection().getId()))
+                    .collect(Collectors.toList());
         } else {
+            // No section recorded: a legacy grade-wide task, matching what
+            // getTasksForStudent shows for the same row.
             recipients = studentRepository.findByTenantId(tenantId).stream()
                     .filter(s -> s.getClassSection() != null
                             && task.getStandard() != null
@@ -197,6 +206,46 @@ public class TasksService {
         }
         return byStandard.entrySet().stream()
                 .map(e -> Map.<String, Object>of("value", e.getKey(), "label", e.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * The sections this caller can set a task for.
+     *
+     * <p>Replaces the grade list on the task form. A grade is not narrow enough
+     * to say who a task is for: a task set against "Grade 6" reached 6-A and
+     * 6-B alike, and Priya, who teaches only 6-A, could set work that landed on
+     * Neha's list. The standard the task is stored against is derived from the
+     * section server-side, so the form no longer sends it at all.
+     *
+     * <p>Every section, including one whose grade name carries no number --
+     * unlike the grade list, which has to drop those because a standard cannot
+     * express "Nursery". That is the other reason to key on the section.
+     *
+     * @return {value, label} pairs sorted by label, never null
+     */
+    public List<Map<String, Object>> sectionOptionsForCaller(Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        User caller = tenantId == null ? null
+                : currentUserService.getCurrentUser(authentication).orElse(null);
+        if (caller == null || caller.getRole() == null) {
+            return List.of();
+        }
+
+        boolean seesWholeSchool = caller.getRole() == UserRole.ADMIN || caller.getRole() == UserRole.PRINCIPAL;
+        List<ClassSection> sections = seesWholeSchool
+                ? classSectionRepository.findByTenantId(tenantId)
+                : subjectAssignmentRepository.findByTeacher(caller).stream()
+                        .map(SubjectAssignment::getClassSection)
+                        .filter(sec -> sec != null && tenantId.equals(sec.getTenantId()))
+                        .distinct()
+                        .collect(Collectors.toList());
+
+        return sections.stream()
+                .map(sec -> Map.<String, Object>of(
+                        "value", sec.getId(),
+                        "label", (sec.getGradeName() + " - " + sec.getSectionName()).trim()))
+                .sorted(java.util.Comparator.comparing(m -> String.valueOf(m.get("label"))))
                 .collect(Collectors.toList());
     }
 
@@ -310,7 +359,12 @@ public class TasksService {
 
     public Object studentTasks(Authentication authentication) {
         Student student = requireStudent(authentication);
-        return teacherTaskService.getTasksForStudent(student.getId(), extractStandard(student), student.getTenantId());
+        // The section, not just the grade: a class task set for 6-A used to
+        // appear on every 6-B child's list, because the grade was all the
+        // student's tasks were ever matched on.
+        return teacherTaskService.getTasksForStudent(student.getId(), extractStandard(student),
+                student.getClassSection() != null ? student.getClassSection().getId() : null,
+                student.getTenantId());
     }
 
     public Object taskQuestions(UUID taskId, Authentication authentication) {
@@ -452,6 +506,13 @@ public class TasksService {
                 .findByIdAndTenantId(teacherTaskId, student.getTenantId())
                 .orElseThrow(() -> TasksException.badRequest("Task not found"));
 
+        // Closing a task has to stop hand-ins, not just hide it from the list.
+        // A pupil who still had the sheet open could otherwise submit against a
+        // task their teacher had retired, and the XP would sit in the queue.
+        if ("CLOSED".equals(task.getTaskStatus())) {
+            throw TasksException.badRequest("Your teacher has closed this task, so it can no longer be handed in.");
+        }
+
         // One pending hand-in per task: re-submitting replaces the previous
         // attempt rather than queueing a second copy for the teacher to review.
         submissionRepository
@@ -472,6 +533,210 @@ public class TasksService {
         return Map.of("status", "submitted",
                 "taskId", teacherTaskId,
                 "xpAwaiting", task.getXpReward() == null ? 0 : task.getXpReward());
+    }
+
+    // --- Managing a task after it is set ------------------------------------
+
+    /**
+     * A task the caller is allowed to manage, or a refusal.
+     *
+     * <p>Owned by whoever set it, with ADMIN and PRINCIPAL able to reach any of
+     * them -- somebody has to be able to clear up after a teacher who has left.
+     * The task is resolved through the caller's own tenant first, so an id from
+     * another school reads as "not found" rather than being edited.
+     */
+    private TeacherTask manageableTask(UUID taskId, Authentication authentication, UUID tenantId) {
+        if (taskId == null) {
+            throw TasksException.badRequest("A task is required");
+        }
+        TeacherTask task = teacherTaskRepository.findByIdAndTenantId(taskId, tenantId)
+                .orElseThrow(() -> TasksException.notFound("That task was not found."));
+
+        User caller = currentUserService.getCurrentUser(authentication).orElse(null);
+        boolean unrestricted = caller != null && caller.getRole() != null
+                && (caller.getRole() == UserRole.ADMIN || caller.getRole() == UserRole.PRINCIPAL);
+        if (unrestricted) {
+            return task;
+        }
+
+        String username = authentication != null ? authentication.getName() : null;
+        UUID callerTaskId = teacherTaskService.resolveTeacherId(username);
+        if (!callerTaskId.equals(task.getCreatedByTeacherId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "That task was set by another teacher, so it is not yours to change.");
+        }
+        return task;
+    }
+
+    /**
+     * Change what a task says.
+     *
+     * <p>The list of tasks was read-only: a typo in a title, a due date a
+     * teacher wanted to move, or an XP reward set wrong stayed that way for the
+     * life of the task, and children were working from it.
+     *
+     * <p>Who the task is for is deliberately not editable. Moving a task to
+     * another section or another child after work has been handed in leaves
+     * submissions attached to a task those pupils can no longer see; setting a
+     * new task is the honest way to do that.
+     */
+    @Transactional
+    public Object updateTask(UUID taskId, String title, String description,
+                             java.time.LocalDate dueDate, Integer xpReward,
+                             Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        TeacherTask task = manageableTask(taskId, authentication, tenantId);
+
+        if (title == null || title.isBlank()) {
+            throw TasksException.badRequest("Give the task a title.");
+        }
+        // The same bounds the create path enforces. A rule that holds only on
+        // the way in is not a rule: -10 XP could simply be edited back in.
+        if (xpReward == null || xpReward < 1) {
+            throw TasksException.badRequest("A task has to be worth at least 1 XP.");
+        }
+        if (xpReward > CreateTaskRequest.MAX_XP_REWARD) {
+            throw TasksException.badRequest(
+                    "A task cannot be worth more than " + CreateTaskRequest.MAX_XP_REWARD + " XP.");
+        }
+
+        task.setTitle(title.trim());
+        task.setDescription(description);
+        task.setDueDate(dueDate);
+        task.setXpReward(xpReward);
+        teacherTaskRepository.save(task);
+
+        return Map.of("status", "updated", "id", task.getId(), "title", task.getTitle());
+    }
+
+    /**
+     * Retire a task without deleting it.
+     *
+     * <p>There was no way to do this, so a finished or mistaken task stayed on
+     * every child's list indefinitely. A closed task drops off the student list
+     * (which shows ACTIVE and OVERDUE only) and stops accepting hand-ins, while
+     * the submissions already made stay on record.
+     */
+    @Transactional
+    public Object closeTask(UUID taskId, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        TeacherTask task = manageableTask(taskId, authentication, tenantId);
+        if ("CLOSED".equals(task.getTaskStatus())) {
+            throw TasksException.badRequest("That task is already closed.");
+        }
+        task.setTaskStatus("CLOSED");
+        teacherTaskRepository.save(task);
+        return Map.of("status", "closed", "id", task.getId());
+    }
+
+    /** Closing by mistake should not be one-way. */
+    @Transactional
+    public Object reopenTask(UUID taskId, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        TeacherTask task = manageableTask(taskId, authentication, tenantId);
+        if (!"CLOSED".equals(task.getTaskStatus())) {
+            throw TasksException.badRequest("That task is not closed.");
+        }
+        // Back to ACTIVE, not OVERDUE: getTasksForStudent re-derives overdue from
+        // the due date on the next read, so setting it here would be a guess the
+        // read then corrects anyway.
+        task.setTaskStatus("ACTIVE");
+        teacherTaskRepository.save(task);
+        return Map.of("status", "reopened", "id", task.getId());
+    }
+
+    /**
+     * Remove a task entirely, but only while nothing has been handed in.
+     *
+     * <p>Deleting a task with submissions against it would leave those rows
+     * pointing at a task that no longer exists -- and they carry XP a child has
+     * been told they earned. That case is a close, and the refusal says so
+     * rather than just failing.
+     */
+    @Transactional
+    public Object deleteTask(UUID taskId, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        TeacherTask task = manageableTask(taskId, authentication, tenantId);
+
+        int handedIn = submissionRepository
+                .findByTeacherTaskIdAndStudentTenantId(taskId, tenantId).size();
+        if (handedIn > 0) {
+            throw TasksException.badRequest(
+                    handedIn + (handedIn == 1 ? " pupil has" : " pupils have")
+                            + " already handed this in, so it cannot be deleted. Close it instead -- "
+                            + "it comes off their lists and their work stays on record.");
+        }
+
+        teacherTaskRepository.delete(task);
+        return Map.of("status", "deleted", "id", taskId);
+    }
+
+    /**
+     * Who has handed this task in, and who has not.
+     *
+     * <p>A teacher could set work and then had no way to see who had done it --
+     * the only review surface was one undifferentiated pending queue for the
+     * whole school. This answers the question actually asked of a task: which of
+     * my pupils is still outstanding.
+     *
+     * <p>The roster is the task's own section, so it lists the children the task
+     * was set for rather than everybody in the grade.
+     */
+    public Object taskSubmissions(UUID taskId, Authentication authentication) {
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        TeacherTask task = manageableTask(taskId, authentication, tenantId);
+
+        List<AcademicSubmission> submissions =
+                submissionRepository.findByTeacherTaskIdAndStudentTenantId(taskId, tenantId);
+        java.util.Map<UUID, AcademicSubmission> byStudent = new java.util.LinkedHashMap<>();
+        for (AcademicSubmission sub : submissions) {
+            byStudent.put(sub.getStudentId(), sub);
+        }
+
+        List<Student> roster;
+        if (Boolean.FALSE.equals(task.getAssignedToClass()) && task.getStudentId() != null) {
+            roster = studentRepository.findByIdAndTenantId(task.getStudentId(), tenantId)
+                    .map(List::of).orElse(List.of());
+        } else if (task.getClassSectionId() != null) {
+            roster = studentRepository.findByTenantId(tenantId).stream()
+                    .filter(st -> st.getClassSection() != null
+                            && task.getClassSectionId().equals(st.getClassSection().getId()))
+                    .collect(Collectors.toList());
+        } else {
+            // A task raised before sections were recorded still reaches the
+            // grade, so its roster is the grade -- the same rule the student list
+            // applies, or these counts would not match what pupils see.
+            roster = studentRepository.findByTenantId(tenantId).stream()
+                    .filter(st -> st.getClassSection() != null && task.getStandard() != null
+                            && task.getStandard() == GradeLevel.parse(st.getClassSection().getGradeName()))
+                    .collect(Collectors.toList());
+        }
+
+        List<Map<String, Object>> rows = roster.stream()
+                .map(st -> {
+                    AcademicSubmission sub = byStudent.get(st.getId());
+                    Map<String, Object> row = new java.util.LinkedHashMap<>();
+                    row.put("studentName", (st.getFirstName() + " " + st.getLastName()).trim());
+                    row.put("rollNumber", st.getRollNumber() == null ? "--" : st.getRollNumber());
+                    row.put("handedIn", sub != null);
+                    row.put("status", sub == null ? "NOT_SUBMITTED" : sub.getStatus());
+                    row.put("notes", sub == null ? null : sub.getProofOfWorkNotes());
+                    // The submission id, not the student's: the review action
+                    // needs this one, and a student id on the page would be a
+                    // UUID with nothing to do.
+                    row.put("submissionId", sub == null ? null : sub.getId());
+                    return row;
+                })
+                .collect(Collectors.toList());
+
+        Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("taskId", task.getId());
+        out.put("title", task.getTitle());
+        out.put("taskStatus", task.getTaskStatus());
+        out.put("expected", rows.size());
+        out.put("handedIn", rows.stream().filter(r -> Boolean.TRUE.equals(r.get("handedIn"))).count());
+        out.put("rows", rows);
+        return out;
     }
 
     /**
@@ -499,6 +764,60 @@ public class TasksService {
 
     // ─── helpers ────────────────────────────────────────────────────────────
 
+    /**
+     * Which class a task is being set for, checked before anything is written.
+     *
+     * <p>A task carried a numeric standard and nothing narrower, so one Priya set
+     * for 6-A appeared on every 6-B child's list: they could hand in work their
+     * teacher never set them, and Priya saw submissions from children she does
+     * not teach. A section is now required on a class task, and it has to be one
+     * the caller actually teaches -- an id a client can put in the body is not a
+     * permission.
+     *
+     * <p>Thrown outside the try below on purpose. That block turns every
+     * exception into TasksException.badRequest with the original message, which
+     * would flatten a permission refusal into the same 400 as a typo.
+     */
+    private void validateTaskTarget(CreateTaskRequest request, Authentication authentication) {
+        if (request == null) {
+            throw TasksException.badRequest("No task was submitted.");
+        }
+        boolean forWholeClass = !Boolean.FALSE.equals(request.getAssignedToClass());
+        if (!forWholeClass) {
+            return; // a task for one named student is scoped by that student
+        }
+
+        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        if (request.getClassSectionId() == null) {
+            throw TasksException.badRequest(
+                    "Choose which class this task is for. Without a section it would go to every "
+                            + "section of the grade.");
+        }
+
+        ClassSection section = tenantId == null ? null
+                : classSectionRepository.findByIdAndTenantId(request.getClassSectionId(), tenantId).orElse(null);
+        if (section == null) {
+            throw TasksException.badRequest("That class was not found.");
+        }
+
+        User caller = currentUserService.getCurrentUser(authentication).orElse(null);
+        boolean unrestricted = caller != null && caller.getRole() != null
+                && (caller.getRole() == UserRole.ADMIN || caller.getRole() == UserRole.PRINCIPAL);
+        if (!unrestricted && (caller == null || !teacherOwnsSection(caller, section))) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You are not assigned to " + section.getGradeName() + " - " + section.getSectionName()
+                            + ", so you cannot set work for it.");
+        }
+
+        // The standard is what the task is stored against and what a student is
+        // matched on, so it has to agree with the section or the task reaches
+        // nobody. Derived rather than trusted: the client sends both.
+        Integer fromSection = GradeLevel.parse(section.getGradeName());
+        if (fromSection != null && fromSection != GradeLevel.UNKNOWN) {
+            request.setStandard(fromSection);
+        }
+    }
+
     private boolean teacherOwnsSection(User teacher, ClassSection section) {
         return subjectAssignmentRepository.existsByTeacherAndClassSection(teacher, section);
     }
@@ -525,6 +844,7 @@ public class TasksService {
         }
         tr.setStandard(req.getStandard());
         tr.setAssignedToClass(req.getAssignedToClass());
+        tr.setClassSectionId(req.getClassSectionId());
         tr.setStudentId(req.getStudentId());
         tr.setXpReward(req.getXpReward());
         tr.setDueDate(req.getDueDate());

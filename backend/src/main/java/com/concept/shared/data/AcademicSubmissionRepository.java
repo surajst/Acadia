@@ -27,6 +27,14 @@ public interface AcademicSubmissionRepository extends JpaRepository<AcademicSubm
            "AND a.studentId IN (SELECT s.id FROM Student s WHERE s.tenantId = :tenantId)")
     List<AcademicSubmission> findByStatusAndStudentTenantId(@Param("status") String status, @Param("tenantId") UUID tenantId);
 
+    // Everyone who has handed in one task, for the teacher who set it. Scoped
+    // through the student's tenant for the same reason as the listing above: a
+    // task id alone is not an ownership key.
+    @Query("SELECT a FROM AcademicSubmission a WHERE a.teacherTaskId = :taskId " +
+           "AND a.studentId IN (SELECT s.id FROM Student s WHERE s.tenantId = :tenantId)")
+    List<AcademicSubmission> findByTeacherTaskIdAndStudentTenantId(@Param("taskId") UUID taskId,
+                                                                  @Param("tenantId") UUID tenantId);
+
     // Same reasoning as above, for a single row: loading by id alone returns a
     // submission from any school, so every id that arrives in a request has to
     // be resolved through the caller's own tenant.

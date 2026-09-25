@@ -55,6 +55,10 @@ public class TenantOnboardingApiController {
      */
     @GetMapping("/subdomain-available")
     public ResponseEntity<?> subdomainAvailable(@RequestParam("subdomain") String requested) {
+        // Throttled per IP by RateLimitFilter's "subdomain" rule, not here: this
+        // endpoint is unauthenticated by necessity and answers whether an address
+        // belongs to a school on ACADIA, so left open it is a directory anyone
+        // can walk.
         String normalised = TenantOnboardingService.normaliseSubdomain(requested);
         if (normalised.isEmpty()) {
             return ResponseEntity.ok(Map.of(

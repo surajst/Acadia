@@ -5,6 +5,7 @@ import ClassRosterModal from '@/components/ClassRosterModal';
 import { useAuth } from '@/context/AuthContext';
 import { getApiHost } from '../services/api';
 import { useTheme, type Theme } from '../context/ThemeContext';
+import { plural } from '../utils/plural';
 
 interface RosterCardProps {
   className: string;
@@ -127,7 +128,7 @@ export default function TeacherScreen() {
         <Text style={styles.sectionLabel}>YOUR CLASS ROSTERS</Text>
         {(classes ?? []).length > 0 && (
           <View style={styles.sectionBadge}>
-            <Text style={styles.sectionBadgeText}>{(classes ?? []).length} Classes</Text>
+            <Text style={styles.sectionBadgeText}>{plural((classes ?? []).length, 'Class', 'Classes')}</Text>
           </View>
         )}
       </View>

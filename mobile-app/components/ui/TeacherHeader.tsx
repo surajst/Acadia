@@ -29,6 +29,12 @@ type Props = {
   total: number;
   unread?: number;
   onBellPress?: () => void;
+  /**
+   * Opens the register. The card showed the day's progress and looked tappable
+   * while doing nothing, which QA reported as a dead control -- so it either
+   * leads somewhere or should stop looking like it does.
+   */
+  onRegisterPress?: () => void;
 };
 
 const greetingFor = (name?: string) => {
@@ -38,7 +44,7 @@ const greetingFor = (name?: string) => {
 };
 
 export default function TeacherHeader({
-  firstName, schoolName, marked, total, unread = 0, onBellPress,
+  firstName, schoolName, marked, total, unread = 0, onBellPress, onRegisterPress,
   photoUri, onProfilePress, onSettingsPress,
 }: Props) {
   const T = useTheme();
@@ -80,7 +86,10 @@ export default function TeacherHeader({
         </TouchableOpacity>
       }
     >
-      <HeaderCard label={`Attendance: ${marked} of ${total} classes marked. ${subtitle}.`}>
+      <HeaderCard
+        label={`Today's register: ${marked} of ${total} classes marked. ${subtitle}. Opens attendance.`}
+        onPress={onRegisterPress}
+      >
         <ProgressRing
           value={marked}
           label={total > 0 ? `OF ${total}` : '—'}

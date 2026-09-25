@@ -33,29 +33,80 @@ public class AttendanceService {
     private final AttendanceClassSectionRepository classSectionRepository;
     private final NotificationDeliveryService notificationDeliveryService;
     private final AuditLogService auditLogService;
+    private final com.concept.assignment.data.SubjectAssignmentRepository subjectAssignmentRepository;
+    private final com.concept.user.CurrentUserService currentUserService;
 
     public AttendanceService(AttendanceStudentRepository studentRepository,
                              AttendanceRecordRepository attendanceRepository,
                              AttendanceClassSectionRepository classSectionRepository,
                              NotificationDeliveryService notificationDeliveryService,
-                             AuditLogService auditLogService) {
+                             AuditLogService auditLogService,
+                             com.concept.assignment.data.SubjectAssignmentRepository subjectAssignmentRepository,
+                             com.concept.user.CurrentUserService currentUserService) {
         this.studentRepository = studentRepository;
         this.attendanceRepository = attendanceRepository;
         this.classSectionRepository = classSectionRepository;
         this.notificationDeliveryService = notificationDeliveryService;
         this.auditLogService = auditLogService;
+        this.subjectAssignmentRepository = subjectAssignmentRepository;
+        this.currentUserService = currentUserService;
     }
 
     /**
-     * Build the roll-call form for a tenant, optionally scoped to one class.
-     * A {@code classId} that does not belong to the tenant is ignored (the form
-     * falls back to the whole tenant), so a foreign class id can never surface
-     * another school's students.
+     * The sections this caller may take a register for, or null meaning "all".
+     *
+     * <p>Every teacher could take attendance for every section: the dropdown
+     * listed the whole school and the submit accepted whatever came back. Priya,
+     * assigned only to 6-A, could mark Neha's 6-B -- and marking a child absent
+     * messages their guardian, so this was not only a data-integrity problem.
+     *
+     * <p>A teacher gets the sections they are assigned to, which covers both the
+     * home-class register and any section they teach. ADMIN and PRINCIPAL get
+     * all of them: an admin covering for an absent teacher is ordinary, and a
+     * principal needs to be able to correct a register.
+     *
+     * <p>Null rather than a set of every id, so the caller can tell "no limit"
+     * from "limited to nothing" -- a teacher with no assignments yet gets an
+     * empty set and an honest empty dropdown, not the whole school.
+     */
+    private java.util.Set<UUID> permittedSectionIds(Authentication authentication, UUID tenantId) {
+        com.concept.user.User caller =
+                currentUserService.getCurrentUser(authentication).orElse(null);
+        if (caller == null || caller.getRole() == null) {
+            return java.util.Set.of();
+        }
+        if (caller.getRole() == com.concept.user.UserRole.ADMIN
+                || caller.getRole() == com.concept.user.UserRole.PRINCIPAL) {
+            return null;
+        }
+        return subjectAssignmentRepository.findByTeacher(caller).stream()
+                .map(com.concept.assignment.data.SubjectAssignment::getClassSection)
+                .filter(sec -> sec != null && tenantId != null && tenantId.equals(sec.getTenantId()))
+                .map(ClassSection::getId)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Build the roll-call form for a tenant, scoped to what this caller may
+     * mark, and optionally to one class.
+     *
+     * <p>A {@code classId} that does not belong to the tenant -- or to the
+     * caller -- is ignored, so a foreign class id can never surface another
+     * school's students or another teacher's section.
      */
     @Transactional(readOnly = true)
-    public AttendanceFormView buildForm(UUID tenantId, UUID classId) {
+    public AttendanceFormView buildForm(UUID tenantId, UUID classId, Authentication authentication) {
+        java.util.Set<UUID> permitted = permittedSectionIds(authentication, tenantId);
         List<ClassSection> classes = tenantId != null
-                ? classSectionRepository.findByTenantId(tenantId) : Collections.emptyList();
+                ? classSectionRepository.findByTenantId(tenantId) : Collections.<ClassSection>emptyList();
+        // Filtered here as well as enforced on submit. Offering a teacher a
+        // section they will then be refused is a worse experience than not
+        // offering it, and the server rule below is what makes it a rule.
+        if (permitted != null) {
+            classes = classes.stream()
+                    .filter(c -> permitted.contains(c.getId()))
+                    .collect(Collectors.toList());
+        }
 
         ClassSection selected = null;
         if (classId != null) {
@@ -67,6 +118,11 @@ public class AttendanceService {
         List<Student> students;
         if (selected != null) {
             students = studentRepository.findByClassSectionId(selected.getId());
+        } else if (permitted != null) {
+            // A teacher with no permitted section sees nobody, rather than the
+            // whole school -- which is what the old fallback did when the
+            // requested classId was not one of theirs.
+            students = Collections.emptyList();
         } else {
             students = tenantId != null ? studentRepository.findByTenantId(tenantId) : Collections.emptyList();
         }
@@ -98,6 +154,7 @@ public class AttendanceService {
             throw new IllegalArgumentException("studentIds and statuses must be present and the same length");
         }
 
+        java.util.Set<UUID> permitted = permittedSectionIds(authentication, command.tenantId());
         LocalDate today = resolveDate(command.attendanceDate());
         int absent = 0;
         UUID sectionId = null;
@@ -108,6 +165,22 @@ public class AttendanceService {
 
             Student student = studentRepository.findByIdAndTenantId(studentId, command.tenantId())
                     .orElseThrow(() -> new IllegalArgumentException("Not authorized for student: " + studentId));
+
+            // The rule, server-side. The dropdown is filtered above, but a
+            // dropdown is not a permission: this endpoint took a list of
+            // student ids and marked whoever was named.
+            ClassSection theirSection = student.getClassSection();
+            if (permitted != null
+                    && (theirSection == null || !permitted.contains(theirSection.getId()))) {
+                // Spring's own denial, not an IllegalArgumentException: the
+                // controller catches those and redirects with a flash message,
+                // which would turn a permission refusal into a tidy notice.
+                // GlobalExceptionHandler rethrows this so the filter chain
+                // answers 403, which is what a permission failure is.
+                throw new org.springframework.security.access.AccessDeniedException(
+                        "You are not assigned to " + (theirSection == null
+                                ? "that class" : label(theirSection)) + ", so you cannot take its register.");
+            }
 
             if (sectionId == null && student.getClassSection() != null) {
                 sectionId = student.getClassSection().getId();

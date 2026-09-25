@@ -68,6 +68,8 @@ class StudentHandInTest {
 
     private UUID tenantId;
     private UUID yearId;
+    /** A class task now names the section it is for, so the test has to keep it. */
+    private UUID sixAId;
     private Student aarav;
     private Authentication teacher;
     private Authentication student;
@@ -98,6 +100,7 @@ class StudentHandInTest {
         section.setGradeName("Grade 6");
         section.setSectionName("A");
         section = classSectionRepository.saveAndFlush(section);
+        sixAId = section.getId();
 
         User priya = user("priya.hand@example.com", "Priya Demo", UserRole.TEACHER);
         assignmentService.assignSubject(priya.getId(), section.getId(), "Mathematics", true, tenantId);
@@ -141,6 +144,9 @@ class StudentHandInTest {
         r.setTaskType("HOMEWORK");
         r.setStandard(6);
         r.setAssignedToClass(true);
+        // Which section it is for. Without this the task would reach every
+        // section of Grade 6, which is what TaskSectionScopeTest covers.
+        r.setClassSectionId(sixAId);
         r.setXpReward(10);
         r.setDueDate(LocalDate.now().plusDays(6));
         // createTask returns the TeacherTask entity, not a map.

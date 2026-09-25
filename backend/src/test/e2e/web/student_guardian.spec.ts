@@ -204,3 +204,87 @@ test.describe('Student guardian capture & profile display', () => {
   });
 
 });
+
+// ─── R2-P1-4: a refused registration keeps the form ──────────────────────────
+
+test.describe('A refused registration keeps what was typed', () => {
+
+  /**
+   * addStudent had no catch at all, so a guardian phone the server refuses
+   * threw past the controller and rendered the plain error page -- losing the
+   * modal and all nine fields. Re-typing everything to discover which one was
+   * wrong is how a roster gets abandoned half-entered.
+   *
+   * RegisterStudentErrorTest covers the flash and the rendered markup; this
+   * covers what the admin sees in a browser, which is the part that was broken.
+   */
+  test('an unusable guardian phone comes back to the form, not an error page', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+
+    await page.goto('/web/admin/management');
+    await page.click('button:has-text("Classrooms & Students")');
+    await page.click('button:has-text("Register New Student")');
+    await expect(page.locator('#registerStudentModal')).toBeVisible();
+
+    await page.fill('#firstName', 'Aarav');
+    await page.fill('#lastName', 'Verma');
+    await page.fill('#rollNumber', 'QA-P14-01');
+    await page.selectOption('#schoolClassId', { label: 'Grade 6 - A' });
+    await page.fill('#guardianFirstName', 'Ramesh');
+    await page.fill('#guardianLastName', 'Verma');
+    await page.fill('#guardianPhone', 'abc123');
+
+    await page.click('#registerStudentModal button[type="submit"]');
+    await page.waitForURL(url => url.pathname.includes('/web/admin/management'), { timeout: 90000 });
+    await page.waitForLoadState('networkidle');
+
+    // Not the error page.
+    await expect(page.locator('text=Whitelabel Error Page')).not.toBeVisible();
+    await expect(page.locator('text=Something went wrong')).not.toBeVisible();
+
+    // The reason, and the form still open with the typing in it.
+    await expect(page.locator('[data-flash]')).toBeVisible();
+    await expect(page.locator('#registerStudentModal')).toBeVisible();
+    await expect(page.locator('#firstName')).toHaveValue('Aarav');
+    await expect(page.locator('#lastName')).toHaveValue('Verma');
+    await expect(page.locator('#rollNumber')).toHaveValue('QA-P14-01');
+    await expect(page.locator('#guardianFirstName')).toHaveValue('Ramesh');
+    await expect(page.locator('#guardianPhone')).toHaveValue('abc123');
+    // The class choice survives too -- it is a select, so it would silently
+    // reset to the disabled placeholder.
+    await expect(page.locator('#schoolClassId')).toHaveValue(GRADE6A);
+  });
+
+  /** Correcting the one bad field and resubmitting has to work from there. */
+  test('fixing the phone and resubmitting registers the student', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+
+    await registerStudent(page, {
+      first: 'Neha', last: 'Verma', roll: 'QA-P14-02',
+      guardianFirst: 'Ramesh', guardianLast: 'Verma', guardianPhone: 'abc123'
+    });
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#registerStudentModal')).toBeVisible();
+
+    await page.fill('#guardianPhone', '+91 98765 43210');
+    await page.click('#registerStudentModal button[type="submit"]');
+    await page.waitForURL(url => url.search.includes('success=student_added'), { timeout: 90000 });
+    await page.waitForLoadState('networkidle');
+
+    // And the modal is shut again, since nothing was refused this time.
+    await expect(page.locator('#registerStudentModal')).not.toBeVisible();
+  });
+
+  /** An ordinary visit must not reopen the modal. */
+  test('the modal stays shut when nothing was refused', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+
+    await page.goto('/web/admin/management');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('#registerStudentModal')).not.toBeVisible();
+  });
+});

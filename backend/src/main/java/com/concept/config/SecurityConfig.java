@@ -68,9 +68,19 @@ public class SecurityConfig {
                         // them anyway. That round fixed how the failure was
                         // displayed and left the failure in place.
                         .requestMatchers("/api/teacher/tasks/my-tasks",
-                                         "/api/teacher/tasks/create")
+                                         "/api/teacher/tasks/create",
+                                         // Managing a task after it is set. Listed
+                                         // here for the same reason as the two
+                                         // above: the broad rule below would
+                                         // refuse an ADMIN whatever the
+                                         // annotation says.
+                                         "/api/teacher/tasks/*/update",
+                                         "/api/teacher/tasks/*/close",
+                                         "/api/teacher/tasks/*/reopen",
+                                         "/api/teacher/tasks/*/delete",
+                                         "/api/teacher/tasks/*/submissions")
                                 .hasAnyRole("TEACHER", "ADMIN")
-                        .requestMatchers("/api/teacher/grade-options")
+                        .requestMatchers("/api/teacher/grade-options", "/api/teacher/section-options")
                                 .hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/mobile/driver/**").hasRole("DRIVER")
@@ -119,6 +129,18 @@ public class SecurityConfig {
                         .requestMatchers("/web/onboard/setup", "/web/onboard/complete").hasRole("ADMIN") // setup wizard is data-entry — ADMIN only, principals are read-only
                         .requestMatchers("/web/admin/dashboard").hasAnyRole("ADMIN", "TEACHER", "PRINCIPAL")
                         .requestMatchers("/web/admin/audit-log", "/web/admin/audit-log/**").hasAnyRole("ADMIN", "PRINCIPAL")
+                        // A URL rule is evaluated before any @PreAuthorize, so the
+                        // broad ADMIN rule below silently overrides a more
+                        // permissive annotation. These two actions are open to the
+                        // principal by design -- withdrawing a bill raised in
+                        // error, and correcting instalment dates -- and without a
+                        // rule of their own the annotation says so while the
+                        // principal gets a 403 nobody can explain. This is the
+                        // third time that mismatch has been the real cause of a
+                        // reported bug.
+                        .requestMatchers("/web/admin/fees/invoice/*/cancel",
+                                         "/web/admin/fees/due-dates/recalculate")
+                                .hasAnyRole("ADMIN", "PRINCIPAL")
                         .requestMatchers("/web/admin/**").hasRole("ADMIN")
                         .requestMatchers("/web/management/upload/**").hasRole("ADMIN")
                         .requestMatchers("/web/teacher/dashboard").hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
