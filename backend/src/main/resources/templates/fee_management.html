@@ -453,13 +453,9 @@
         }
         function cancelInvoice(invoiceId, studentName, total) {
             var reason = prompt('Cancelling an invoice of ₹' + total + ' for ' + studentName
-                + '.
-
-The invoice stays on the ledger marked cancelled, comes off this family’s'
-                + ' balance, and the reason is recorded against your account.'
-                + '
-
-Reason:');
+                + '.\n\nThe invoice stays on the ledger marked cancelled, comes off this'
+                + ' family’s balance, and the reason is recorded against your account.'
+                + '\n\nReason:');
             if (reason === null) return;
             if (!reason.trim()) { alert('A reason is required to cancel an invoice.'); return; }
             var form = document.createElement('form');

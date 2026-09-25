@@ -268,8 +268,11 @@
                                     cells[2].textContent, cells[3].textContent]);
                             });
 
-                            var csv = rows.map(function (r) { return r.map(csvCell).join(','); }).join('
-');
+                            // CRLF, which is what Excel expects from a CSV, and
+                            // written as an escape: a literal line break here
+                            // left the string open, which made this whole script
+                            // block a syntax error and the download button dead.
+                            var csv = rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n');
                             // The BOM is what makes Excel read this as UTF-8;
                             // without it Indian names come out as mojibake.
                             var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
