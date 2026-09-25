@@ -75,8 +75,18 @@ test.describe('An ended session sends you back to sign-in', () => {
 
   /**
    * The half a careless fix breaks: signing a parent out for reaching a screen
-   * that is simply not theirs would lose their session over a wrong turn. The
-   * backend answers 403 there, and 403 must not clear anything.
+   * that is simply not theirs would lose their session over a wrong turn.
+   *
+   * Driven by opening a teacher-only screen as a parent, so the refusals travel
+   * through the app's own API client and hit the interceptor that decides whether
+   * to end the session. An earlier version of this test called fetch() from the
+   * page instead -- which both resolved against the Expo dev server on :8081
+   * rather than the API on :8080, and bypassed the very interceptor it was meant
+   * to exercise. It asserted nothing about the app.
+   *
+   * That a parent can reach this screen at all is R3-P1-5, which is a separate
+   * fix; here it is useful, because it is the simplest way to make the app take
+   * a 403 in its normal flow.
    */
   test('a 403 does not sign anyone out', async ({ page }) => {
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
@@ -85,14 +95,9 @@ test.describe('An ended session sends you back to sign-in', () => {
     const before = await page.evaluate(() => window.localStorage.getItem('userToken'));
     expect(before, 'the parent should be signed in at this point').toBeTruthy();
 
-    const status = await page.evaluate(async () => {
-      const token = window.localStorage.getItem('userToken');
-      const res = await fetch('/api/mobile/teacher/badges', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return res.status;
-    });
-    expect(status, 'a signed-in parent reaching a teacher endpoint is forbidden, not unauthorised').toBe(403);
+    // Every teacher call this screen makes is forbidden for a parent.
+    await page.goto('/gradebook');
+    await page.waitForLoadState('networkidle');
 
     const after = await page.evaluate(() => window.localStorage.getItem('userToken'));
     expect(after, 'a permission refusal must not end the session').toBe(before);
