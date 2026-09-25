@@ -82,10 +82,17 @@ test.describe.serial('Real User Journey E2E Specs', () => {
     // Open attendance page
     await page.goto('/web/teacher/attendance');
     
-    // Select first classroom from dropdown
+    // Select the teacher's classroom from the dropdown.
+    //
+    // index: 1 until R2-P1-1: the register used to list every section in the
+    // school, so the second option was another teacher's class. It now lists
+    // only the caller's own assignments, and the seeded teacher has one -- so
+    // there is no second option to pick, and picking it was the bug.
+    const classOptions = page.locator('#attendanceClassSelect option');
+    await expect(classOptions.first()).toHaveAttribute('value', /classId=/);
     await Promise.all([
       page.waitForURL(url => url.pathname.includes('/web/teacher/attendance') && url.searchParams.has('classId')),
-      page.selectOption('select', { index: 1 })
+      page.selectOption('#attendanceClassSelect', { index: 0 })
     ]);
     
     // Mark first student Present, second student Absent

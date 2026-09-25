@@ -1,6 +1,5 @@
 package com.concept.tenant;
 
-import com.concept.common.RateLimiter;
 import com.concept.config.jwt.JwtUtils;
 import com.concept.user.User;
 import org.springframework.http.HttpStatus;
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,22 +26,12 @@ import java.util.Map;
 @RequestMapping("/api/onboard")
 public class TenantOnboardingApiController {
 
-    /**
-     * Enough for anyone filling in a signup form -- the field checks as you type,
-     * so a handful per name -- and slow enough that walking the customer list
-     * through it is not worth doing.
-     */
-    static final int SUBDOMAIN_CHECKS_PER_MINUTE = 30;
-
     private final TenantOnboardingService onboardingService;
     private final JwtUtils jwtUtils;
-    private final RateLimiter rateLimiter;
 
-    public TenantOnboardingApiController(TenantOnboardingService onboardingService, JwtUtils jwtUtils,
-                                         RateLimiter rateLimiter) {
+    public TenantOnboardingApiController(TenantOnboardingService onboardingService, JwtUtils jwtUtils) {
         this.onboardingService = onboardingService;
         this.jwtUtils = jwtUtils;
-        this.rateLimiter = rateLimiter;
     }
 
     public static class CreateSchoolRequest {
@@ -66,18 +54,11 @@ public class TenantOnboardingApiController {
      * cannot disagree about what the address is.
      */
     @GetMapping("/subdomain-available")
-    public ResponseEntity<?> subdomainAvailable(@RequestParam("subdomain") String requested,
-                                               HttpServletRequest httpRequest) {
-        // Unauthenticated by necessity -- nobody has an account at signup -- and
-        // it answers whether a given address belongs to a school on ACADIA. Left
-        // open it is a directory anyone can walk, and a few thousand requests
-        // enumerate the customer list. The limit is generous enough that typing
-        // a name never trips it.
-        if (!rateLimiter.tryAcquire(clientAddress(httpRequest), SUBDOMAIN_CHECKS_PER_MINUTE)) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(Map.of("error", "Too many checks. Wait a moment and try again."));
-        }
-
+    public ResponseEntity<?> subdomainAvailable(@RequestParam("subdomain") String requested) {
+        // Throttled per IP by RateLimitFilter's "subdomain" rule, not here: this
+        // endpoint is unauthenticated by necessity and answers whether an address
+        // belongs to a school on ACADIA, so left open it is a directory anyone
+        // can walk.
         String normalised = TenantOnboardingService.normaliseSubdomain(requested);
         if (normalised.isEmpty()) {
             return ResponseEntity.ok(Map.of(
@@ -129,28 +110,6 @@ public class TenantOnboardingApiController {
         } catch (TenantOnboardingService.DuplicateSubdomainException | TenantOnboardingService.DuplicateEmailException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
         }
-    }
-
-    /**
-     * The caller's address, as seen from behind Render's proxy.
-     *
-     * <p>{@code getRemoteAddr()} is the load balancer there, so every request
-     * would share one bucket and thirty checks would lock out the whole
-     * internet. The first entry in X-Forwarded-For is the original client; it is
-     * client-supplied and therefore spoofable, which is the accepted limit of an
-     * IP limit on a public endpoint -- it slows bulk scraping from one place, and
-     * is not an authorisation decision.
-     */
-    private static String clientAddress(HttpServletRequest request) {
-        if (request == null) {
-            return null;
-        }
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            int comma = forwarded.indexOf(',');
-            return (comma < 0 ? forwarded : forwarded.substring(0, comma)).trim();
-        }
-        return request.getRemoteAddr();
     }
 
     private boolean isBlank(String s) {

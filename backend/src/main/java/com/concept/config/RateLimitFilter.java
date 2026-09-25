@@ -56,9 +56,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * out for a quarter of an hour. Brute force is made of failures, so counting
      * only those throttles the attack without throttling the school.
      */
-    private record Rule(String name, List<String> paths, int limit, Duration window, boolean failuresOnly) {
-        boolean matches(String path) {
-            return paths.contains(path);
+    private record Rule(String name, String method, List<String> paths, int limit, Duration window,
+                        boolean failuresOnly) {
+        boolean matches(String requestMethod, String path) {
+            return method.equalsIgnoreCase(requestMethod) && paths.contains(path);
         }
     }
 
@@ -80,18 +81,31 @@ public class RateLimitFilter extends OncePerRequestFilter {
             @Value("${app.dev-mode:false}") boolean devMode,
             @Value("${app.rate-limit.enabled:true}") boolean rateLimitEnabled,
             @Value("${app.rate-limit.signup-per-hour:5}") int signupPerHour,
-            @Value("${app.rate-limit.login-per-15min:50}") int loginPer15Min) {
+            @Value("${app.rate-limit.login-per-15min:50}") int loginPer15Min,
+            @Value("${app.rate-limit.subdomain-per-minute:30}") int subdomainPerMinute) {
         this.enabled = rateLimitEnabled && !devMode;
         this.rules = List.of(
                 // Signup counts every attempt: each success creates a tenant, so
                 // successes are exactly what needs limiting here.
-                new Rule("signup", List.of("/api/onboard/create-school"),
+                new Rule("signup", "POST", List.of("/api/onboard/create-school"),
                         signupPerHour, Duration.ofHours(1), false),
+                // The availability check is a GET, and the first one here to need
+                // throttling. It has to stay unauthenticated -- nobody has an
+                // account at signup -- and it answers whether a given address
+                // belongs to a school on ACADIA, so left open it is a customer
+                // directory anyone can walk a few thousand requests through.
+                //
+                // Counts every request, not just refusals: unlike login, a
+                // successful check is exactly what an enumerator wants. The
+                // ceiling is well clear of a person naming their school, since
+                // the field checks as they type.
+                new Rule("subdomain", "GET", List.of("/api/onboard/subdomain-available"),
+                        subdomainPerMinute, Duration.ofMinutes(1), false),
                 // Login counts only rejected attempts — see Rule's note on why a
                 // shared IP makes counting successes the wrong quota. The ceiling
                 // is higher than the old 20 because a whole school's mistyped
                 // passwords now share it, and nothing else does.
-                new Rule("login", List.of("/login", "/web/auth/login", "/api/mobile/auth/login"),
+                new Rule("login", "POST", List.of("/login", "/web/auth/login", "/api/mobile/auth/login"),
                         loginPer15Min, Duration.ofMinutes(15), true));
         if (!this.enabled) {
             log.info("Rate limiting disabled (dev-mode={}, app.rate-limit.enabled={})", devMode, rateLimitEnabled);
@@ -101,12 +115,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        if (!enabled || !"POST".equalsIgnoreCase(request.getMethod())) {
+        if (!enabled) {
             chain.doFilter(request, response);
             return;
         }
 
-        Rule rule = ruleFor(request.getServletPath());
+        // The method is the rule's business now: every rule was POST until the
+        // subdomain check, which is a GET.
+        Rule rule = ruleFor(request.getMethod(), request.getServletPath());
         if (rule == null) {
             chain.doFilter(request, response);
             return;
@@ -171,9 +187,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return false;
     }
 
-    private Rule ruleFor(String path) {
+    private Rule ruleFor(String requestMethod, String path) {
         for (Rule rule : rules) {
-            if (rule.matches(path)) {
+            if (rule.matches(requestMethod, path)) {
                 return rule;
             }
         }

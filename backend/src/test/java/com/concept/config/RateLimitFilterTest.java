@@ -20,9 +20,10 @@ class RateLimitFilterTest {
 
     private static final int SIGNUP_LIMIT = 3;
     private static final int LOGIN_LIMIT = 5;
+    private static final int SUBDOMAIN_LIMIT = 4;
 
     private RateLimitFilter enabledFilter() {
-        return new RateLimitFilter(false, true, SIGNUP_LIMIT, LOGIN_LIMIT);
+        return new RateLimitFilter(false, true, SIGNUP_LIMIT, LOGIN_LIMIT, SUBDOMAIN_LIMIT);
     }
 
     private MockHttpServletRequest post(String path, String forwardedFor) {
@@ -33,6 +34,86 @@ class RateLimitFilterTest {
             request.addHeader("X-Forwarded-For", forwardedFor);
         }
         return request;
+    }
+
+    private MockHttpServletRequest get(String path, String forwardedFor) {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
+        request.setServletPath(path);
+        request.setRemoteAddr("10.0.0.1");
+        if (forwardedFor != null) {
+            request.addHeader("X-Forwarded-For", forwardedFor);
+        }
+        return request;
+    }
+
+    // ── The subdomain availability check ─────────────────────────────────────
+
+    /**
+     * The first GET rule here, and the reason the filter now matches on method
+     * at all. The endpoint has to stay unauthenticated -- nobody has an account
+     * at signup -- and it answers whether a given address belongs to a school on
+     * ACADIA, so left open it is a customer directory anyone can walk.
+     */
+    @Test
+    void enumeratingTheSubdomainCheckIsCutOff() throws Exception {
+        RateLimitFilter filter = enabledFilter();
+        FilterChain chain = mock(FilterChain.class);
+
+        for (int i = 0; i < SUBDOMAIN_LIMIT; i++) {
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(get("/api/onboard/subdomain-available", "203.0.113.90"), response, chain);
+            assertEquals(200, response.getStatus(), "check " + (i + 1) + " should pass");
+        }
+
+        MockHttpServletResponse blocked = new MockHttpServletResponse();
+        filter.doFilter(get("/api/onboard/subdomain-available", "203.0.113.90"), blocked, chain);
+        assertEquals(429, blocked.getStatus());
+        assertNotNull(blocked.getHeader("Retry-After"), "a refusal has to say when to come back");
+        verify(chain, times(SUBDOMAIN_LIMIT)).doFilter(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    /** One scraper must not lock out everyone naming a school. */
+    @Test
+    void theSubdomainCheckIsCountedPerClient() throws Exception {
+        RateLimitFilter filter = enabledFilter();
+        FilterChain chain = mock(FilterChain.class);
+
+        for (int i = 0; i < SUBDOMAIN_LIMIT + 2; i++) {
+            filter.doFilter(get("/api/onboard/subdomain-available", "203.0.113.91"),
+                    new MockHttpServletResponse(), chain);
+        }
+
+        MockHttpServletResponse other = new MockHttpServletResponse();
+        filter.doFilter(get("/api/onboard/subdomain-available", "203.0.113.92"), other, chain);
+        assertEquals(200, other.getStatus(), "a different client keeps its own allowance");
+    }
+
+    /**
+     * The rules are method-specific, so the GET rule must not throttle a POST to
+     * the same path and the POST rules must not catch a GET. Worth asserting
+     * because the method used to be checked once for the whole filter.
+     */
+    @Test
+    void aRuleOnlyAppliesToItsOwnMethod() throws Exception {
+        RateLimitFilter filter = enabledFilter();
+        FilterChain chain = mock(FilterChain.class);
+
+        // Exhaust the GET rule.
+        for (int i = 0; i < SUBDOMAIN_LIMIT + 1; i++) {
+            filter.doFilter(get("/api/onboard/subdomain-available", "203.0.113.93"),
+                    new MockHttpServletResponse(), chain);
+        }
+
+        // A POST to the same path has no rule, so it passes through untouched.
+        MockHttpServletResponse posted = new MockHttpServletResponse();
+        filter.doFilter(post("/api/onboard/subdomain-available", "203.0.113.93"), posted, chain);
+        assertEquals(200, posted.getStatus());
+
+        // And a GET to the signup path is not the signup rule's business.
+        MockHttpServletResponse gotSignup = new MockHttpServletResponse();
+        filter.doFilter(get("/api/onboard/create-school", "203.0.113.93"), gotSignup, chain);
+        assertEquals(200, gotSignup.getStatus());
     }
 
     @Test
@@ -212,7 +293,7 @@ class RateLimitFilterTest {
 
     @Test
     void isInertWhenDevModeIsOn() throws Exception {
-        RateLimitFilter filter = new RateLimitFilter(true, true, SIGNUP_LIMIT, LOGIN_LIMIT);
+        RateLimitFilter filter = new RateLimitFilter(true, true, SIGNUP_LIMIT, LOGIN_LIMIT, SUBDOMAIN_LIMIT);
         FilterChain chain = mock(FilterChain.class);
 
         for (int i = 0; i < SIGNUP_LIMIT + 10; i++) {
