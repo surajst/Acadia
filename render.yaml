@@ -79,6 +79,52 @@ services:
       - key: DB_PASSWORD
         sync: false
 
+  # Nightly logical backup of the Neon database to S3.
+  #
+  # IMPORTANT: this entry documents the job, and creating it requires a blueprint
+  # sync -- which this file warns above is risky, because a sync can create a
+  # second service rather than adopting the existing one. If that risk is not
+  # worth taking, create the cron job by hand in the dashboard with exactly the
+  # settings below; nothing here depends on it having come from the blueprint.
+  - type: cron
+    name: acadia-db-backup
+    # Same region as the database and the backend. A backup crossing continents
+    # pays the latency on every row.
+    region: singapore
+    runtime: docker
+    dockerfilePath: ./backup/Dockerfile
+    dockerContext: ./backup
+    # 20:30 UTC = 02:00 IST, which is the quiet hour for Indian schools. Not on
+    # the hour: every cron job in the world fires at :00, and a dump competing
+    # with everyone else's for Neon's attention is slower for no reason.
+    schedule: "30 20 * * *"
+    envVars:
+      # Every value is entered in the dashboard. sync:false keeps this file from
+      # ever carrying a database URL or an AWS secret, and keeps a blueprint sync
+      # from overwriting what is set there.
+      #
+      # BACKUP_DATABASE_URL should be a read-only Neon role, not the application
+      # user -- the SQL to create one is in the PR description. Keep
+      # sslmode=require in it; Neon refuses plaintext, so losing it turns this
+      # into a connection error rather than an insecure backup.
+      - key: BACKUP_DATABASE_URL
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      # These three are not secret, so they live here rather than being retyped.
+      - key: BACKUP_BUCKET
+        value: acadia-db-backups-947752017191
+      - key: AWS_DEFAULT_REGION
+        value: ap-southeast-1
+      # The dump is refused if it holds data for fewer tables than this. Raise it
+      # as the schema grows: its job is to catch a dump taken against an empty
+      # database or by a role that cannot see the schema, which otherwise
+      # succeeds, uploads, and is discovered during a restore.
+      - key: MIN_TABLES
+        value: "20"
+
   # Static web build of the Expo mobile app — lets parents/students/teachers
   # use it from any browser with zero install, no app-store review needed.
   # EXPO_PUBLIC_API_HOST below points it at the deployed backend above; if

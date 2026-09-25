@@ -27,6 +27,147 @@ jobs:
         working-directory: backend
         run: mvn -B test -Dtest=LayeringArchitectureTest
 
+  # The backup job, exercised end to end against a throwaway Postgres and a fake
+  # S3. Nothing here touches the real bucket -- the production credentials are
+  # not available to CI and the uploads go to MinIO on localhost.
+  #
+  # The point is not that pg_dump works. It is that the two sanity checks fire:
+  # a dump can succeed and still be useless (taken against an empty database, or
+  # by a role that cannot see the schema), and that is the failure that looks
+  # like success for months and is discovered during a restore. So this asserts
+  # the guard *rejects* a thin dump as well as accepting a good one.
+  database-backup:
+    name: Database backup job
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Same major version as the image and as production Neon. A mismatch is
+        # exactly what the Dockerfile's comment warns about, so CI should not be
+        # the place it silently differs.
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: ci-throwaway
+          POSTGRES_DB: backuptest
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start a fake S3 (MinIO)
+        # docker run rather than a service container: MinIO needs a command
+        # ("server /data") and service containers cannot override one.
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=ci-access-key \
+            -e MINIO_ROOT_PASSWORD=ci-secret-key \
+            minio/minio server /data
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live; then break; fi
+            sleep 2
+          done
+          curl -sf http://localhost:9000/minio/health/live
+
+      - name: Create the bucket
+        env:
+          AWS_ACCESS_KEY_ID: ci-access-key
+          AWS_SECRET_ACCESS_KEY: ci-secret-key
+          AWS_DEFAULT_REGION: ap-southeast-1
+        run: |
+          aws --endpoint-url http://localhost:9000 s3 mb s3://ci-backup-bucket
+
+      - name: Seed enough tables to satisfy the guard
+        env:
+          PGPASSWORD: ci-throwaway
+        run: |
+          # 22 tables with a row each, so MIN_TABLES=20 passes and the count is
+          # meaningfully above the floor rather than exactly on it.
+          for i in $(seq 1 22); do
+            psql -h localhost -U postgres -d backuptest -c \
+              "CREATE TABLE t$i (id int primary key, payload text);" \
+              -c "INSERT INTO t$i VALUES ($i, repeat('x', 800));"
+          done
+
+      - name: Build the backup image
+        run: docker build -t acadia-backup ./backup
+
+      - name: Run the backup and assert it reports BACKUP OK
+        run: |
+          set -o pipefail
+          # --network host so the container reaches both the Postgres service and
+          # MinIO on the runner's localhost.
+          docker run --rm --network host \
+            -e BACKUP_DATABASE_URL="postgresql://postgres:ci-throwaway@localhost:5432/backuptest?sslmode=disable" \
+            -e BACKUP_BUCKET=ci-backup-bucket \
+            -e BACKUP_S3_ENDPOINT=http://localhost:9000 \
+            -e AWS_ACCESS_KEY_ID=ci-access-key \
+            -e AWS_SECRET_ACCESS_KEY=ci-secret-key \
+            -e AWS_DEFAULT_REGION=ap-southeast-1 \
+            -e MIN_TABLES=20 \
+            acadia-backup | tee backup.log
+
+          grep -E "^BACKUP OK acadia-[0-9T]+Z\.dump [0-9]+ [0-9]+$" backup.log
+
+          # The line is what a human greps for, so its shape is part of the
+          # contract: file, bytes, table count, nothing else.
+          test "$(grep -c '^BACKUP OK' backup.log)" = "1"
+
+          # And nothing may leak the connection string into a log that is
+          # retained and readable from the dashboard.
+          if grep -q "ci-throwaway" backup.log; then
+            echo "the database password reached the log" >&2
+            exit 1
+          fi
+
+      - name: Assert the file actually landed in the bucket
+        env:
+          AWS_ACCESS_KEY_ID: ci-access-key
+          AWS_SECRET_ACCESS_KEY: ci-secret-key
+          AWS_DEFAULT_REGION: ap-southeast-1
+        run: |
+          # Checked from CI's own credentials, not the job's: in production the
+          # uploader cannot list, which is deliberate, so the script itself can
+          # never verify its own upload.
+          aws --endpoint-url http://localhost:9000 s3 ls s3://ci-backup-bucket/daily/ | tee listing.txt
+          grep -E "acadia-[0-9T]+Z\.dump" listing.txt
+
+      - name: Assert a dump too thin to be real is rejected
+        run: |
+          # The check that matters. MIN_TABLES above what the database holds
+          # stands in for a dump taken against an empty database or by a role
+          # that cannot see the schema -- which pg_dump reports as success.
+          if docker run --rm --network host \
+            -e BACKUP_DATABASE_URL="postgresql://postgres:ci-throwaway@localhost:5432/backuptest?sslmode=disable" \
+            -e BACKUP_BUCKET=ci-backup-bucket \
+            -e BACKUP_S3_ENDPOINT=http://localhost:9000 \
+            -e AWS_ACCESS_KEY_ID=ci-access-key \
+            -e AWS_SECRET_ACCESS_KEY=ci-secret-key \
+            -e AWS_DEFAULT_REGION=ap-southeast-1 \
+            -e MIN_TABLES=500 \
+            acadia-backup > thin.log 2>&1; then
+            echo "a dump holding 22 tables was accepted against a floor of 500" >&2
+            cat thin.log
+            exit 1
+          fi
+          grep "BACKUP FAILED" thin.log
+
+      - name: Assert a missing variable fails fast rather than uploading nothing
+        run: |
+          if docker run --rm --network host \
+            -e BACKUP_BUCKET=ci-backup-bucket \
+            acadia-backup > unset.log 2>&1; then
+            echo "the job ran with no database URL" >&2
+            exit 1
+          fi
+          grep "BACKUP_DATABASE_URL" unset.log
+
+      - name: Stop MinIO
+        if: always()
+        run: docker rm -f minio || true
+
   # Until now nothing in CI looked at mobile-app at all — no typecheck, no lint,
   # no contrast check — which is why a token codemod that put dark *background*
   # values onto *ink* tokens shipped: attendance cells at 1.45:1, and one badge
