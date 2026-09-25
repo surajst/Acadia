@@ -27,6 +27,172 @@ jobs:
         working-directory: backend
         run: mvn -B test -Dtest=LayeringArchitectureTest
 
+  # Every migration in this repo is written twice, once for H2 and once for
+  # Postgres, and until now only the H2 copy was ever executed -- tests run on H2.
+  # Production is Postgres, so a Postgres-only syntax error is invisible until
+  # deploy, where Flyway fails and the application does not start.
+  #
+  # V21 is the case in point: its Postgres form uses a DO block, a CTE feeding
+  # UPDATE ... FROM, and GET DIAGNOSTICS, none of which H2 has. Its H2 twin is a
+  # completely different statement, so testing one says nothing about the other.
+  #
+  # This runs the shipped Postgres file against a real Postgres 18 and checks the
+  # outcome, not just that it parses. The migration plan asks for a Postgres
+  # migration check in CI as part of its Phase 2; this is the start of it. The
+  # honest limitation: it builds a minimal schema rather than applying the whole
+  # V1..V21 chain, so it proves V21 and not its predecessors.
+  postgres-migrations:
+    name: Postgres migrations
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: ci-throwaway
+          POSTGRES_DB: migrationtest
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: ci-throwaway
+      PGHOST: localhost
+      PGUSER: postgres
+      PGDATABASE: migrationtest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the minimum schema V21 touches
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE academic_years (
+            id uuid PRIMARY KEY,
+            start_date date NOT NULL
+          );
+          CREATE TABLE students (
+            id uuid PRIMARY KEY,
+            academic_year_id uuid NOT NULL REFERENCES academic_years(id),
+            first_name varchar(255),
+            admission_date date
+          );
+          CREATE TABLE audit_logs (
+            id uuid PRIMARY KEY,
+            entity_type varchar(255),
+            entity_id uuid,
+            action varchar(255) NOT NULL,
+            created_at timestamp(6) NOT NULL
+          );
+          SQL
+
+      - name: Seed the cases the migration has to distinguish
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO academic_years VALUES
+            ('11111111-1111-1111-1111-111111111111', '2026-06-01');
+
+          -- riya: no admission date, and her only trace is a fee schedule --
+          -- which is exactly why V18's STUDENT_ADDED-only backfill skipped her.
+          INSERT INTO students VALUES
+            ('aaaaaaaa-0000-0000-0000-000000000001',
+             '11111111-1111-1111-1111-111111111111', 'riya', NULL);
+          -- yearstart: admission date already equals the year start (the
+          -- finding's own hypothesis).
+          INSERT INTO students VALUES
+            ('aaaaaaaa-0000-0000-0000-000000000002',
+             '11111111-1111-1111-1111-111111111111', 'yearstart', '2026-06-01');
+          -- stated: a date a person chose. Must not be touched.
+          INSERT INTO students VALUES
+            ('aaaaaaaa-0000-0000-0000-000000000003',
+             '11111111-1111-1111-1111-111111111111', 'stated', '2026-07-15');
+          -- notrace: nothing is known about when this one joined.
+          INSERT INTO students VALUES
+            ('aaaaaaaa-0000-0000-0000-000000000004',
+             '11111111-1111-1111-1111-111111111111', 'notrace', NULL);
+          -- backwards: its only trace predates the year, so using it would move
+          -- the date earlier and bill the family sooner.
+          INSERT INTO students VALUES
+            ('aaaaaaaa-0000-0000-0000-000000000005',
+             '11111111-1111-1111-1111-111111111111', 'backwards', NULL);
+
+          INSERT INTO audit_logs VALUES
+            ('bbbbbbbb-0000-0000-0000-000000000001', 'Student',
+             'aaaaaaaa-0000-0000-0000-000000000001', 'FEE_SCHEDULE_GENERATED',
+             '2026-09-23 09:30:00'),
+            -- a later trace for the same student: the earliest must win
+            ('bbbbbbbb-0000-0000-0000-000000000002', 'Student',
+             'aaaaaaaa-0000-0000-0000-000000000001', 'XP_AWARDED',
+             '2026-12-04 09:30:00'),
+            ('bbbbbbbb-0000-0000-0000-000000000003', 'Student',
+             'aaaaaaaa-0000-0000-0000-000000000002', 'STUDENT_UPDATED',
+             '2026-09-23 09:30:00'),
+            ('bbbbbbbb-0000-0000-0000-000000000004', 'Student',
+             'aaaaaaaa-0000-0000-0000-000000000003', 'STUDENT_UPDATED',
+             '2026-11-02 09:30:00'),
+            ('bbbbbbbb-0000-0000-0000-000000000005', 'Student',
+             'aaaaaaaa-0000-0000-0000-000000000005', 'ROSTER_BULK_IMPORT',
+             '2026-03-01 09:30:00'),
+            -- a row carrying riya's id but about an invoice: entity_type has to
+            -- be part of the match, not just the id
+            ('bbbbbbbb-0000-0000-0000-000000000006', 'FeeInvoice',
+             'aaaaaaaa-0000-0000-0000-000000000004', 'FEE_INVOICE_CANCELLED',
+             '2026-08-01 09:30:00');
+          SQL
+
+      - name: Run the shipped Postgres migration
+        run: |
+          # The file as it will run in production, including its DO block. A
+          # syntax error here is a deploy that fails to start.
+          psql -v ON_ERROR_STOP=1 \
+            -f backend/src/main/resources/db/migration/postgresql/V21__admission_date_from_first_trace.sql
+
+      - name: Assert each case came out right
+        run: |
+          check() {
+            actual=$(psql -tAc "SELECT COALESCE(CAST(admission_date AS text), 'NULL') FROM students WHERE first_name = '$1'")
+            if [ "$actual" != "$2" ]; then
+              echo "FAIL $1: expected $2, got $actual" >&2
+              exit 1
+            fi
+            echo "ok   $1 = $actual"
+          }
+          # Filled from her earliest student-scoped trace, not her latest.
+          check riya      2026-09-23
+          # The year start counts as a gap, so it is corrected too.
+          check yearstart 2026-09-23
+          # A date a person set is an answer, not a gap.
+          check stated    2026-07-15
+          # No evidence means no invented date.
+          check notrace   NULL
+          # Never move the date backwards.
+          check backwards NULL
+
+      - name: Assert it is idempotent
+        run: |
+          before=$(psql -tAc "SELECT string_agg(first_name || '=' || COALESCE(CAST(admission_date AS text),'NULL'), ',' ORDER BY first_name) FROM students")
+          psql -v ON_ERROR_STOP=1 \
+            -f backend/src/main/resources/db/migration/postgresql/V21__admission_date_from_first_trace.sql
+          after=$(psql -tAc "SELECT string_agg(first_name || '=' || COALESCE(CAST(admission_date AS text),'NULL'), ',' ORDER BY first_name) FROM students")
+          echo "before: $before"
+          echo "after:  $after"
+          test "$before" = "$after"
+
+      - name: Assert both vendors ship the same migration versions
+        run: |
+          # A version present for one vendor and missing for the other is a
+          # schema that drifts, and Flyway refusing to start on whichever is
+          # behind. Cheap to check, and it has to hold for every version, not
+          # just the newest.
+          h2=$(ls backend/src/main/resources/db/migration/h2/ | sed 's/__.*//' | sort)
+          pg=$(ls backend/src/main/resources/db/migration/postgresql/ | sed 's/__.*//' | sort)
+          if [ "$h2" != "$pg" ]; then
+            echo "migration versions differ between vendors:" >&2
+            diff <(echo "$h2") <(echo "$pg") || true
+            exit 1
+          fi
+          echo "both vendors ship: $(echo $h2 | tr '\n' ' ')"
+
   # The backup job, exercised end to end against a throwaway Postgres and a fake
   # S3. Nothing here touches the real bucket -- the production credentials are
   # not available to CI and the uploads go to MinIO on localhost.
@@ -94,9 +260,11 @@ jobs:
         # that ever actually mattered.
         run: |
           mkdir -p ci-aws
-          # printf, not a heredoc: inside a YAML block scalar the heredoc body
-          # would carry this block's indentation, so the shebang would start with
-          # ten spaces and the indented terminator would never match.
+          # printf rather than a heredoc, but not for the reason first claimed
+          # here: a YAML block scalar strips the block's own indentation before
+          # the shell sees it, so an indented heredoc terminator does land at
+          # column 0 and works fine (the seeding steps below rely on exactly
+          # that). printf just keeps a two-line file on two lines.
           printf '%s\n' \
             '#!/bin/sh' \
             'echo "AWS-CALL $*" >> /ci-aws/calls.log' \
