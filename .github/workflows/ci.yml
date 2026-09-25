@@ -60,16 +60,37 @@ jobs:
       - name: Start a fake S3 (MinIO)
         # docker run rather than a service container: MinIO needs a command
         # ("server /data") and service containers cannot override one.
+        #
+        # The pull is its own command so a registry problem is distinguishable
+        # from the container refusing to start. The first attempt failed here in
+        # 20 seconds and the step said only "failed", which could have been
+        # either -- so this reports which, and prints the container's own log
+        # rather than waiting out a timeout that would explain nothing.
         run: |
+          set -x
+          docker pull minio/minio:latest
+
           docker run -d --name minio -p 9000:9000 \
             -e MINIO_ROOT_USER=ci-access-key \
             -e MINIO_ROOT_PASSWORD=ci-secret-key \
-            minio/minio server /data
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:9000/minio/health/live; then break; fi
+            minio/minio:latest server /data --address :9000
+
+          for i in $(seq 1 40); do
+            if curl -sf http://localhost:9000/minio/health/live >/dev/null; then
+              echo "MinIO healthy after ${i} attempt(s)"
+              exit 0
+            fi
+            if [ -z "$(docker ps -q -f name=minio)" ]; then
+              echo '--- MinIO exited early; its log follows ---'
+              docker logs minio || true
+              exit 1
+            fi
             sleep 2
           done
-          curl -sf http://localhost:9000/minio/health/live
+
+          echo '--- MinIO never became healthy; its log follows ---'
+          docker logs minio || true
+          exit 1
 
       - name: Create the bucket
         env:
