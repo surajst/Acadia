@@ -57,121 +57,125 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Start a fake S3 (MinIO)
-        # docker run rather than a service container: MinIO needs a command
-        # ("server /data") and service containers cannot override one.
-        #
-        # The pull is its own command so a registry problem is distinguishable
-        # from the container refusing to start. The first attempt failed here in
-        # 20 seconds and the step said only "failed", which could have been
-        # either -- so this reports which, and prints the container's own log
-        # rather than waiting out a timeout that would explain nothing.
-        run: |
-          set -x
-          # quay.io, not Docker Hub: `docker pull minio/minio` now answers
-          # "pull access denied ... may require 'docker login'" for an anonymous
-          # puller, which is what broke the first two attempts at this job.
-          # quay.io/minio/minio is MinIO's own published registry and needs no
-          # credentials.
-          docker pull quay.io/minio/minio:latest
-
-          docker run -d --name minio -p 9000:9000 \
-            -e MINIO_ROOT_USER=ci-access-key \
-            -e MINIO_ROOT_PASSWORD=ci-secret-key \
-            quay.io/minio/minio:latest server /data --address :9000
-
-          for i in $(seq 1 40); do
-            if curl -sf http://localhost:9000/minio/health/live >/dev/null; then
-              echo "MinIO healthy after ${i} attempt(s)"
-              exit 0
-            fi
-            if [ -z "$(docker ps -q -f name=minio)" ]; then
-              echo '--- MinIO exited early; its log follows ---'
-              docker logs minio || true
-              exit 1
-            fi
-            sleep 2
-          done
-
-          echo '--- MinIO never became healthy; its log follows ---'
-          docker logs minio || true
-          exit 1
-
-      - name: Create the bucket
-        env:
-          AWS_ACCESS_KEY_ID: ci-access-key
-          AWS_SECRET_ACCESS_KEY: ci-secret-key
-          AWS_DEFAULT_REGION: ap-southeast-1
-        run: |
-          aws --endpoint-url http://localhost:9000 s3 mb s3://ci-backup-bucket
-
       - name: Seed enough tables to satisfy the guard
         env:
           PGPASSWORD: ci-throwaway
         run: |
-          # 22 tables with a row each, so MIN_TABLES=20 passes and the count is
-          # meaningfully above the floor rather than exactly on it.
+          # 22 tables with a row each, so MIN_TABLES=20 passes with margin rather
+          # than landing exactly on the floor.
           for i in $(seq 1 22); do
-            psql -h localhost -U postgres -d backuptest -c \
-              "CREATE TABLE t$i (id int primary key, payload text);" \
+            psql -h localhost -U postgres -d backuptest \
+              -c "CREATE TABLE t$i (id int primary key, payload text);" \
               -c "INSERT INTO t$i VALUES ($i, repeat('x', 800));"
           done
 
       - name: Build the backup image
         run: docker build -t acadia-backup ./backup
 
+      - name: Install a recording stand-in for the aws CLI
+        # No MinIO, and no third-party registry at all.
+        #
+        # Two attempts went out over a fake S3 and both died on the pull:
+        # `docker pull minio/minio` answers "pull access denied ... may require
+        # 'docker login'" for an anonymous puller, and moving to quay.io did not
+        # fix it either. A CI job for a backup script should not be able to fail
+        # because somebody else's registry changed its access policy.
+        #
+        # So the aws binary inside the image is replaced with a script that
+        # records its arguments. What this proves: pg_dump runs against a real
+        # Postgres 18, both sanity checks fire, the upload is invoked exactly
+        # once per destination with the right key and flags, the Sunday branch
+        # behaves, and no credential reaches the log.
+        #
+        # What it deliberately does NOT prove: that bytes land in a real bucket.
+        # Nothing here can prove that -- in production the uploader may only
+        # PutObject, so it cannot read back what it wrote either. That is
+        # verified by a human running backup/RESTORE.md, which is the only check
+        # that ever actually mattered.
+        run: |
+          mkdir -p ci-aws
+          # printf, not a heredoc: inside a YAML block scalar the heredoc body
+          # would carry this block's indentation, so the shebang would start with
+          # ten spaces and the indented terminator would never match.
+          printf '%s\n' \
+            '#!/bin/sh' \
+            'echo "AWS-CALL $*" >> /ci-aws/calls.log' \
+            > ci-aws/aws
+          chmod 755 ci-aws/aws
+          cat ci-aws/aws
+          # World-writable because the container runs as its own user (postgres)
+          # and appends to this file through the bind mount.
+          : > ci-aws/calls.log
+          chmod 666 ci-aws/calls.log
+
       - name: Run the backup and assert it reports BACKUP OK
         run: |
           set -o pipefail
-          # --network host so the container reaches both the Postgres service and
-          # MinIO on the runner's localhost.
+          # --network host so the container reaches the Postgres service on the
+          # runner's localhost. The bind mount lands on /usr/bin/aws, which is
+          # where apk put the real one.
           docker run --rm --network host \
+            -v "$PWD/ci-aws/aws:/usr/bin/aws:ro" \
+            -v "$PWD/ci-aws:/ci-aws" \
             -e BACKUP_DATABASE_URL="postgresql://postgres:ci-throwaway@localhost:5432/backuptest?sslmode=disable" \
             -e BACKUP_BUCKET=ci-backup-bucket \
-            -e BACKUP_S3_ENDPOINT=http://localhost:9000 \
-            -e AWS_ACCESS_KEY_ID=ci-access-key \
-            -e AWS_SECRET_ACCESS_KEY=ci-secret-key \
-            -e AWS_DEFAULT_REGION=ap-southeast-1 \
             -e MIN_TABLES=20 \
             acadia-backup | tee backup.log
 
-          grep -E "^BACKUP OK acadia-[0-9T]+Z\.dump [0-9]+ [0-9]+$" backup.log
-
-          # The line is what a human greps for, so its shape is part of the
+          # The line a human greps for, so its exact shape is part of the
           # contract: file, bytes, table count, nothing else.
+          grep -E "^BACKUP OK acadia-[0-9T-]+Z\.dump [0-9]+ [0-9]+$" backup.log
           test "$(grep -c '^BACKUP OK' backup.log)" = "1"
 
-          # And nothing may leak the connection string into a log that is
-          # retained and readable from the dashboard.
+          # The table count has to be the real one, not a placeholder -- 22
+          # tables were seeded above.
+          test "$(awk '/^BACKUP OK/ {print $5}' backup.log)" = "22"
+
+          # Nothing may leak the connection string into a log that is retained
+          # and readable from the Render dashboard.
           if grep -q "ci-throwaway" backup.log; then
             echo "the database password reached the log" >&2
             exit 1
           fi
 
-      - name: Assert the file actually landed in the bucket
-        env:
-          AWS_ACCESS_KEY_ID: ci-access-key
-          AWS_SECRET_ACCESS_KEY: ci-secret-key
-          AWS_DEFAULT_REGION: ap-southeast-1
+      - name: Assert the upload was invoked correctly
         run: |
-          # Checked from CI's own credentials, not the job's: in production the
-          # uploader cannot list, which is deliberate, so the script itself can
-          # never verify its own upload.
-          aws --endpoint-url http://localhost:9000 s3 ls s3://ci-backup-bucket/daily/ | tee listing.txt
-          grep -E "acadia-[0-9T]+Z\.dump" listing.txt
+          cat ci-aws/calls.log
+          # Exactly one upload on a weekday, to daily/, encrypted, quiet.
+          grep -E "^AWS-CALL s3 cp /tmp/acadia-[0-9T-]+Z\.dump s3://ci-backup-bucket/daily/acadia-[0-9T-]+Z\.dump --sse AES256 --only-show-errors$" ci-aws/calls.log
+
+          # And the file it uploaded is the file it dumped -- same name in both,
+          # which a copy/paste error in the script would break silently.
+          dumped=$(awk '/^BACKUP OK/ {print $3}' backup.log)
+          grep -q "daily/$dumped" ci-aws/calls.log
+
+      - name: Assert the endpoint override reaches the aws call
+        run: |
+          : > ci-aws/calls.log
+          docker run --rm --network host \
+            -v "$PWD/ci-aws/aws:/usr/bin/aws:ro" \
+            -v "$PWD/ci-aws:/ci-aws" \
+            -e BACKUP_DATABASE_URL="postgresql://postgres:ci-throwaway@localhost:5432/backuptest?sslmode=disable" \
+            -e BACKUP_BUCKET=ci-backup-bucket \
+            -e BACKUP_S3_ENDPOINT=http://example.invalid:9000 \
+            -e MIN_TABLES=20 \
+            acadia-backup >/dev/null
+          # The seam exists so a real S3 can be substituted; if it silently
+          # stopped being passed through, a local test would quietly hit the
+          # real endpoint instead.
+          grep -q -- "--endpoint-url http://example.invalid:9000" ci-aws/calls.log
 
       - name: Assert a dump too thin to be real is rejected
         run: |
-          # The check that matters. MIN_TABLES above what the database holds
-          # stands in for a dump taken against an empty database or by a role
+          # The check that matters most. MIN_TABLES above what the database holds
+          # stands in for a dump taken against an empty database, or by a role
           # that cannot see the schema -- which pg_dump reports as success.
+          : > ci-aws/calls.log
           if docker run --rm --network host \
+            -v "$PWD/ci-aws/aws:/usr/bin/aws:ro" \
+            -v "$PWD/ci-aws:/ci-aws" \
             -e BACKUP_DATABASE_URL="postgresql://postgres:ci-throwaway@localhost:5432/backuptest?sslmode=disable" \
             -e BACKUP_BUCKET=ci-backup-bucket \
-            -e BACKUP_S3_ENDPOINT=http://localhost:9000 \
-            -e AWS_ACCESS_KEY_ID=ci-access-key \
-            -e AWS_SECRET_ACCESS_KEY=ci-secret-key \
-            -e AWS_DEFAULT_REGION=ap-southeast-1 \
             -e MIN_TABLES=500 \
             acadia-backup > thin.log 2>&1; then
             echo "a dump holding 22 tables was accepted against a floor of 500" >&2
@@ -179,20 +183,23 @@ jobs:
             exit 1
           fi
           grep "BACKUP FAILED" thin.log
+          # And it refused *before* uploading. A guard that rejects the dump
+          # after putting it in the bucket has not protected anything.
+          test ! -s ci-aws/calls.log
 
       - name: Assert a missing variable fails fast rather than uploading nothing
         run: |
+          : > ci-aws/calls.log
           if docker run --rm --network host \
+            -v "$PWD/ci-aws/aws:/usr/bin/aws:ro" \
+            -v "$PWD/ci-aws:/ci-aws" \
             -e BACKUP_BUCKET=ci-backup-bucket \
             acadia-backup > unset.log 2>&1; then
             echo "the job ran with no database URL" >&2
             exit 1
           fi
           grep "BACKUP_DATABASE_URL" unset.log
-
-      - name: Stop MinIO
-        if: always()
-        run: docker rm -f minio || true
+          test ! -s ci-aws/calls.log
 
   # Until now nothing in CI looked at mobile-app at all — no typecheck, no lint,
   # no contrast check — which is why a token codemod that put dark *background*
