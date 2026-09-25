@@ -40,7 +40,9 @@ public class SecurityConfig {
     // This allows the mobile app (JWT) and browser UI (session) to share routes.
     @Bean
     @Order(2)
-    public SecurityFilterChain apiFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain apiFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter,
+                                              ApiAuthenticationEntryPoint apiAuthenticationEntryPoint,
+                                              ApiAccessDeniedHandler apiAccessDeniedHandler) throws Exception {
         http
                 .securityMatcher("/api/**")
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -106,6 +108,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/notifications/**").authenticated()
                         .anyRequest().authenticated()
                 )
+                // 401 for "nobody is signed in", 403 for "signed in but not
+                // allowed". Without an entry point this chain fell back to
+                // Http403ForbiddenEntryPoint, so an expired token and a parent
+                // reaching a teacher's endpoint were the same status -- and the
+                // app, unable to tell them apart, rendered "No fees raised yet"
+                // over 450 rupees outstanding rather than asking anyone to sign
+                // in again.
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(apiAuthenticationEntryPoint)
+                        .accessDeniedHandler(apiAccessDeniedHandler))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

@@ -231,6 +231,31 @@ export function decideWaiver(invoiceId: string, action: 'approve' | 'reject'): P
 export function getPendingStaff(): Promise<ApiObject[]>;
 export function decideStaff(userId: string, action: 'approve' | 'reject'): Promise<ApiObject>;
 
+/**
+ * Session expiry. The backend answers 401 with a reason when a token is expired,
+ * invalid or absent, and keeps 403 for "signed in but not allowed" -- so only the
+ * 401 path clears the login. Before this the app had no response interceptor at
+ * all and read a dead session as "no data", which is how a parent was shown
+ * "No fees raised yet" over money they owed.
+ */
+export type SessionEndedReason = 'expired' | 'invalid' | 'missing' | undefined;
+
+/** Registered by AuthContext, which owns the state the route gate reads. */
+export function setSessionExpiredHandler(
+  handler: ((reason: SessionEndedReason) => void | Promise<void>) | null,
+): void;
+
+/** Clears the stored login and notifies the registered handler. Idempotent. */
+export function handleSessionExpired(reason?: SessionEndedReason): Promise<void>;
+
+/**
+ * For screens that call fetch() directly and so bypass the axios interceptor.
+ *
+ * @returns true when the response was 401 and the session has been cleared, so
+ *          the caller should stop rather than parse an error body as data
+ */
+export function endedSession(response: Response): Promise<boolean>;
+
 declare const api: AxiosInstance;
 
 export default api;

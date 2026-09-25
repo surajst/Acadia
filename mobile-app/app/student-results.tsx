@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { getStudentPerformance } from '@/services/api';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
+import LoadFailed from '../components/ui/LoadFailed';
 import T from '@/constants/theme';
 
 /**
@@ -29,20 +30,35 @@ export default function StudentResultsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // The empty state used to cover a failure -- the comment below said so
+  // outright. "No marks yet" is a claim about the teachers' gradebook, and a
+  // request that never succeeded is not evidence for it.
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const load = useCallback(async () => {
+    setLoadError(null);
     setRows((await getStudentPerformance()) as Row[]);
   }, []);
 
   useEffect(() => {
     (async () => {
-      try { await load(); } catch { /* empty state covers it */ }
-      finally { setLoading(false); }
+      try {
+        await load();
+      } catch {
+        setLoadError('Could not load the latest information. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [load]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    try { await load(); } catch { /* keep what is on screen */ }
+    try {
+      await load();
+    } catch {
+      setLoadError('Could not load the latest information. Please try again.');
+    }
     setRefreshing(false);
   };
 
@@ -63,7 +79,9 @@ export default function StudentResultsScreen() {
     >
       <Stack.Screen options={{ title: 'My Results' }} />
 
-      {rows.length === 0 ? (
+      {loadError ? (
+        <LoadFailed message={loadError} onRetry={() => { void onRefresh(); }} />
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
           title="No marks yet"

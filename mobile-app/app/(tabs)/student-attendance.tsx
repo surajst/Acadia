@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useContext, useState, useEffect, useMemo } from 'react';
 import { DataContext } from './_layout';
+import LoadFailed from '../../components/ui/LoadFailed';
 import { getStudentAttendance } from '../../services/api';
 import { useTheme, type Theme } from '../../context/ThemeContext';
 // STATUS_COLOR/STATUS_BG below are status families, not brand tokens -- no
@@ -53,15 +54,22 @@ export default function StudentAttendanceScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  // "No attendance records" is a statement about the register. After a failed
+  // request the app does not know that, and saying it anyway is the same fault
+  // that told a parent their fees had never been raised.
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchAttendance = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await getStudentAttendance();
       setRecords(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch student attendance:', err);
-      setRecords([]);
+      // Records are left as they were rather than cleared: whatever was on
+      // screen is at least something the server once said.
+      setLoadError('Could not load the latest information. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -123,6 +131,8 @@ export default function StudentAttendanceScreen() {
         <Text style={styles.sectionTitle}>Attendance History</Text>
         {loading ? (
           <ActivityIndicator color={T.brand} style={{ marginTop: 20 }} />
+        ) : loadError ? (
+          <LoadFailed message={loadError} onRetry={() => { void fetchAttendance(); }} />
         ) : records.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No attendance records</Text>
