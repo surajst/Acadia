@@ -187,6 +187,42 @@ test.describe('Endpoints added for these screens', () => {
     }
   });
 
+  test('the subdomain check is rate limited per client, not globally', async ({ page }) => {
+    await page.goto('/web/onboard/signup');
+    await page.waitForLoadState('networkidle');
+
+    // The endpoint has to stay unauthenticated -- nobody has an account at
+    // signup -- and it answers whether an address belongs to a school on
+    // ACADIA, so left open it is a customer list anyone can walk.
+    //
+    // A deliberately unique forwarded address, so exhausting the limit here
+    // cannot refuse the other specs that call this endpoint in the same minute.
+    const scraper = '198.18.' + Math.floor(Math.random() * 250) + '.' + Math.floor(Math.random() * 250);
+
+    const outcome = await page.evaluate(async (from) => {
+      let firstRefusalAt = null;
+      let servedBeforeRefusal = 0;
+      for (let i = 1; i <= 40; i++) {
+        const res = await fetch('/api/onboard/subdomain-available?subdomain=probe' + i,
+          { headers: { 'X-Forwarded-For': from } });
+        if (res.status === 429) { firstRefusalAt = i; break; }
+        servedBeforeRefusal = i;
+      }
+      // A different client must still be served, or one scraper takes signup
+      // down for everybody -- which is what keying on the proxy's own address
+      // would have done.
+      const other = await fetch('/api/onboard/subdomain-available?subdomain=someone-else',
+        { headers: { 'X-Forwarded-For': '203.0.113.200' } });
+      return { firstRefusalAt, servedBeforeRefusal, otherStatus: other.status };
+    }, scraper);
+
+    expect(outcome.firstRefusalAt, 'bulk checks from one address have to be cut off').not.toBeNull();
+    expect(outcome.servedBeforeRefusal,
+      'and the limit has to be generous enough that typing a name never trips it')
+      .toBeGreaterThanOrEqual(20);
+    expect(outcome.otherStatus, 'a different client keeps its own allowance').toBe(200);
+  });
+
   test('section options are what the task form asks for now', async ({ page }) => {
     await page.goto('/test/reset');
     await loginAsAdmin(page);
