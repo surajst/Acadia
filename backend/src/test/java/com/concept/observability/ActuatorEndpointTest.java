@@ -11,6 +11,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -92,6 +94,56 @@ class ActuatorEndpointTest {
                 meterRegistry.find("jvm.memory.used").meter().getId().getTag("application"),
                 "expected metrics tagged with the application name so a shared "
                         + "Prometheus can separate this app's series");
+    }
+
+    /**
+     * The whole point of making this endpoint public: answering "is production
+     * serving the new build?" without credentials.
+     *
+     * <p>A deploy check that needs a login does not get run. Twice this round I
+     * verified a rollout by probing for a string that had already shipped, and
+     * concluded the deploy had landed when I had measured nothing.
+     */
+    @Test
+    void infoIsPublicAndNamesTheDeployedCommit() throws Exception {
+        var response = mockMvc.perform(get("/actuator/info")).andReturn().getResponse();
+
+        assertEquals(200, response.getStatus(),
+                "an unauthenticated caller has to be able to read this, or it will not be used");
+        String body = response.getContentAsString();
+        assertTrue(body.contains("\"commit\""),
+                "the commit is the one field this exists for, got: " + body);
+        assertTrue(body.contains("\"branch\""), "got: " + body);
+        assertTrue(body.contains("\"version\""), "got: " + body);
+    }
+
+    /**
+     * {@code @project.version@} only resolves if Maven resource filtering is
+     * applied to application.properties -- which spring-boot-starter-parent
+     * configures, but nothing in this repo states. Without it the placeholder
+     * reaches production verbatim and the endpoint reports a literal
+     * "@project.version@" as the running version.
+     */
+    @Test
+    void theVersionPlaceholderIsResolvedNotLiteral() throws Exception {
+        String body = mockMvc.perform(get("/actuator/info"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertTrue(!body.contains("@project.version@"),
+                "resource filtering did not run, so the version is a placeholder: " + body);
+    }
+
+    /**
+     * Public means info and nothing else. env is the one that would matter --
+     * it holds the database URL and every secret the process was started with.
+     */
+    @Test
+    void makingInfoPublicDidNotOpenTheRestOfActuator() throws Exception {
+        for (String path : new String[]{"/actuator/env", "/actuator/metrics", "/actuator/prometheus"}) {
+            int statusCode = mockMvc.perform(get(path)).andReturn().getResponse().getStatus();
+            assertNotEquals(200, statusCode,
+                    path + " must not have become public alongside info");
+        }
     }
 
     @Test

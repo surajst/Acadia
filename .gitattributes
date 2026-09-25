@@ -1,0 +1,9 @@
+# Line endings for files that are executed rather than read.
+#
+# A shell script checked out with CRLF fails inside a Linux container with
+# "bad interpreter: no such file or directory" -- the \r becomes part of the
+# interpreter path. Git stores LF in the index regardless, so a Linux checkout is
+# normally fine, but that depends on every contributor's core.autocrlf rather
+# than on anything in the repo. This states it instead.
+*.sh text eol=lf
+Dockerfile text eol=lf

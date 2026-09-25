@@ -154,9 +154,26 @@ public class SecurityConfig {
                         // callers — component detail is gated by
                         // management.endpoint.health.show-details=when-authorized.
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                        // Everything else under /actuator (metrics, prometheus, info) describes
-                        // internals and must never be public — this chain ends in permitAll(),
-                        // so without this line the scrape endpoint would be world-readable.
+                        // Which commit is deployed, readable without logging in.
+                        //
+                        // Deliberately public, and narrow: info.app.* is a name, a
+                        // description, a version and the Render git commit/branch —
+                        // nothing about the database, the environment or a secret.
+                        // management.info.env.enabled exposes only properties under
+                        // the info. prefix, not the environment at large, so this does
+                        // not turn into an env dump.
+                        //
+                        // The reason it is public at all: after a merge there was no
+                        // way to tell whether production was serving the new build
+                        // without logging in and hunting for a changed string, and
+                        // twice that meant probing for something that had already
+                        // shipped and drawing the wrong conclusion. A deploy check
+                        // that needs credentials does not get run.
+                        .requestMatchers("/actuator/info").permitAll()
+                        // Everything else under /actuator (metrics, prometheus, env)
+                        // describes internals and must never be public — this chain
+                        // ends in permitAll(), so without this line the scrape
+                        // endpoint would be world-readable.
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
