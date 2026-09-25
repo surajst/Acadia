@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setSessionExpiredHandler } from '../services/api';
 import {
   createContext,
   PropsWithChildren,
@@ -95,6 +96,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setAcademicYearName(null);
     await AsyncStorage.clear();
   };
+
+
+  // The API client cannot call a hook, so it holds a handler instead and this
+  // registers logout into it. A 401 from any request then clears the session the
+  // same way the Log out button does -- and because the route gate in
+  // app/_layout.tsx renders sign-in whenever userToken is null, that is all it
+  // takes to get the person there.
+  //
+  // Declared after logout, not before: referencing it earlier is a
+  // use-before-declaration that eslint rejects outright.
+  useEffect(() => {
+    setSessionExpiredHandler(async () => {
+      await logout();
+    });
+    return () => setSessionExpiredHandler(null);
+  }, []);
 
   const value = useMemo(
     () => ({

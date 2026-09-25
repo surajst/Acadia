@@ -2,6 +2,7 @@ import React, { useContext, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Alert } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { DataContext } from './_layout';
+import LoadFailed from '../../components/ui/LoadFailed';
 import { requestFeeWaiver } from '../../services/api';
 import { useTheme, type Theme } from '../../context/ThemeContext';
 // Only for TONE below -- success/danger/warn are not brand-family tokens, so
@@ -36,7 +37,7 @@ const day = (iso?: string | null) => {
 export default function FeesScreen() {
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
-  const { data, refreshData } = useContext(DataContext);
+  const { data, error, refreshData } = useContext(DataContext);
   const [refreshing, setRefreshing] = useState(false);
   // Which instalment the parent is asking about, and why. Only one at a time:
   // asking for help is a considered thing, not a bulk action.
@@ -77,6 +78,18 @@ export default function FeesScreen() {
       setSending(false);
     }
   };
+
+  // A failed load is not an answer about this family's fees. Saying "the school
+  // has not billed anything" when the request never succeeded is how a parent was
+  // shown that over 450 rupees outstanding, on a screen whose only problem was an
+  // expired token. Check the error before the empty state, always in that order.
+  if (error) {
+    return (
+      <ScrollView style={s.page} contentContainerStyle={s.emptyWrap} refreshControl={refresh}>
+        <LoadFailed message={error} onRetry={() => { void refreshData(); }} />
+      </ScrollView>
+    );
+  }
 
   if (!fees) {
     return (

@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { View, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { useCallback, useState, useEffect, createContext } from 'react';
-import { getStudentDashboard, getParentDashboard, getApiHost } from '../../services/api';
+import { getStudentDashboard, getParentDashboard, getApiHost, endedSession } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '@/context/AuthContext';
@@ -14,7 +14,7 @@ import T from '../../constants/theme';
  */
 export const unstable_settings = { anchor: 'index' };
 
-export const DataContext = createContext<any>({ role: null, data: {}, refreshData: async () => {}, selectedChildId: null, selectChild: (_id: string) => {} });
+export const DataContext = createContext<any>({ role: null, data: {}, error: null, refreshData: async () => {}, selectedChildId: null, selectChild: (_id: string) => {} });
 
 const ROLE_PARENT    = 'PARENT';
 const ROLE_TEACHER   = 'TEACHER';
@@ -51,6 +51,13 @@ export default function TabLayout() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  // Why a request failed, or null. Before this, every failure was flattened into
+  // an empty data object and each screen rendered its "nothing here" message --
+  // which is how a parent whose token had expired overnight was shown "No fees
+  // raised yet. The school has not billed anything for Your child" over 450
+  // rupees outstanding. An empty state is a claim about the school's data, and
+  // it must only ever be made when the server actually said so.
+  const [error, setError] = useState<string | null>(null);
   const { userRole: role } = useAuth();
 
   const fetchDashboardData = useCallback(async (childId?: string | null) => {
@@ -63,6 +70,7 @@ export default function TabLayout() {
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       if (role === ROLE_PARENT) {
         const parentData = await getParentDashboard(childId ?? selectedChildId ?? undefined);
@@ -92,6 +100,20 @@ export default function TabLayout() {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
+        // These bypass the axios interceptor, so they have to check for
+        // themselves. A 401 clears the session and the route gate takes over;
+        // there is nothing useful to render in the meantime.
+        const responses = [classesResp, tasksResp, attendanceSummaryResp, timetableResp, queueResp];
+        for (const resp of responses) {
+          if (await endedSession(resp)) return;
+        }
+        // And a failure that is not a 401 must not be parsed as data: an error
+        // body is JSON too, and .value ?? [] turns it into an empty list.
+        const failed = responses.find((r) => !r.ok);
+        if (failed) {
+          throw new Error(`Request failed with ${failed.status}`);
+        }
+
         const classes = await classesResp.json();
         const tasksRaw = await tasksResp.json();
         const tasks = Array.isArray(tasksRaw) ? tasksRaw : (tasksRaw.value ?? []);
@@ -106,15 +128,26 @@ export default function TabLayout() {
         const routeResp = await fetch(`${BASE_HOST}/api/mobile/driver/route/my-route`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        if (await endedSession(routeResp)) return;
+        if (!routeResp.ok) {
+          throw new Error(`Request failed with ${routeResp.status}`);
+        }
         const route = await routeResp.json();
         setData({ driver: true, route });
       } else {
         const studentData = await getStudentDashboard();
         setData(studentData);
       }
-    } catch (error) {
-      console.log('Dashboard data sync error:', error);
-      setData({});
+    } catch (err: any) {
+      // Deliberately NOT setData({}). Clearing the data is what turned a failed
+      // request into a confident "there is nothing here" on every screen. What
+      // was loaded before stays; the error says the figures may be stale.
+      console.log('Dashboard data sync error:', err);
+      setError(
+        err?.message === 'Network Error' || err?.code === 'ERR_NETWORK'
+          ? 'Could not reach the school. Check your connection and try again.'
+          : 'Could not load the latest information. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -148,7 +181,7 @@ export default function TabLayout() {
   // flashed for a request that usually returns in under a second.
   if (loading && !data) {
     return (
-      <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
+      <DataContext.Provider value={{ role, data: {}, error, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
         <View style={{ flex: 1, backgroundColor: T.bg, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color={T.brand} />
         </View>
@@ -158,14 +191,14 @@ export default function TabLayout() {
 
   if (!data) {
     return (
-      <DataContext.Provider value={{ role, data: {}, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
+      <DataContext.Provider value={{ role, data: {}, error, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
         <View style={{ flex: 1, backgroundColor: T.bg }} />
       </DataContext.Provider>
     );
   }
 
   return (
-    <DataContext.Provider value={{ role, data, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
+    <DataContext.Provider value={{ role, data, error, refreshData: fetchDashboardData, selectedChildId, selectChild }}>
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: T.bg },

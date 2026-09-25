@@ -38,6 +38,84 @@ api.interceptors.request.use(
   }
 );
 
+// ─── Session expiry ─────────────────────────────────────────────────────────
+//
+// A parent's token lasts 24 hours. When Rakesh's expired overnight, nothing in
+// the app noticed: there was no response interceptor at all, so every screen
+// read its failed request as "no data" and the Fees screen said "No fees raised
+// yet. The school has not billed anything for Your child" over 450 rupees
+// outstanding. The app was not inventing anything -- it simply had no way to
+// tell a dead session from an empty one.
+//
+// The backend now answers 401 with reason=expired|invalid|missing for that, and
+// keeps 403 for "signed in but not allowed". Only the 401 clears the session; a
+// parent who taps through to a teacher's screen must not be signed out for it.
+
+let onSessionExpired = null;
+
+/**
+ * Registered once by AuthContext, which owns the React state and the stored
+ * login. This module cannot call a hook, so the direction is inverted: the
+ * context hands its logout down here.
+ */
+export function setSessionExpiredHandler(handler) {
+  onSessionExpired = handler;
+}
+
+/**
+ * Clears the stored login and lets the app react. The route gate in
+ * app/_layout.tsx renders the sign-in screen whenever userToken is null, so
+ * clearing it is what sends the person there -- no navigation call needed.
+ *
+ * Safe to call more than once: several requests usually fail together when a
+ * token expires, and the first one to arrive does the work.
+ */
+export async function handleSessionExpired(reason) {
+  if (__DEV__) {
+    console.log('[auth] session ended (' + (reason || 'unknown') + '), signing out');
+  }
+  try {
+    await AsyncStorage.removeItem('userToken');
+  } catch {
+    // Storage can fail; the handler below still clears the in-memory state,
+    // which is what actually gates the UI.
+  }
+  if (onSessionExpired) {
+    await onSessionExpired(reason);
+  }
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error?.response?.status === 401) {
+      await handleSessionExpired(error.response?.data?.reason);
+    }
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * For the handful of screens that call fetch() directly rather than through this
+ * axios instance -- they bypass the interceptor above, so they have to say so.
+ *
+ * @returns true when the response was a 401 and the session has been cleared,
+ *          so the caller can stop rather than parse an error body as data
+ */
+export async function endedSession(response) {
+  if (response && response.status === 401) {
+    let reason;
+    try {
+      reason = (await response.clone().json())?.reason;
+    } catch {
+      // A 401 with no JSON body is still a 401.
+    }
+    await handleSessionExpired(reason);
+    return true;
+  }
+  return false;
+}
+
 export const login = async (email, password) => {
   const response = await api.post('/auth/login', { email, password });
   return response;
