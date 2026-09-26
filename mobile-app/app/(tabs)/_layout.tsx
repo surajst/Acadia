@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '@/context/AuthContext';
 import T from '../../constants/theme';
+import { SCREEN_TITLES } from '../../constants/screenTitles';
 
 /**
  * The screen a cold deep link is opened *beneath*, so a link straight to
@@ -215,19 +216,19 @@ export default function TabLayout() {
             header is what provides the back arrow now the tab bar is gone. */}
         <Stack.Screen name="index" options={{ headerShown: false }} />
 
-        <Stack.Screen name="syllabus" options={{ title: 'Syllabus' }} />
-        <Stack.Screen name="student-attendance" options={{ title: 'Attendance' }} />
-        <Stack.Screen name="challenges" options={{ title: 'Challenges' }} />
-        <Stack.Screen name="quests" options={{ title: 'Quests' }} />
-        <Stack.Screen name="attendance" options={{ title: 'Attendance' }} />
-        <Stack.Screen name="performance" options={{ title: 'Performance' }} />
-        <Stack.Screen name="approvals" options={{ title: 'Approvals' }} />
-        <Stack.Screen name="fees" options={{ title: 'Fees' }} />
-        <Stack.Screen name="bus" options={{ title: 'Bus' }} />
-        <Stack.Screen name="announcements" options={{ title: 'News' }} />
-        <Stack.Screen name="messages" options={{ title: 'Messages' }} />
-        <Stack.Screen name="profile" options={{ title: 'Profile' }} />
-        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="syllabus" options={{ title: SCREEN_TITLES.syllabus }} />
+        <Stack.Screen name="student-attendance" options={{ title: SCREEN_TITLES['student-attendance'] }} />
+        <Stack.Screen name="challenges" options={{ title: SCREEN_TITLES.challenges }} />
+        <Stack.Screen name="quests" options={{ title: SCREEN_TITLES.quests }} />
+        <Stack.Screen name="attendance" options={{ title: SCREEN_TITLES.attendance }} />
+        <Stack.Screen name="performance" options={{ title: SCREEN_TITLES.performance }} />
+        <Stack.Screen name="approvals" options={{ title: SCREEN_TITLES.approvals }} />
+        <Stack.Screen name="fees" options={{ title: SCREEN_TITLES.fees }} />
+        <Stack.Screen name="bus" options={{ title: SCREEN_TITLES.bus }} />
+        <Stack.Screen name="announcements" options={{ title: SCREEN_TITLES.announcements }} />
+        <Stack.Screen name="messages" options={{ title: SCREEN_TITLES.messages }} />
+        <Stack.Screen name="profile" options={{ title: SCREEN_TITLES.profile }} />
+        <Stack.Screen name="settings" options={{ title: SCREEN_TITLES.settings }} />
       </Stack>
     </DataContext.Provider>
   );

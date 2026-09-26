@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
@@ -10,13 +10,30 @@ import {
   setPreferredLanguage,
 } from '../../services/api';
 import { useTheme, type Theme } from '../../context/ThemeContext';
+import { DataContext } from './_layout';
 
 export default function AnnouncementsScreen() {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
+  const { data } = useContext(DataContext);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [languages, setLanguages] = useState<any[]>([]);
-  const [selectedLang, setSelectedLang] = useState('en');
+  /**
+   * The language notices are translated and read aloud in.
+   *
+   * <p>R3-P2-5. This was `useState('en')`, and the picker below has always saved
+   * the choice to the parent's record -- so the screen wrote a preference and then
+   * ignored it. A parent who picked Hindi came back to a corner chip reading
+   * "English" and notices in English, which is why an unexplained language name
+   * up there read as stray text left behind by something: it was never their
+   * setting, just a hardcoded default.
+   *
+   * <p>Derived rather than copied into state in an effect, which is how the same
+   * field went stale on the recognition screen: `data` arrives after the first
+   * render, and a local copy taken once is a copy taken too early.
+   */
+  const [pickedLang, setPickedLang] = useState<string | null>(null);
+  const selectedLang = pickedLang ?? data?.parent?.preferredLanguage ?? 'en';
   const [loading, setLoading] = useState(true);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [localized, setLocalized] = useState<Record<string, { title: string; content: string }>>({});
@@ -42,15 +59,20 @@ export default function AnnouncementsScreen() {
   }, []);
 
   const handlePickLanguage = async (code: string) => {
-    setSelectedLang(code);
     setPickerVisible(false);
+    if (code === selectedLang) {
+      return;
+    }
+    setPickedLang(code);
+    // Translations already fetched were in the old language.
     setLocalized({});
-    if (code !== 'en') {
-      try {
-        await setPreferredLanguage(code);
-      } catch (e) {
-        console.log('Failed to save preferred language:', e);
-      }
+    // Including English. This was guarded with `if (code !== 'en')`, so a parent
+    // who tried Hindi and wanted to go back kept Hindi on their record for good
+    // -- the one choice the picker offered that it refused to remember.
+    try {
+      await setPreferredLanguage(code);
+    } catch (e) {
+      console.log('Failed to save preferred language:', e);
     }
   };
 
@@ -99,18 +121,22 @@ export default function AnnouncementsScreen() {
           <SymbolView name={{ ios: 'megaphone', android: 'campaign', web: 'campaign' }} tintColor={T.brand} size={26} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
-          <Text style={styles.headerTitle}>Announcements</Text>
-          <Text style={styles.headerSubtitle}>From your school</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>Announcements</Text>
+          <Text style={styles.headerSubtitle} numberOfLines={1}>From your school</Text>
         </View>
-        {/* This is the language control, not a label -- an unexplained
-            "English" in the corner of an empty News screen reads as stray text
-            left behind by something. The globe and the accessible name say what
-            it does; screen readers got nothing at all before. */}
+        {/* The language control. A globe and an accessible name were added for
+            this once and QA still read it as stray text, which was fair: it said
+            only "English", and in the default state nothing on the screen visibly
+            depends on it -- Translate does not even appear until the language is
+            something other than English. So it now names what it governs rather
+            than only its value, and shows the parent's actual saved language. */}
         <TouchableOpacity
           style={styles.langBtn}
           onPress={() => setPickerVisible(true)}
           accessibilityRole="button"
-          accessibilityLabel={`Language: ${selectedLanguageName}. Change the language announcements are shown in.`}
+          accessibilityLabel={
+            `Notices are read in ${selectedLanguageName}. Change the language.`
+          }
           hitSlop={10}
         >
           <SymbolView
@@ -118,7 +144,7 @@ export default function AnnouncementsScreen() {
             tintColor={T.brand}
             size={14}
           />
-          <Text style={styles.langBtnText}>{selectedLanguageName}</Text>
+          <Text style={styles.langBtnText} numberOfLines={1}>Read in {selectedLanguageName}</Text>
         </TouchableOpacity>
       </View>
 

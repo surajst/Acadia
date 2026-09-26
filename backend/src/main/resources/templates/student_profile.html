@@ -191,7 +191,7 @@
                               class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <input type="text" name="name" required placeholder="Name" class="field" data-pickup-name>
                             <input type="text" name="relationship" placeholder="Relationship" class="field">
-                            <input type="text" name="phone" placeholder="Phone" class="field">
+                            <input name="phone" placeholder="Phone" type="tel" inputmode="tel" autocomplete="tel" class="field">
                             <button type="submit" class="btn btn-secondary btn-sm sm:col-span-3">+ Authorise someone</button>
                         </form>
                     </div>
@@ -469,7 +469,7 @@
                         </div>
                         <div class="space-y-1.5">
                             <label for="editEmergencyPhone" class="field-label block">Emergency phone</label>
-                            <input type="text" id="editEmergencyPhone" name="emergencyContactPhone" class="field"
+                            <input id="editEmergencyPhone" name="emergencyContactPhone" class="field" type="tel" inputmode="tel" autocomplete="tel"
                                    th:value="${emergencyContactPhone}">
                         </div>
                     </div>
@@ -488,7 +488,7 @@
                         </div>
                         <div class="space-y-1.5 col-span-2">
                             <label for="editGuardianPhone" class="field-label block">Phone</label>
-                            <input type="text" id="editGuardianPhone" name="guardianPhone" placeholder="e.g. +91 98765 43210" th:value="${guardianPhone}" class="field">
+                            <input id="editGuardianPhone" name="guardianPhone" placeholder="e.g. +91 98765 43210" type="tel" inputmode="tel" autocomplete="tel" pattern="\s*(?=(?:[^0-9]*[0-9]){7,})\+?[0-9\s\(\)\-]{7,}" title="Digits, spaces, brackets and hyphens, with an optional leading +. At least 7 digits." th:value="${guardianPhone}" class="field">
                         </div>
                     </div>
                     <p class="text-[11px] text-[var(--text-3)] mt-2">Add a guardian if none is linked, or edit the existing one. A shared phone links one guardian account to all their children.</p>

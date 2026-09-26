@@ -58,16 +58,121 @@ test.describe('Managing a task after it is set', () => {
     await loginAsTeacher(page);
     const row = await createTask(page, 'QA P15 Close Me');
 
+    // Close asks now (R3-P2-6). Playwright dismisses dialogs unless told
+    // otherwise, so without this the task would simply stay open.
+    page.once('dialog', dialog => dialog.accept());
     await row.locator('button[data-task-close]').click();
     const closed = page.locator('#tasksTableBody tr', { hasText: 'QA P15 Close Me' });
     await expect(closed).toContainText('CLOSED', { timeout: 30000 });
 
     // Reopen is offered in place of Close, not alongside it.
     await expect(closed.locator('button[data-task-close]')).toHaveCount(0);
+    // And reopening asks nothing. It is the undo, and putting a confirmation in
+    // front of the recovery from a confirmed action is how people stop reading
+    // them. No dialog handler here, so an unexpected prompt fails this.
     await closed.locator('button[data-task-reopen]').click();
     await expect(page.locator('#tasksTableBody tr', { hasText: 'QA P15 Close Me' }))
       .toContainText('ACTIVE', { timeout: 30000 });
   });
+
+  /**
+   * R3-P2-6. Close had no confirmation while Delete did -- and Close is the one
+   * a teacher reaches for far more often, from a small button wedged between
+   * "Who handed in" and "Delete". It takes the task off every pupil's list and
+   * stops them handing it in.
+   */
+  test('backing out of the close confirmation leaves the task open', async ({ page }) => {
+    await page.goto('/test/reset');
+    await loginAsTeacher(page);
+    const row = await createTask(page, 'QA P16 Close Cancelled');
+
+    page.once('dialog', dialog => dialog.dismiss());
+    await row.locator('button[data-task-close]').click();
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('#tasksTableBody tr', { hasText: 'QA P16 Close Cancelled' }))
+      .toContainText('ACTIVE');
+  });
+
+  test('the close confirmation says what happens and what can be undone', async ({ page }) => {
+    await page.goto('/test/reset');
+    await loginAsTeacher(page);
+    const row = await createTask(page, 'QA P16 Close Wording');
+
+    let asked = null;
+    page.once('dialog', dialog => { asked = dialog.message(); dialog.dismiss(); });
+    await row.locator('button[data-task-close]').click();
+    await page.waitForLoadState('networkidle');
+
+    expect(asked, 'closing a task must ask first').toBeTruthy();
+    expect(asked).toContain('QA P16 Close Wording');
+    // The two things somebody about to press it actually wants to know.
+    expect(asked).toMatch(/will not be able to hand it in/i);
+    expect(asked).toMatch(/reopen/i);
+  });
+
+  /**
+   * R3-P2-2. The Class column read "Class 6" -- the grade -- for every task,
+   * including one set for a single section, with "Whole Class" beside it. So a
+   * task for 6-A was listed exactly like one for the whole of Grade 6. True
+   * before tasks carried a section; this list was the last place still saying it.
+   */
+  test('the list names the section a task was set for, not the whole grade', async ({ page }) => {
+    await page.goto('/test/reset');
+    await loginAsTeacher(page);
+    const row = await createTask(page, 'QA P16 Section Label');
+
+    // createTask picks Grade 6 - A from the section list, so that is what the
+    // row has to say.
+    await expect(row).toContainText('Grade 6 - A', { timeout: 30000 });
+    // The claim that was not true.
+    await expect(row).not.toContainText('Class 6');
+    await expect(row).not.toContainText('all sections');
+  });
+
+  /**
+   * R3-P2-3. The Subject picker listed all five of the school's subjects in
+   * catalogue order, so a teacher who takes Mathematics in 6-A had to hunt past
+   * English and Hindi to reach the only one they were likely to want.
+   *
+   * Grouped, not filtered -- and the second half of this test is why. The list
+   * still has to offer every subject: nothing on the server restricts
+   * subjectCode, `Teacher task creation subject dropdown is populated from
+   * /api/subjects, not hardcoded` asserts the option count matches the catalogue,
+   * and two task-creation tests deliberately set Science and English work. A
+   * filtered list would have broken all three and invented a rule the API does
+   * not keep.
+   */
+  test("the subject picker puts the teacher's own subject first, and still offers the rest",
+    async ({ page }) => {
+      await page.goto('/test/reset');
+      await loginAsTeacher(page);
+      await page.goto('/web/teacher/tasks');
+      await page.waitForLoadState('networkidle');
+
+      const select = page.locator('#subjectType');
+      await expect(select.locator('option').first()).toHaveText(/Mathematics/, { timeout: 30000 });
+
+      // Grouped under a heading that says why it is first.
+      await expect(select.locator('optgroup').first())
+        .toHaveAttribute('label', /You teach this class/i);
+
+      // The half that must not regress: every catalogue subject is still on offer.
+      const apiCodes = await page.evaluate(() =>
+        fetch('/api/subjects').then(r => r.json()).then(list => list.map(s => s.code)));
+      const optionValues = await select.locator('option').evaluateAll(opts => opts.map(o => o.value));
+      expect(optionValues.length,
+        'grouping must not drop options -- the server does not restrict subjectCode')
+        .toBe(apiCodes.length);
+      for (const code of apiCodes) {
+        expect(optionValues).toContain(code);
+      }
+
+      // And a subject this teacher does not take is still selectable, which is
+      // what teacher_task_creation.spec.js relies on.
+      await select.selectOption('SCIENCE');
+      await expect(select).toHaveValue('SCIENCE');
+    });
 
   test('a task nobody has touched can be deleted', async ({ page }) => {
     await page.goto('/test/reset');

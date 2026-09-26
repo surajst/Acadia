@@ -18,9 +18,32 @@ async function login(page: any, username: string, password: string) {
 // folded into class sections; the dashboard's classId means a section now.
 const GRADE6A = '66666666-6666-6666-6666-666666666666';
 
+/**
+ * Strips the guardian phone's `pattern` so a deliberately bad value can be
+ * posted anyway.
+ *
+ * <p>R3-P2-7 gave that field the server's own rule as an HTML pattern, so the
+ * browser now refuses to submit "abc123" and the request never leaves the page.
+ * That is the point of it -- but it would also mean the tests below stopped
+ * exercising the server, which is the layer that actually protects the data.
+ *
+ * <p>Browser validation is a courtesy to whoever is typing. Anything that is not
+ * a browser -- curl, a script, the CSV importer, a form replayed from history --
+ * still arrives at the controller with whatever it likes, so the server's refusal
+ * and the form round-trip have to keep being tested. Removing the attribute is
+ * the cheapest honest way to stand in for those callers.
+ */
+async function bypassPhonePattern(page: any) {
+  await page.locator('#guardianPhone').evaluate((el: HTMLInputElement) => {
+    el.removeAttribute('pattern');
+  });
+}
+
 async function registerStudent(page: any, opts: {
   first: string; last: string; roll: string;
   guardianFirst?: string; guardianLast?: string; guardianPhone?: string;
+  /** Post a phone the browser would now block, to reach the server's own rule. */
+  bypassPhonePattern?: boolean;
 }) {
   await page.goto('/web/admin/management');
   // Reveal the Classrooms & Students section from the card hub, then open the modal.
@@ -34,6 +57,7 @@ async function registerStudent(page: any, opts: {
   if (opts.guardianFirst) await page.fill('#guardianFirstName', opts.guardianFirst);
   if (opts.guardianLast) await page.fill('#guardianLastName', opts.guardianLast);
   if (opts.guardianPhone) await page.fill('#guardianPhone', opts.guardianPhone);
+  if (opts.bypassPhonePattern) await bypassPhonePattern(page);
   // Scope to the modal: the hub card description "…register students…" also
   // substring-matches "Register Student", so a bare text selector is ambiguous.
   await page.click('#registerStudentModal button[type="submit"]');
@@ -234,6 +258,10 @@ test.describe('A refused registration keeps what was typed', () => {
     await page.fill('#guardianFirstName', 'Ramesh');
     await page.fill('#guardianLastName', 'Verma');
     await page.fill('#guardianPhone', 'abc123');
+    // Standing in for every caller that is not a browser -- see bypassPhonePattern.
+    // Without this the browser blocks the submit and the server is never asked,
+    // which would leave the refusal below untested.
+    await bypassPhonePattern(page);
 
     await page.click('#registerStudentModal button[type="submit"]');
     await page.waitForURL(url => url.pathname.includes('/web/admin/management'), { timeout: 90000 });
@@ -263,7 +291,8 @@ test.describe('A refused registration keeps what was typed', () => {
 
     await registerStudent(page, {
       first: 'Neha', last: 'Verma', roll: 'QA-P14-02',
-      guardianFirst: 'Ramesh', guardianLast: 'Verma', guardianPhone: 'abc123'
+      guardianFirst: 'Ramesh', guardianLast: 'Verma', guardianPhone: 'abc123',
+      bypassPhonePattern: true
     });
     await page.waitForLoadState('networkidle');
     await expect(page.locator('#registerStudentModal')).toBeVisible();
@@ -275,6 +304,53 @@ test.describe('A refused registration keeps what was typed', () => {
 
     // And the modal is shut again, since nothing was refused this time.
     await expect(page.locator('#registerStudentModal')).not.toBeVisible();
+  });
+
+  /**
+   * R3-P2-7. The field was type="text": no phone keypad on a handset, no autofill,
+   * and nothing said the value was wrong until the server refused the whole save
+   * and the modal came back. The server was already right -- PhoneNumbers.require
+   * has guarded this since the importer's rule was lifted into it -- so this is
+   * the missing half, not a replacement for it.
+   *
+   * The pattern is the server's rule, character for character, because a browser
+   * rule stricter than the server's blocks a value the API would have taken, and
+   * a looser one promises a check that is not there.
+   */
+  test('the guardian phone field asks for a phone and refuses a typed non-number', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+
+    await page.goto('/web/admin/management');
+    await page.click('button:has-text("Classrooms & Students")');
+    await page.click('button:has-text("Register New Student")');
+    await expect(page.locator('#registerStudentModal')).toBeVisible();
+
+    const phone = page.locator('#guardianPhone');
+    // The keypad half: a handset shows letters for type="text".
+    await expect(phone).toHaveAttribute('type', 'tel');
+    await expect(phone).toHaveAttribute('inputmode', 'tel');
+
+    // The rule half, read through the browser's own validity rather than by
+    // re-implementing the regex here -- which would only test my copy of it.
+    await phone.fill('abc123');
+    expect(await phone.evaluate((el: HTMLInputElement) => el.checkValidity()),
+      'abc123 is not a number a school can ring').toBe(false);
+
+    await phone.fill('+91 98765 43210');
+    expect(await phone.evaluate((el: HTMLInputElement) => el.checkValidity()),
+      'a real number has to be accepted, or the field is unusable').toBe(true);
+
+    // Seven digits is the server's floor, and six is below it. The two must agree
+    // exactly: this is the boundary where a copied-by-hand rule usually drifts.
+    await phone.fill('9876543');
+    expect(await phone.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(true);
+    await phone.fill('987654');
+    expect(await phone.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(false);
+
+    // Blank is still allowed: the guardian is optional, and the form says so.
+    await phone.fill('');
+    expect(await phone.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(true);
   });
 
   /** An ordinary visit must not reopen the modal. */

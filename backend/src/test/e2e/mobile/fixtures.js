@@ -74,7 +74,19 @@ const test = base.test.extend({
     try {
       said = await page.evaluate(() => {
         const host = document.getElementById('error-toast');
-        return host && host.shadowRoot ? (host.shadowRoot.textContent || '').trim() : '';
+        if (!host || !host.shadowRoot) return '';
+        // Element children only, and never a <style>. renderInShadowRoot injects a
+        // ":host { all: initial }" reset and clones the app's stylesheet in beside
+        // the React container, and textContent on the root returns all of it -- so
+        // the first version of this reported ":host {" as an error on every single
+        // test. A diagnostic that fires every time is one nobody reads.
+        let said = '';
+        host.shadowRoot.childNodes.forEach((node) => {
+          if (node.nodeType === 1 && node.tagName !== 'STYLE') {
+            said += (node.textContent || '');
+          }
+        });
+        return said.trim();
       });
     } catch {
       // The page may already be closing; a diagnostic must never fail a test.

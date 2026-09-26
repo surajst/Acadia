@@ -11,7 +11,15 @@ interface Task {
   title?: string;
   taskDescription?: string;
   taskType?: string;
-  status?: string;
+  /**
+   * ACTIVE, OVERDUE or CLOSED.
+   *
+   * <p>Named `status` here until R3-P2-1, which matched nothing: the endpoint
+   * returns TeacherTask rows straight out of JPA, and the column is taskStatus.
+   * So the field was always undefined and the list drew every task the same way,
+   * which is why closing one looked like nothing had happened.
+   */
+  taskStatus?: string;
   createdAt?: string;
   dueDate?: string;
 }
@@ -113,13 +121,23 @@ export default function TasksScreen() {
             const type = task.taskType ?? 'HOMEWORK';
             const color = TYPE_COLORS[type] ?? T.brand;
             const bg = TYPE_BG[type] ?? T.brand50;
+            // A closed task is off every pupil's list and refuses hand-ins, so
+            // the teacher's own list is the only place left that can say so.
+            const closed = task.taskStatus === 'CLOSED';
             return (
-              <View key={task.id} style={styles.card}>
+              <View key={task.id} style={[styles.card, closed && styles.cardClosed]}>
                 <View style={styles.cardLeft}>
-                  <View style={[styles.typeBadge, { backgroundColor: bg }]}>
-                    <Text style={[styles.typeText, { color }]}>{type}</Text>
+                  <View style={styles.badgeRow}>
+                    <View style={[styles.typeBadge, { backgroundColor: bg }]}>
+                      <Text style={[styles.typeText, { color }]}>{type}</Text>
+                    </View>
+                    {closed && (
+                      <View style={styles.closedBadge}>
+                        <Text style={styles.closedBadgeText}>CLOSED</Text>
+                      </View>
+                    )}
                   </View>
-                  <Text style={styles.cardTitle}>
+                  <Text style={[styles.cardTitle, closed && styles.cardTitleClosed]}>
                     {task.title ?? task.taskDescription ?? 'Untitled Task'}
                   </Text>
                   {/* The due date, not the creation date. The list showed
@@ -138,7 +156,13 @@ export default function TasksScreen() {
                     </Text>
                   )}
                 </View>
-                <View style={[styles.statusDot, { backgroundColor: color }]} />
+                <View
+                  style={[styles.statusDot, { backgroundColor: closed ? T.text4 : color }]}
+                  // The dot carried the task's type in colour and nothing in
+                  // text, so it said nothing to a screen reader at all.
+                  accessibilityRole="text"
+                  accessibilityLabel={closed ? 'Closed' : 'Open'}
+                />
               </View>
             );
           })}
@@ -199,10 +223,22 @@ const makeStyles = (T: Theme) => StyleSheet.create({
     borderWidth: 1, borderColor: T.line,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
+  // A closed task stays legible -- a teacher still needs to read it, and half of
+  // why they are on this screen is to find the one they closed by mistake. So the
+  // card recedes and the badge does the saying, rather than the text fading out.
+  cardClosed: { backgroundColor: T.bg, borderStyle: 'dashed' },
   cardLeft: { flex: 1, marginRight: 12 },
-  typeBadge: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  typeBadge: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  closedBadge: {
+    alignSelf: 'flex-start', borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 3,
+    backgroundColor: T.line,
+  },
+  closedBadgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, color: T.text2 },
   typeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
   cardTitle: { fontSize: 14, fontWeight: '600', color: T.text, lineHeight: 20 },
+  cardTitleClosed: { color: T.text2 },
   cardDate: { fontSize: 11, color: T.text2, marginTop: 4, fontWeight: '600' },
   // The creation date is context, not the answer -- one step quieter than
   // the due date above it so the two cannot be confused again.
