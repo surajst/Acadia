@@ -278,14 +278,20 @@ test.describe('Native Web App E2E Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // 4. Simulate a Student account explicitly trying to deep-link into the '/attendance' route
-    // The tab is hidden via href: null, so we test the route directly to verify the guard
     await page.goto('/attendance');
     await page.waitForLoadState('networkidle');
-    
-    // Assert that the UI gracefully catches the unauthorized role and displays our custom "Locked" security screen layout rather than crashing or revealing parental records
-    await expect(page.locator('text="🔒" >> visible=true')).toBeVisible();
-    await expect(page.locator('text="Parent View Only" >> visible=true')).toBeVisible();
-    await expect(page.locator('text="This section is available for parent accounts." >> visible=true')).toBeVisible();
+
+    // Same intent as before -- a pupil must not reach their parent's attendance
+    // record -- but the answer changed with R3-P1-5. This screen used to render a
+    // "Parent View Only" lock card, and the route guard now turns the pupil round
+    // at the door instead, so the lock card never gets the chance to draw.
+    //
+    // Sent home, which is the stronger outcome: a locked screen is still a screen
+    // that is not theirs, with the app's furniture around it.
+    expect(await page.evaluate(() => window.location.pathname)).toBe('/');
+    // And none of the parent's record came with them.
+    await expect(page.locator('text="Parent View Only" >> visible=true')).toHaveCount(0);
+    await expect(page.locator('text="Attendance Calendar" >> visible=true')).toHaveCount(0);
   });
 
   test('Unread notifications appear under the wheel and open what they are about', async ({ page }) => {

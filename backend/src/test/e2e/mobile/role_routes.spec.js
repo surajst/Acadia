@@ -55,6 +55,23 @@ test.describe('Screens belong to roles', () => {
     }
   });
 
+  /**
+   * The case the first version of constants/routeAccess.ts got wrong: it read
+   * /attendance as the teacher's register and refused parents, when
+   * (tabs)/attendance.tsx is the parent's own attendance calendar. Two
+   * long-standing tests caught it, which is why the map is now derived from
+   * constants/wheel.ts rather than written out a second time.
+   */
+  test('a parent still reaches their own screens', async ({ page }) => {
+    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+
+    for (const route of ['/attendance', '/fees', '/performance', '/announcements', '/recognition']) {
+      await page.goto(route);
+      await page.waitForLoadState('networkidle');
+      expect(await landedOn(page), `${route} is a parent's own screen`).toBe(route);
+    }
+  });
+
   test('a pupil is sent home from teacher screens', async ({ page }) => {
     await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
 
@@ -89,6 +106,47 @@ test.describe('Screens belong to roles', () => {
       expect(await landedOn(page), `${route} is a pupil's own screen`).toBe(route);
     }
   });
+
+  /**
+   * The strongest form of the admission half, and the one that closes the hole
+   * the first map fell into.
+   *
+   * <p>Naming routes in a test is another hand-written list, and a list can be
+   * wrong the same way the map was. This reads the destinations out of the app
+   * itself -- every spoke drawn on the role's wheel -- and requires each one to
+   * open. If the guard and the navigation ever disagree about a role, whichever
+   * of the two is wrong, this fails.
+   */
+  for (const [who, role] of [
+    ['ramesh@gmail.com', 'parent'],
+    ['arjun@gmail.com', 'pupil'],
+    ['teacher@greenwood.com', 'teacher'],
+  ]) {
+    test(`every spoke on a ${role}'s wheel opens`, async ({ page }) => {
+      // One login plus a page load per spoke; eight spokes is the widest wheel.
+      test.setTimeout(120000);
+      await login(page, who, 'PilotLaunchSecure2026!');
+
+      // UserWheel labels each spoke "{label}, {i + 1} of {n}".
+      const spokeName = /, \d+ of \d+$/;
+      const count = await page.getByRole('button', { name: spokeName }).count();
+      expect(count, `a ${role} should be offered somewhere to go`).toBeGreaterThan(0);
+
+      for (let i = 0; i < count; i++) {
+        // Back to the wheel by address rather than history: a full load also
+        // clears any LogBox toast a visited screen left behind, which would
+        // otherwise swallow the next spoke's tap.
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+        const spoke = page.getByRole('button', { name: spokeName }).nth(i);
+        const label = await spoke.getAttribute('aria-label');
+        await spoke.click();
+        await page.waitForLoadState('networkidle');
+        expect(await landedOn(page), `"${label}" is on a ${role}'s wheel, so it must open`)
+          .not.toBe('/');
+      }
+    });
+  }
 
   /** And the screens everyone has stay reachable for everyone. */
   test('profile and settings are open to every role', async ({ page }) => {
