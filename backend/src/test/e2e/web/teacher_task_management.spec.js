@@ -130,6 +130,50 @@ test.describe('Managing a task after it is set', () => {
     await expect(row).not.toContainText('all sections');
   });
 
+  /**
+   * R3-P2-3. The Subject picker listed all five of the school's subjects in
+   * catalogue order, so a teacher who takes Mathematics in 6-A had to hunt past
+   * English and Hindi to reach the only one they were likely to want.
+   *
+   * Grouped, not filtered -- and the second half of this test is why. The list
+   * still has to offer every subject: nothing on the server restricts
+   * subjectCode, `Teacher task creation subject dropdown is populated from
+   * /api/subjects, not hardcoded` asserts the option count matches the catalogue,
+   * and two task-creation tests deliberately set Science and English work. A
+   * filtered list would have broken all three and invented a rule the API does
+   * not keep.
+   */
+  test("the subject picker puts the teacher's own subject first, and still offers the rest",
+    async ({ page }) => {
+      await page.goto('/test/reset');
+      await loginAsTeacher(page);
+      await page.goto('/web/teacher/tasks');
+      await page.waitForLoadState('networkidle');
+
+      const select = page.locator('#subjectType');
+      await expect(select.locator('option').first()).toHaveText(/Mathematics/, { timeout: 30000 });
+
+      // Grouped under a heading that says why it is first.
+      await expect(select.locator('optgroup').first())
+        .toHaveAttribute('label', /You teach this class/i);
+
+      // The half that must not regress: every catalogue subject is still on offer.
+      const apiCodes = await page.evaluate(() =>
+        fetch('/api/subjects').then(r => r.json()).then(list => list.map(s => s.code)));
+      const optionValues = await select.locator('option').evaluateAll(opts => opts.map(o => o.value));
+      expect(optionValues.length,
+        'grouping must not drop options -- the server does not restrict subjectCode')
+        .toBe(apiCodes.length);
+      for (const code of apiCodes) {
+        expect(optionValues).toContain(code);
+      }
+
+      // And a subject this teacher does not take is still selectable, which is
+      // what teacher_task_creation.spec.js relies on.
+      await select.selectOption('SCIENCE');
+      await expect(select).toHaveValue('SCIENCE');
+    });
+
   test('a task nobody has touched can be deleted', async ({ page }) => {
     await page.goto('/test/reset');
     await loginAsTeacher(page);
