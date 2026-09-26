@@ -183,7 +183,14 @@
                             <div class="flex items-start justify-between gap-3 flex-wrap">
                                 <div>
                                     <h2 class="card-title">Student roster</h2>
-                                    <p class="card-sub">Search, filter and open a student profile</p>
+                                    <!-- A filtered roster has to say so. Arriving from the
+                                         KPI, the list is short for a reason, and a short
+                                         list that does not explain itself reads as missing
+                                         children rather than as an answer. -->
+                                    <p class="card-sub" th:if="${!filterMissingEmergencyContact}">
+                                        Search, filter and open a student profile</p>
+                                    <p class="card-sub" th:if="${filterMissingEmergencyContact}">
+                                        Showing only children with no emergency contact number</p>
                                 </div>
                                 <span id="rosterResultCount" class="badge badge--info"
                                       th:text="${totalRosterItems} + ' student' + (${totalRosterItems} != 1 ? 's' : '')">505 students</span>
@@ -204,6 +211,18 @@
                                     <option th:each="grade : ${allGradeNames}" th:value="${grade}" th:text="${grade}"
                                             th:selected="${grade == filterGrade}">Grade 6</option>
                                 </select>
+                                <!-- Visible where the other filters are, and removable
+                                     the same way. A filter you can only clear by editing
+                                     the address is a trap. -->
+                                <a th:if="${filterMissingEmergencyContact}"
+                                   data-clear-missing-emergency
+                                   th:href="@{/web/admin/dashboard}"
+                                   class="badge badge--warn"
+                                   style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                                    No emergency contact
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">Clear this filter</span>
+                                </a>
                                 <div class="segmented" role="group" aria-label="Row density">
                                     <button type="button" data-density="comfortable" class="is-on" onclick="setDensity('comfortable')">Comfortable</button>
                                     <button type="button" data-density="compact" onclick="setDensity('compact')">Compact</button>
@@ -507,8 +526,15 @@
             const name = document.getElementById('rosterSearchInput')?.value || '';
             const gradeLevel = document.getElementById('rosterGradeFilter')?.value || '';
             const params = new URLSearchParams();
-            const currentClassId = new URLSearchParams(window.location.search).get('classId');
+            const current = new URLSearchParams(window.location.search);
+            const currentClassId = current.get('classId');
             if (currentClassId) params.set('classId', currentClassId);
+            // Kept, like classId: typing a name while looking at the children with
+            // no emergency contact should search within them, not silently drop
+            // back to the whole school.
+            if (current.get('missingEmergencyContact') === 'true') {
+                params.set('missingEmergencyContact', 'true');
+            }
             if (name.trim()) params.set('name', name.trim());
             if (gradeLevel.trim()) params.set('gradeLevel', gradeLevel.trim());
             params.set('page', '0');

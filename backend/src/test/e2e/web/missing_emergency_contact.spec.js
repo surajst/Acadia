@@ -46,7 +46,10 @@ test.describe('Children with no emergency contact', () => {
     await expect(page.locator('#rosterResultCount'))
       .toHaveText(new RegExp(`^${missing} student`), { timeout: 30000 });
     // And it says why it is short, rather than reading as missing children.
-    await expect(page.locator('.card-sub'))
+    // Scoped to the roster card: there are three .card-sub on this page, and an
+    // unscoped locator is one page-layout change away from asserting about the
+    // fee waivers panel instead.
+    await expect(page.locator('#rosterCard .card-sub'))
       .toContainText(/no emergency contact number/i);
   });
 
