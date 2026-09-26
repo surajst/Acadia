@@ -47,51 +47,89 @@ test.describe('Viewport Architecture Standards', () => {
 
 /**
  * A `pattern` a browser cannot compile is not a weaker check -- it is no check at
- * all. The attribute is discarded silently and the field accepts anything.
+ * all. The attribute is discarded silently and the field accepts anything, so the
+ * form looks validated and is not.
  *
  * This exists because that happened. R3-P2-7 gave the guardian phone field the
  * server's rule as a pattern, and I verified the regex against the server on
- * eighteen values in node before shipping it -- in node's default dialect. HTML
+ * eighteen values in node before shipping it -- in node's **default** dialect. HTML
  * compiles `pattern` with the **v** flag, where `(` and `)` inside a character
- * class are syntax errors rather than literals, so the browser threw the whole
- * thing away and every value validated. The test written for that field caught
- * it, but only that one field; nothing would have caught the next one.
+ * class are syntax errors rather than literals, so the browser discarded the whole
+ * thing and every value validated. The test written for that one field caught it;
+ * nothing would have caught the next one.
  *
- * So the rule is checked in the browser that has to run it, across every page the
- * standards sweep already visits, rather than by re-implementing the dialect in a
- * test. Compiling is all this asserts -- whether a pattern says the right thing is
- * its own screen's business.
+ * <h2>Read off the templates, not off the pages</h2>
+ *
+ * Two earlier shapes of this gate were worse, and both failure modes are worth
+ * recording because they look like passes:
+ *
+ * <p>Signing in and sweeping rendered pages reused `pagesToTest`, which signs in as
+ * `admin_1` -- not a seeded login, nothing in the codebase creates it. Those pages
+ * redirect to /login, where there are no patterned inputs, and the gate passed
+ * having inspected nothing. `#guardianPhone` is on /web/admin/management, so it
+ * would have missed the exact bug it was written for.
+ *
+ * <p>Naming pages by hand then needs every page to have one: the second attempt
+ * listed /web/teacher/tasks, which has no patterned input at all.
+ *
+ * <p>So it reads the templates from disk and compiles what it finds in a real
+ * browser engine -- comprehensive by construction, no login, no routing, and a new
+ * template is covered the day it is written. `total` must be greater than zero, so
+ * a scan that silently finds nothing fails rather than reassures.
  */
-test.describe('Every input pattern is a regex a browser will actually use', () => {
-    for (const p of pagesToTest) {
-        test(`Assert usable pattern attributes on ${p.path} (${p.role})`, async ({ page }) => {
-            await page.goto('/login');
-            await page.fill('#username', p.role);
-            await page.fill('#password', 'PilotLaunchSecure2026!');
-            await page.click('button[type="submit"]');
-            await page.waitForLoadState('load');
+const fs = require('fs');
+const path = require('path');
 
-            await page.goto(p.path);
-            await page.waitForLoadState('load');
+const TEMPLATE_DIR = path.join(__dirname, '..', '..', '..', 'main', 'resources', 'templates');
 
-            const broken = await page.evaluate(() => {
-                const bad = [];
-                document.querySelectorAll('input[pattern]').forEach((input) => {
-                    const source = input.getAttribute('pattern');
-                    try {
-                        // How the HTML spec says a pattern is compiled: anchored,
-                        // and with the v flag.
-                        new RegExp('^(?:' + source + ')$', 'v');
-                    } catch (e) {
-                        bad.push((input.id || input.name || 'unnamed') + ': ' + e.message);
-                    }
-                });
-                return bad;
-            });
-
-            expect(broken,
-                'a pattern the browser cannot compile is ignored, so the field checks nothing')
-                .toEqual([]);
-        });
+/** Every pattern="..." in every template, with where it came from. */
+function collectPatterns(dir) {
+    const found = [];
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            found.push(...collectPatterns(full));
+            continue;
+        }
+        if (!entry.name.endsWith('.html')) continue;
+        const html = fs.readFileSync(full, 'utf8');
+        const attribute = /\spattern\s*=\s*"([^"]*)"/g;
+        let match;
+        while ((match = attribute.exec(html)) !== null) {
+            found.push({ file: entry.name, source: match[1] });
+        }
     }
+    return found;
+}
+
+test.describe('Every input pattern is a regex a browser will actually use', () => {
+    test('Assert every template pattern compiles the way HTML compiles it', async ({ page }) => {
+        const patterns = collectPatterns(TEMPLATE_DIR);
+
+        // The anti-vacuity guard. An absence assertion that cannot tell "nothing
+        // wrong" from "nothing looked at" is the trap this gate exists to close.
+        expect(patterns.length,
+            `no pattern attributes found under ${TEMPLATE_DIR} -- the templates moved, `
+            + 'or the scan is broken; either way this gate is asserting nothing')
+            .toBeGreaterThan(0);
+
+        // In a browser, because the dialect is the whole point. Re-implementing it
+        // here would only test my copy of it, which is how the bug shipped.
+        await page.goto('/login');
+        const broken = await page.evaluate((list) => {
+            return list.filter((entry) => {
+                try {
+                    new RegExp('^(?:' + entry.source + ')$', 'v');
+                    return false;
+                } catch (e) {
+                    entry.error = e.message;
+                    return true;
+                }
+            });
+        }, patterns);
+
+        expect(broken,
+            'a pattern the browser cannot compile is discarded, so the field checks nothing')
+            .toEqual([]);
+    });
 });

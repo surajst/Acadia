@@ -19,6 +19,8 @@ import com.concept.tasks.data.TaskType;
 import com.concept.tasks.data.TeacherTask;
 import com.concept.tasks.data.TeacherTaskRepository;
 import com.concept.tasks.data.TeacherTaskRequest;
+import com.concept.academics.data.Subject;
+import com.concept.academics.data.SubjectRepository;
 import com.concept.notification.app.NotificationPublisher;
 import com.concept.tasks.app.TeacherTaskService;
 import com.concept.user.CurrentUserService;
@@ -60,6 +62,7 @@ public class TasksService {
     private final UserRepository userRepository;
     private final AcademicSubmissionRepository submissionRepository;
     private final TeacherTaskRepository teacherTaskRepository;
+    private final SubjectRepository subjectRepository;
     private final NotificationPublisher notificationPublisher;
     private final NotificationDeliveryService notificationDeliveryService;
     private final CurrentUserService currentUserService;
@@ -74,6 +77,7 @@ public class TasksService {
                         UserRepository userRepository,
                         AcademicSubmissionRepository submissionRepository,
                         TeacherTaskRepository teacherTaskRepository,
+                        SubjectRepository subjectRepository,
                         NotificationPublisher notificationPublisher,
                         NotificationDeliveryService notificationDeliveryService,
                         CurrentUserService currentUserService,
@@ -87,6 +91,7 @@ public class TasksService {
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
         this.teacherTaskRepository = teacherTaskRepository;
+        this.subjectRepository = subjectRepository;
         this.notificationPublisher = notificationPublisher;
         this.notificationDeliveryService = notificationDeliveryService;
         this.currentUserService = currentUserService;
@@ -898,12 +903,22 @@ public class TasksService {
         if (request == null) {
             throw TasksException.badRequest("No task was submitted.");
         }
+        UUID callerTenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         boolean forWholeClass = !Boolean.FALSE.equals(request.getAssignedToClass());
         if (!forWholeClass) {
-            return; // a task for one named student is scoped by that student
+            // Who it is for is scoped by the named student. What subject it is
+            // filed under still is not, so that is checked against the section
+            // that pupil is actually in.
+            Student only = request.getStudentId() == null || callerTenantId == null ? null
+                    : studentRepository.findByIdAndTenantId(request.getStudentId(), callerTenantId)
+                            .orElse(null);
+            if (only != null && only.getClassSection() != null) {
+                validateTaskSubject(request, authentication, only.getClassSection(), callerTenantId);
+            }
+            return;
         }
 
-        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
+        UUID tenantId = callerTenantId;
         if (request.getClassSectionId() == null) {
             throw TasksException.badRequest(
                     "Choose which class this task is for. Without a section it would go to every "
@@ -925,6 +940,8 @@ public class TasksService {
                             + ", so you cannot set work for it.");
         }
 
+        validateTaskSubject(request, authentication, section, tenantId);
+
         // The standard is what the task is stored against and what a student is
         // matched on, so it has to agree with the section or the task reaches
         // nobody. Derived rather than trusted: the client sends both.
@@ -938,6 +955,92 @@ public class TasksService {
         return subjectAssignmentRepository.existsByTeacherAndClassSection(teacher, section);
     }
 
+    /**
+     * A task has to be filed under a subject the caller actually teaches that class.
+     *
+     * <p>{@code validateTaskTarget} has checked the section since R2-P1-2, but
+     * nothing ever looked at the subject -- so Priya, assigned to 6-A for
+     * Mathematics, could post English homework to 6-A. It appeared on those
+     * children's lists under English, with 6-A's real English teacher none the
+     * wiser. The web form offering all five of the school's subjects is how it
+     * surfaced.
+     *
+     * <p>On create only. There is no edit path to guard: {@code updateTask} takes
+     * the title, description, due date and XP, and deliberately not who or what a
+     * task is for, because moving a task after work has been handed in would orphan
+     * those submissions. Tasks already filed under the wrong subject stay as they
+     * are; this refuses new ones.
+     *
+     * <h2>What counts as a mismatch</h2>
+     *
+     * <p>The rule fires only when the subject <em>is one this school offers</em> and
+     * is not one of the caller's. A code the catalogue does not know -- an
+     * abbreviation, a typo, a subject from another system -- is left alone, because
+     * there is no subject of anybody else's being borrowed and nothing to compare
+     * against. Refusing on a basis it cannot verify is how this rule would stop a
+     * teacher setting homework at all, which is worse than the loose behaviour it
+     * replaces.
+     *
+     * <p>That leniency is narrow on purpose. "Is one this school offers" is matched
+     * against both spellings of every catalogue subject, so filing work under
+     * {@code English} rather than {@code ENGLISH} is the same claim and gets the
+     * same refusal. Otherwise the whole rule would be one spelling away from
+     * nothing.
+     *
+     * <p>The shape comparison exists because a task carries a code
+     * ("SOCIAL_SCIENCE") and an assignment carries a name ("Social Science").
+     */
+    private void validateTaskSubject(CreateTaskRequest request, Authentication authentication,
+                                     ClassSection section, UUID tenantId) {
+        String code = request.getSubjectCode();
+        if (code == null || code.isBlank()) {
+            throw TasksException.badRequest("Choose a subject for this task.");
+        }
+
+        User caller = currentUserService.getCurrentUser(authentication).orElse(null);
+        if (caller == null) {
+            return; // the section check has already refused this caller
+        }
+        if (caller.getRole() == UserRole.ADMIN || caller.getRole() == UserRole.PRINCIPAL) {
+            // Somebody has to be able to set work for a teacher who has left, and
+            // an admin is assigned to nothing. The section check beside this one
+            // exempts them for the same reason.
+            return;
+        }
+        if (tenantId == null) {
+            return;
+        }
+
+        // Is this one of the school's own subjects, under either spelling?
+        Subject offered = subjectRepository.findByTenantIdOrderBySortOrderAsc(tenantId).stream()
+                .filter(subject -> sameSubject(subject.getCode(), code)
+                        || sameSubject(subject.getDisplayName(), code))
+                .findFirst()
+                .orElse(null);
+        if (offered == null) {
+            return; // not a subject anyone here teaches -- see the note above
+        }
+
+        boolean theirs = subjectAssignmentRepository.findByTeacher(caller).stream()
+                .filter(a -> a.getClassSection() != null
+                        && section.getId().equals(a.getClassSection().getId()))
+                .map(SubjectAssignment::getSubjectName)
+                .anyMatch(name -> sameSubject(name, offered.getCode())
+                        || sameSubject(name, offered.getDisplayName()));
+        if (!theirs) {
+            throw TasksException.badRequest(
+                    "You're not assigned to teach " + offered.getDisplayName() + ".");
+        }
+    }
+
+    /** "Social Science" and SOCIAL_SCIENCE are one subject written two ways. */
+    private static boolean sameSubject(String left, String right) {
+        return left != null && right != null && shape(left).equals(shape(right));
+    }
+
+    private static String shape(String value) {
+        return value.trim().toUpperCase(java.util.Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
+    }
     private Student requireStudent(Authentication authentication) {
         return currentUserService.getCurrentStudent(authentication)
                 .orElseThrow(() -> TasksException.badRequest("Student record not found"));

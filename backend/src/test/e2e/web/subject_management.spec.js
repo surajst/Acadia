@@ -62,9 +62,18 @@ test.describe('Sprint 1: Data-driven Subject Catalog', () => {
     const apiCodes = await page.evaluate(() => fetch('/api/subjects').then(r => r.json()).then(list => list.map(s => s.code)));
     const optionValues = await page.locator('#subjectType option').evaluateAll(opts => opts.map(o => o.value));
 
-    expect(optionValues.length).toBe(apiCodes.length);
-    for (const code of apiCodes) {
-      expect(optionValues).toContain(code);
+    // Drawn from the catalogue, which is what "not hardcoded" means and what this
+    // test was written to protect. It used to assert every catalogue code was on
+    // offer; the picker now shows only the subjects the signed-in teacher is
+    // assigned to teach for the chosen class, because the server refuses the rest
+    // (TaskSubjectScopeTest). So the claim becomes: every option is a real
+    // catalogue code, and there is at least one.
+    //
+    // A hardcoded list would fail this the moment a school renames or adds a
+    // subject, which is the regression that mattered.
+    expect(optionValues.length).toBeGreaterThan(0);
+    for (const value of optionValues) {
+      expect(apiCodes).toContain(value);
     }
   });
 

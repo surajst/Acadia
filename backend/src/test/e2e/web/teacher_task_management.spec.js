@@ -20,7 +20,11 @@ async function createTask(page, title) {
   await page.goto('/web/teacher/tasks');
   await page.waitForLoadState('networkidle');
   await page.fill('#taskTitle', title);
-  await page.selectOption('#subjectType', { index: 1 });
+  // By code, not by index. The picker now shows only the subjects this teacher
+  // is assigned to teach for the chosen class, so index 1 was Science when the
+  // whole catalogue was listed and does not exist now -- and the server would
+  // refuse it either way.
+  await page.selectOption('#subjectType', 'MATHEMATICS');
   await page.selectOption('#taskType', 'HOMEWORK');
   await page.selectOption('#classSectionId', { label: 'Grade 6 - A' });
   await page.locator('input[name="assignedToClass"][value="true"]').check();
@@ -131,48 +135,122 @@ test.describe('Managing a task after it is set', () => {
   });
 
   /**
-   * R3-P2-3. The Subject picker listed all five of the school's subjects in
-   * catalogue order, so a teacher who takes Mathematics in 6-A had to hunt past
-   * English and Hindi to reach the only one they were likely to want.
+   * R3-P2-3, finished. The Subject picker listed all five of the school's subjects,
+   * so a teacher who takes Mathematics in 6-A was invited to file English homework
+   * for them.
    *
-   * Grouped, not filtered -- and the second half of this test is why. The list
-   * still has to offer every subject: nothing on the server restricts
-   * subjectCode, `Teacher task creation subject dropdown is populated from
-   * /api/subjects, not hardcoded` asserts the option count matches the catalogue,
-   * and two task-creation tests deliberately set Science and English work. A
-   * filtered list would have broken all three and invented a rule the API does
-   * not keep.
+   * The first version of this grouped rather than filtered, deliberately: nothing
+   * on the server restricted subjectCode, so a short list would have been a rule
+   * the form kept and the API did not. The server enforces it now
+   * (TaskSubjectScopeTest), which inverts that argument -- leaving the other four
+   * on offer means offering four guaranteed refusals.
+   *
+   * The fallback is the part worth protecting, and the admin case below is it.
    */
-  test("the subject picker puts the teacher's own subject first, and still offers the rest",
+  test('the subject picker offers only what this teacher teaches that class', async ({ page }) => {
+    await page.goto('/test/reset');
+    await loginAsTeacher(page);
+    await page.goto('/web/teacher/tasks');
+    await page.waitForLoadState('networkidle');
+
+    const select = page.locator('#subjectType');
+    await expect(select.locator('option').first()).toHaveText(/Mathematics/, { timeout: 30000 });
+
+    const offered = await select.locator('option').evaluateAll(opts => opts.map(o => o.value));
+    expect(offered, 'this teacher takes Mathematics in 6-A and nothing else')
+      .toEqual(['MATHEMATICS']);
+
+    // And the catalogue is still what it is drawn from -- the list is narrowed,
+    // not hardcoded, which is what `populated from /api/subjects` is about.
+    const apiCodes = await page.evaluate(() =>
+      fetch('/api/subjects').then(r => r.json()).then(list => list.map(s => s.code)));
+    expect(apiCodes.length).toBeGreaterThan(offered.length);
+    for (const code of offered) {
+      expect(apiCodes).toContain(code);
+    }
+  });
+
+  /**
+   * The fallback: when the form cannot tell what the caller teaches, it offers
+   * everything.
+   *
+   * <p>This is the half that keeps the narrowing safe, and it is worth a test of its
+   * own because nothing else would notice it breaking -- the teacher test above
+   * passes whether the fallback works or not.
+   *
+   * <p>Driven by failing the request rather than by signing in as an admin. That was
+   * the first version and it was the wrong surface: /web/teacher/tasks does not
+   * properly support an admin -- the template has a branch reading "This page is for
+   * teachers. An admin account cannot list tasks here." -- and the test timed out
+   * waiting for a page that never settles for them. The admin exemption is a server
+   * rule and is pinned where it lives, in
+   * TaskSubjectScopeTest.anAdminIsNotAssignedToAnythingAndIsNotHeldToThis.
+   *
+   * <p>What matters here is the branch, not who takes it: an admin, a teacher whose
+   * assignment cannot be matched to a catalogue entry, and a request that simply
+   * failed all arrive at the same place, and none of them should be left unable to
+   * choose a subject at all.
+   */
+  test('when the form cannot tell what the caller teaches, it offers every subject',
     async ({ page }) => {
       await page.goto('/test/reset');
       await loginAsTeacher(page);
+
+      // Exactly what an admin gets from this endpoint, and what a network failure
+      // gets anybody.
+      await page.route('**/api/teacher/classes', route =>
+        route.fulfill({ status: 403, contentType: 'application/json', body: '{"error":"no"}' }));
+
       await page.goto('/web/teacher/tasks');
       await page.waitForLoadState('networkidle');
 
-      const select = page.locator('#subjectType');
-      await expect(select.locator('option').first()).toHaveText(/Mathematics/, { timeout: 30000 });
-
-      // Grouped under a heading that says why it is first.
-      await expect(select.locator('optgroup').first())
-        .toHaveAttribute('label', /You teach this class/i);
-
-      // The half that must not regress: every catalogue subject is still on offer.
+      const offered = await page.locator('#subjectType option').evaluateAll(opts => opts.map(o => o.value));
       const apiCodes = await page.evaluate(() =>
         fetch('/api/subjects').then(r => r.json()).then(list => list.map(s => s.code)));
-      const optionValues = await select.locator('option').evaluateAll(opts => opts.map(o => o.value));
-      expect(optionValues.length,
-        'grouping must not drop options -- the server does not restrict subjectCode')
-        .toBe(apiCodes.length);
-      for (const code of apiCodes) {
-        expect(optionValues).toContain(code);
-      }
 
-      // And a subject this teacher does not take is still selectable, which is
-      // what teacher_task_creation.spec.js relies on.
-      await select.selectOption('SCIENCE');
-      await expect(select).toHaveValue('SCIENCE');
+      expect(offered.length,
+        'with nothing to narrow by, every subject has to stay available -- the '
+        + 'alternative is a picker with nothing in it')
+        .toBe(apiCodes.length);
+      expect(apiCodes.length, 'the catalogue should have more than one subject for this to mean anything')
+        .toBeGreaterThan(1);
     });
+
+  /**
+   * The rule as the teacher meets it. The picker keeps them out of this by default;
+   * this drives the refusal itself, because the picker is a courtesy and the server
+   * is the rule -- and a teacher who gets here needs to be told why, not just
+   * stopped.
+   */
+  test("a subject the teacher does not teach is refused, and says so", async ({ page }) => {
+    await page.goto('/test/reset');
+    await loginAsTeacher(page);
+    await page.goto('/web/teacher/tasks');
+    await page.waitForLoadState('networkidle');
+
+    await page.fill('#taskTitle', 'QA P17 Wrong Subject');
+    await page.selectOption('#taskType', 'HOMEWORK');
+    await page.selectOption('#classSectionId', { label: 'Grade 6 - A' });
+    await page.locator('input[name="assignedToClass"][value="true"]').check();
+    await page.fill('#xpReward', '30');
+
+    // Past the narrowed list, the way anything that is not this form arrives.
+    await page.locator('#subjectType').evaluate((select) => {
+      const option = document.createElement('option');
+      option.value = 'ENGLISH';
+      option.textContent = 'English';
+      select.appendChild(option);
+      select.value = 'ENGLISH';
+    });
+
+    await page.click('button:has-text("Assign Task")');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('[data-task-notice]'))
+      .toContainText(/not assigned to teach English/i, { timeout: 30000 });
+    await expect(page.locator('#tasksTableBody tr', { hasText: 'QA P17 Wrong Subject' }))
+      .toHaveCount(0);
+  });
 
   test('a task nobody has touched can be deleted', async ({ page }) => {
     await page.goto('/test/reset');

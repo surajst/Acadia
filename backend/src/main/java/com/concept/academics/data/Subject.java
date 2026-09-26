@@ -1,5 +1,4 @@
 package com.concept.academics.data;
-import com.concept.tasks.data.TeacherTask;
 import com.concept.curriculum.data.Curriculum;
 
 import com.concept.common.BaseTenantEntity;

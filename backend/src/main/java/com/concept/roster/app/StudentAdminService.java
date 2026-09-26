@@ -493,7 +493,25 @@ public class StudentAdminService {
         student.setDateOfBirth(details.dateOfBirth());
         student.setMedicalNotes(blankToNull(details.medicalNotes()));
         student.setEmergencyContactName(blankToNull(details.emergencyContactName()));
-        student.setEmergencyContactPhone(blankToNull(details.emergencyContactPhone()));
+
+        // The same rule the guardian number has, for the same reason, one step
+        // more serious: this is the number a school rings when something has
+        // happened to the child. It took any text at all -- blankToNull and
+        // nothing else -- so "call mum" was as acceptable here as a phone number,
+        // and nobody would find out until the day it was needed.
+        //
+        // Checked when the number CHANGES, not on every save. The profile form
+        // posts every field it holds, so validating unconditionally would refuse
+        // an unrelated edit to a child's allergies because their emergency number
+        // was typed wrong in 2024 -- the rule becoming the problem. A record
+        // already holding a bad number keeps it until somebody touches it, and
+        // then it has to be right.
+        String emergencyPhone = blankToNull(details.emergencyContactPhone());
+        boolean changed = !java.util.Objects.equals(emergencyPhone, student.getEmergencyContactPhone());
+        if (changed && emergencyPhone != null) {
+            PhoneNumbers.require(emergencyPhone, "emergency contact");
+        }
+        student.setEmergencyContactPhone(emergencyPhone);
     }
 
     private static String blankToNull(String value) {
