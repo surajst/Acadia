@@ -429,6 +429,10 @@
         });
 
         async function loadTasks() {
+            // Names first, or the column below lies about who a task was set for.
+            if (sectionLabelsReady) {
+                await sectionLabelsReady;
+            }
             try {
                 const response = await fetch('/api/teacher/tasks/my-tasks');
                 if (!response.ok) {
@@ -454,7 +458,7 @@
                             <td class="px-4 py-4 font-semibold text-slate-900">${task.title}</td>
                             <td class="px-4 py-4">${task.subjectCode}</td>
                             <td class="px-4 py-4"><span class="px-2 py-1 text-[10px] rounded bg-indigo-500/10 text-indigo-700 font-bold">${task.taskType}</span></td>
-                            <td class="px-4 py-4">Class ${task.standard}</td>
+                            <td class="px-4 py-4">${taskClassLabel(task)}</td>
                             <td class="px-4 py-4">${task.assignedToClass ? '🏫 Whole Class' : '👤 Individual'}</td>
                             <td class="px-4 py-4 text-slate-500">${task.dueDate || 'No Due Date'}</td>
                             <td class="px-4 py-4">
@@ -471,7 +475,8 @@
                                 ${task.taskStatus === 'CLOSED'
                                     ? `<button type="button" data-task-reopen data-id="${task.id}" onclick="taskAction(this.dataset.id, 'reopen')"
                                                class="px-2 py-1 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 cursor-pointer">Reopen</button>`
-                                    : `<button type="button" data-task-close data-id="${task.id}" onclick="taskAction(this.dataset.id, 'close')"
+                                    : `<button type="button" data-task-close data-id="${task.id}" data-title="${escapeAttr(task.title)}"
+                                               onclick="closeTask(this.dataset.id, this.dataset.title)"
                                                class="px-2 py-1 text-[10px] font-bold rounded bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 cursor-pointer">Close</button>`}
                                 <button type="button" data-task-delete data-id="${task.id}" data-title="${escapeAttr(task.title)}"
                                         onclick="deleteTask(this.dataset.id, this.dataset.title)"
@@ -493,6 +498,49 @@
             }
         }
 
+        /**
+         * Section id -> "Grade 6 - A", filled by loadSectionOptions.
+         *
+         * <p>The task rows carry classSectionId but not the section's name, and
+         * /api/teacher/section-options is already fetched for the create form --
+         * so the names are here for the asking rather than needing a new field on
+         * the task payload.
+         */
+        var sectionLabels = {};
+
+        /**
+         * Resolves once the names above are in.
+         *
+         * <p>loadSectionOptions and loadTasks are two independent fetches, and
+         * loadTasks starts first -- so without this the table renders before any
+         * section name has arrived and every section-limited task is labelled
+         * "all sections", which is worse than the vague label it replaced. It
+         * never rejects: loadSectionOptions handles its own failure, and a missing
+         * name degrades to the grade rather than to no table.
+         */
+        var sectionLabelsReady = null;
+
+        /**
+         * Who a task was actually set for.
+         *
+         * <p>This column read "Class ${task.standard}" -- the grade -- for every
+         * task, including one limited to a single section. A task set for 6-A was
+         * listed identically to one set for the whole of Grade 6, and the column
+         * beside it says "Whole Class", so the two together read as "everyone in
+         * Grade 6". That was true before tasks carried a section; it has not been
+         * true since, and this list was the last place still saying it.
+         *
+         * <p>A task with no classSectionId is a genuine grade-wide one from before
+         * the section became required, and getTasksForStudent still matches those
+         * by grade -- so "all sections" is the honest label, not a fallback.
+         */
+        function taskClassLabel(task) {
+            var named = task.classSectionId ? sectionLabels[task.classSectionId] : null;
+            if (named) return named;
+            var grade = task.standard == null ? 'Unknown grade' : 'Grade ' + task.standard;
+            return task.assignedToClass ? grade + ' \u00b7 all sections' : grade;
+        }
+
         async function loadSectionOptions() {
             const select = document.getElementById('classSectionId');
             try {
@@ -503,6 +551,7 @@
                     select.innerHTML = '<option value="">No classes assigned to you</option>';
                     return;
                 }
+                sections.forEach(function (s) { sectionLabels[s.value] = s.label; });
                 select.innerHTML = sections
                     .map(function (s) { return '<option value="' + s.value + '">' + s.label + '</option>'; })
                     .join('');
@@ -554,6 +603,24 @@
             } catch (error) {
                 showTaskNotice('Network error.', false);
             }
+        }
+
+        /**
+         * Closing asked nothing, while Delete asks -- and closing is the one a
+         * teacher reaches for far more often. It takes the task off every pupil's
+         * list and stops them handing it in, from a small button sitting between
+         * "Who handed in" and "Delete".
+         *
+         * <p>The wording says what is recoverable, because that is the question
+         * somebody about to press it actually has.
+         */
+        async function closeTask(taskId, title) {
+            if (!confirm('Close "' + title + '"?\n\n'
+                    + 'It comes off every pupil\'s list and they will not be able to hand it in. '
+                    + 'Work already handed in stays on record, and you can reopen it.')) {
+                return;
+            }
+            await taskAction(taskId, 'close');
         }
 
         async function deleteTask(taskId, title) {
@@ -656,7 +723,7 @@
             modal.classList.remove('flex');
         }
 
-        loadSectionOptions();
+        sectionLabelsReady = loadSectionOptions().catch(function () {});
     </script>
 
 
