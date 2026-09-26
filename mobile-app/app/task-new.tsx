@@ -109,7 +109,9 @@ export default function NewTaskScreen() {
       setNotice({
         kind: 'ok',
         text: toClass
-          ? `${title.trim()} went to everyone in ${cls.gradeName ?? cls.className}.`
+          // The section, not the grade: this is the same claim as the chip
+          // above, and it was overstating the reach in the same way.
+          ? `${title.trim()} went to everyone in ${cls.className ?? 'the class'}.`
           : `${title.trim()} went to ${student?.name}.`,
       });
       // Then out to the list, so the teacher sees the task they just set rather
@@ -218,17 +220,22 @@ export default function NewTaskScreen() {
       <Field label="ASSIGN TO">
         <ChipRow
           items={[
-            { key: 'class', label: `Whole of ${cls?.gradeName ?? 'the grade'}` },
+            { key: 'class', label: `Whole class (${cls?.className ?? 'this class'})` },
             { key: 'one', label: 'One student' },
           ]}
           selected={toClass ? 'class' : 'one'}
           onSelect={(k) => setToClass(k === 'class')}
         />
-        {/* Tasks are keyed by grade, not section -- a class task reaches 6-A,
-            6-B and 6-C alike. Naming the section here would be a lie. */}
+        {/* This screen used to say "Whole of Grade 6" and, underneath, "Every
+            section of Grade 6, not just Grade 6 - A". Both were true when tasks
+            were keyed by grade; they stopped being true when the section became
+            required, and the submit call above has sent classSectionId ever
+            since. A teacher setting homework for 6-A was being told it would
+            reach 6-B and 6-C as well. */}
         {toClass && cls && (
           <Text style={s.dueNote}>
-            Every section of {cls.gradeName ?? 'this grade'}, not just {cls.className}.
+            Everyone in {cls.className}. Other sections of{' '}
+            {cls.gradeName ?? 'this grade'} will not see it.
           </Text>
         )}
       </Field>
