@@ -171,32 +171,50 @@ test.describe('Managing a task after it is set', () => {
   });
 
   /**
-   * An admin is assigned to no class and is exempt from the rule on the server, so
-   * narrowing their list would leave them unable to set work for anybody. They get
-   * the whole catalogue, via the same empty-result fallback that protects a teacher
-   * whose assignment cannot be matched to a catalogue entry.
+   * The fallback: when the form cannot tell what the caller teaches, it offers
+   * everything.
+   *
+   * <p>This is the half that keeps the narrowing safe, and it is worth a test of its
+   * own because nothing else would notice it breaking -- the teacher test above
+   * passes whether the fallback works or not.
+   *
+   * <p>Driven by failing the request rather than by signing in as an admin. That was
+   * the first version and it was the wrong surface: /web/teacher/tasks does not
+   * properly support an admin -- the template has a branch reading "This page is for
+   * teachers. An admin account cannot list tasks here." -- and the test timed out
+   * waiting for a page that never settles for them. The admin exemption is a server
+   * rule and is pinned where it lives, in
+   * TaskSubjectScopeTest.anAdminIsNotAssignedToAnythingAndIsNotHeldToThis.
+   *
+   * <p>What matters here is the branch, not who takes it: an admin, a teacher whose
+   * assignment cannot be matched to a catalogue entry, and a request that simply
+   * failed all arrive at the same place, and none of them should be left unable to
+   * choose a subject at all.
    */
-  test('an admin still sees every subject', async ({ page }) => {
-    await page.goto('/test/reset');
-    await page.goto('/login');
-    // admin@greenwood.com, not admin_1: the latter is used in a few specs but is
-    // not a seeded login, so signing in as it never completes.
-    await page.fill('#username', 'admin@greenwood.com');
-    await page.fill('#password', 'PilotLaunchSecure2026!');
-    await page.click('button[type="submit"]');
-    await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/login'),
-      { timeout: 90000 });
+  test('when the form cannot tell what the caller teaches, it offers every subject',
+    async ({ page }) => {
+      await page.goto('/test/reset');
+      await loginAsTeacher(page);
 
-    await page.goto('/web/teacher/tasks');
-    await page.waitForLoadState('networkidle');
+      // Exactly what an admin gets from this endpoint, and what a network failure
+      // gets anybody.
+      await page.route('**/api/teacher/classes', route =>
+        route.fulfill({ status: 403, contentType: 'application/json', body: '{"error":"no"}' }));
 
-    const offered = await page.locator('#subjectType option').evaluateAll(opts => opts.map(o => o.value));
-    const apiCodes = await page.evaluate(() =>
-      fetch('/api/subjects').then(r => r.json()).then(list => list.map(s => s.code)));
-    expect(offered.length,
-      'an admin is assigned to nothing, so a narrowed list would offer them nothing')
-      .toBe(apiCodes.length);
-  });
+      await page.goto('/web/teacher/tasks');
+      await page.waitForLoadState('networkidle');
+
+      const offered = await page.locator('#subjectType option').evaluateAll(opts => opts.map(o => o.value));
+      const apiCodes = await page.evaluate(() =>
+        fetch('/api/subjects').then(r => r.json()).then(list => list.map(s => s.code)));
+
+      expect(offered.length,
+        'with nothing to narrow by, every subject has to stay available -- the '
+        + 'alternative is a picker with nothing in it')
+        .toBe(apiCodes.length);
+      expect(apiCodes.length, 'the catalogue should have more than one subject for this to mean anything')
+        .toBeGreaterThan(1);
+    });
 
   /**
    * The rule as the teacher meets it. The picker keeps them out of this by default;
