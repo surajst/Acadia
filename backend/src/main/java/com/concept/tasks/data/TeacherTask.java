@@ -58,6 +58,22 @@ public class TeacherTask {
     @Column(name = "created_by_teacher_id", nullable = false)
     private UUID createdByTeacherId;
 
+    /**
+     * Who set this task, as a reference to the person.
+     *
+     * <p>{@code createdByTeacherId} above is UUID.nameUUIDFromBytes(email) with no
+     * foreign key, so a teacher who changes their address loses every task they
+     * have set -- and V15, which lowercased stored addresses, already did that to
+     * the rows written before it. Nullable because V24 refuses to guess: a row it
+     * could not match to a user keeps a null here and was listed in the migration
+     * log rather than reassigned.
+     *
+     * <p>The old column is still written for one release so a rollback has
+     * something to read. It is no longer what ownership is decided by.
+     */
+    @Column(name = "created_by_user_id")
+    private UUID createdByUserId;
+
     @Column(name = "xp_reward", nullable = false)
     private Integer xpReward = 50;
 
@@ -116,6 +132,9 @@ public class TeacherTask {
     
     public UUID getCreatedByTeacherId() { return createdByTeacherId; }
     public void setCreatedByTeacherId(UUID createdByTeacherId) { this.createdByTeacherId = createdByTeacherId; }
+
+    public UUID getCreatedByUserId() { return createdByUserId; }
+    public void setCreatedByUserId(UUID createdByUserId) { this.createdByUserId = createdByUserId; }
     
     public Integer getXpReward() { return xpReward; }
     public void setXpReward(Integer xpReward) { this.xpReward = xpReward; }

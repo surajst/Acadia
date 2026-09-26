@@ -149,9 +149,15 @@ public class TasksService {
     }
 
     public Object myTasks(Authentication authentication) {
-        String username = authentication != null ? authentication.getName() : "teacher_1";
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
-        return teacherTaskService.getTasksCreatedByTeacher(username, tenantId);
+        // Whose tasks these are is now a question about the person, not about the
+        // spelling of their address. It also fixes a list that was empty for a
+        // second reason: ScreenContentSeeder writes the real users.id into the old
+        // column while TeacherTaskService writes the hash, so the seeded demo
+        // tasks never matched the lookup and never appeared here.
+        return teacherTaskService.getTasksCreatedByUser(
+                currentUserService.getCurrentUser(authentication).map(User::getId).orElse(null),
+                tenantId);
     }
 
     /**
@@ -665,9 +671,18 @@ public class TasksService {
             return task;
         }
 
-        String username = authentication != null ? authentication.getName() : null;
-        UUID callerTaskId = teacherTaskService.resolveTeacherId(username);
-        if (!callerTaskId.equals(task.getCreatedByTeacherId())) {
+        // By user id, not by a hash of the caller's email address. The old column
+        // stopped identifying its owner the moment an address changed -- and V15
+        // changed a batch of them by lowercasing stored addresses, so a teacher
+        // could already be locked out of work they set themselves.
+        //
+        // A null owner means V24 could not match the row to any current user and
+        // deliberately left it rather than guessing. Those stay unmanageable by
+        // teachers, which is where they already were: whoever the hash belonged to
+        // no longer exists to match it. ADMIN and PRINCIPAL are past this point
+        // already, so somebody can still clear them up.
+        if (caller == null || task.getCreatedByUserId() == null
+                || !task.getCreatedByUserId().equals(caller.getId())) {
             throw new org.springframework.security.access.AccessDeniedException(
                     "That task was set by another teacher, so it is not yours to change.");
         }
