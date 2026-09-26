@@ -314,29 +314,34 @@
         }
 
         /**
-         * R3-P2-3. The Subject picker listed all five of the school's subjects in
-         * catalogue order, whoever was looking -- so a teacher who takes
-         * Mathematics in 6-A had to hunt past English, Hindi and the rest to find
-         * the only one they were likely to want.
+         * The subjects the caller may actually file a task under, for the class
+         * they have chosen.
          *
-         * <p>Their own subjects for the chosen section come first, under a heading,
-         * and the rest stay below it. Deliberately grouped rather than filtered,
-         * for two reasons.
+         * <p>This listed all five of the school's subjects until R3-P2-3, which
+         * put the teacher's own first and left the rest below. That was the right
+         * call while the server accepted any subjectCode -- a short list would
+         * have been a rule the form kept and the API did not. The server enforces
+         * it now (TasksService.validateTaskSubject), so the opposite is true:
+         * leaving the other four on offer is offering four guaranteed refusals.
          *
-         * <p>First, the list must keep offering everything. `Teacher task creation
-         * subject dropdown is populated from /api/subjects, not hardcoded` asserts
-         * the option count matches the catalogue exactly -- it was written when the
-         * list was hardcoded, and that decision still holds. Nothing on the server
-         * restricts subjectCode either, so a filtered list would be a rule the form
-         * invented and the API does not keep.
+         * <p>Two things keep this from locking anybody out, and both matter more
+         * than the narrowing itself:
          *
-         * <p>Second, the join is fragile: assignments store a subject *name*
-         * ("Mathematics") and tasks are keyed by a catalogue *code*
-         * ("MATHEMATICS"), matched on the display name. An assignment recorded as
-         * "Maths" matches nothing -- which under grouping costs the teacher an
-         * ordering, and under filtering would have cost them the ability to set any
-         * work at all.
+         * <p>An empty result falls back to the whole catalogue. An admin or
+         * principal is not assigned to anything and is exempt on the server, and
+         * /api/teacher/classes answers them with an error rather than a list -- so
+         * the map is empty and they see everything, which is correct for them. The
+         * same fallback covers any case where the match below fails.
+         *
+         * <p>The match is on SHAPE, not on the display name, because that is what
+         * the server compares: a task carries a code ("SOCIAL_SCIENCE") and an
+         * assignment carries a name ("Social Science"). Comparing names alone would
+         * hide a subject from a teacher that the server would have accepted.
          */
+        function subjectShape(value) {
+            return String(value == null ? '' : value).trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+        }
+
         function renderSubjectOptions() {
             const subjectSelect = document.getElementById('subjectType');
             if (!subjectSelect) return;
@@ -347,26 +352,21 @@
 
             const sectionId = (document.getElementById('classSectionId') || {}).value;
             const mine = (sectionId && subjectsBySection[sectionId]) || [];
-            const names = mine.map(function (n) { return String(n).toLowerCase(); });
-            const teaches = function (subject) {
-                return names.indexOf(String(subject.displayName).toLowerCase()) !== -1;
-            };
+            const shapes = mine.map(subjectShape);
+            const offered = subjectCatalogue.filter(function (subject) {
+                return shapes.indexOf(subjectShape(subject.code)) !== -1
+                    || shapes.indexOf(subjectShape(subject.displayName)) !== -1;
+            });
+            const options = offered.length ? offered : subjectCatalogue;
 
-            const own = subjectCatalogue.filter(teaches);
-            const rest = subjectCatalogue.filter(function (s) { return !teaches(s); });
-            const option = function (s) {
-                return '<option value="' + s.code + '">' + s.displayName + '</option>';
-            };
-
-            // Keep the teacher's choice: the section can change after they have
-            // picked a subject, and re-selecting the first option would silently
-            // retarget the task.
+            // Keep the choice if it survives: the section can change after a
+            // subject has been picked, and silently selecting the first option
+            // would retarget the task without saying so.
             const chosen = subjectSelect.value;
-            subjectSelect.innerHTML = own.length
-                ? '<optgroup label="You teach this class">' + own.map(option).join('') + '</optgroup>'
-                    + '<optgroup label="Other subjects">' + rest.map(option).join('') + '</optgroup>'
-                : subjectCatalogue.map(option).join('');
-            if (chosen && subjectCatalogue.some(function (s) { return s.code === chosen; })) {
+            subjectSelect.innerHTML = options
+                .map(function (s) { return '<option value="' + s.code + '">' + s.displayName + '</option>'; })
+                .join('');
+            if (chosen && options.some(function (s) { return s.code === chosen; })) {
                 subjectSelect.value = chosen;
             }
         }
@@ -520,11 +520,18 @@
                         
                         loadTasks();
                     } else {
-                        const err = await response.json();
-                        alert(err.error || 'Failed to create task');
+                        // The server's own words, in the page. It is the only thing
+                        // that knows why -- and since the subject a task is filed
+                        // under is now checked against what the teacher is assigned
+                        // to teach, "You're not assigned to teach English." is a
+                        // refusal an ordinary mis-click can reach. An alert() put
+                        // that behind an OK button nothing could quote back, and
+                        // this page already has a notice for exactly this.
+                        const err = await response.json().catch(function () { return {}; });
+                        showTaskNotice(err.error || 'Could not create that task.', false);
                     }
                 } catch (error) {
-                    alert('Network error');
+                    showTaskNotice('Network error. Please try again.', false);
                 }
             });
         });

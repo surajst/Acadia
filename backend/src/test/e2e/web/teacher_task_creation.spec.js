@@ -37,7 +37,11 @@ test.describe('Teacher Task Creation', () => {
 
         // Fill form
         await page.fill('#taskTitle', 'Test Homework Task');
-        await page.selectOption('#subjectType', 'SCIENCE');
+        // MATHEMATICS, not SCIENCE: this teacher is assigned Mathematics in 6-A and
+        // the server now refuses a task filed under a subject they do not teach
+        // (TaskSubjectScopeTest). Which subject this task carries was never what
+        // the test was about.
+        await page.selectOption('#subjectType', 'MATHEMATICS');
         await page.selectOption('#taskType', 'HOMEWORK');
         // A section, not a grade -- see R2-P1-2.
         await page.selectOption('#classSectionId', { label: 'Grade 6 - A' });
@@ -204,7 +208,11 @@ test.describe('Teacher Task Creation', () => {
 
         // Fill form
         await page.fill('#taskTitle', 'Read Chapter 1');
-        await page.selectOption('#subjectType', 'ENGLISH');
+        // MATHEMATICS, not ENGLISH: this teacher is assigned Mathematics in 6-A and
+        // the server now refuses a task filed under a subject they do not teach
+        // (TaskSubjectScopeTest). Which subject this task carries was never what
+        // the test was about.
+        await page.selectOption('#subjectType', 'MATHEMATICS');
         // A section, not a grade -- see R2-P1-2.
         await page.selectOption('#classSectionId', { label: 'Grade 6 - A' });
         await page.fill('#xpReward', '50');
