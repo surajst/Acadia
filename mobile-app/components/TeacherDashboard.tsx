@@ -62,8 +62,11 @@ export default function TeacherDashboard({
         unread={unreadCount}
         onBellPress={() => router.push('/notifications')}
         // The card reported the day's register and led nowhere, which read as a
-        // broken control rather than a summary.
-        onRegisterPress={() => router.push('/attendance')}
+        // broken control rather than a summary. /teacher, not /attendance:
+        // (tabs)/attendance.tsx is the parent's attendance calendar and answers a
+        // teacher with "Parent View Only", so this control has been landing staff
+        // on a lock screen. Their register is taken from My Classes.
+        onRegisterPress={() => router.push('/teacher')}
       />
 
       <View style={s.body}>

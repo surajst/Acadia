@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 /**
  * The two app actions the QA pass could not confirm, driven in a real browser

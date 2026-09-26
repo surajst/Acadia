@@ -26,6 +26,16 @@ public class TasksException extends RuntimeException {
         return new TasksException(403, message);
     }
 
+    /**
+     * 409. The request was understood and allowed, and the thing it asks for has
+     * already happened -- a second hand-in of the same task being the case this
+     * was added for. A 400 would read as "you got the request wrong", which is
+     * not what a pupil pressing a button they should not have been shown did.
+     */
+    public static TasksException conflict(String message) {
+        return new TasksException(409, message);
+    }
+
     public static TasksException notFound(String message) {
         return new TasksException(404, message);
     }
