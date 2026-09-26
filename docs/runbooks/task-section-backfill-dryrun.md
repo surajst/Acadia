@@ -187,6 +187,52 @@ A task in Tier C with `handed_in = 0` and `task_status` not ACTIVE is arguably
 better **closed** than narrowed: nobody did it, and guessing a section for it
 invents information. That is a judgement for you, not a migration.
 
+## Outcome, 27 September 2026
+
+**Run, decided, and no migration written.** Recording it here because a runbook
+that says only how to look is worth half of one that says what was found.
+
+Query 1 returned **6** grade-wide class tasks, all Grade 6, created 19-24
+September -- entirely inside the window between the section column arriving and
+the section becoming required, both of which landed on the 25th in commit
+5125f7e. Nothing has produced one since, and those 6 turned out to be every task
+in the database.
+
+Tier A was empty: Grade 6 has two sections, so no grade had only one.
+
+The disambiguator the section "The thing that shapes this whole job" calls
+impossible turned out to be reachable after all. The hash cannot be joined in
+SQL, but it can be *computed* in SQL -- the v3 UUID expression worked out for
+V24's preflight (docs/runbooks/task-owner-unmatched-preflight.md) resolves each
+task to the teacher who set it, and from there to the sections they teach. That
+answered all six:
+
+| Set by | Tasks | Teaches | Verdict |
+|---|---|---|---|
+| Anita Desai | 4 | Grade 6 - A **and** 6 - B | leave -- reaching both sections is plausibly what she meant |
+| Priya Demo | 2 | Grade 6 - A only | genuinely 6-A, but both are QA rows and both are now CLOSED |
+
+Anita's four are the important half, and the finding is not "ambiguous" but
+"probably already right": she teaches both sections, so a grade-wide task from her
+reaching both is not a bug. Narrowing them on the strength of one child's
+submission would have taken work off her own 6-B pupils. Two of the four share a
+title and a date, which looks like the same task set twice -- worth her glance,
+not a migration.
+
+Priya's two were unambiguous and would have justified a migration touching one
+visible row; both have since been closed from the console, so a closed task is off
+every pupil's list and there is nothing left to narrow.
+
+So: one row would ever have changed, it was test data, and it has been dealt with
+by hand. A Flyway migration -- written twice, tested, reviewed, deployed, and
+permanent in the schema history -- would have been a poor trade for that.
+
+**If this comes up again**, start with Query 1, then go straight to the teacher
+resolution above rather than to Tiers B and C. "Which sections does the person who
+set this teach" beats "who has handed it in" every time: one submission in a
+two-section grade proves nothing, which is a weakness in the Tier B rule as
+written below.
+
 ## What I would recommend
 
 1. Run Query 1. If it is zero, we are done and no migration is needed.
