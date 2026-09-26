@@ -68,7 +68,20 @@ export default function ChallengesScreen() {
     HOMEWORK: T.info50, READING: T.brand50, PROJECT: T.warn50,
   }), [T]);
 
+  /**
+   * What the sheet is showing, and whether the sheet is up. Two pieces of state
+   * rather than one, because a Modal with animationType="slide" is still on
+   * screen for the length of its slide-out: clearing the task to dismiss it
+   * emptied the sheet on the very next frame, so the child watched the task
+   * dissolve to " · + XP" and a blank body as it slid away.
+   *
+   * <p>openTask therefore outlives the dismissal and is replaced by the next
+   * open, not cleared by the close. Modal's onDismiss would be the tidier hook
+   * for it, but it fires on iOS only -- on Android and on the web build QA is
+   * testing, it never fires at all.
+   */
   const [openTask, setOpenTask] = useState<Challenge | null>(null);
+  const [sheetUp, setSheetUp] = useState(false);
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
@@ -101,7 +114,13 @@ export default function ChallengesScreen() {
   };
 
   const open = async (task: Challenge) => {
+    // Everything the last attempt left behind is cleared here rather than on
+    // close: on close it would be visible, mid-animation, as the sheet emptying
+    // itself. Opening is the one moment when nothing is on screen to disturb.
     setOpenTask(task);
+    setSheetUp(true);
+    setHandedIn(false);
+    setError(null);
     setNotes('');
     setQuestions([]);
     setAnswers([]);
@@ -125,12 +144,11 @@ export default function ChallengesScreen() {
     setError(null);
     try {
       await submitTask({ taskId: openTask.id, notes, answers });
-      // The sheet stays open and openTask stays set. Clearing it here is what
-      // blanked the header to " · + XP": visible={openTask !== null} starts the
-      // slide-out, but the optional chaining renders empty on the very next
-      // frame, so the child watched the task they had just handed in dissolve.
+      // The sheet stays up and turns into the confirmation. It does not dismiss
+      // itself: a child who has just pressed Hand in should be told it worked,
+      // and be the one who closes it.
       //
-      // And the confirmation was an Alert, which does nothing at all on React
+      // The confirmation used to be an Alert, which does nothing at all on React
       // Native Web -- so on the build being tested, a successful hand-in looked
       // exactly like nothing happening. It is in the sheet now, where both
       // platforms show it.
@@ -143,15 +161,13 @@ export default function ChallengesScreen() {
     }
   };
 
-  /** Dismiss the sheet and forget the attempt, ready for the next task. */
-  const closeSheet = () => {
-    setOpenTask(null);
-    setHandedIn(false);
-    setError(null);
-    setNotes('');
-    setAnswers([]);
-    setQuestions([]);
-  };
+  /**
+   * Dismiss the sheet, and nothing else. Every reset lives in open() -- see the
+   * note on sheetUp. Touching any of it here shows the sheet taking itself
+   * apart on the way out: the title goes, the body goes, and a sheet that was
+   * showing "Handed in" flips back to the Hand in button as it slides.
+   */
+  const closeSheet = () => setSheetUp(false);
 
   const answered = questions.length === 0 || answers.every((a) => a.trim().length > 0);
 
@@ -221,7 +237,7 @@ export default function ChallengesScreen() {
       </ScrollView>
 
       <Modal
-        visible={openTask !== null}
+        visible={sheetUp}
         transparent
         animationType="slide"
         onRequestClose={closeSheet}
