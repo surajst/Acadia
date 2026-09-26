@@ -179,7 +179,9 @@ test.describe('Managing a task after it is set', () => {
   test('an admin still sees every subject', async ({ page }) => {
     await page.goto('/test/reset');
     await page.goto('/login');
-    await page.fill('#username', 'admin_1');
+    // admin@greenwood.com, not admin_1: the latter is used in a few specs but is
+    // not a seeded login, so signing in as it never completes.
+    await page.fill('#username', 'admin@greenwood.com');
     await page.fill('#password', 'PilotLaunchSecure2026!');
     await page.click('button[type="submit"]');
     await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/login'),
