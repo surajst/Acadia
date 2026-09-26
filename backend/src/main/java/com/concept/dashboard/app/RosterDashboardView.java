@@ -15,6 +15,12 @@ public record RosterDashboardView(List<StudentRow> roster,
                                   /** Register entries recorded today, of any status. */
                                   long markedToday,
                                   int attendancePercentage,
+                                  /**
+                                   * Children with no emergency contact number, within
+                                   * whatever this caller can see. The field is optional
+                                   * and stays so; what was missing was anybody knowing.
+                                   */
+                                  long missingEmergencyContact,
                                   int totalPages,
                                   long totalRosterItems,
                                   Map<String, Object> schoolProgress,

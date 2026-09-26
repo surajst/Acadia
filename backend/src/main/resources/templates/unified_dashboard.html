@@ -80,6 +80,32 @@
                             <p class="kpi-note" th:text="|of ${totalStudents ?: 0} on roll today|">of 505 on roll today</p>
                         </div>
 
+                        <!-- Drawn only when there is something to do about it. An
+                             always-present "0 missing" is furniture on a screen a
+                             head teacher reads every morning, and a zero here would
+                             also be what a failed query reports -- so the card
+                             appearing at all is the signal.
+
+                             The number is a link because a count on its own only
+                             worries people: 30 children is a morning's phone calls,
+                             and this says which 30. -->
+                        <div class="kpi-cell" th:if="${(missingEmergencyContact ?: 0) > 0}">
+                            <p class="eyebrow">Missing emergency contact</p>
+                            <a class="kpi-value" data-kpi-missing-emergency
+                               href="/web/admin/dashboard?missingEmergencyContact=true"
+                               th:href="@{/web/admin/dashboard(missingEmergencyContact=true)}"
+                               style="display:inline-block; color:var(--warn); text-decoration:none;"
+                               th:text="${missingEmergencyContact}">30</a>
+                            <div class="track track--xs" style="margin-top:7px;">
+                                <div class="fill" th:style="${'background:var(--warn); width:'
+                                     + ((totalStudents ?: 0) > 0
+                                        ? ((missingEmergencyContact ?: 0) * 100 / totalStudents) : 0) + '%'}"></div>
+                            </div>
+                            <p class="kpi-note"
+                               th:text="|${missingEmergencyContact} of ${totalStudents ?: 0} with no number to ring|">
+                                30 of 52 with no number to ring</p>
+                        </div>
+
                         <!-- Rendered only when the figure is actually known. The
                              fallback used to be 0%, which reads as "nothing has
                              been collected" rather than "we could not work it

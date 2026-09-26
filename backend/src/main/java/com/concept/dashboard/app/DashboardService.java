@@ -76,6 +76,14 @@ public class DashboardService {
     public RosterDashboardView buildRosterDashboard(UUID tenantId, String username, UUID classId,
                                                     String nameFilter, String gradeFilter,
                                                     int page, int size, boolean principal) {
+        return buildRosterDashboard(tenantId, username, classId, nameFilter, gradeFilter,
+                false, page, size, principal);
+    }
+
+    public RosterDashboardView buildRosterDashboard(UUID tenantId, String username, UUID classId,
+                                                    String nameFilter, String gradeFilter,
+                                                    boolean missingEmergencyContactOnly,
+                                                    int page, int size, boolean principal) {
         // Every section in this tenant. Never unscoped: falling back to "the
         // first section found anywhere" would leak another tenant's roster.
         List<ClassSection> checkSections = Collections.emptyList();
@@ -118,6 +126,25 @@ public class DashboardService {
                 // Asked for someone else's class: serve an empty roster rather
                 // than that class's children.
                 conditionalRoster = Collections.emptyList();
+            } else if (missingEmergencyContactOnly) {
+                // Scoped the same way as everything else here: a teacher sees the
+                // children in their own sections, an admin the school. A count on a
+                // dashboard that leads to somebody else's roster would be a leak
+                // dressed up as a to-do list.
+                Page<Student> missing;
+                if (!scoped) {
+                    missing = tenantId == null ? Page.empty(pageable)
+                            : studentRepository.findMissingEmergencyContact(
+                                    tenantId, effectiveName, effectiveGrade, pageable);
+                } else if (!assignedClassrooms.isEmpty()) {
+                    missing = studentRepository.findMissingEmergencyContactIn(
+                            assignedClassrooms, effectiveName, effectiveGrade, pageable);
+                } else {
+                    missing = Page.empty(pageable);
+                }
+                conditionalRoster = missing.getContent();
+                totalRosterItems = missing.getTotalElements();
+                totalRosterPages = missing.getTotalPages();
             } else if (classId != null && (effectiveName != null || effectiveGrade != null)) {
                 // Class-specific view with name/grade filters: no dedicated paginated
                 // query exists for this combination, so filter in-memory (bounded by
@@ -178,6 +205,24 @@ public class DashboardService {
         long totalStudents = 0;
         long activeAbsences = 0;
         long markedToday = 0;
+        long missingEmergencyContact = 0;
+        try {
+            // Counted over what this caller can reach, not over the school, so a
+            // teacher's figure matches the list the figure links to.
+            if (!scoped) {
+                missingEmergencyContact = tenantId == null ? 0
+                        : studentRepository.countMissingEmergencyContact(tenantId);
+            } else if (!assignedClassrooms.isEmpty()) {
+                missingEmergencyContact =
+                        studentRepository.countMissingEmergencyContactIn(assignedClassrooms);
+            }
+        } catch (Exception e) {
+            // A KPI that cannot be computed must not take the dashboard with it.
+            // Same reasoning as the fee summary: zero here reads as "none missing",
+            // which is the wrong confident answer, but the card is only drawn when
+            // the figure is greater than zero.
+            missingEmergencyContact = 0;
+        }
         try {
             totalStudents = tenantId != null ? studentRepository.countByTenantId(tenantId) : 0;
             activeAbsences = tenantId != null
@@ -230,7 +275,8 @@ public class DashboardService {
                 .collect(Collectors.toList());
 
         return new RosterDashboardView(roster, allGradeNames, totalStudents, activeAbsences,
-                markedToday, attendancePercentage, totalRosterPages, totalRosterItems, schoolProgress, feeSummary);
+                markedToday, attendancePercentage, missingEmergencyContact,
+                totalRosterPages, totalRosterItems, schoolProgress, feeSummary);
     }
 
     @Transactional(readOnly = true)
