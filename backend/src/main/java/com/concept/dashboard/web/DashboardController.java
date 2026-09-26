@@ -42,6 +42,8 @@ public class DashboardController {
             @RequestParam(value = "classId", required = false) UUID classId,
             @RequestParam(value = "name", required = false) String nameFilter,
             @RequestParam(value = "gradeLevel", required = false) String gradeLevelFilter,
+            @RequestParam(value = "missingEmergencyContact", defaultValue = "false")
+            boolean missingEmergencyContact,
             @RequestParam(value = "page", defaultValue = "0") int pageParam,
             @RequestParam(value = "size", defaultValue = "20") int sizeParam,
             Model model, Authentication authentication) {
@@ -56,7 +58,8 @@ public class DashboardController {
 
         RosterDashboardView view = dashboardService.buildRosterDashboard(
                 tenantContext.getTenantId().orElse(null), username, classId,
-                nameFilter, gradeLevelFilter, page, size, "PRINCIPAL".equals(role));
+                nameFilter, gradeLevelFilter, missingEmergencyContact,
+                page, size, "PRINCIPAL".equals(role));
 
         model.addAttribute("currentUserRole", role);
         model.addAttribute("systemScope", "RESTRICTED_VIEW");
@@ -66,6 +69,8 @@ public class DashboardController {
         model.addAttribute("activeAbsences", view.activeAbsences());
         model.addAttribute("markedToday", view.markedToday());
         model.addAttribute("attendancePercentage", view.attendancePercentage());
+        model.addAttribute("missingEmergencyContact", view.missingEmergencyContact());
+        model.addAttribute("filterMissingEmergencyContact", missingEmergencyContact);
         model.addAttribute("filterName", nameFilter != null ? nameFilter : "");
         model.addAttribute("filterGrade", gradeLevelFilter != null ? gradeLevelFilter : "");
         model.addAttribute("currentPage", page);
