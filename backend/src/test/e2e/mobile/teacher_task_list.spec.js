@@ -58,6 +58,14 @@ test.describe("A teacher's task list on the phone", () => {
     await page.goto('/tasks');
     await page.waitForLoadState('networkidle');
 
+    // There has to be a list here before its contents mean anything. Without this
+    // the absence below passes on an empty screen, a spinner, or a failed fetch --
+    // and the whole point of the test is what the rows say.
+    const typeBadge = page.getByText(/^(HOMEWORK|PRACTICE|PROJECT|READING)$/);
+    await expect(typeBadge.first()).toBeVisible({ timeout: 30000 });
+    expect(await typeBadge.count(),
+      'no tasks rendered, so nothing below is being tested').toBeGreaterThan(0);
+
     // Nothing is closed yet, so the badge must be absent. Asserted before
     // closing anything: a screen that always drew CLOSED would pass the half
     // below and be just as wrong.

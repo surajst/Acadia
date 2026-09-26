@@ -177,6 +177,22 @@ class TaskNotificationRetirementTest {
         return ((Number) notificationService.unreadCount(who).get("count")).longValue();
     }
 
+    /**
+     * The precondition every test below needs: the row this is about exists and is
+     * unread right now.
+     *
+     * <p>Without it, "afterwards there are none" passes just as happily when there
+     * were none to begin with -- if taskAssigned stopped raising notifications, or
+     * the section filter stopped matching this pupil, every retirement test here
+     * would go green over an empty list. A test whose subject can silently be
+     * absent is not testing anything.
+     */
+    private void assertWaiting(Authentication who, UUID taskId, String whose) {
+        assertEquals(1, unreadAbout(who, taskId),
+                whose + " should have exactly one unread row about this task before anything "
+                        + "retires it -- with none, the assertions that follow prove nothing");
+    }
+
     // ── The notification has to exist before any of this means anything ───────
 
     @Test
@@ -194,6 +210,7 @@ class TaskNotificationRetirementTest {
     @Test
     void handingWorkInStopsTheHomeScreenSayingItIsWaiting() {
         TeacherTask task = setTask("Fractions worksheet 4");
+        assertWaiting(aaravAuth, task.getId(), "Aarav");
 
         tasksService.submitTaskForCurrentStudent(task.getId(), "Did 1 to 5", List.of(), aaravAuth);
 
@@ -209,6 +226,7 @@ class TaskNotificationRetirementTest {
     @Test
     void onePupilHandingInLeavesTheRestOfTheClassStillTold() {
         TeacherTask task = setTask("Fractions worksheet 4");
+        assertWaiting(diyaAuth, task.getId(), "Diya");
 
         tasksService.submitTaskForCurrentStudent(task.getId(), "Did 1 to 5", List.of(), aaravAuth);
 
@@ -222,6 +240,8 @@ class TaskNotificationRetirementTest {
     @Test
     void closingATaskRetiresItForEveryoneItWasSetFor() {
         TeacherTask task = setTask("Fractions worksheet 4");
+        assertWaiting(aaravAuth, task.getId(), "Aarav");
+        assertWaiting(diyaAuth, task.getId(), "Diya");
 
         tasksService.closeTask(task.getId(), teacher);
 
@@ -236,6 +256,8 @@ class TaskNotificationRetirementTest {
     @Test
     void deletingATaskRetiresItForEveryoneItWasSetFor() {
         TeacherTask task = setTask("Fractions worksheet 4");
+        assertWaiting(aaravAuth, task.getId(), "Aarav");
+        assertWaiting(diyaAuth, task.getId(), "Diya");
 
         tasksService.deleteTask(task.getId(), teacher);
 
@@ -253,6 +275,7 @@ class TaskNotificationRetirementTest {
     @Test
     void reopeningDoesNotRaiseTheOldNotificationAgain() {
         TeacherTask task = setTask("Fractions worksheet 4");
+        assertWaiting(aaravAuth, task.getId(), "Aarav");
         tasksService.closeTask(task.getId(), teacher);
 
         tasksService.reopenTask(task.getId(), teacher);
@@ -271,6 +294,8 @@ class TaskNotificationRetirementTest {
     void otherTasksAreLeftWaiting() {
         TeacherTask done = setTask("Fractions worksheet 4");
         TeacherTask notDone = setTask("Reading log");
+        assertWaiting(aaravAuth, done.getId(), "Aarav");
+        assertWaiting(aaravAuth, notDone.getId(), "Aarav");
 
         tasksService.submitTaskForCurrentStudent(done.getId(), "Did 1 to 5", List.of(), aaravAuth);
 
@@ -284,6 +309,7 @@ class TaskNotificationRetirementTest {
     @Test
     void aRetiredNotificationIsKeptAsHistoryRatherThanDeleted() {
         TeacherTask task = setTask("Fractions worksheet 4");
+        assertWaiting(aaravAuth, task.getId(), "Aarav");
         tasksService.submitTaskForCurrentStudent(task.getId(), "Did 1 to 5", List.of(), aaravAuth);
 
         List<Notification> about = notificationRepository
