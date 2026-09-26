@@ -9,6 +9,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { canOpen, ROLE_HOME } from '../constants/routeAccess';
+import { SCREEN_TITLES } from '../constants/screenTitles';
+import DocumentTitle from '../components/DocumentTitle';
 // Aliased: expo-router also exports a `ThemeProvider` (light/dark nav chrome,
 // used below for the Stack) -- unrelated to the app's own brand-colour theme.
 import { ThemeProvider as AppThemeProvider } from '@/context/ThemeContext';
@@ -116,6 +118,9 @@ function ProtectedStack() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      {/* Names the browser tab after whichever screen is open. Outside the
+          guard, so a redirect still leaves the tab correctly named. */}
+      <DocumentTitle />
       <RouteGuard>
       {/* headerTintColor was #fff on a light header, so every stack screen's
           title and back arrow were white on near-white -- invisible. That is
@@ -136,17 +141,17 @@ function ProtectedStack() {
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         {/* Had no title anywhere -- not declared here, and no inline
             Stack.Screen in the file -- so its header read the raw route name. */}
-        <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
-        <Stack.Screen name="teacher" options={{ title: 'My Classes' }} />
-        <Stack.Screen name="verification" options={{ title: 'Verification Queue' }} />
-        <Stack.Screen name="tasks" options={{ title: 'Tasks' }} />
-        <Stack.Screen name="task-new" options={{ title: 'New task' }} />
-        <Stack.Screen name="gradebook" options={{ title: 'Gradebook' }} />
-        <Stack.Screen name="timetable" options={{ title: 'Timetable' }} />
-        <Stack.Screen name="student-timetable" options={{ title: 'Timetable' }} />
-        <Stack.Screen name="student-news" options={{ title: 'School News' }} />
-        <Stack.Screen name="student-results" options={{ title: 'My Results' }} />
-        <Stack.Screen name="marketplace" options={{ title: 'Rewards' }} />
+        <Stack.Screen name="notifications" options={{ title: SCREEN_TITLES.notifications }} />
+        <Stack.Screen name="teacher" options={{ title: SCREEN_TITLES.teacher }} />
+        <Stack.Screen name="verification" options={{ title: SCREEN_TITLES.verification }} />
+        <Stack.Screen name="tasks" options={{ title: SCREEN_TITLES.tasks }} />
+        <Stack.Screen name="task-new" options={{ title: SCREEN_TITLES['task-new'] }} />
+        <Stack.Screen name="gradebook" options={{ title: SCREEN_TITLES.gradebook }} />
+        <Stack.Screen name="timetable" options={{ title: SCREEN_TITLES.timetable }} />
+        <Stack.Screen name="student-timetable" options={{ title: SCREEN_TITLES['student-timetable'] }} />
+        <Stack.Screen name="student-news" options={{ title: SCREEN_TITLES['student-news'] }} />
+        <Stack.Screen name="student-results" options={{ title: SCREEN_TITLES['student-results'] }} />
+        <Stack.Screen name="marketplace" options={{ title: SCREEN_TITLES.marketplace }} />
       </Stack>
       </RouteGuard>
     </ThemeProvider>
