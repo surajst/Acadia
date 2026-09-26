@@ -12,6 +12,13 @@ import java.util.UUID;
 @Repository
 public interface TeacherTaskRepository extends JpaRepository<TeacherTask, UUID> {
     List<TeacherTask> findByCreatedByTeacherIdAndTenantId(UUID teacherId, UUID tenantId);
+
+    /**
+     * The tasks a teacher has set, keyed on who they are rather than on a hash of
+     * their email address. See TeacherTask.createdByUserId for why the other one
+     * cannot be trusted.
+     */
+    List<TeacherTask> findByCreatedByUserIdAndTenantId(UUID createdByUserId, UUID tenantId);
     /**
      * Class tasks a student in one section should see: the ones set for their
      * own section, plus the ones with no section recorded at all.

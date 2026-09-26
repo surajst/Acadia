@@ -17,9 +17,43 @@ public class TeacherTaskService {
     @Autowired
     private TeacherTaskRepository teacherTaskRepository;
 
+    @Autowired
+    private com.concept.user.UserRepository userRepository;
+
+    /**
+     * The legacy owner id: UUID.nameUUIDFromBytes of the caller's login address.
+     *
+     * <p>Still written, for one release, so a rollback has a populated column to
+     * read. It is no longer what ownership is decided by -- see
+     * {@link #ownerIdFor} and TeacherTask.createdByUserId. A hash of an email
+     * address stops identifying a person the moment the address changes, which
+     * V15 did to a subset of these rows already by lowercasing them.
+     *
+     * @deprecated use the caller's own user id; this exists to keep the old
+     *             column populated until it is dropped.
+     */
+    @Deprecated
     public UUID resolveTeacherId(String username) {
         if (username == null) return UUID.fromString("11111111-1111-1111-1111-111111111111");
         return UUID.nameUUIDFromBytes(username.getBytes());
+    }
+
+    /** Who the caller is, for the column that references users.id. */
+    public UUID ownerIdFor(String username) {
+        if (username == null) {
+            return null;
+        }
+        return userRepository.findByEmail(com.concept.user.User.normaliseEmail(username))
+                .map(com.concept.user.User::getId)
+                .orElse(null);
+    }
+
+    /** The tasks this teacher set, by user id. */
+    public List<TeacherTask> getTasksCreatedByUser(UUID userId, UUID tenantId) {
+        if (userId == null) {
+            return java.util.List.of();
+        }
+        return teacherTaskRepository.findByCreatedByUserIdAndTenantId(userId, tenantId);
     }
 
     @Transactional
@@ -43,7 +77,10 @@ public class TeacherTaskService {
         // grade-wide, see TeacherTask.classSectionId.
         task.setClassSectionId(request.getClassSectionId());
         task.setStudentId(request.getStudentId());
+        // Both, for now. The new column is what ownership is read from; the old
+        // one stays populated for one release so a rollback is not a data loss.
         task.setCreatedByTeacherId(resolveTeacherId(teacherUsername));
+        task.setCreatedByUserId(ownerIdFor(teacherUsername));
         task.setXpReward(request.getXpReward() != null ? request.getXpReward() : 50);
         task.setDueDate(request.getDueDate());
 
