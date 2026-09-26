@@ -623,6 +623,14 @@ public class TasksService {
         if (given.size() > 2) submission.setAnswer3(given.get(2));
         submissionRepository.save(submission);
 
+        // The work is in, so the home screen should stop saying it is waiting.
+        // "Waiting for you" listed a pupil's homework until somebody tapped the
+        // row, and the bell counted it -- so a child who had handed everything in
+        // still had a list of things to do, and no way to clear it except by
+        // tapping into each task one at a time.
+        notificationPublisher.settledFor(student.getUserId(),
+                NotificationPublisher.TYPE_TASK, teacherTaskId);
+
         return Map.of("status", "submitted",
                 "taskId", teacherTaskId,
                 "xpAwaiting", task.getXpReward() == null ? 0 : task.getXpReward());
@@ -719,6 +727,11 @@ public class TasksService {
         }
         task.setTaskStatus("CLOSED");
         teacherTaskRepository.save(task);
+        // A closed task cannot be handed in, so it is waiting for nobody. Left
+        // alone, every pupil it was set for keeps an unread "New task" row
+        // pointing at work they are no longer allowed to do.
+        notificationPublisher.settledForEveryone(
+                NotificationPublisher.TYPE_TASK, task.getId(), tenantId);
         return Map.of("status", "closed", "id", task.getId());
     }
 
@@ -733,6 +746,11 @@ public class TasksService {
         // Back to ACTIVE, not OVERDUE: getTasksForStudent re-derives overdue from
         // the due date on the next read, so setting it here would be a guess the
         // read then corrects anyway.
+        //
+        // The notifications closing retired stay retired. They said "New task",
+        // and that announcement has already been made; marking them unread again
+        // would announce it a second time for a task the pupils have had all
+        // along, and would un-read rows some of them had genuinely dealt with.
         task.setTaskStatus("ACTIVE");
         teacherTaskRepository.save(task);
         return Map.of("status", "reopened", "id", task.getId());
@@ -761,6 +779,11 @@ public class TasksService {
         }
 
         teacherTaskRepository.delete(task);
+        // Same reason as closing, one step worse: the notification pointed at a
+        // task that no longer exists, so tapping it opened a list the task was
+        // not on.
+        notificationPublisher.settledForEveryone(
+                NotificationPublisher.TYPE_TASK, taskId, tenantId);
         return Map.of("status", "deleted", "id", taskId);
     }
 

@@ -70,6 +70,71 @@ test.describe('App actions that need a real browser', () => {
     await page.waitForLoadState('networkidle');
   });
 
+  /**
+   * R3-P1-2. Handing in was fixed by keeping the task set after a submission;
+   * pressing Close still cleared it, and Close is the path most pupils take --
+   * they open a task to read it and back out. The sheet emptied itself on the
+   * frame after the tap and slid away as a blank card with " · + XP" where the
+   * title had been.
+   *
+   * <p>Two halves. The frame sampler is the detector for the symptom itself:
+   * it reads the page on every animation frame across the slide-out, so a blank
+   * frame cannot pass unseen. It asserts an absence, so it cannot time out and
+   * cannot flake -- but an absence proves less, which is why the rest is the
+   * deterministic half: every reset moved from closeSheet into open(), and this
+   * pins that none of it was dropped on the way.
+   */
+  test('closing the hand-in sheet does not blank it on the way out', async ({ page }) => {
+    await page.goto('http://localhost:8080/test/reset');
+    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+
+    await page.getByText('Challenges', { exact: true }).first().click();
+    await page.waitForLoadState('networkidle');
+
+    const firstTask = page.locator('text=/Homework|Practice|Project|Reading/ >> visible=true').first();
+    if (await firstTask.count() === 0) {
+      test.skip(true, 'no task is set for this pupil in the seed; nothing to open');
+    }
+    await firstTask.click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('button', { name: 'Hand in' })).toBeVisible({ timeout: 30000 });
+
+    // Something to leave behind, so the reset has something to prove.
+    await page.getByPlaceholder('Optional note').fill('half-written note');
+
+    // Sample every frame of the dismissal. The header renders
+    // "{taskType} · +{xpReward} XP", so a healthy frame reads "+50 XP" and the
+    // defect reads "+ XP" with the number and the title gone.
+    await page.evaluate(() => {
+      window.__closeFrames = [];
+      const tick = () => {
+        window.__closeFrames.push(document.body.innerText);
+        if (window.__closeFrames.length < 150) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+
+    await page.getByRole('button', { name: 'Close without handing in' }).click();
+    // A fixed window rather than a wait for state: what is being measured is the
+    // slide-out itself, and there is no condition that marks its end.
+    await page.waitForTimeout(1500);
+
+    const frames = await page.evaluate(() => window.__closeFrames);
+    expect(frames.length, 'the frame sampler never ran, so it proved nothing').toBeGreaterThan(5);
+    expect(
+      frames.filter((f) => f.includes('+ XP')),
+      'the sheet emptied its header while sliding away',
+    ).toEqual([]);
+
+    // The deterministic half: re-open and the sheet is clean and ready, which is
+    // what closeSheet used to be responsible for.
+    await page.locator('text=/Homework|Practice|Project|Reading/ >> visible=true').first().click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('button', { name: 'Hand in' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByPlaceholder('Optional note')).toHaveValue('');
+    await expect(page.locator('text=Handed in >> visible=true')).toHaveCount(0);
+  });
+
   test('a teacher cannot save a score above the maximum, and sees it said so', async ({ page }) => {
     await page.goto('http://localhost:8080/test/reset');
     await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');

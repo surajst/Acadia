@@ -78,6 +78,62 @@ public class NotificationPublisher {
         }
     }
 
+    /**
+     * One person has dealt with the thing a notification was about.
+     *
+     * <p>"Waiting for you" on the home screen listed a pupil's homework until
+     * somebody tapped the row, so it went on saying a task was waiting after the
+     * work had been handed in -- and the bell counted it. Raising a notification
+     * was only ever half the story; nothing ever retired one.
+     *
+     * <p>Marked read rather than deleted: they were told, and that stays true. It
+     * is also what both the strip and the unread count already key off, so the
+     * two cannot drift apart.
+     *
+     * <p>Best-effort like everything else here: failing to retire a notification
+     * must not fail the hand-in it followed.
+     */
+    public void settledFor(UUID recipientUserId, String type, UUID relatedEntityId) {
+        if (recipientUserId == null || relatedEntityId == null) {
+            return;
+        }
+        try {
+            markRead(notificationRepository
+                    .findByRecipientIdAndTypeAndRelatedEntityIdAndReadFalse(
+                            recipientUserId, type, relatedEntityId));
+        } catch (Exception e) {
+            log.warn("Could not retire the {} notification for {}", type, recipientUserId, e);
+        }
+    }
+
+    /**
+     * The thing itself has gone, so it is waiting for nobody.
+     *
+     * <p>A closed or deleted task cannot be handed in, but every pupil it was set
+     * for kept an unread "New task" row pointing at it -- in the deleted case, at
+     * nothing at all.
+     */
+    public void settledForEveryone(String type, UUID relatedEntityId, UUID tenantId) {
+        if (relatedEntityId == null || tenantId == null) {
+            return;
+        }
+        try {
+            markRead(notificationRepository
+                    .findByTypeAndRelatedEntityIdAndTenantIdAndReadFalse(
+                            type, relatedEntityId, tenantId));
+        } catch (Exception e) {
+            log.warn("Could not retire the {} notifications for {}", type, relatedEntityId, e);
+        }
+    }
+
+    private void markRead(List<Notification> rows) {
+        if (rows.isEmpty()) {
+            return;
+        }
+        rows.forEach(n -> n.setRead(true));
+        notificationRepository.saveAll(rows);
+    }
+
     private void raise(UUID tenantId, UUID academicYearId, UUID recipientId, String recipientRole,
                        String type, UUID relatedEntityId, String title, String body) {
         try {
