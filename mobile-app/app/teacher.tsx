@@ -35,7 +35,15 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
   };
 
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={onViewRoster}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.85}
+      onPress={onViewRoster}
+      accessibilityRole="button"
+      accessibilityLabel={
+        `${className}, ${subject}, ${plural(studentCount, 'student')}. View roster.`
+      }
+    >
       <View style={styles.cardHeader}>
         <View style={styles.cardIconWrap}>
           <SymbolView
@@ -64,10 +72,21 @@ function RosterCard({ className, subject, studentCount, status, onViewRoster }: 
           tintColor={T.text4}
           size={14}
         />
-        <Text style={styles.footerText}> {studentCount} Students</Text>
-        <TouchableOpacity style={styles.viewBtn} onPress={onViewRoster}>
+        <Text style={styles.footerText}> {plural(studentCount, 'student')}</Text>
+        {/* A View, not a TouchableOpacity. The whole card already opens the
+            roster, and this sat inside it calling the same handler -- which
+            React Native Web renders as a <button> inside a <button>. That is
+            invalid HTML, so React logs it, and Expo's dev overlay then pins a
+            bar across the bottom of the screen that swallows clicks on whatever
+            is down there. It is the "RosterCard error" that went unnamed for two
+            rounds, and the reason the gradebook test could not reach Save.
+
+            It was also wrong on its own terms: nested controls give a screen
+            reader two buttons where there is one action, and a tap on the inner
+            one ran the handler twice. */}
+        <View style={styles.viewBtn}>
           <Text style={styles.viewBtnText}>View Roster  ›</Text>
-        </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
