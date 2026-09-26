@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 test.describe('Native Web App E2E Tests', () => {
   // Use the Expo Web URL instead of the backend URL

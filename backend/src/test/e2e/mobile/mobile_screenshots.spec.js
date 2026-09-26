@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 test.describe('Mobile Screenshots', () => {
   test.use({ viewport: { width: 390, height: 844 }, baseURL: 'http://localhost:8080' });

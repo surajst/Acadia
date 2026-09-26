@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 /**
  * A parent's token lasts 24 hours. Rakesh's expired overnight and the app did not
