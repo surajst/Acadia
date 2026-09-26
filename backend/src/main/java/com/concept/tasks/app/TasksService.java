@@ -362,9 +362,90 @@ public class TasksService {
         // The section, not just the grade: a class task set for 6-A used to
         // appear on every 6-B child's list, because the grade was all the
         // student's tasks were ever matched on.
-        return teacherTaskService.getTasksForStudent(student.getId(), extractStandard(student),
+        List<TeacherTask> tasks = teacherTaskService.getTasksForStudent(
+                student.getId(), extractStandard(student),
                 student.getClassSection() != null ? student.getClassSection().getId() : null,
                 student.getTenantId());
+
+        // What this pupil has already handed in, so the card can say so. One
+        // query for the lot rather than one per task.
+        Map<UUID, String> statusByTask = new java.util.HashMap<>();
+        for (AcademicSubmission sub : submissionRepository.findByStudentId(student.getId())) {
+            if (sub.getTeacherTaskId() == null) {
+                continue;
+            }
+            // A pupil can have more than one row for a task once work has been
+            // sent back and done again. The most advanced answer wins, so an
+            // approval is never hidden behind an older rejection.
+            statusByTask.merge(sub.getTeacherTaskId(), sub.getStatus(), TasksService::moreAdvanced);
+        }
+
+        return tasks.stream().map(task -> {
+            String status = statusByTask.getOrDefault(task.getId(), StudentTaskView.NOT_SUBMITTED);
+            return new StudentTaskView(
+                    task.getId(),
+                    task.getTitle(),
+                    task.getDescription(),
+                    task.getSubjectCode(),
+                    task.getTaskType() == null ? null : task.getTaskType().name(),
+                    task.getStandard(),
+                    task.getXpReward(),
+                    task.getDueDate(),
+                    task.getTaskStatus(),
+                    status,
+                    !StudentTaskView.NOT_SUBMITTED.equals(status));
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * Which of two submission statuses to report for one task.
+     *
+     * <p>APPROVED beats PENDING beats REJECTED. Without an order, whichever row
+     * the database returned last would decide, and a pupil whose second attempt
+     * was approved could still be shown "Sent back".
+     */
+    private static String moreAdvanced(String a, String b) {
+        return rank(a) >= rank(b) ? a : b;
+    }
+
+    private static int rank(String status) {
+        if ("APPROVED".equals(status)) {
+            return 3;
+        }
+        if ("PENDING".equals(status)) {
+            return 2;
+        }
+        return 1;
+    }
+
+    /**
+     * One task as a pupil needs to see it, including what they have already done
+     * about it.
+     *
+     * <p>The screen had no way to know: {@code /api/student/tasks} returned the
+     * task and nothing else, so after Aarav handed work in and pressed Done, the
+     * card still read "Tap to open and hand in" and its accessible name still said
+     * "Open to hand in" -- while his teacher could see the submission sitting in
+     * the queue. He had no way to tell whether it had gone.
+     *
+     * <p>submissionStatus is NOT_SUBMITTED, PENDING, APPROVED or REJECTED. The
+     * first is not a real row: it is the absence of one, named so the client does
+     * not have to treat null as a fourth state.
+     */
+    public record StudentTaskView(
+            UUID id,
+            String title,
+            String description,
+            String subjectCode,
+            String taskType,
+            Integer standard,
+            Integer xpReward,
+            java.time.LocalDate dueDate,
+            String taskStatus,
+            String submissionStatus,
+            boolean handedIn) {
+
+        static final String NOT_SUBMITTED = "NOT_SUBMITTED";
     }
 
     public Object taskQuestions(UUID taskId, Authentication authentication) {
@@ -513,11 +594,23 @@ public class TasksService {
             throw TasksException.badRequest("Your teacher has closed this task, so it can no longer be handed in.");
         }
 
-        // One pending hand-in per task: re-submitting replaces the previous
-        // attempt rather than queueing a second copy for the teacher to review.
-        submissionRepository
-                .findByStudentIdAndTeacherTaskId(student.getId(), teacherTaskId).stream()
-                .filter(s -> "PENDING".equals(s.getStatus()))
+        // A second hand-in of the same task is refused rather than silently
+        // replacing the first. The app used to leave Hand in pressable after a
+        // submission -- because nothing told it one existed -- so a pupil could
+        // send the same work repeatedly and quietly overwrite what their teacher
+        // was part-way through reviewing.
+        //
+        // Work that was sent back is the exception: REJECTED is an invitation to
+        // try again, and that attempt replaces the rejected row.
+        List<AcademicSubmission> existing =
+                submissionRepository.findByStudentIdAndTeacherTaskId(student.getId(), teacherTaskId);
+        boolean alreadyWithTeacher = existing.stream()
+                .anyMatch(s -> "PENDING".equals(s.getStatus()) || "APPROVED".equals(s.getStatus()));
+        if (alreadyWithTeacher) {
+            throw TasksException.conflict("You have already handed this in.");
+        }
+        existing.stream()
+                .filter(s -> "REJECTED".equals(s.getStatus()))
                 .forEach(submissionRepository::delete);
 
         AcademicSubmission submission =

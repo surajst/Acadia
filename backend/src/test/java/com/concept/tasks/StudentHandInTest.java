@@ -185,14 +185,28 @@ class StudentHandInTest {
                         + queues.pendingSubmissions().size() + " submission(s)");
     }
 
-    /** Handing the same task in twice must not create a second pending row. */
+    /**
+     * Handing the same task in twice must not create a second pending row.
+     *
+     * <p>Still the point of this test; the mechanism changed with R3-P1-1. It used
+     * to be that a second attempt silently replaced the first, which meant a pupil
+     * could overwrite work their teacher was part-way through reviewing -- and the
+     * app left Hand in pressable because nothing told it a submission existed.
+     * Now the second attempt is refused with 409, and the first survives.
+     * StudentTaskStatusTest covers the statuses and the sent-back case.
+     */
     @Test
     void handingInTwiceDoesNotQueueItTwice() {
         UUID taskId = createTask();
         tasksService.submitTaskForCurrentStudent(taskId, "First go", List.of("4/8", "1/2"), student);
-        tasksService.submitTaskForCurrentStudent(taskId, "Second go", List.of("1/2", "4/8"), student);
+
+        com.concept.tasks.app.TasksException e = org.junit.jupiter.api.Assertions.assertThrows(
+                com.concept.tasks.app.TasksException.class,
+                () -> tasksService.submitTaskForCurrentStudent(
+                        taskId, "Second go", List.of("1/2", "4/8"), student));
+        assertEquals(409, e.status());
 
         assertEquals(1, submissionRepository.findByStudentId(aarav.getId()).size(),
-                "a second attempt replaces the first rather than queueing another");
+                "one row, and it is still the first attempt rather than an overwrite");
     }
 }

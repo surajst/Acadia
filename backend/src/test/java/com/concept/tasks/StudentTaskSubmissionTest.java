@@ -165,14 +165,34 @@ public class StudentTaskSubmissionTest {
                 "the reward is the teacher's, and must not be something the pupil can name");
     }
 
+    /**
+     * Renamed from handingInTwiceReplacesThePendingAttempt, because R3-P1-1
+     * changed what should happen rather than how.
+     *
+     * <p>"A teacher should review one hand-in, not a pile of retries" is still the
+     * point, and still asserted. What changed is which copy survives: replacing
+     * the pending row let a pupil overwrite work their teacher was part-way
+     * through reviewing, and the app left Hand in pressable because nothing in the
+     * payload said a submission existed. The second attempt is now refused with
+     * 409 and the first stands.
+     *
+     * <p>Work that was sent back is the exception, and StudentTaskStatusTest
+     * covers it: REJECTED is an invitation to try again.
+     */
     @Test
-    public void handingInTwiceReplacesThePendingAttempt() {
+    public void handingInTwiceIsRefusedAndTheFirstAttemptStands() {
         tasksService.submitTaskForCurrentStudent(task.getId(), "first go", List.of(), asStudent());
-        tasksService.submitTaskForCurrentStudent(task.getId(), "second go", List.of(), asStudent());
+
+        com.concept.tasks.app.TasksException e = org.junit.jupiter.api.Assertions.assertThrows(
+                com.concept.tasks.app.TasksException.class,
+                () -> tasksService.submitTaskForCurrentStudent(
+                        task.getId(), "second go", List.of(), asStudent()));
+        assertEquals(409, e.status(), "already handed in is a conflict, not a bad request");
 
         List<AcademicSubmission> queued = submissionRepository.findByStudentId(student.getId());
         assertEquals(1, queued.size(), "a teacher should review one hand-in, not a pile of retries");
-        assertEquals("second go", queued.get(0).getProofOfWorkNotes());
+        assertEquals("first go", queued.get(0).getProofOfWorkNotes(),
+                "the attempt the teacher may already be reading must not be overwritten");
     }
 
     @Test

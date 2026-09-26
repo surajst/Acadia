@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, Redirect, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { canOpen, ROLE_HOME } from '../constants/routeAccess';
 // Aliased: expo-router also exports a `ThemeProvider` (light/dark nav chrome,
 // used below for the Stack) -- unrelated to the app's own brand-colour theme.
 import { ThemeProvider as AppThemeProvider } from '@/context/ThemeContext';
@@ -85,11 +86,37 @@ function RootLayoutGate({ fontsLoaded }: RootLayoutGateProps) {
   return <ProtectedStack />;
 }
 
+/**
+ * Sends a signed-in user back to their own home if they reach a screen that is
+ * not theirs.
+ *
+ * <p>The API was already locked down -- a parent's token gets 403 on every teacher
+ * endpoint -- but the app let a parent open /gradebook by address, which rendered
+ * "Create assessments and enter scores" above "No classes assigned". Nothing
+ * leaked, because no data arrived; what leaked was the impression that a parent
+ * belongs there, and a screen of controls that cannot work.
+ *
+ * <p>A redirect rather than Expo Router route groups: groups would mean moving a
+ * dozen files and rewriting every router.push target, and the outcome asked for is
+ * that the person ends up at their own home. constants/routeAccess.ts holds the
+ * map, so the rule is one list rather than a check scattered across screens.
+ */
+function RouteGuard({ children }: { children: React.ReactNode }) {
+  const { userRole } = useAuth();
+  const pathname = usePathname();
+
+  if (!canOpen(userRole, pathname)) {
+    return <Redirect href={ROLE_HOME as never} />;
+  }
+  return <>{children}</>;
+}
+
 function ProtectedStack() {
   const colorScheme = useColorScheme();
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <RouteGuard>
       {/* headerTintColor was #fff on a light header, so every stack screen's
           title and back arrow were white on near-white -- invisible. That is
           why the child profile and recognition screens appeared to have no
@@ -121,6 +148,7 @@ function ProtectedStack() {
         <Stack.Screen name="student-results" options={{ title: 'My Results' }} />
         <Stack.Screen name="marketplace" options={{ title: 'Rewards' }} />
       </Stack>
+      </RouteGuard>
     </ThemeProvider>
   );
 }

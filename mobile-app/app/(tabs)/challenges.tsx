@@ -24,7 +24,30 @@ type Challenge = {
   xpReward: number;
   dueDate: string;
   taskStatus: string;
+  /**
+   * What this pupil has already done about the task: NOT_SUBMITTED, PENDING,
+   * APPROVED or REJECTED. Added in R3-P1-1 -- before it, the card could only ever
+   * say "Tap to open and hand in", so Aarav had no way to tell whether the work
+   * he had handed in had gone anywhere, while his teacher could see it waiting.
+   */
+  submissionStatus?: 'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  handedIn?: boolean;
 };
+
+/** What the card says, and whether it still offers to hand in. */
+function handInState(item: Challenge) {
+  switch (item.submissionStatus) {
+    case 'PENDING':
+      return { hint: 'Handed in · waiting for your teacher', done: true, tone: 'pending' as const };
+    case 'APPROVED':
+      return { hint: `Approved · +${item.xpReward} XP`, done: true, tone: 'approved' as const };
+    case 'REJECTED':
+      // Sent back is an invitation, so this one stays open.
+      return { hint: 'Sent back · tap to try again →', done: false, tone: 'sentBack' as const };
+    default:
+      return { hint: 'Tap to open and hand in →', done: false, tone: 'open' as const };
+  }
+}
 
 export default function ChallengesScreen() {
   const T = useTheme();
@@ -149,13 +172,23 @@ export default function ChallengesScreen() {
               <Text style={styles.emptySubtext}>Check back later!</Text>
             </View>
           ) : (
-            challenges.map((item) => (
+            challenges.map((item) => {
+              const state = handInState(item);
+              return (
               <TouchableOpacity
                 key={item.id}
                 style={styles.card}
-                onPress={() => open(item)}
+                // Already with the teacher: opening it would offer a Hand in the
+                // server now refuses with 409, so the card stops pretending.
+                onPress={state.done ? undefined : () => open(item)}
+                disabled={state.done}
                 accessibilityRole="button"
-                accessibilityLabel={`${item.title}, ${item.xpReward} XP. Open to hand in.`}
+                accessibilityState={{ disabled: state.done }}
+                accessibilityLabel={
+                  state.done
+                    ? `${item.title}, ${item.xpReward} XP. ${state.hint}.`
+                    : `${item.title}, ${item.xpReward} XP. Open to hand in.`
+                }
               >
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardTitle}>{item.title}</Text>
@@ -170,9 +203,19 @@ export default function ChallengesScreen() {
                   <Text style={styles.xpText}>+{item.xpReward} XP</Text>
                   {item.dueDate && <Text style={styles.dateText}>Due: {item.dueDate}</Text>}
                 </View>
-                <Text style={styles.openHint}>Tap to open and hand in →</Text>
+                <Text
+                  style={[
+                    styles.openHint,
+                    state.tone === 'pending' && styles.hintPending,
+                    state.tone === 'approved' && styles.hintApproved,
+                    state.tone === 'sentBack' && styles.hintSentBack,
+                  ]}
+                >
+                  {state.hint}
+                </Text>
               </TouchableOpacity>
-            ))
+              );
+            })
           )}
         </View>
       </ScrollView>
@@ -352,6 +395,11 @@ const makeStyles = (T: Theme) => StyleSheet.create({
     fontWeight: '600',
     marginTop: 10,
   },
+  // The ink steps, not the base status colours: those are sized for fills and
+  // fall under the 4.5:1 floor as small text.
+  hintPending: { color: T.warnInk },
+  hintApproved: { color: T.successInk },
+  hintSentBack: { color: T.dangerInk },
   emptyCard: {
     height: 100,
     paddingVertical: 16,
