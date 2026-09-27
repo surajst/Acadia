@@ -86,6 +86,10 @@
                th:classappend="${shell != null and shell.on('/web/teacher/tasks')} ? 'active' : ''">
                 <span class="dot"></span> My Tasks
             </a>
+            <a class="navlink" href="/web/teacher/videos"
+               th:classappend="${shell != null and shell.on('/web/teacher/videos')} ? 'active' : ''">
+                <span class="dot"></span> Videos
+            </a>
             <a class="navlink" href="/web/teacher/assessments" th:if="${school == null or school.hasExamScores}"
                th:classappend="${shell != null and shell.on('/web/teacher/assessments')} ? 'active' : ''">
                 <span class="dot"></span> Gradebook

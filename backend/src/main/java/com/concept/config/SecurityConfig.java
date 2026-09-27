@@ -84,6 +84,17 @@ public class SecurityConfig {
                                 .hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/api/teacher/grade-options", "/api/teacher/section-options")
                                 .hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
+                        // Learning videos, listed here for the same reason as the
+                        // task endpoints above: the broad /api/teacher/** rule
+                        // below is hasRole("TEACHER"), it is evaluated before any
+                        // method annotation, and it would refuse an admin whatever
+                        // @PreAuthorize on the controller says. An admin is meant
+                        // to be able to remove any video in the school, and
+                        // LearningVideoService already treats ADMIN and PRINCIPAL
+                        // as unrestricted -- so without this the service's own rule
+                        // could never be reached.
+                        .requestMatchers("/api/teacher/videos", "/api/teacher/videos/*")
+                                .hasAnyRole("TEACHER", "ADMIN", "PRINCIPAL")
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/mobile/driver/**").hasRole("DRIVER")
                         // The mobile surface, guarded by URL rather than by

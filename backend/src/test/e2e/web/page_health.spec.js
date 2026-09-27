@@ -89,6 +89,10 @@ test.describe('Teacher Page Health', () => {
   test('Teacher Tasks', async ({ page }) => {
     await assertPageHealth(page, '/web/teacher/tasks');
   });
+
+  test('Teacher Videos', async ({ page }) => {
+    await assertPageHealth(page, '/web/teacher/videos');
+  });
 });
 
 test.describe('Parent Page Health', () => {
