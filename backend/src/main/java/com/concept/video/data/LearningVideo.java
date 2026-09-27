@@ -13,10 +13,15 @@ import java.util.UUID;
  * A YouTube video a teacher has pointed one class at.
  *
  * <p>Only the eleven-character id is stored, never the pasted URL -- see
- * {@code YouTubeUrls} for why. The title and thumbnail come from YouTube's oEmbed
- * endpoint at save time rather than from the teacher, so a class list cannot be
- * given a misleading name, and the same call is what proves the video exists and
- * allows embedding.
+ * {@code YouTubeUrls} for why. The title comes from YouTube's oEmbed endpoint at
+ * save time rather than from the teacher, so a class list cannot be given a name
+ * that does not match what plays, and the same call is what proves the video
+ * exists and allows embedding.
+ *
+ * <p>No thumbnail column. oEmbed returns one and storing it looked obvious, but
+ * that URL is a fact about YouTube's CDN at the moment the video was added and
+ * goes stale on its own schedule -- a stored one becomes a broken image in a list
+ * with nothing to say it has. It is derived from the id instead.
  *
  * <p>Removal is {@code removedAt}, not a delete: rows in video_views point here,
  * and taking a video off a list should not take the record of who watched it.
@@ -41,9 +46,6 @@ public class LearningVideo extends BaseTenantEntity {
     @Column(nullable = false, length = 500)
     private String title;
 
-    @Column(name = "thumbnail_url", length = 1000)
-    private String thumbnailUrl;
-
     /** The teacher's own words: "Watch before Friday's class". */
     @Column(length = 1000)
     private String note;
@@ -67,8 +69,6 @@ public class LearningVideo extends BaseTenantEntity {
     public void setYoutubeId(String youtubeId) { this.youtubeId = youtubeId; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
-    public String getThumbnailUrl() { return thumbnailUrl; }
-    public void setThumbnailUrl(String thumbnailUrl) { this.thumbnailUrl = thumbnailUrl; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
     public UUID getCreatedByUserId() { return createdByUserId; }

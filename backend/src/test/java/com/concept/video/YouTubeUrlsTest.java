@@ -143,6 +143,18 @@ class YouTubeUrlsTest {
                         + "the ordinary domain sets: " + embed);
         assertTrue(embed.contains("rel=0"));
         assertTrue(embed.contains("playsinline=1"));
+        // Load-bearing: without it YouTube posts no messages and "Watched" never
+        // happens, silently, behind a player that looks perfectly fine.
+        assertTrue(embed.contains("enablejsapi=1"),
+                "the player has to be able to report that a video finished: " + embed);
+    }
+
+    @Test
+    void theThumbnailIsBuiltFromTheIdRatherThanStored() {
+        // hqdefault, not maxresdefault: every video has one. maxres exists only
+        // above a certain upload resolution and its absence is a 404 image.
+        assertEquals("https://i.ytimg.com/vi/" + ID + "/hqdefault.jpg",
+                YouTubeUrls.thumbnailUrl(ID));
     }
 
     @Test

@@ -110,10 +110,37 @@ public final class YouTubeUrls {
      * tracking cookie the ordinary domain sets. rel=0 keeps end-screen suggestions
      * to the same channel -- it does not remove them, and nothing here tries to:
      * hiding YouTube's branding or its advertising would breach their terms.
+     *
+     * <p>enablejsapi=1 is what lets the player report that a video finished.
+     * Without it YouTube posts no messages at all and "Watched" never happens,
+     * silently, behind a player that otherwise looks perfectly fine.
+     *
+     * <p>The client appends {@code &origin=<its own origin>} to this, and must:
+     * YouTube refuses to post to a page whose origin it was not told, and only the
+     * page knows what that is. A server guessing would be wrong on the web build,
+     * on localhost and in the native webview, for three different reasons. That one
+     * parameter is the only part of the player address the client decides.
      */
     public static String embedUrl(String youtubeId) {
         return "https://www.youtube-nocookie.com/embed/" + youtubeId
-                + "?rel=0&modestbranding=1&playsinline=1";
+                + "?rel=0&modestbranding=1&playsinline=1&enablejsapi=1";
+    }
+
+    /**
+     * The thumbnail for an id, built rather than stored.
+     *
+     * <p>oEmbed returns a thumbnail URL and storing it looked like the obvious
+     * thing. It is not: that URL is a fact about YouTube's CDN at the moment the
+     * video was added, and it goes stale on its own schedule -- a stored one turns
+     * into a broken image in a list, with no way to tell it has. The address is
+     * derivable from the id, so there is no reason to keep a copy that can rot.
+     *
+     * <p>hqdefault rather than maxresdefault: every video has one. maxres exists
+     * only for videos uploaded above a certain resolution, and its absence is a 404
+     * image rather than a fallback.
+     */
+    public static String thumbnailUrl(String youtubeId) {
+        return "https://i.ytimg.com/vi/" + youtubeId + "/hqdefault.jpg";
     }
 
     /** The oEmbed endpoint for an id. No API key, and it answers 401/404 when a video cannot be embedded. */

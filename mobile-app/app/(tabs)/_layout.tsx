@@ -228,6 +228,7 @@ export default function TabLayout() {
         <Stack.Screen name="announcements" options={{ title: SCREEN_TITLES.announcements }} />
         <Stack.Screen name="messages" options={{ title: SCREEN_TITLES.messages }} />
         <Stack.Screen name="profile" options={{ title: SCREEN_TITLES.profile }} />
+        <Stack.Screen name="videos" options={{ title: SCREEN_TITLES.videos }} />
         <Stack.Screen name="settings" options={{ title: SCREEN_TITLES.settings }} />
       </Stack>
     </DataContext.Provider>

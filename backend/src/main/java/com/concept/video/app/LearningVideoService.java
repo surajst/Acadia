@@ -154,7 +154,6 @@ public class LearningVideoService {
         video.setSubjectCode(subjectCode);
         video.setYoutubeId(youtubeId);
         video.setTitle(details.title());
-        video.setThumbnailUrl(details.thumbnailUrl());
         video.setNote(note == null || note.isBlank() ? null : note.trim());
         video.setCreatedByUserId(caller.getId());
         video.setCreatedAt(LocalDateTime.now());
@@ -353,7 +352,7 @@ public class LearningVideoService {
         String sectionName = section == null ? null
                 : section.getGradeName() + " - " + section.getSectionName();
         return new VideoView_(v.getId(), v.getYoutubeId(), YouTubeUrls.embedUrl(v.getYoutubeId()),
-                v.getTitle(), v.getThumbnailUrl(), v.getNote(), v.getSubjectCode(),
+                v.getTitle(), YouTubeUrls.thumbnailUrl(v.getYoutubeId()), v.getNote(), v.getSubjectCode(),
                 v.getSectionId(), sectionName, postedBy, v.getCreatedAt(), watched, watchedCount);
     }
 

@@ -419,6 +419,64 @@ export const submitAssessmentScores = async (assessmentId, scores) => {
 // The web console has had this form since the beginning; the app could only
 // list what had already been assigned.
 
+/**
+ * Learning videos.
+ *
+ * <p>The server returns the youtube id and a base player address; the page adds
+ * its own origin, which YouTube insists on before it will post the message that
+ * tells us a video finished.
+ */
+export const getStudentVideos = async (subject) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/student/videos`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: subject ? { subject } : {},
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getParentVideos = async (studentId, subject) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/mobile/parent/videos`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { ...(studentId ? { studentId } : {}), ...(subject ? { subject } : {}) },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+/** Idempotent on the server, so calling it twice is not worth guarding here. */
+export const markVideoWatched = async (videoId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(
+    `${BASE_HOST}/api/mobile/student/videos/${videoId}/watched`, {},
+    { headers: { Authorization: `Bearer ${token}` } });
+  return response.data;
+};
+
+export const getTeacherVideos = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(`${BASE_HOST}/api/teacher/videos`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const postTeacherVideo = async (payload) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/teacher/videos`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const removeTeacherVideo = async (videoId) => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.delete(`${BASE_HOST}/api/teacher/videos/${videoId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export const createTeacherTask = async (payload) => {
   const token = await AsyncStorage.getItem('userToken');
   const response = await axios.post(`${BASE_HOST}/api/teacher/tasks/create`, payload, {
