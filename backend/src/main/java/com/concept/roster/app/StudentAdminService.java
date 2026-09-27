@@ -512,6 +512,14 @@ public class StudentAdminService {
             PhoneNumbers.require(emergencyPhone, "emergency contact");
         }
         student.setEmergencyContactPhone(emergencyPhone);
+
+        // Null means "not editing this", not "withdraw it". A caller that does not
+        // carry the checkbox -- ChildDetails.none(), or any path that does not show
+        // the field -- must leave the answer where it was rather than quietly
+        // revoking permission to photograph a child.
+        if (details.photoConsent() != null) {
+            student.setPhotoConsent(details.photoConsent());
+        }
     }
 
     private static String blankToNull(String value) {

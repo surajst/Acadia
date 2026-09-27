@@ -16,10 +16,21 @@ import java.time.LocalDate;
 public record ChildDetails(LocalDate dateOfBirth,
                            String medicalNotes,
                            String emergencyContactName,
-                           String emergencyContactPhone) {
+                           String emergencyContactPhone,
+                           /**
+                            * Whether this child may appear in a photograph the
+                            * school publishes.
+                            *
+                            * <p>Boxed, because null means "the caller is not
+                            * editing this field" -- a different thing from false,
+                            * and the difference matters: a caller that does not
+                            * carry the checkbox must not silently withdraw
+                            * permission to photograph a child.
+                            */
+                           Boolean photoConsent) {
 
     /** Nothing supplied -- used by callers that do not edit these fields. */
     public static ChildDetails none() {
-        return new ChildDetails(null, null, null, null);
+        return new ChildDetails(null, null, null, null, null);
     }
 }

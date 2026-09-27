@@ -124,6 +124,13 @@ public class StudentAdminController {
                                 @RequestParam(value = "medicalNotes", required = false) String medicalNotes,
                                 @RequestParam(value = "emergencyContactName", required = false) String emergencyContactName,
                                 @RequestParam(value = "emergencyContactPhone", required = false) String emergencyContactPhone,
+                                // Boxed and not defaulted: an unticked checkbox
+                                // sends nothing, so absent has to mean "off" on a
+                                // form that carries it -- but a caller that does
+                                // not carry it at all must leave the answer alone.
+                                // The form below always posts a hidden "false", so
+                                // absent here means a different caller entirely.
+                                @RequestParam(value = "photoConsent", required = false) Boolean photoConsent,
                                 Authentication authentication,
                                 RedirectAttributes ra) {
         try {
@@ -131,7 +138,8 @@ public class StudentAdminController {
                     tenantContext.getTenantId().orElse(null), tenantContext.getAcademicYearId().orElse(null),
                     firstName, lastName, rollNumber, schoolClassId,
                     guardianFirstName, guardianLastName, guardianPhone,
-                    new ChildDetails(dateOfBirth, medicalNotes, emergencyContactName, emergencyContactPhone),
+                    new ChildDetails(dateOfBirth, medicalNotes, emergencyContactName,
+                            emergencyContactPhone, photoConsent),
                     authentication);
             credentials.ifPresent(c -> ra.addFlashAttribute("newCredentials", c));
             ra.addFlashAttribute("profileMessage", "Student details updated.");

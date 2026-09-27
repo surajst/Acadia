@@ -128,7 +128,9 @@ class EmergencyContactPhoneTest {
         studentAdminService.updateStudent(aarav.getId(), tenantId, yearId,
                 "Aarav", "Verma", "6A-01", null,
                 null, null, null,
-                new ChildDetails(null, "None", "Meera Verma", emergencyPhone),
+                // null consent: this test is not editing that field, and null means
+                // "leave it alone" rather than "withdraw it".
+                new ChildDetails(null, "None", "Meera Verma", emergencyPhone, null),
                 admin);
     }
 
@@ -201,7 +203,7 @@ class EmergencyContactPhoneTest {
         assertDoesNotThrow(() -> studentAdminService.updateStudent(aarav.getId(), tenantId, yearId,
                 "Aarav", "Verma", "6A-02", null,
                 null, null, null,
-                new ChildDetails(null, "Peanut allergy", "Meera Verma", "call mum"),
+                new ChildDetails(null, "Peanut allergy", "Meera Verma", "call mum", null),
                 admin));
 
         assertEquals("Peanut allergy", studentRepository.findByIdAndTenantId(aarav.getId(), tenantId)

@@ -168,6 +168,22 @@ public class RosterImportService {
             String section = cols.get(4).trim();
             String parentName = cols.get(5).trim();
             String parentPhone = cols.get(6).trim();
+            /**
+             * An optional eighth column: photo consent.
+             *
+             * Optional on purpose. The row check above is "at least 7", and making
+             * consent mandatory would reject every spreadsheet the school already
+             * has -- including the ones being used to enrol children this term. A
+             * file without the column behaves exactly as before, and the default
+             * (false, "nobody has recorded an answer") is the safe one.
+             *
+             * Read generously: yes, y, true and 1 all mean the same thing to
+             * somebody filling in a spreadsheet, and rejecting "Yes" because it has
+             * a capital would be pedantry with a child's photograph at the end of
+             * it.
+             */
+            boolean photoConsent = cols.size() > 7 && isYes(cols.get(7));
+
             String label = (firstName + " " + lastName).trim();
             if (label.isEmpty()) label = "(row " + rowNumber + ")";
 
@@ -228,6 +244,7 @@ public class RosterImportService {
                 student.setLastName(lastName);
                 student.setRollNumber(rollNumber);
                 student.setClassSection(classSection);
+                student.setPhotoConsent(photoConsent);
                 // Same as the single-add path: without this their fee schedule
                 // counts from the academic year rather than from them, and a
                 // mid-year import is overdue the moment it lands.
@@ -392,6 +409,22 @@ public class RosterImportService {
         StringBuilder p = new StringBuilder();
         for (int i = 0; i < 10; i++) p.append(chars.charAt(RANDOM.nextInt(chars.length())));
         return p.append("!9").toString();
+    }
+
+    /**
+     * What a person means by yes in a spreadsheet cell.
+     *
+     * <p>Anything else -- including blank, and including "no" -- is no. The default
+     * has to be the safe one: this decides whether a child's face may appear in a
+     * photograph the school publishes, and a typo should fall on the side of not
+     * publishing it.
+     */
+    private static boolean isYes(String raw) {
+        if (raw == null) {
+            return false;
+        }
+        String value = raw.trim().toLowerCase(java.util.Locale.ROOT);
+        return value.equals("yes") || value.equals("y") || value.equals("true") || value.equals("1");
     }
 
     private Map<String, String> rowOutcome(int rowNumber, String label, String status, String detail) {
