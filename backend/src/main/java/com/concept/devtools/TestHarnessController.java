@@ -70,6 +70,8 @@ public class TestHarnessController {
     @Autowired private FeeManagementService feeManagementService;
     @Autowired private StudentProgressRepository studentProgressRepository;
     @Autowired private TeacherTaskRepository teacherTaskRepository;
+    @Autowired private com.concept.video.data.LearningVideoRepository learningVideoRepository;
+    @Autowired private com.concept.video.data.VideoViewRepository videoViewRepository;
     @Autowired private AttendanceRepository attendanceRepository;
     @Autowired private SubjectAssignmentRepository subjectAssignmentRepository;
     @Autowired private SubjectAssignmentService subjectAssignmentService;
@@ -240,6 +242,8 @@ public class TestHarnessController {
             parentRewardRepository.deleteAllInBatch();
             studentProgressRepository.deleteAllInBatch();
             academicSubmissionRepository.deleteAllInBatch();
+            videoViewRepository.deleteAllInBatch();
+            learningVideoRepository.deleteAllInBatch();
             teacherTaskRepository.deleteAllInBatch();
 
             // Seed a pending parent quest for Arjun Sharma
@@ -271,6 +275,30 @@ public class TestHarnessController {
             quest.setParent(ramesh);
             quest.setStudent(student);
             parentQuestRepository.saveAndFlush(quest);
+
+            // One learning video for this pupil's own section.
+            //
+            // Seeded rather than posted through the API because posting calls
+            // YouTube's oEmbed endpoint to check the video exists and can be
+            // embedded, and a demo reset that depends on youtube.com being
+            // reachable is a demo reset that fails on a train. The API path has its
+            // own tests; this is here so a pupil's Videos screen has something on it.
+            com.concept.video.data.LearningVideo demoVideo = new com.concept.video.data.LearningVideo();
+            demoVideo.setId(UUID.randomUUID());
+            demoVideo.setTenantId(activeTenantId);
+            demoVideo.setAcademicYearId(activeAcademicYearId);
+            demoVideo.setSectionId(student.getClassSection() != null
+                    ? student.getClassSection().getId() : null);
+            demoVideo.setSubjectCode("SCIENCE");
+            demoVideo.setYoutubeId("dQw4w9WgXcQ");
+            demoVideo.setTitle("Photosynthesis in 5 minutes");
+            demoVideo.setNote("Watch before Friday's class");
+            demoVideo.setCreatedByUserId(
+                    userRepository.findByEmail("teacher@greenwood.com").map(u -> u.getId()).orElse(null));
+            demoVideo.setCreatedAt(java.time.LocalDateTime.now());
+            if (demoVideo.getSectionId() != null && demoVideo.getCreatedByUserId() != null) {
+                learningVideoRepository.saveAndFlush(demoVideo);
+            }
 
             // Seed 3 demo teacher tasks for standard 6 (assigned to whole class)
             UUID teacherId = java.util.UUID.nameUUIDFromBytes("teacher@greenwood.com".getBytes());

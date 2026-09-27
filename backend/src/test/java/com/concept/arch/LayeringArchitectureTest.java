@@ -62,6 +62,7 @@ class LayeringArchitectureTest {
                     "com.concept.curriculum..",
                     "com.concept.teacher..",
                     "com.concept.notification..",
+                    "com.concept.video..",
                     "com.concept.export..",
                     "com.concept.academics..",
                     "com.concept.shared.."
@@ -239,6 +240,11 @@ class LayeringArchitectureTest {
             // and callers must use those; a bare findById returns any school's row.
             "StudentProgress",
             "AcademicSubmission",
+
+            // Scoped through the video it belongs to, which is tenant-scoped.
+            // LearningVideoService resolves the video within the caller's tenant
+            // first, then asks about views of it; the same shape as the two above.
+            "VideoView",
             "StudentAssessmentScore",
 
             // Scoped through its Conversation, the tenant-scoped aggregate root.
@@ -313,7 +319,7 @@ class LayeringArchitectureTest {
     private static final Set<String> MIGRATED_PACKAGE_NAMES = Set.of(
             "roster", "attendance", "fees", "staff", "rewards", "transport", "console",
             "dashboard", "messaging", "parent", "timetable", "assignment", "student",
-            "tasks", "assessment", "oversight", "curriculum", "teacher", "notification",
+            "tasks", "assessment", "oversight", "curriculum", "teacher", "notification", "video",
             "export", "shared", "academics", "recognition");
 
     /**

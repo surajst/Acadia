@@ -256,6 +256,38 @@ export function handleSessionExpired(reason?: SessionEndedReason): Promise<void>
  */
 export function endedSession(response: Response): Promise<boolean>;
 
+/** One learning video as any of the three audiences sees it. */
+export interface LearningVideo {
+  id: string;
+  youtubeId: string;
+  /**
+   * nocookie, rel=0, enablejsapi=1. The page appends its own `origin`, which
+   * YouTube insists on before it will post the message that says a video ended.
+   */
+  embedUrl: string;
+  title: string;
+  /** Built from the id, so there is no stored address to go stale. */
+  thumbnailUrl: string;
+  note: string | null;
+  subjectCode: string;
+  sectionId: string;
+  sectionName: string | null;
+  postedBy: string | null;
+  postedAt: string;
+  watched: boolean;
+  watchedCount: number;
+}
+
+export function getStudentVideos(subject?: string): Promise<LearningVideo[]>;
+export function getParentVideos(studentId?: string, subject?: string): Promise<LearningVideo[]>;
+/** Idempotent on the server, so calling it twice is not worth guarding against. */
+export function markVideoWatched(videoId: string): Promise<{ status: string; first: boolean }>;
+export function getTeacherVideos(): Promise<LearningVideo[]>;
+export function postTeacherVideo(payload: {
+  url: string; sectionId: string; subjectCode: string; note?: string | null;
+}): Promise<LearningVideo>;
+export function removeTeacherVideo(videoId: string): Promise<{ status: string }>;
+
 declare const api: AxiosInstance;
 
 export default api;

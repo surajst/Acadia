@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" style="height:100vh; height:100dvh; overflow:hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videos &middot; ACADIA</title>
+    <link rel="stylesheet" href="/css/tailwind.css">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="icon" type="image/png" href="/images/acadia-logo.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+</head>
+<!-- Signed-in portal page: the shell fills the screen and only the main area
+     scrolls. 100vh first, 100dvh second, per the viewport rule. -->
+<body style="height:100vh; height:100dvh; overflow:hidden; display:flex; flex-direction:column"
+      class="bg-[#F4F6FB] text-[#0F172A] font-sans">
+<input type="hidden" id="csrfToken" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}" />
+
+<header class="bg-[#F4F6FB] border-b border-slate-200/50 shrink-0 z-40" style="height: 64px;">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <img src="/images/acadia-logo.png" alt="ACADIA" style="height:32px;">
+            <span style="font-size:16px; font-weight:600; color:#0F172A; letter-spacing:2px;">ACADIA</span>
+        </div>
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Videos</h1>
+            <p class="text-slate-500 mt-0.5 text-xs font-medium">Share a YouTube video with one of your classes.</p>
+        </div>
+        <a href="/web/teacher/dashboard"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold tracking-wider bg-white/80 text-slate-600 hover:bg-slate-100 transition-colors border border-slate-200/50">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+</header>
+
+<div id="global-scroll-wrapper" style="flex:1; overflow-y:auto; min-height:0; width:100%;">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" style="display:grid; gap:16px;">
+
+        <!-- Add -->
+        <section class="card overflow-hidden">
+            <div style="padding:16px; border-bottom:1px solid var(--line);">
+                <h2 class="card-title">Add a video</h2>
+                <p class="card-sub">Paste a YouTube link. The title comes from YouTube, so it matches what plays.</p>
+            </div>
+
+            <form id="addVideoForm" onsubmit="addVideo(event)" style="padding:16px; display:grid; gap:12px;">
+                <div class="space-y-1">
+                    <label for="videoUrl" class="text-xs font-bold uppercase tracking-wider text-slate-500">YouTube link</label>
+                    <input id="videoUrl" type="url" required
+                           placeholder="https://www.youtube.com/watch?v=..."
+                           class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl text-slate-800 outline-none">
+                    <!-- Said before it is refused, not after. A playlist link is the
+                         commonest paste and the refusal is otherwise a surprise. -->
+                    <p class="text-[11px] text-slate-400">One video, not a playlist or a channel.</p>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="space-y-1">
+                        <label for="videoSection" class="text-xs font-bold uppercase tracking-wider text-slate-500">Class</label>
+                        <select id="videoSection" required
+                                class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl text-slate-800 outline-none">
+                            <option value="">Loading classes&hellip;</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label for="videoSubject" class="text-xs font-bold uppercase tracking-wider text-slate-500">Subject</label>
+                        <select id="videoSubject" required
+                                class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl text-slate-800 outline-none">
+                            <option value="">Loading subjects&hellip;</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label for="videoNote" class="text-xs font-bold uppercase tracking-wider text-slate-500">Note <span class="text-slate-400 font-normal">(optional)</span></label>
+                    <input id="videoNote" type="text" maxlength="200" placeholder="Watch before Friday's class"
+                           class="w-full px-4 py-2 bg-[#F4F6FB]/60 border border-slate-200/50 rounded-xl text-slate-800 outline-none">
+                </div>
+
+                <div data-video-notice class="hidden" role="alert" aria-live="polite"
+                     style="padding:10px 14px; border-radius:12px; font-size:13px;"></div>
+
+                <div>
+                    <button type="submit" data-add-video
+                            class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+                        Add video
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- List -->
+        <section class="card overflow-hidden">
+            <div style="padding:16px; border-bottom:1px solid var(--line);"
+                 class="flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="card-title">Your videos</h2>
+                    <p class="card-sub">Newest first. Removing one takes it off the class's list.</p>
+                </div>
+                <span id="videoCount" class="badge badge--info">0 videos</span>
+            </div>
+            <!-- The table scrolls inside its card, never the page. -->
+            <div style="max-height:420px; overflow:auto;">
+                <div class="table-head"
+                     style="display:grid; grid-template-columns:minmax(160px,1fr) 130px 120px 90px auto; gap:10px; position:sticky; top:0; z-index:1;">
+                    <span>Video</span><span>Class</span><span>Subject</span><span>Watched</span><span style="text-align:right;">Remove</span>
+                </div>
+                <div id="videoTableBody">
+                    <div style="padding:24px; text-align:center; color:var(--text-3);">Loading&hellip;</div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    function csrfHeaders() {
+        var headers = { 'Content-Type': 'application/json' };
+        var token = document.getElementById('csrfToken');
+        if (token) headers['X-CSRF-TOKEN'] = token.value;
+        return headers;
+    }
+
+    /**
+     * A title can contain a quote, and these go into attributes in a template
+     * string, so they are escaped rather than trusted. Same reason as the task
+     * page: never pass a string into a th:on* attribute, and never trust one here.
+     */
+    function escapeAttr(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function showNotice(message, ok) {
+        var el = document.querySelector('[data-video-notice]');
+        if (!el) return;
+        el.textContent = message;
+        el.className = ok
+            ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20'
+            : 'bg-rose-500/10 text-rose-700 border border-rose-500/20';
+        el.style.padding = '10px 14px';
+        el.style.borderRadius = '12px';
+        el.style.fontSize = '13px';
+        el.classList.remove('hidden');
+    }
+
+    function clearNotice() {
+        var el = document.querySelector('[data-video-notice]');
+        if (el) el.classList.add('hidden');
+    }
+
+    /** Section id -> "Grade 6 - A", and which subjects this teacher takes there. */
+    var subjectsBySection = {};
+    var subjectCatalogue = [];
+
+    async function loadSections() {
+        var select = document.getElementById('videoSection');
+        try {
+            var response = await fetch('/api/teacher/section-options');
+            if (!response.ok) throw new Error('Fetch failed');
+            var sections = await response.json();
+            if (!sections.length) {
+                select.innerHTML = '<option value="">No classes assigned to you</option>';
+                return;
+            }
+            select.innerHTML = sections
+                .map(function (s) { return '<option value="' + s.value + '">' + s.label + '</option>'; })
+                .join('');
+        } catch (error) {
+            console.error(error);
+            select.innerHTML = '<option value="">Could not load classes</option>';
+        }
+    }
+
+    async function loadSubjectCatalogue() {
+        try {
+            var response = await fetch('/api/subjects');
+            subjectCatalogue = await response.json();
+            if (!Array.isArray(subjectCatalogue)) subjectCatalogue = [];
+        } catch (error) {
+            console.error(error);
+            subjectCatalogue = [];
+        }
+    }
+
+    async function loadTeacherSubjects() {
+        try {
+            var response = await fetch('/api/teacher/classes');
+            if (!response.ok) return;
+            var rows = await response.json();
+            if (!Array.isArray(rows)) return;
+            rows.forEach(function (row) {
+                if (!row || !row.id || !row.subject) return;
+                if (!subjectsBySection[row.id]) subjectsBySection[row.id] = [];
+                subjectsBySection[row.id].push(row.subject);
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    function subjectShape(value) {
+        return String(value == null ? '' : value).trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+    }
+
+    /**
+     * Only the subjects this teacher takes for the chosen class, because the
+     * server refuses the rest -- the same rule the task form follows, and for the
+     * same reason: offering the other four is offering four guaranteed refusals.
+     *
+     * Falls back to the whole catalogue when nothing matches, which is what an
+     * admin gets (assigned to nothing, and exempt on the server) and what protects
+     * a teacher whose assignment cannot be matched to a catalogue entry.
+     */
+    function renderSubjects() {
+        var select = document.getElementById('videoSubject');
+        if (!select) return;
+        if (!subjectCatalogue.length) {
+            select.innerHTML = '<option value="">Unable to load subjects</option>';
+            return;
+        }
+        var sectionId = (document.getElementById('videoSection') || {}).value;
+        var mine = (sectionId && subjectsBySection[sectionId]) || [];
+        var shapes = mine.map(subjectShape);
+        var offered = subjectCatalogue.filter(function (s) {
+            return shapes.indexOf(subjectShape(s.code)) !== -1
+                || shapes.indexOf(subjectShape(s.displayName)) !== -1;
+        });
+        var options = offered.length ? offered : subjectCatalogue;
+        var chosen = select.value;
+        select.innerHTML = options
+            .map(function (s) { return '<option value="' + s.code + '">' + s.displayName + '</option>'; })
+            .join('');
+        if (chosen && options.some(function (s) { return s.code === chosen; })) select.value = chosen;
+    }
+
+    async function loadVideos() {
+        var body = document.getElementById('videoTableBody');
+        try {
+            var response = await fetch('/api/teacher/videos');
+            if (!response.ok) throw new Error('status ' + response.status);
+            var videos = await response.json();
+            document.getElementById('videoCount').textContent =
+                videos.length + ' video' + (videos.length === 1 ? '' : 's');
+
+            if (!videos.length) {
+                body.innerHTML = '<div style="padding:24px; text-align:center; color:var(--text-3);">'
+                    + 'No videos yet &mdash; add one above.</div>';
+                return;
+            }
+            body.innerHTML = videos.map(function (v) {
+                return '<div class="row" data-video-row'
+                    + ' style="display:grid; grid-template-columns:minmax(160px,1fr) 130px 120px 90px auto;'
+                    + ' gap:10px; align-items:center;">'
+                    + '<span style="min-width:0;">'
+                    +   '<a href="https://www.youtube.com/watch?v=' + escapeAttr(v.youtubeId) + '"'
+                    +   ' target="_blank" rel="noopener noreferrer"'
+                    +   ' style="font-weight:600; color:var(--text); text-decoration:none;">'
+                    +   escapeAttr(v.title) + '</a>'
+                    +   (v.note ? '<span style="display:block; font-size:12px; color:var(--text-3);">'
+                                  + escapeAttr(v.note) + '</span>' : '')
+                    + '</span>'
+                    + '<span class="badge badge--neutral">' + escapeAttr(v.sectionName || '') + '</span>'
+                    + '<span style="font-size:12px;">' + escapeAttr(v.subjectCode) + '</span>'
+                    + '<span style="font-size:12px;">' + (v.watchedCount || 0) + '</span>'
+                    + '<span style="text-align:right;">'
+                    +   '<button type="button" data-remove-video data-id="' + escapeAttr(v.id) + '"'
+                    +   ' data-title="' + escapeAttr(v.title) + '"'
+                    +   ' onclick="removeVideo(this.dataset.id, this.dataset.title)"'
+                    +   ' class="px-2 py-1 text-[10px] font-bold rounded bg-rose-500/10 text-rose-700'
+                    +   ' hover:bg-rose-500/20 cursor-pointer">Remove</button>'
+                    + '</span>'
+                    + '</div>';
+            }).join('');
+        } catch (error) {
+            console.error(error);
+            body.innerHTML = '<div style="padding:24px; text-align:center; color:var(--danger);">'
+                + 'Could not load videos. Please reload the page.</div>';
+        }
+    }
+
+    async function addVideo(event) {
+        event.preventDefault();
+        clearNotice();
+        var button = document.querySelector('[data-add-video]');
+        button.disabled = true;
+        try {
+            var response = await fetch('/api/teacher/videos', {
+                method: 'POST',
+                headers: csrfHeaders(),
+                body: JSON.stringify({
+                    url: document.getElementById('videoUrl').value,
+                    sectionId: document.getElementById('videoSection').value,
+                    subjectCode: document.getElementById('videoSubject').value,
+                    note: document.getElementById('videoNote').value || null,
+                }),
+            });
+            var body = await response.json().catch(function () { return {}; });
+            if (!response.ok) {
+                // The server's own words. It is the only thing that knows whether
+                // the link was a playlist, the video cannot be embedded, or YouTube
+                // could not be reached -- and those need three different next moves
+                // from the teacher.
+                showNotice(body.error || 'Could not add that video.', false);
+                return;
+            }
+            showNotice('Added "' + (body.title || 'video') + '".', true);
+            document.getElementById('videoUrl').value = '';
+            document.getElementById('videoNote').value = '';
+            loadVideos();
+        } catch (error) {
+            showNotice('Network error. Please try again.', false);
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function removeVideo(videoId, title) {
+        if (!confirm('Remove "' + title + '"?\n\n'
+                + 'It comes off the class\'s list. Who has already watched it stays on record.')) {
+            return;
+        }
+        try {
+            var response = await fetch('/api/teacher/videos/' + videoId, {
+                method: 'DELETE', headers: csrfHeaders(),
+            });
+            var body = await response.json().catch(function () { return {}; });
+            if (!response.ok) {
+                showNotice(body.error || 'Could not remove that video.', false);
+                return;
+            }
+            showNotice('Removed.', true);
+            loadVideos();
+        } catch (error) {
+            showNotice('Network error. Please try again.', false);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // The subject list depends on the section list and on this teacher's
+        // assignments, so all three have to be in before the first render.
+        Promise.all([loadSections(), loadSubjectCatalogue(), loadTeacherSubjects()])
+            .then(renderSubjects);
+        var sectionSelect = document.getElementById('videoSection');
+        if (sectionSelect) sectionSelect.addEventListener('change', renderSubjects);
+        loadVideos();
+    });
+</script>
+</body>
+</html>

@@ -35,6 +35,7 @@ public class NotificationPublisher {
     public static final String TYPE_FEE = "FEE";
     public static final String TYPE_ANNOUNCEMENT = "ANNOUNCEMENT";
     public static final String TYPE_ATTENDANCE = "ATTENDANCE";
+    public static final String TYPE_VIDEO = "VIDEO";
 
     private final NotificationRepository notificationRepository;
 
@@ -51,6 +52,35 @@ public class NotificationPublisher {
                     "New task: " + title,
                     subject == null || subject.isBlank() ? "Tap to open and hand it in"
                             : subject + " · tap to open and hand it in");
+        }
+    }
+
+    /**
+     * A learning video, to every pupil in the section it was set for and to their
+     * guardians.
+     *
+     * <p>Parents as well as pupils, unlike a task: a task is work a child does, and
+     * a video is usually something a parent is meant to help with or know about.
+     * Both get their own row, so one reading it does not clear it for the other.
+     */
+    public void videoPosted(List<Student> students, UUID tenantId, UUID academicYearId,
+                            UUID videoId, String title, String subject) {
+        String body = subject == null || subject.isBlank()
+                ? "Tap to watch" : subject + " · tap to watch";
+        for (Student s : students) {
+            if (s.getUserId() != null) {
+                raise(tenantId, academicYearId, s.getUserId(), "STUDENT", TYPE_VIDEO, videoId,
+                        "New video: " + title, body);
+            }
+            if (s.getParents() == null) {
+                continue;
+            }
+            for (Parent p : s.getParents()) {
+                if (p.getUserId() == null) continue;
+                raise(tenantId, academicYearId, p.getUserId(), "PARENT", TYPE_VIDEO, videoId,
+                        "New video: " + title,
+                        (s.getFirstName() == null ? "Your child" : s.getFirstName()) + " · " + body);
+            }
         }
     }
 

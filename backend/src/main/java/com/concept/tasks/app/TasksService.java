@@ -19,8 +19,7 @@ import com.concept.tasks.data.TaskType;
 import com.concept.tasks.data.TeacherTask;
 import com.concept.tasks.data.TeacherTaskRepository;
 import com.concept.tasks.data.TeacherTaskRequest;
-import com.concept.academics.data.Subject;
-import com.concept.academics.data.SubjectRepository;
+import com.concept.assignment.app.TeachingScope;
 import com.concept.notification.app.NotificationPublisher;
 import com.concept.tasks.app.TeacherTaskService;
 import com.concept.user.CurrentUserService;
@@ -62,7 +61,7 @@ public class TasksService {
     private final UserRepository userRepository;
     private final AcademicSubmissionRepository submissionRepository;
     private final TeacherTaskRepository teacherTaskRepository;
-    private final SubjectRepository subjectRepository;
+    private final TeachingScope teachingScope;
     private final NotificationPublisher notificationPublisher;
     private final NotificationDeliveryService notificationDeliveryService;
     private final CurrentUserService currentUserService;
@@ -77,7 +76,7 @@ public class TasksService {
                         UserRepository userRepository,
                         AcademicSubmissionRepository submissionRepository,
                         TeacherTaskRepository teacherTaskRepository,
-                        SubjectRepository subjectRepository,
+                        TeachingScope teachingScope,
                         NotificationPublisher notificationPublisher,
                         NotificationDeliveryService notificationDeliveryService,
                         CurrentUserService currentUserService,
@@ -91,7 +90,7 @@ public class TasksService {
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
         this.teacherTaskRepository = teacherTaskRepository;
-        this.subjectRepository = subjectRepository;
+        this.teachingScope = teachingScope;
         this.notificationPublisher = notificationPublisher;
         this.notificationDeliveryService = notificationDeliveryService;
         this.currentUserService = currentUserService;
@@ -967,7 +966,7 @@ public class TasksService {
     }
 
     private boolean teacherOwnsSection(User teacher, ClassSection section) {
-        return subjectAssignmentRepository.existsByTeacherAndClassSection(teacher, section);
+        return teachingScope.teachesSection(teacher, section);
     }
 
     /**
@@ -1016,46 +1015,17 @@ public class TasksService {
         if (caller == null) {
             return; // the section check has already refused this caller
         }
-        if (caller.getRole() == UserRole.ADMIN || caller.getRole() == UserRole.PRINCIPAL) {
-            // Somebody has to be able to set work for a teacher who has left, and
-            // an admin is assigned to nothing. The section check beside this one
-            // exempts them for the same reason.
-            return;
-        }
-        if (tenantId == null) {
-            return;
-        }
 
-        // Is this one of the school's own subjects, under either spelling?
-        Subject offered = subjectRepository.findByTenantIdOrderBySortOrderAsc(tenantId).stream()
-                .filter(subject -> sameSubject(subject.getCode(), code)
-                        || sameSubject(subject.getDisplayName(), code))
-                .findFirst()
-                .orElse(null);
-        if (offered == null) {
-            return; // not a subject anyone here teaches -- see the note above
-        }
-
-        boolean theirs = subjectAssignmentRepository.findByTeacher(caller).stream()
-                .filter(a -> a.getClassSection() != null
-                        && section.getId().equals(a.getClassSection().getId()))
-                .map(SubjectAssignment::getSubjectName)
-                .anyMatch(name -> sameSubject(name, offered.getCode())
-                        || sameSubject(name, offered.getDisplayName()));
-        if (!theirs) {
-            throw TasksException.badRequest(
-                    "You're not assigned to teach " + offered.getDisplayName() + ".");
+        // The rule itself lives in TeachingScope, because learning videos ask the
+        // same question and a second copy of an authorisation rule is how this
+        // codebase has been caught before. What stays here is the wording: the
+        // refusal a teacher reads, in this feature's own exception type.
+        String refused = teachingScope.subjectTheyDoNotTeach(caller, section, code, tenantId);
+        if (refused != null) {
+            throw TasksException.badRequest("You're not assigned to teach " + refused + ".");
         }
     }
 
-    /** "Social Science" and SOCIAL_SCIENCE are one subject written two ways. */
-    private static boolean sameSubject(String left, String right) {
-        return left != null && right != null && shape(left).equals(shape(right));
-    }
-
-    private static String shape(String value) {
-        return value.trim().toUpperCase(java.util.Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
-    }
     private Student requireStudent(Authentication authentication) {
         return currentUserService.getCurrentStudent(authentication)
                 .orElseThrow(() -> TasksException.badRequest("Student record not found"));

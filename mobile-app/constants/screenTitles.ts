@@ -38,6 +38,7 @@ export const SCREEN_TITLES = {
   verify: 'Verification Queue',
 
   // (tabs)
+  videos: 'Videos',
   syllabus: 'Syllabus',
   'student-attendance': 'Attendance',
   challenges: 'Challenges',
