@@ -100,57 +100,21 @@ export default function VideoPlayer({ youtubeId, embedUrl, title, onFinished }: 
     return () => window.removeEventListener('message', onMessage);
   }, [onFinished, youtubeId]);
 
-  if (Platform.OS === 'web') {
-    return (
-      <View style={styles.frame}>
-        {React.createElement('iframe', {
-          // Named so a test can find it, and so the two parameters above can be
-          // asserted rather than assumed.
-          'data-video-player': youtubeId,
-          src,
-          title,
-          width: '100%',
-          height: '100%',
-          frameBorder: '0',
-          allow: 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
-          allowFullScreen: true,
-          style: { border: 0, display: 'block', width: '100%', height: '100%' },
-        })}
-      </View>
-    );
-  }
-
-  // Native. react-native-webview is already a dependency of the Expo runtime used
-  // here; the same postMessage contract applies inside it, relayed to the page.
-  const { WebView } = require('react-native-webview');
   return (
     <View style={styles.frame}>
-      <WebView
-        source={{ uri: src }}
-        style={{ flex: 1, backgroundColor: 'transparent' }}
-        allowsInlineMediaPlayback
-        mediaPlaybackRequiresUserAction={false}
-        // The webview has no window.postMessage listener of its own, so the page
-        // inside it is asked to forward what YouTube sends.
-        injectedJavaScript={`
-          window.addEventListener('message', function (e) {
-            try { window.ReactNativeWebView.postMessage(typeof e.data === 'string' ? e.data : JSON.stringify(e.data)); }
-            catch (err) {}
-          });
-          true;
-        `}
-        onMessage={(event: { nativeEvent: { data: string } }) => {
-          try {
-            const payload = JSON.parse(event.nativeEvent.data);
-            if (payload?.event === 'onStateChange' && payload?.info === ENDED && !finished.current) {
-              finished.current = true;
-              onFinished();
-            }
-          } catch {
-            // not ours
-          }
-        }}
-      />
+      {React.createElement('iframe', {
+        // Named so a test can find it, and so the two parameters above can be
+        // asserted rather than assumed.
+        'data-video-player': youtubeId,
+        src,
+        title,
+        width: '100%',
+        height: '100%',
+        frameBorder: '0',
+        allow: 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+        allowFullScreen: true,
+        style: { border: 0, display: 'block', width: '100%', height: '100%' },
+      })}
     </View>
   );
 }
