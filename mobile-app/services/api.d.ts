@@ -144,6 +144,10 @@ export function getStudentDashboard(): Promise<ApiObject>;
 export function getParentDashboard(studentId?: string): Promise<ApiObject>;
 export function getUserProfile(): Promise<UserProfile>;
 export function profilePhotoUrl(userId?: string | null, updatedAt?: string | null): string | null;
+/** The photo as a data URI, fetched with the caller's token. Null when there is none. */
+export function fetchProfilePhoto(
+  userId?: string | null, updatedAt?: string | null,
+): Promise<string | null>;
 export function uploadProfilePhoto(input: { uri: string; mimeType?: string }): Promise<ApiObject>;
 export function deleteProfilePhoto(): Promise<ApiObject>;
 

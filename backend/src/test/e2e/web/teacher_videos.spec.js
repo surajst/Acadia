@@ -134,17 +134,23 @@ test.describe('Sharing a video with a class', () => {
     // Now take away the one thing the race takes away: the handler. This is what
     // the form sees in the window between becoming interactive and the script
     // seventy lines below it executing.
-    // Assigned rather than deleted: a top-level `function` declaration creates a
-    // NON-CONFIGURABLE global, so `delete window.addVideo` fails silently and
-    // leaves the handler in place -- a first attempt at this asserted nothing for
-    // exactly that reason. Assignment works, and throws TypeError from the
-    // attribute where the real race throws ReferenceError. The distinction does
-    // not matter here: the question is whether an exception thrown out of the
-    // handler lets the native submit proceed, and both answer it the same way.
-    await page.evaluate(() => { window.addVideo = undefined; });
-    expect(await page.evaluate(() => typeof window.addVideo),
-      'the handler has to actually be gone for this to test anything')
-      .toBe('undefined');
+    // Take the handler off the form, which is the state the page is in for the
+    // moment between the form being parsed and the script below it running.
+    //
+    // The listener is removable because addVideo is bound by reference rather
+    // than as an anonymous wrapper. Nulling `window.addVideo` would NOT do it --
+    // the listener holds the function object, not the global -- and an earlier
+    // version of this test tried exactly that. Worth knowing: a top-level
+    // `function` declaration is also a non-configurable global, so `delete` on it
+    // fails silently too.
+    const removed = await page.evaluate(() => {
+      const form = document.getElementById('addVideoForm');
+      if (!form || typeof window.addVideo !== 'function') return false;
+      form.removeEventListener('submit', window.addVideo);
+      return true;
+    });
+    expect(removed, 'the handler has to actually come off for this to test anything')
+      .toBe(true);
 
     let navigated = false;
     page.on('framenavigated', (frame) => {

@@ -12,17 +12,30 @@ import { useTheme, type Theme } from '../../context/ThemeContext';
  * YouTube posts no messages at all. Without the second -- matching the embedding
  * page exactly -- it refuses to post to that page.
  *
- * <p>And they are not sufficient, which is what shipped broken. The widget protocol
- * is a handshake: YouTube stays completely silent until the parent page posts
- * `{"event":"listening","id":n,"channel":"widget"}` into the iframe. Listening
- * without speaking first means zero messages, ever -- behind a player that looks
- * and plays perfectly normally. QA found it by hand-posting the handshake and
- * watching onReady arrive immediately.
+ * <p>And they are not sufficient. There are two further steps, and each of them
+ * shipped missing in turn, because each fails in the same invisible way -- the
+ * video plays perfectly and the tick never comes.
  *
- * <p>The test that was meant to catch this did not, because its stub sent ENDED
- * unprompted. It proved the app reacts to a message; it could not prove a message
- * would ever come. The stub now stays silent until it is spoken to, the way
- * YouTube does.
+ * <p>First, the listening handshake: the parent posts
+ * `{"event":"listening","id":n,"channel":"widget"}` into the iframe. (An earlier
+ * note here claimed YouTube stays completely silent without it. Not so -- QA
+ * observed onReady arriving unprompted. The handshake is still sent, since it is
+ * what the protocol asks for, but it is not the thing that was withholding state.)
+ *
+ * <p>Second, and this is what actually kept "Watched" empty: onStateChange has to
+ * be SUBSCRIBED to. Until the parent posts
+ * `{"event":"command","func":"addEventListener","args":["onStateChange"],...}`,
+ * YouTube never sends one. What it does send, unprompted, is `infoDelivery` with
+ * `info.playerState` -- a full watch produced -1, 3, 1, 2, 0 -- and the app read
+ * only onStateChange, so it discarded the end of every video.
+ *
+ * <p>So both are done now: subscribe on onReady, and read the state out of
+ * infoDelivery too. Either alone can fail quietly, which is the entire history of
+ * this component.
+ *
+ * <p>The tests earned none of the confidence they gave. Each version stubbed the
+ * message the app already understood, so each passed against code that could not
+ * work against the real player. The stub now replays a recorded playback.
  *
  * <p>The server sends the address as far as `enablejsapi=1`, so the decisions about
  * youtube-nocookie and `rel` live in one place; the origin is added here, because
@@ -53,6 +66,49 @@ type Props = {
 /** YouTube's player states. 0 is ENDED; the rest are not interesting here. */
 const ENDED = 0;
 
+/** What the parent posts to be sent state changes at all. */
+const SUBSCRIBE = {
+  event: 'command',
+  func: 'addEventListener',
+  args: ['onStateChange'],
+  id: 1,
+  channel: 'widget',
+};
+
+type PlayerMessage = {
+  event?: string;
+  info?: number | { playerState?: number } | null;
+};
+
+/**
+ * The player's state, from whichever message carried it.
+ *
+ * <p>Three shapes, and the app previously understood only the first:
+ *
+ * <ul>
+ *   <li>`onStateChange` with `info` as a bare number. Only ever arrives after
+ *       the parent has subscribed.</li>
+ *   <li>`onStateChange` with `info` as `{playerState}`. Some player versions.</li>
+ *   <li>`infoDelivery` with `info.playerState`. This is what actually turns up
+ *       during an ordinary playback, unprompted, and it is the one that was
+ *       being dropped. A full watch produced -1, 3, 1, 2 then 0 and the app
+ *       ignored every one of them.</li>
+ * </ul>
+ *
+ * <p>Reading the state out of infoDelivery as well as onStateChange means the
+ * tick no longer depends on the subscription having been accepted. Both are
+ * done, because either alone has a way of failing quietly.
+ */
+function playerStateOf(payload: PlayerMessage): number | undefined {
+  if (payload.event !== 'onStateChange' && payload.event !== 'infoDelivery') {
+    return undefined;
+  }
+  if (typeof payload.info === 'number') {
+    return payload.info;
+  }
+  return payload.info?.playerState;
+}
+
 const ALLOWED_SENDERS = [
   'https://www.youtube-nocookie.com',
   'https://www.youtube.com',
@@ -77,6 +133,23 @@ export default function VideoPlayer({ youtubeId, embedUrl, title, onFinished }: 
     return `${embedUrl}&origin=${encodeURIComponent(origin)}`;
   }, [embedUrl]);
 
+  /**
+   * Ask to be told about state changes.
+   *
+   * <p>Separate from the listening handshake and easy to mistake for it. The
+   * handshake gets the player talking; this asks it to talk about the one thing
+   * we care about. Sent on onReady, when there is definitely something at the
+   * other end to receive it.
+   */
+  const subscribe = useCallback(() => {
+    if (Platform.OS !== 'web') {
+      return;
+    }
+    frame.current?.contentWindow?.postMessage(
+      JSON.stringify(SUBSCRIBE), PLAYER_ORIGIN,
+    );
+  }, []);
+
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') {
       return undefined;
@@ -87,22 +160,27 @@ export default function VideoPlayer({ youtubeId, embedUrl, title, onFinished }: 
       if (!ALLOWED_SENDERS.includes(event.origin)) {
         return;
       }
-      let payload: { event?: string; info?: unknown } | null = null;
+      let payload: PlayerMessage | null = null;
       try {
         payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
       } catch {
         return; // not ours; YouTube also sends things that are not JSON
       }
-      // Anything at all from the player means the handshake landed.
+      // Anything at all from the player means it is talking to us.
       heard.current = true;
-      if (!payload || payload.event !== 'onStateChange') {
+      if (!payload) {
         return;
       }
-      // info is the state, sometimes wrapped in an object depending on the
-      // player's version. Both shapes have meant ENDED at one time or another.
-      const state = typeof payload.info === 'number'
-        ? payload.info
-        : (payload.info as { playerState?: number } | null)?.playerState;
+
+      // onReady is not the end of the conversation, it is the start of it.
+      // Subscribing is a separate request, and without it onStateChange never
+      // comes -- see the note above the component.
+      if (payload.event === 'onReady') {
+        subscribe();
+        return;
+      }
+
+      const state = playerStateOf(payload);
       if (state !== ENDED || finished.current) {
         return;
       }
@@ -115,7 +193,7 @@ export default function VideoPlayer({ youtubeId, embedUrl, title, onFinished }: 
 
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [onFinished, youtubeId]);
+  }, [onFinished, youtubeId, subscribe]);
 
   /**
    * Tell the player we are listening.
@@ -135,16 +213,19 @@ export default function VideoPlayer({ youtubeId, embedUrl, title, onFinished }: 
     }
     let attempts = 0;
     const send = () => {
-      attempts += 1;
       const target = frame.current?.contentWindow;
-      if (heard.current || !target || attempts > 5) {
+      if (!target) {
         return;
       }
+      attempts += 1;
       target.postMessage(
         JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }),
         PLAYER_ORIGIN,
       );
-      window.setTimeout(send, 400);
+      target.postMessage(JSON.stringify(SUBSCRIBE), PLAYER_ORIGIN);
+      if (attempts < 5 && !heard.current) {
+        window.setTimeout(send, 400);
+      }
     };
     send();
   }, []);

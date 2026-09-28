@@ -58,6 +58,25 @@ test.describe('Finishing a video marks it watched', () => {
    * Served at the nocookie origin, so the message the app receives carries the
    * origin the app checks for.
    */
+  /**
+   * A recorded playback, replayed.
+   *
+   * <p>The sequence below is what QA captured from the real player over one full
+   * watch: `infoDelivery` messages carrying playerState -1, 3, 1, 2, then 0. Note
+   * what is NOT in it -- a single `onStateChange`. YouTube does not send those
+   * until the parent subscribes, and every previous version of this stub sent one
+   * unprompted. That is why the suite stayed green through two shipped bugs: the
+   * stub spoke the one dialect the app already understood.
+   *
+   * <p>So this stub says only what the real player said. If the app goes back to
+   * reading onStateChange alone, nothing here arrives in a form it understands and
+   * these tests fail -- which is what they were always supposed to do.
+   *
+   * <p>It also records what the page posts IN, so the subscription can be asserted
+   * on its own rather than inferred.
+   */
+  const RECORDED_PLAYBACK = [-1, 3, 1, 2, 0];
+
   async function stubThePlayer(page) {
     await page.route(`${NOCOOKIE}/embed/**`, (route) =>
       route.fulfill({
@@ -66,17 +85,32 @@ test.describe('Finishing a video marks it watched', () => {
         body: `<!doctype html><html><body>
           <p>stub player</p>
           <script>
-            // Silent until spoken to, which is the whole point. YouTube sends
-            // nothing -- not onReady, not a state change -- until the parent posts
-            // the listening handshake. A stub that announces itself would pass with
-            // the handshake missing, which is exactly how this shipped broken.
+            window.__sentToPlayer = [];
+            var states = ${JSON.stringify(RECORDED_PLAYBACK)};
+
+            function deliver(state) {
+              // The real shape: infoDelivery, with the state nested under info.
+              parent.postMessage(JSON.stringify({
+                event: 'infoDelivery',
+                info: { playerState: state },
+              }), '*');
+            }
+
             window.addEventListener('message', function (e) {
               var data;
               try { data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; }
               catch (err) { return; }
-              if (!data || data.event !== 'listening') return;
-              parent.postMessage(JSON.stringify({ event: 'onReady' }), '*');
-              parent.postMessage(JSON.stringify({ event: 'onStateChange', info: 0 }), '*');
+              if (!data) return;
+              window.__sentToPlayer.push(data);
+            });
+
+            // onReady unprompted, which is what the real player does -- it does
+            // not wait for the listening handshake to say hello.
+            parent.postMessage(JSON.stringify({ event: 'onReady' }), '*');
+
+            // Then the playback, paced so the order is observable.
+            states.forEach(function (state, i) {
+              window.setTimeout(function () { deliver(state); }, 150 * (i + 1));
             });
           </script>
         </body></html>`,
@@ -116,27 +150,22 @@ test.describe('Finishing a video marks it watched', () => {
    * behaviour below, so a regression says "the handshake stopped" rather than
    * "watched stopped working" and leaves somebody to find out why.
    */
-  test('the app opens the conversation rather than waiting to be spoken to',
+  /**
+   * The two things the page has to SAY, asserted on their own.
+   *
+   * <p>Separate from the behaviour below because a failure here names the cause.
+   * "The subscription stopped being sent" is actionable; "watched stopped working"
+   * sends somebody back through the whole protocol, which is how this component
+   * came to be fixed three times.
+   *
+   * <p>The subscription is the one that matters most and was missing longest.
+   * Without it YouTube sends no onStateChange at all, ever.
+   */
+  test('the app introduces itself and then asks to be told about state changes',
     async ({ page }) => {
       await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
       await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
-
-      // Record what the page sends INTO the iframe, which is the direction the
-      // ordinary message listener cannot see.
-      await page.route(`${NOCOOKIE}/embed/**`, (route) =>
-        route.fulfill({
-          status: 200,
-          contentType: 'text/html',
-          body: `<!doctype html><html><body><script>
-            window.__handshakes = [];
-            window.addEventListener('message', function (e) {
-              var d;
-              try { d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; }
-              catch (err) { return; }
-              if (d && d.event === 'listening') window.__handshakes.push(d);
-            });
-          </script></body></html>`,
-        }));
+      await stubThePlayer(page);
 
       await page.goto('/videos');
       await page.waitForLoadState('networkidle');
@@ -144,13 +173,25 @@ test.describe('Finishing a video marks it watched', () => {
       await expect(page.locator('[data-video-player]')).toBeVisible({ timeout: 30000 });
 
       const frame = page.frameLocator('[data-video-player]');
-      await expect
-        .poll(async () => frame.locator('body').evaluate(
-          () => (window.__handshakes || []).length), { timeout: 30000 })
-        .toBeGreaterThan(0);
+      const sent = async () => frame.locator('body')
+        .evaluate(() => window.__sentToPlayer || []);
 
-      const handshake = await frame.locator('body').evaluate(() => window.__handshakes[0]);
+      // The handshake, on the channel YouTube listens on.
+      await expect.poll(async () => (await sent())
+        .filter((m) => m.event === 'listening').length, { timeout: 30000 })
+        .toBeGreaterThan(0);
+      const handshake = (await sent()).find((m) => m.event === 'listening');
       expect(handshake.channel, 'YouTube ignores anything not on the widget channel')
+        .toBe('widget');
+
+      // And the subscription, which is a command and not a handshake.
+      await expect.poll(async () => (await sent())
+        .filter((m) => m.event === 'command'
+          && m.func === 'addEventListener'
+          && (m.args || []).includes('onStateChange')).length, { timeout: 30000 })
+        .toBeGreaterThan(0);
+      const subscribe = (await sent()).find((m) => m.event === 'command');
+      expect(subscribe.channel, 'a command off the widget channel is discarded')
         .toBe('widget');
     });
 

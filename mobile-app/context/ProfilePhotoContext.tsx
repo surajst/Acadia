@@ -4,7 +4,7 @@ import {
   type PropsWithChildren,
 } from 'react';
 
-import { getUserProfile, profilePhotoUrl, uploadProfilePhoto, deleteProfilePhoto } from '../services/api';
+import { getUserProfile, fetchProfilePhoto, uploadProfilePhoto, deleteProfilePhoto } from '../services/api';
 import { notify } from '../utils/notify';
 
 /**
@@ -34,9 +34,15 @@ export function ProfilePhotoProvider({ children }: PropsWithChildren) {
   const refresh = useCallback(async () => {
     try {
       const profile = await getUserProfile();
-      setPhotoUri(profile?.hasPhoto
-        ? profilePhotoUrl(profile.userId, profile.photoUpdatedAt)
-        : null);
+      if (!profile?.hasPhoto) {
+        setPhotoUri(null);
+        return;
+      }
+      // Fetched with the token rather than handed to <Image> as a URL. The
+      // endpoint is Bearer-authenticated and an <img src> cannot carry a header,
+      // so the URL form rendered a blank circle however well the upload had
+      // worked. See fetchProfilePhoto.
+      setPhotoUri(await fetchProfilePhoto(profile.userId, profile.photoUpdatedAt));
     } catch {
       // A missing photo is not worth interrupting anyone over -- the avatar
       // falls back to the initial.
