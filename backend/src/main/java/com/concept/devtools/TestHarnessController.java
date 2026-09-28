@@ -445,6 +445,27 @@ public class TestHarnessController {
                 User pilotTeacher = userRepository.findByEmail("teacher@greenwood.com").orElse(null);
                 if (pilotTeacher != null) {
                     List<Notification> existingNotifs = notificationRepository.findByRecipientIdOrderByCreatedAtDesc(pilotTeacher.getId());
+
+                    // Read-state is state, and this reset used to leave it behind.
+                    //
+                    // The seed below only runs when there are no notifications at all,
+                    // and nothing here deletes them -- so the first test to tap one
+                    // marked it read for every test that followed, and the one
+                    // asserting an unread strip failed depending on what had run
+                    // before it. It passed on a fresh database and failed on the
+                    // second run against the same one, which is the most expensive
+                    // kind of flake to chase.
+                    //
+                    // Marking them unread rather than deleting and re-seeding keeps
+                    // the ids stable, which anything holding a deep link to one will
+                    // thank us for.
+                    for (Notification existing : existingNotifs) {
+                        if (existing.isRead()) {
+                            existing.setRead(false);
+                            notificationRepository.save(existing);
+                        }
+                    }
+
                     if (existingNotifs.isEmpty()) {
                         String[][] notifs = {
                             {"Attendance Reminder", "You have 2 classes pending attendance today.", "ATTENDANCE"},
