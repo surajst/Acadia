@@ -64,6 +64,50 @@ test.describe('Sharing a video with a class', () => {
    * The subject picker offers only what this teacher takes for the chosen class,
    * because the server refuses the rest -- the same rule the task form follows.
    */
+  /**
+   * QA reported that pressing Enter in the link box cleared the form instead of
+   * adding the video, while the button worked. **This test does not reproduce
+   * that**, and it is worth writing down why, so the next person does not go
+   * looking in the same place.
+   *
+   * There is no code path on which the two can differ. `<button type="submit">`
+   * and implicit submission both raise the one `submit` event; `addVideo` is a
+   * plain top-level function, so the inline attribute resolves it; and
+   * `event.preventDefault()` is its first statement, before any await. The page
+   * sends no Content-Security-Policy, so nothing is blocking the handler
+   * attribute either. Rebinding the handler in JS was tried, and it changed
+   * nothing -- this test passed identically with and without it, which is how
+   * that was found out. So whatever QA hit is in the environment, not here: a key
+   * pressed before the script had run, an extension, or an autofill.
+   *
+   * What this test IS, then, is the coverage the Enter route never had. It pins
+   * the behaviour so that if a later change does make Enter navigate, something
+   * says so. It is not a regression test for the report above, and should not be
+   * cited as one.
+   *
+   * Asserted through the same refusal the button's test uses, because it is the
+   * cheapest thing that proves the handler ran at all: if the browser navigates,
+   * the page reloads, the notice is gone and the field is empty.
+   */
+  test('pressing Enter in the link box submits rather than reloading', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'teacher@greenwood.com');
+    await page.goto('/web/teacher/videos');
+    await page.waitForLoadState('networkidle');
+
+    await page.fill('#videoUrl', 'https://www.youtube.com/playlist?list=PLabc123');
+    await page.selectOption('#videoSection', { label: 'Grade 6 - A' });
+    await page.locator('#videoUrl').press('Enter');
+    await page.waitForLoadState('networkidle');
+
+    // The handler ran: the server answered and the page said so.
+    await expect(page.locator('[data-video-notice]'))
+      .toContainText(/playlist/i, { timeout: 30000 });
+    // And what was typed is still there, which a reload would have taken.
+    await expect(page.locator('#videoUrl'))
+      .toHaveValue('https://www.youtube.com/playlist?list=PLabc123');
+  });
+
   test('the subject picker offers only what this teacher teaches', async ({ page }) => {
     await page.goto('/test/reset');
     await login(page, 'teacher@greenwood.com');

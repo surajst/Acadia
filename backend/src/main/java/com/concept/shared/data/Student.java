@@ -64,6 +64,18 @@ public class Student extends BaseTenantEntity {
     @Column(name = "emergency_contact_phone", length = 32)
     private String emergencyContactPhone;
 
+    /**
+     * Whether this child may appear in a photograph the school publishes.
+     *
+     * <p>False by default, and false is the honest default: a school that has not
+     * recorded an answer does not have permission. It is not the same as "no" --
+     * nobody has asked yet -- but for the purpose of putting a child's face in an
+     * album the two have to behave alike, because the cost of guessing wrong is not
+     * symmetrical.
+     */
+    @jakarta.persistence.Column(name = "photo_consent", nullable = false)
+    private boolean photoConsent = false;
+
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
 
@@ -115,6 +127,9 @@ public class Student extends BaseTenantEntity {
 
     public String getEmergencyContactName() { return emergencyContactName; }
     public void setEmergencyContactName(String emergencyContactName) { this.emergencyContactName = emergencyContactName; }
+
+    public boolean isPhotoConsent() { return photoConsent; }
+    public void setPhotoConsent(boolean photoConsent) { this.photoConsent = photoConsent; }
 
     public String getEmergencyContactPhone() { return emergencyContactPhone; }
     public void setEmergencyContactPhone(String emergencyContactPhone) { this.emergencyContactPhone = emergencyContactPhone; }

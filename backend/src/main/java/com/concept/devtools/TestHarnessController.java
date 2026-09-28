@@ -77,6 +77,7 @@ public class TestHarnessController {
     @Autowired private SubjectAssignmentService subjectAssignmentService;
     @Autowired private ClassSectionRepository classSectionRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private com.concept.user.UserPhotoRepository userPhotoRepository;
     @Autowired private NotificationRepository notificationRepository;
     /**
      * Optional on purpose: the seeder is @ConditionalOnProperty(dev-mode=true),
@@ -245,6 +246,19 @@ public class TestHarnessController {
             videoViewRepository.deleteAllInBatch();
             learningVideoRepository.deleteAllInBatch();
             teacherTaskRepository.deleteAllInBatch();
+
+            // A profile photograph is state, and a reset that leaves it behind makes
+            // every test that touches one depend on what ran before it. The photo
+            // rows go, and the users' photoUpdatedAt with them -- the flag and the
+            // bytes are what the app reads to decide there is a picture, so clearing
+            // one without the other leaves a user claiming a photo that is gone.
+            userPhotoRepository.deleteAllInBatch();
+            for (com.concept.user.User u : userRepository.findAll()) {
+                if (u.getPhotoUpdatedAt() != null) {
+                    u.setPhotoUpdatedAt(null);
+                    userRepository.save(u);
+                }
+            }
 
             // Seed a pending parent quest for Arjun Sharma
             ParentQuest quest = new ParentQuest();
@@ -431,6 +445,27 @@ public class TestHarnessController {
                 User pilotTeacher = userRepository.findByEmail("teacher@greenwood.com").orElse(null);
                 if (pilotTeacher != null) {
                     List<Notification> existingNotifs = notificationRepository.findByRecipientIdOrderByCreatedAtDesc(pilotTeacher.getId());
+
+                    // Read-state is state, and this reset used to leave it behind.
+                    //
+                    // The seed below only runs when there are no notifications at all,
+                    // and nothing here deletes them -- so the first test to tap one
+                    // marked it read for every test that followed, and the one
+                    // asserting an unread strip failed depending on what had run
+                    // before it. It passed on a fresh database and failed on the
+                    // second run against the same one, which is the most expensive
+                    // kind of flake to chase.
+                    //
+                    // Marking them unread rather than deleting and re-seeding keeps
+                    // the ids stable, which anything holding a deep link to one will
+                    // thank us for.
+                    for (Notification existing : existingNotifs) {
+                        if (existing.isRead()) {
+                            existing.setRead(false);
+                            notificationRepository.save(existing);
+                        }
+                    }
+
                     if (existingNotifs.isEmpty()) {
                         String[][] notifs = {
                             {"Attendance Reminder", "You have 2 classes pending attendance today.", "ATTENDANCE"},
