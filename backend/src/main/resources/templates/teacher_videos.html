@@ -42,7 +42,26 @@
                 <p class="card-sub">Paste a YouTube link. The title comes from YouTube, so it matches what plays.</p>
             </div>
 
-            <form id="addVideoForm" onsubmit="addVideo(event)" style="padding:16px; display:grid; gap:12px;">
+            <!--
+              preventDefault comes FIRST, before the call, and that ordering is the
+              whole fix.
+
+              This form has no method, so its default is GET, and this script is
+              parsed 70 lines below it. There is a window in which the fields are
+              interactive and addVideo does not exist yet. An Enter press in that
+              window threw ReferenceError out of this attribute, the default action
+              went ahead, and the browser did a native GET to this same URL: a
+              reload, which reads as "the form cleared itself". The button appeared
+              to work only because moving a mouse to it takes longer than the script
+              takes to arrive.
+
+              Cancelling first means the worst case is a submit that does nothing and
+              logs, rather than one that navigates and loses what was typed. Binding
+              this in DOMContentLoaded instead would be strictly worse -- that fires
+              later than an inline attribute, which widens the window.
+            -->
+            <form id="addVideoForm" onsubmit="event.preventDefault(); addVideo(event);"
+                  style="padding:16px; display:grid; gap:12px;">
                 <div class="space-y-1">
                     <label for="videoUrl" class="text-xs font-bold uppercase tracking-wider text-slate-500">YouTube link</label>
                     <input id="videoUrl" type="url" required

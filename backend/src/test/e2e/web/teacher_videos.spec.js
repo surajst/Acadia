@@ -65,25 +65,9 @@ test.describe('Sharing a video with a class', () => {
    * because the server refuses the rest -- the same rule the task form follows.
    */
   /**
-   * QA reported that pressing Enter in the link box cleared the form instead of
-   * adding the video, while the button worked. **This test does not reproduce
-   * that**, and it is worth writing down why, so the next person does not go
-   * looking in the same place.
-   *
-   * There is no code path on which the two can differ. `<button type="submit">`
-   * and implicit submission both raise the one `submit` event; `addVideo` is a
-   * plain top-level function, so the inline attribute resolves it; and
-   * `event.preventDefault()` is its first statement, before any await. The page
-   * sends no Content-Security-Policy, so nothing is blocking the handler
-   * attribute either. Rebinding the handler in JS was tried, and it changed
-   * nothing -- this test passed identically with and without it, which is how
-   * that was found out. So whatever QA hit is in the environment, not here: a key
-   * pressed before the script had run, an extension, or an autofill.
-   *
-   * What this test IS, then, is the coverage the Enter route never had. It pins
-   * the behaviour so that if a later change does make Enter navigate, something
-   * says so. It is not a regression test for the report above, and should not be
-   * cited as one.
+   * The Enter route, on a page whose script has finished loading. This is the
+   * ordinary case and it always worked; the race that broke it has its own test
+   * below, because this one cannot see it.
    *
    * Asserted through the same refusal the button's test uses, because it is the
    * cheapest thing that proves the handler ran at all: if the browser navigates,
@@ -106,6 +90,77 @@ test.describe('Sharing a video with a class', () => {
     // And what was typed is still there, which a reload would have taken.
     await expect(page.locator('#videoUrl'))
       .toHaveValue('https://www.youtube.com/playlist?list=PLabc123');
+  });
+
+  /**
+   * The race QA actually hit, and the reason this took two attempts to find.
+   *
+   * The form carries no `method`, so its default is GET, and the script that
+   * defines `addVideo` is parsed seventy lines below the fields. Between the
+   * fields becoming interactive and that script executing there is a window where
+   * the handler does not exist. An Enter press in that window threw
+   * ReferenceError out of the inline attribute, the default action proceeded, and
+   * the browser did a native GET to this same URL. A reload, which presents as
+   * "the form cleared itself". The button looked fine only because moving a mouse
+   * to it takes longer than the script takes to arrive -- so the bug was real,
+   * intermittent, and invisible to a test that waits for networkidle first.
+   *
+   * Reproduced by serving the page with its script removed, which is what "the
+   * script has not run yet" looks like from the form's point of view, and is the
+   * only way to hold the window open long enough to assert on. What is asserted
+   * is the thing that hurt: the page must not navigate, so what was typed
+   * survives.
+   */
+  test('Enter cannot trigger a native GET when the handler is unavailable', async ({ page }) => {
+    await page.goto('/test/reset');
+    await login(page, 'teacher@greenwood.com');
+    await page.goto('/web/teacher/videos');
+    await page.waitForLoadState('networkidle');
+
+    // The form must be VALID first. The two selects are `required` and start
+    // empty, so an incomplete form is blocked by the browser's own constraint
+    // validation and never reaches submit at all -- which is a different reason
+    // for "nothing happened" and would make this test pass for the wrong reason.
+    // A first attempt at this stripped the whole script and proved only that.
+    const typed = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+    await page.fill('#videoUrl', typed);
+    await page.selectOption('#videoSection', { label: 'Grade 6 - A' });
+    // The subject list is built from the chosen section, so it arrives after it.
+    const subject = page.locator('#videoSubject option[value]:not([value=""])').first();
+    await expect(subject).toHaveCount(1, { timeout: 30000 });
+    await page.selectOption('#videoSubject',
+      await subject.getAttribute('value') ?? '');
+
+    // Now take away the one thing the race takes away: the handler. This is what
+    // the form sees in the window between becoming interactive and the script
+    // seventy lines below it executing.
+    // Assigned rather than deleted: a top-level `function` declaration creates a
+    // NON-CONFIGURABLE global, so `delete window.addVideo` fails silently and
+    // leaves the handler in place -- a first attempt at this asserted nothing for
+    // exactly that reason. Assignment works, and throws TypeError from the
+    // attribute where the real race throws ReferenceError. The distinction does
+    // not matter here: the question is whether an exception thrown out of the
+    // handler lets the native submit proceed, and both answer it the same way.
+    await page.evaluate(() => { window.addVideo = undefined; });
+    expect(await page.evaluate(() => typeof window.addVideo),
+      'the handler has to actually be gone for this to test anything')
+      .toBe('undefined');
+
+    let navigated = false;
+    page.on('framenavigated', (frame) => {
+      if (frame === page.mainFrame()) navigated = true;
+    });
+
+    await page.locator('#videoUrl').press('Enter');
+    await page.waitForTimeout(1000);
+
+    // The form carries no method, so a native submit is a GET to this same URL:
+    // a reload, which is what "the form cleared itself" actually was.
+    expect(navigated, 'Enter must not navigate: a native GET reloads the page and '
+      + 'takes the link the teacher just pasted with it').toBe(false);
+    await expect(page.locator('#videoUrl'),
+      'what was typed has to survive a submit the page could not handle')
+      .toHaveValue(typed);
   });
 
   test('the subject picker offers only what this teacher teaches', async ({ page }) => {
