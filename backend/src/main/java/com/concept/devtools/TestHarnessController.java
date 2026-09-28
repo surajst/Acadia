@@ -77,6 +77,7 @@ public class TestHarnessController {
     @Autowired private SubjectAssignmentService subjectAssignmentService;
     @Autowired private ClassSectionRepository classSectionRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private com.concept.user.UserPhotoRepository userPhotoRepository;
     @Autowired private NotificationRepository notificationRepository;
     /**
      * Optional on purpose: the seeder is @ConditionalOnProperty(dev-mode=true),
@@ -245,6 +246,19 @@ public class TestHarnessController {
             videoViewRepository.deleteAllInBatch();
             learningVideoRepository.deleteAllInBatch();
             teacherTaskRepository.deleteAllInBatch();
+
+            // A profile photograph is state, and a reset that leaves it behind makes
+            // every test that touches one depend on what ran before it. The photo
+            // rows go, and the users' photoUpdatedAt with them -- the flag and the
+            // bytes are what the app reads to decide there is a picture, so clearing
+            // one without the other leaves a user claiming a photo that is gone.
+            userPhotoRepository.deleteAllInBatch();
+            for (com.concept.user.User u : userRepository.findAll()) {
+                if (u.getPhotoUpdatedAt() != null) {
+                    u.setPhotoUpdatedAt(null);
+                    userRepository.save(u);
+                }
+            }
 
             // Seed a pending parent quest for Arjun Sharma
             ParentQuest quest = new ParentQuest();

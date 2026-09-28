@@ -13,23 +13,29 @@ const { test, expect } = require('./fixtures');
  *
  * So this asserts the configuration first, then the behaviour.
  *
- * <h2>How the video is "played to the end"</h2>
+ * <h2>The handshake, and why the first version of this test was worthless</h2>
  *
- * The embed request is intercepted and answered with a page that posts the message
- * YouTube posts at the end. That is not a shortcut around the hard part -- it is
- * the only way to test the hard part honestly:
+ * enablejsapi and origin are necessary and NOT sufficient. The widget protocol is a
+ * handshake: YouTube stays completely silent until the parent posts
+ * `{"event":"listening","id":n,"channel":"widget"}` into the iframe. The app did
+ * not, so nothing was ever recorded -- and this test passed anyway, because its
+ * stub sent ENDED unprompted. It proved the app reacts to a message. It could not
+ * prove a message would ever arrive, which was the only thing in doubt.
  *
- *  - the stub is served AT the youtube-nocookie origin, so `event.origin` on the
- *    message is genuinely `https://www.youtube-nocookie.com` and the listener's
- *    origin check is exercised rather than bypassed;
- *  - the message is the real shape, `{"event":"onStateChange","info":0}`;
- *  - and nothing waits on a real video's running time, or on a CI runner having
- *    egress to youtube.com, or on somebody not deleting the video this was written
- *    against.
+ * So the stub now behaves like YouTube: silent until spoken to. It answers the
+ * handshake with onReady and only then reports the end. If the app stops sending
+ * the handshake, nothing arrives, no request is made, and these fail -- which is
+ * what the earlier version should have done.
  *
- * What is NOT proven here is that YouTube itself sends that message. Nothing in CI
- * can prove that. What is proven is that the embed is configured so it will, and
- * that when it arrives the app does the right thing with it.
+ * The rest of the shape is deliberate too: the stub is served AT the
+ * youtube-nocookie origin, so `event.origin` is genuinely YouTube's and the
+ * listener's origin check is exercised rather than bypassed, and the messages are
+ * the real ones. Nothing waits on a real video's running time, on a runner having
+ * egress, or on somebody not deleting the video this was written against.
+ *
+ * What is still NOT proven here is YouTube's own behaviour. Nothing in CI can prove
+ * that. What is proven is that the app performs its half of a protocol whose other
+ * half QA has now confirmed by hand.
  */
 test.describe('Finishing a video marks it watched', () => {
   test.use({ baseURL: 'http://localhost:8081' });
@@ -60,8 +66,18 @@ test.describe('Finishing a video marks it watched', () => {
         body: `<!doctype html><html><body>
           <p>stub player</p>
           <script>
-            // What YouTube posts when a video reaches its end. info 0 is ENDED.
-            parent.postMessage(JSON.stringify({ event: 'onStateChange', info: 0 }), '*');
+            // Silent until spoken to, which is the whole point. YouTube sends
+            // nothing -- not onReady, not a state change -- until the parent posts
+            // the listening handshake. A stub that announces itself would pass with
+            // the handshake missing, which is exactly how this shipped broken.
+            window.addEventListener('message', function (e) {
+              var data;
+              try { data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; }
+              catch (err) { return; }
+              if (!data || data.event !== 'listening') return;
+              parent.postMessage(JSON.stringify({ event: 'onReady' }), '*');
+              parent.postMessage(JSON.stringify({ event: 'onStateChange', info: 0 }), '*');
+            });
           </script>
         </body></html>`,
       }));
@@ -94,6 +110,49 @@ test.describe('Finishing a video marks it watched', () => {
     // And the address the teacher's link became, not the link itself.
     expect(src).toContain(`${NOCOOKIE}/embed/dQw4w9WgXcQ`);
   });
+
+  /**
+   * The half that was missing. Asserted on its own as well as through the
+   * behaviour below, so a regression says "the handshake stopped" rather than
+   * "watched stopped working" and leaves somebody to find out why.
+   */
+  test('the app opens the conversation rather than waiting to be spoken to',
+    async ({ page }) => {
+      await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
+      await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+
+      // Record what the page sends INTO the iframe, which is the direction the
+      // ordinary message listener cannot see.
+      await page.route(`${NOCOOKIE}/embed/**`, (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'text/html',
+          body: `<!doctype html><html><body><script>
+            window.__handshakes = [];
+            window.addEventListener('message', function (e) {
+              var d;
+              try { d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; }
+              catch (err) { return; }
+              if (d && d.event === 'listening') window.__handshakes.push(d);
+            });
+          </script></body></html>`,
+        }));
+
+      await page.goto('/videos');
+      await page.waitForLoadState('networkidle');
+      await page.getByText('Photosynthesis in 5 minutes').click();
+      await expect(page.locator('[data-video-player]')).toBeVisible({ timeout: 30000 });
+
+      const frame = page.frameLocator('[data-video-player]');
+      await expect
+        .poll(async () => frame.locator('body').evaluate(
+          () => (window.__handshakes || []).length), { timeout: 30000 })
+        .toBeGreaterThan(0);
+
+      const handshake = await frame.locator('body').evaluate(() => window.__handshakes[0]);
+      expect(handshake.channel, 'YouTube ignores anything not on the widget channel')
+        .toBe('widget');
+    });
 
   test('reaching the end records it, and the list says so', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });

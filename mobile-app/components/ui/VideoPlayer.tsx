@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
 
 import { useTheme, type Theme } from '../../context/ThemeContext';
@@ -10,9 +10,19 @@ import { useTheme, type Theme } from '../../context/ThemeContext';
  *
  * <p>`enablejsapi=1` and `origin=` are not optional decoration. Without the first,
  * YouTube posts no messages at all. Without the second -- matching the embedding
- * page exactly -- it refuses to post to that page. Either missing and "Watched ✓"
- * simply never appears, silently, behind a player that looks and plays perfectly
- * normally. That is a bug nobody notices until a teacher asks who has watched.
+ * page exactly -- it refuses to post to that page.
+ *
+ * <p>And they are not sufficient, which is what shipped broken. The widget protocol
+ * is a handshake: YouTube stays completely silent until the parent page posts
+ * `{"event":"listening","id":n,"channel":"widget"}` into the iframe. Listening
+ * without speaking first means zero messages, ever -- behind a player that looks
+ * and plays perfectly normally. QA found it by hand-posting the handshake and
+ * watching onReady arrive immediately.
+ *
+ * <p>The test that was meant to catch this did not, because its stub sent ENDED
+ * unprompted. It proved the app reacts to a message; it could not prove a message
+ * would ever come. The stub now stays silent until it is spoken to, the way
+ * YouTube does.
  *
  * <p>The server sends the address as far as `enablejsapi=1`, so the decisions about
  * youtube-nocookie and `rel` live in one place; the origin is added here, because
@@ -48,10 +58,15 @@ const ALLOWED_SENDERS = [
   'https://www.youtube.com',
 ];
 
+/** The origin the embed is served from, and so where the handshake is sent. */
+const PLAYER_ORIGIN = 'https://www.youtube-nocookie.com';
+
 export default function VideoPlayer({ youtubeId, embedUrl, title, onFinished }: Props) {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
   const finished = useRef(false);
+  const frame = useRef<HTMLIFrameElement | null>(null);
+  const heard = useRef(false);
 
   /** The address with this page's own origin on it. */
   const src = useMemo(() => {
@@ -78,6 +93,8 @@ export default function VideoPlayer({ youtubeId, embedUrl, title, onFinished }: 
       } catch {
         return; // not ours; YouTube also sends things that are not JSON
       }
+      // Anything at all from the player means the handshake landed.
+      heard.current = true;
       if (!payload || payload.event !== 'onStateChange') {
         return;
       }
@@ -100,12 +117,46 @@ export default function VideoPlayer({ youtubeId, embedUrl, title, onFinished }: 
     return () => window.removeEventListener('message', onMessage);
   }, [onFinished, youtubeId]);
 
+  /**
+   * Tell the player we are listening.
+   *
+   * <p>Until this arrives, YouTube sends nothing at all -- not onReady, not a
+   * single state change. It is the half that was missing, and its absence is
+   * invisible: the video plays, and the tick never comes.
+   *
+   * <p>Repeated a few times because the iframe's load event and the player's own
+   * readiness are not the same moment, and a handshake that arrives too early is
+   * simply dropped. It stops as soon as anything is heard back, so the usual case
+   * is one message.
+   */
+  const startListening = useCallback(() => {
+    if (Platform.OS !== 'web') {
+      return;
+    }
+    let attempts = 0;
+    const send = () => {
+      attempts += 1;
+      const target = frame.current?.contentWindow;
+      if (heard.current || !target || attempts > 5) {
+        return;
+      }
+      target.postMessage(
+        JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }),
+        PLAYER_ORIGIN,
+      );
+      window.setTimeout(send, 400);
+    };
+    send();
+  }, []);
+
   return (
     <View style={styles.frame}>
       {React.createElement('iframe', {
         // Named so a test can find it, and so the two parameters above can be
         // asserted rather than assumed.
         'data-video-player': youtubeId,
+        ref: frame,
+        onLoad: startListening,
         src,
         title,
         width: '100%',

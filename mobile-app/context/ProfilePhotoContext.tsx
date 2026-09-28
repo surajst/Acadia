@@ -1,11 +1,11 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Alert } from 'react-native';
 import {
   createContext, useCallback, useContext, useEffect, useMemo, useState,
   type PropsWithChildren,
 } from 'react';
 
 import { getUserProfile, profilePhotoUrl, uploadProfilePhoto, deleteProfilePhoto } from '../services/api';
+import { notify } from '../utils/notify';
 
 /**
  * The signed-in user's profile photograph, in one place.
@@ -54,7 +54,7 @@ export function ProfilePhotoProvider({ children }: PropsWithChildren) {
   const pickAndUpload = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert(
+      notify(
         'Photos not allowed',
         'Acadia needs access to your photos to set a profile picture. You can turn this on in Settings.',
       );
@@ -80,7 +80,7 @@ export function ProfilePhotoProvider({ children }: PropsWithChildren) {
     } catch (err: any) {
       const message = err?.response?.data?.error
         ?? 'Could not save that picture. Please try again.';
-      Alert.alert('Not saved', message);
+      notify('Not saved', message);
     } finally {
       setIsBusy(false);
     }
@@ -92,7 +92,7 @@ export function ProfilePhotoProvider({ children }: PropsWithChildren) {
       await deleteProfilePhoto();
       setPhotoUri(null);
     } catch {
-      Alert.alert('Not removed', 'Could not remove that picture. Please try again.');
+      notify('Not removed', 'Could not remove that picture. Please try again.');
     } finally {
       setIsBusy(false);
     }
