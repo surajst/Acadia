@@ -6,8 +6,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
-} from 'react-native';
+  } from 'react-native';
 import { useContext, useState, useEffect, useMemo } from 'react';
 import * as Sharing from 'expo-sharing';
 import { DataContext } from './_layout';
@@ -16,6 +15,7 @@ import { useTheme, type Theme } from '../../context/ThemeContext';
 // Only for scoreColor below -- success/warn/danger are not brand-family
 // tokens, so they never change with the chosen theme.
 import baseT from '../../constants/theme';
+import { notify, notifySuccess } from '../../utils/notify';
 
 const TERMS = ['TERM1', 'TERM2', 'FINAL'] as const;
 
@@ -110,10 +110,10 @@ export default function PerformanceScreen() {
       if (canShare) {
         await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Report Card' });
       } else {
-        Alert.alert('Downloaded', `Report card saved to ${uri}`);
+        notifySuccess('Downloaded', `Report card saved to ${uri}`);
       }
     } catch {
-      Alert.alert('Download failed', 'Could not download the report card. Please try again.');
+      notify('Download failed', 'Could not download the report card. Please try again.');
     } finally {
       setDownloading(false);
     }

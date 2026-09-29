@@ -1,6 +1,6 @@
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  ActivityIndicator, Alert, Modal,
+  ActivityIndicator, Modal,
 } from 'react-native';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { DataContext } from './_layout';
 import { getSupportedLanguages, setPreferredLanguage } from '../../services/api';
 import { useThemePicker, type Theme } from '../../context/ThemeContext';
+import { notify } from '../../utils/notify';
 
 /**
  * Preferences and sign-out, split out of the profile screen when the wheel
@@ -49,7 +50,7 @@ export default function SettingsScreen() {
       await setPreferredLanguage(code);
       setPickedLanguage(code);
     } catch {
-      Alert.alert('Language', 'Could not save your language preference.');
+      notify('Language', 'Could not save your language preference.');
     } finally {
       setSavingLanguage(false);
     }

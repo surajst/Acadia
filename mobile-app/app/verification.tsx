@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, Alert,
-} from 'react-native';
+  RefreshControl, } from 'react-native';
 import { Stack } from 'expo-router';
 import { getTeacherQueue, decideMilestone, decideProgress } from '@/services/api';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import { useTheme, type Theme } from '@/context/ThemeContext';
+import { notify, ask } from '../utils/notify';
 
 /**
  * What is waiting on the teacher: student milestone submissions asking for an
@@ -68,7 +68,7 @@ export default function VerificationScreen() {
   useEffect(() => {
     (async () => {
       try { await load(); }
-      catch (e: any) { Alert.alert('Could not load', e?.response?.data?.error ?? 'Please try again.'); }
+      catch (e: any) { notify('Could not load', e?.response?.data?.error ?? 'Please try again.'); }
       finally { setLoading(false); }
     })();
   }, [load]);
@@ -79,17 +79,21 @@ export default function VerificationScreen() {
     setRefreshing(false);
   };
 
-  const confirmDecline = (row: Row) => {
+  const confirmDecline = async (row: Row) => {
     // Declining sends the student a "needs review" notice, and there is no
     // undo -- so it asks first, where awarding XP does not.
-    Alert.alert(
+    //
+    // ask(), not notify(): this one blocks. A notice that cannot be answered
+    // would either do nothing or send the work back while the teacher was still
+    // reading it. Dismissing the dialog answers no.
+    const yes = await ask(
       'Send this back?',
       `${row.title} will be returned to the student as needing more work.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Send back', style: 'destructive', onPress: () => decide(row, 'reject') },
-      ],
+      { confirmLabel: 'Send back', destructive: true },
     );
+    if (yes) {
+      await decide(row, 'reject');
+    }
   };
 
   const decide = async (row: Row, action: 'approve' | 'reject') => {
@@ -101,7 +105,7 @@ export default function VerificationScreen() {
       // change what else is pending for the same student.
       await load();
     } catch (e: any) {
-      Alert.alert('Could not save', e?.response?.data?.error ?? 'Please try again.');
+      notify('Could not save', e?.response?.data?.error ?? 'Please try again.');
     } finally {
       setBusyId(null);
     }

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import StudentHeader from './ui/StudentHeader';
 import HomeWheel from './HomeWheel';
@@ -9,6 +9,7 @@ import { SectionLabel, QuestCard, NextClassCard } from './ui/TodaySection';
 import BirthdayCard, { isBirthday, turningAge } from './ui/BirthdayCard';
 import { claimQuest } from '../services/api';
 import { useTheme, type Theme } from '../context/ThemeContext';
+import { notify } from '../utils/notify';
 
 /**
  * The student home screen.
@@ -49,7 +50,7 @@ export default function StudentDashboard({ data, schoolName, refreshing, onRefre
       await claimQuest(questId);
       await refreshData();
     } catch (e: any) {
-      Alert.alert('Could not claim', e?.response?.data?.error ?? 'Please try again.');
+      notify('Could not claim', e?.response?.data?.error ?? 'Please try again.');
     } finally {
       setClaiming(null);
     }

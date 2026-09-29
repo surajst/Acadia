@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import EmptyState from '@/components/ui/EmptyState';
 import {
@@ -10,6 +10,7 @@ import {
   submitAssessmentScores,
 } from '@/services/api';
 import { useTheme, type Theme } from '../context/ThemeContext';
+import { notify } from '../utils/notify';
 
 /** What a school actually marks things out of. */
 const MAX_SCORE_CHOICES = [20, 25, 50, 100];
@@ -106,7 +107,7 @@ export default function GradebookScreen() {
       await loadAssessments(selectedClass.id);
       openAssessment(created.id);
     } catch {
-      Alert.alert('Error', 'Could not create assessment.');
+      notify('Error', 'Could not create assessment.');
     }
   };
 

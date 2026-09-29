@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { DataContext } from './_layout';
 import LoadFailed from '../../components/ui/LoadFailed';
@@ -8,6 +8,7 @@ import { useTheme, type Theme } from '../../context/ThemeContext';
 // Only for TONE below -- success/danger/warn are not brand-family tokens, so
 // they never change with the chosen theme and don't need the live hook.
 import baseT from '../../constants/theme';
+import { notify, notifySuccess } from '../../utils/notify';
 
 /**
  * What this family owes the school, and what they have already paid.
@@ -62,7 +63,7 @@ export default function FeesScreen() {
   const sendWaiverRequest = async () => {
     if (!askingFor || sending) return;
     if (!reason.trim()) {
-      Alert.alert('Tell them why', 'A short reason helps the school consider it fairly.');
+      notify('Tell them why', 'A short reason helps the school consider it fairly.');
       return;
     }
     setSending(true);
@@ -71,9 +72,9 @@ export default function FeesScreen() {
       setAskingFor(null);
       setReason('');
       await refreshData();
-      Alert.alert('Sent', res?.message ?? 'The school will let you know their decision.');
+      notifySuccess('Sent', res?.message ?? 'The school will let you know their decision.');
     } catch (e: any) {
-      Alert.alert('Could not send', e?.response?.data?.error ?? 'Please try again.');
+      notify('Could not send', e?.response?.data?.error ?? 'Please try again.');
     } finally {
       setSending(false);
     }

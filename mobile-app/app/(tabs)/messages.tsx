@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Modal, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Modal, Platform } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import {
   createAudioPlayer,
@@ -23,6 +23,7 @@ import {
   sendVoiceReply,
 } from '@/services/api';
 import { useTheme, type Theme } from '../../context/ThemeContext';
+import { notify } from '../../utils/notify';
 
 export default function MessagesScreen() {
   const T = useTheme();
@@ -157,7 +158,7 @@ export default function MessagesScreen() {
 
   const handleToggleRecording = async () => {
     if (Platform.OS === 'web') {
-      Alert.alert('Voice reply', 'Voice recording is only available in the native app, not the web version.');
+      notify('Voice reply', 'Voice recording is only available in the native app, not the web version.');
       return;
     }
     if (!activeConversation) return;
@@ -174,7 +175,7 @@ export default function MessagesScreen() {
         }
       } catch (e) {
         console.log('Failed to send voice reply:', e);
-        Alert.alert('Voice reply', 'Could not send your voice message.');
+        notify('Voice reply', 'Could not send your voice message.');
       } finally {
         setRecordingBusy(false);
       }
@@ -184,7 +185,7 @@ export default function MessagesScreen() {
     try {
       const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Voice reply', 'Microphone permission was not granted.');
+        notify('Voice reply', 'Microphone permission was not granted.');
         return;
       }
       // The iOS-suffixed keys are gone: expo-audio applies allowsRecording and
@@ -195,7 +196,7 @@ export default function MessagesScreen() {
       setIsRecording(true);
     } catch (e) {
       console.log('Failed to start recording:', e);
-      Alert.alert('Voice reply', 'Could not start recording.');
+      notify('Voice reply', 'Could not start recording.');
     }
   };
 

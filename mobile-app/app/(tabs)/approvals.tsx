@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, RefreshControl, Alert,
-} from 'react-native';
+  ActivityIndicator, RefreshControl, } from 'react-native';
 import { Stack } from 'expo-router';
 import {
   getPendingApprovals, decideApproval, getPendingStaff, decideStaff,
   getPendingWaivers, decideWaiver,
 } from '../../services/api';
 import { useTheme, type Theme } from '../../context/ThemeContext';
+import { notify } from '../../utils/notify';
 
 /**
  * What is waiting on the principal.
@@ -92,7 +92,7 @@ export default function ApprovalsScreen() {
   useEffect(() => {
     (async () => {
       try { await load(); }
-      catch (e: any) { Alert.alert('Could not load', e?.response?.data?.error ?? 'Please try again.'); }
+      catch (e: any) { notify('Could not load', e?.response?.data?.error ?? 'Please try again.'); }
       finally { setLoading(false); }
     })();
   }, [load]);
@@ -114,7 +114,7 @@ export default function ApprovalsScreen() {
       // worse than one that takes a moment.
       await load();
     } catch (e: any) {
-      Alert.alert('Could not save', e?.response?.data?.error ?? 'Please try again.');
+      notify('Could not save', e?.response?.data?.error ?? 'Please try again.');
     } finally {
       setBusyId(null);
     }
