@@ -116,6 +116,13 @@ test.describe('Screens belong to roles', () => {
    * itself -- every spoke drawn on the role's wheel -- and requires each one to
    * open. If the guard and the navigation ever disagree about a role, whichever
    * of the two is wrong, this fails.
+   *
+   * <p>"Opens" used to mean only that the router did not send the role home, and
+   * that was not enough. A teacher's Videos spoke opened a screen that then called
+   * the PUPIL endpoint, was refused, and rendered "Could not load videos" -- a
+   * broken destination on the wheel, green in this test for weeks. Landing on the
+   * route is the weaker half of the claim; the screen has to have something on it.
+   * So each spoke is now also required not to show a failure.
    */
   for (const [who, role] of [
     ['ramesh@gmail.com', 'parent'],
@@ -144,6 +151,17 @@ test.describe('Screens belong to roles', () => {
         await page.waitForLoadState('networkidle');
         expect(await landedOn(page), `"${label}" is on a ${role}'s wheel, so it must open`)
           .not.toBe('/');
+
+        // And it has to have loaded. A screen that opens and then says it could
+        // not fetch anything is a destination that does not work, whatever the
+        // router did. Matched on the wording these screens use for a failed load,
+        // not on any error anywhere: an empty state is fine, and a validation
+        // message a user provoked is not this.
+        const failures = await page.getByText(
+          /could not load|couldn't load|something went wrong|failed to load/i,
+        ).count();
+        expect(failures, `"${label}" opened for a ${role} but could not load its data`)
+          .toBe(0);
       }
     });
   }

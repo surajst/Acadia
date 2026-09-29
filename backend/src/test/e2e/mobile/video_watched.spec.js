@@ -248,10 +248,67 @@ test.describe('Finishing a video marks it watched', () => {
   test('a parent sees their child\'s list read-only', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
     await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await stubThePlayer(page);
+
+    // Every attempt to record a watch, whoever makes it.
+    const attempts = [];
+    page.on('request', (r) => {
+      if (r.url().includes('/videos/') && r.url().includes('/watched')) {
+        attempts.push(`${r.method()} ${r.url()}`);
+      }
+    });
+
+    await page.goto('/videos');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText('Photosynthesis in 5 minutes')).toBeVisible({ timeout: 30000 });
+
+    // Read-only means read-only even when the video reaches its end in front of
+    // them. The endpoint is pupil-only, so calling it as a parent is a 403 the
+    // screen would have to swallow -- and the mark is about their child, not
+    // about them, so nothing here should want to send it.
+    await page.getByText('Photosynthesis in 5 minutes').click();
+    await expect(page.locator('[data-video-player]')).toBeVisible({ timeout: 30000 });
+    await page.waitForTimeout(2000);
+
+    expect(attempts, 'a parent watching to the end must not record a watch')
+      .toEqual([]);
+  });
+
+  /**
+   * A teacher gets their own list, not a pupil's.
+   *
+   * <p>Videos is on the teacher's wheel, and the screen used to send everyone who
+   * was not a parent to the PUPIL endpoint. A teacher tapping it was refused with
+   * a 403 and shown "Could not load videos" -- a destination on the wheel that had
+   * never worked. Three audiences, three endpoints, and no default to fall through
+   * to.
+   *
+   * <p>The absence assertion matters as much as the presence one: a tick says "you
+   * watched this", which is not a thing a teacher does to a video they shared, and
+   * the endpoint behind it refuses them anyway.
+   */
+  test('a teacher sees what they shared, with how many have watched', async ({ page }) => {
+    await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
+    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
 
     await page.goto('/videos');
     await page.waitForLoadState('networkidle');
 
+    // The list loaded at all. This is the bug: it used to say it could not.
+    await expect(page.getByText(/could not load/i)).toHaveCount(0);
     await expect(page.getByText('Photosynthesis in 5 minutes')).toBeVisible({ timeout: 30000 });
+
+    // The teacher's measure is the class, not themselves.
+    //
+    // Matched on the words, not a data-* attribute: react-native-web drops unknown
+    // props on Text, so a hook like that never reaches the DOM. A first version of
+    // this test looked for one and timed out against a screen that was rendering
+    // perfectly -- the same attribute had been sitting in the component unused,
+    // because every other test in this file quietly matched the text instead.
+    await expect(page.getByText(/pupils? ha(?:s|ve) watched/))
+      .toBeVisible({ timeout: 30000 });
+    await expect(page.getByText('Watched ✓'),
+      'a tick is about the person reading it, which is the wrong question for a teacher')
+      .toHaveCount(0);
   });
 });

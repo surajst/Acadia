@@ -6,16 +6,26 @@ import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DataContext } from './_layout';
-import { getStudentVideos, getParentVideos, markVideoWatched } from '../../services/api';
+import {
+  getStudentVideos, getParentVideos, getTeacherVideos, markVideoWatched,
+} from '../../services/api';
 import { useTheme, type Theme } from '../../context/ThemeContext';
 import VideoPlayer from '../../components/ui/VideoPlayer';
 
 /**
  * Videos a teacher has pointed this class at.
  *
- * <p>One screen for pupils and parents. A pupil can play and is recorded as having
- * watched; a parent sees the same list with the same "Watched" marks and cannot
- * change them -- the mark is about their child, not about them.
+ * <p>One screen for three audiences, because the server returns one row shape for
+ * all of them. A pupil can play and is recorded as having watched; a parent sees
+ * the same list with the same "Watched" marks and cannot change them -- the mark
+ * is about their child, not about them; a teacher sees what they have shared and
+ * how many pupils have watched each one.
+ *
+ * <p>The teacher case was missing and the tile was on their wheel anyway, so
+ * tapping Videos called the pupil endpoint, got a 403, and showed "Could not load
+ * videos". Three audiences, three endpoints, and the role decides which -- there
+ * is no default that is safe to fall through to, which is exactly how a teacher
+ * ended up asking the server for a pupil's list.
  */
 
 type Video = {
@@ -28,6 +38,7 @@ type Video = {
   subjectCode: string;
   sectionName?: string | null;
   watched: boolean;
+  watchedCount?: number;
 };
 
 export default function VideosScreen() {
@@ -43,17 +54,23 @@ export default function VideosScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const isParent = role === 'PARENT';
+  const isTeacher = role === 'TEACHER';
 
   const load = useCallback(async () => {
     try {
-      const list = isParent ? await getParentVideos(undefined) : await getStudentVideos(undefined);
+      // Switched on explicitly rather than "parent or else pupil". The old shape
+      // sent every non-parent to the pupil endpoint, so a teacher asked for a
+      // pupil's list and was refused.
+      const list = isParent ? await getParentVideos(undefined)
+        : isTeacher ? await getTeacherVideos()
+          : await getStudentVideos(undefined);
       setVideos(list);
       setError(null);
     } catch {
       setVideos([]);
       setError('Could not load videos. Pull down to try again.');
     }
-  }, [isParent]);
+  }, [isParent, isTeacher]);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load(); }, [load]);
@@ -81,13 +98,19 @@ export default function VideosScreen() {
    * and nothing worse.
    */
   const onFinished = useCallback(async (video: Video) => {
+    // Only a pupil is recorded. The watched endpoint is pupil-only, so calling it
+    // as a parent or a teacher is a 403 -- and a teacher previewing what they
+    // shared has not "watched" it in the sense the register means.
+    if (isParent || isTeacher) {
+      return;
+    }
     setVideos((prev) => (prev ?? []).map((v) => (v.id === video.id ? { ...v, watched: true } : v)));
     try {
       await markVideoWatched(video.id);
     } catch {
       // Left as it is on screen. Re-opening the list asks the server again.
     }
-  }, []);
+  }, [isParent, isTeacher]);
 
   const openVideo = (video: Video) => {
     setOpen(video);
@@ -133,7 +156,8 @@ export default function VideosScreen() {
             <Text style={styles.emptyTitle}>No videos yet</Text>
             <Text style={styles.emptyBody}>
               {isParent ? 'Anything a teacher shares will appear here.'
-                        : 'Your teacher will add videos here.'}
+                : isTeacher ? 'Videos you share with a class appear here. Add one from the web portal.'
+                  : 'Your teacher will add videos here.'}
             </Text>
           </View>
         ) : (
@@ -144,7 +168,9 @@ export default function VideosScreen() {
               onPress={() => openVideo(video)}
               accessibilityRole="button"
               accessibilityLabel={
-                `${video.title}. ${video.subjectCode}. ${video.watched ? 'Watched.' : 'Not watched yet.'}`
+                `${video.title}. ${video.subjectCode}. ${isTeacher
+                  ? `${video.watchedCount ?? 0} watched.`
+                  : video.watched ? 'Watched.' : 'Not watched yet.'}`
               }
             >
               <View style={styles.thumbWrap}>
@@ -162,9 +188,22 @@ export default function VideosScreen() {
                 {!!video.note && (
                   <Text style={styles.cardNote} numberOfLines={2}>{video.note}</Text>
                 )}
-                {video.watched && (
-                  <Text style={styles.watched} data-watched-mark>Watched ✓</Text>
-                )}
+                {/*
+                  No data-* test hook here. react-native-web drops unknown props on
+                  Text, so the `data-watched-mark` that used to sit on the line
+                  below never reached the DOM -- every test that claimed to use it
+                  actually matched the words. Asserting on what the user reads is
+                  the better test anyway; a hook that silently does nothing is
+                  worse than none.
+                */}
+                {isTeacher ? (
+                  <Text style={styles.watched}>
+                    {video.watchedCount === 1 ? '1 pupil has watched'
+                      : `${video.watchedCount ?? 0} pupils have watched`}
+                  </Text>
+                ) : video.watched ? (
+                  <Text style={styles.watched}>Watched ✓</Text>
+                ) : null}
               </View>
             </TouchableOpacity>
           ))
