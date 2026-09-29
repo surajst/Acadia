@@ -339,5 +339,14 @@ class LayeringArchitectureTest {
             // translation) and a read-only SIS projection. No web/app/data split
             // because there is no domain here to split -- if either grows domain
             // logic, slice it and move it into MIGRATED.
-            "language", "parentapp");
+            "language", "parentapp",
+
+            // Object storage and the image pipeline in front of it. Same shape as
+            // the two above: a port, two adapters (S3 and the filesystem), and
+            // pure byte-pushing. It owns no domain -- an album decides WHAT to
+            // store and who may see it; this only knows how to put bytes
+            // somewhere and how to turn a photograph the right way up. The moment
+            // it starts deciding anything about albums or consent, that logic
+            // belongs in the gallery slice, not here.
+            "media");
 }
