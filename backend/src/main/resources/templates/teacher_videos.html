@@ -42,7 +42,26 @@
                 <p class="card-sub">Paste a YouTube link. The title comes from YouTube, so it matches what plays.</p>
             </div>
 
-            <form id="addVideoForm" onsubmit="addVideo(event)" style="padding:16px; display:grid; gap:12px;">
+            <!--
+              preventDefault comes FIRST, before the call, and that ordering is the
+              whole fix.
+
+              This form has no method, so its default is GET, and this script is
+              parsed 70 lines below it. There is a window in which the fields are
+              interactive and addVideo does not exist yet. An Enter press in that
+              window threw ReferenceError out of this attribute, the default action
+              went ahead, and the browser did a native GET to this same URL: a
+              reload, which reads as "the form cleared itself". The button appeared
+              to work only because moving a mouse to it takes longer than the script
+              takes to arrive.
+
+              Cancelling first means the worst case is a submit that does nothing and
+              logs, rather than one that navigates and loses what was typed. Binding
+              this in DOMContentLoaded instead would be strictly worse -- that fires
+              later than an inline attribute, which widens the window.
+            -->
+            <form id="addVideoForm" onsubmit="event.preventDefault()"
+                  style="padding:16px; display:grid; gap:12px;">
                 <div class="space-y-1">
                     <label for="videoUrl" class="text-xs font-bold uppercase tracking-wider text-slate-500">YouTube link</label>
                     <input id="videoUrl" type="url" required
@@ -314,6 +333,22 @@
             button.disabled = false;
         }
     }
+
+    // Bound here, in the script body, and NOT in DOMContentLoaded.
+    //
+    // The attribute above cancels the native submit and does nothing else, so the
+    // two cannot both fire and POST twice. Splitting them this way is what lets
+    // both halves be correct at once: the attribute exists from the moment the
+    // form is parsed, which closes the window where Enter used to trigger a real
+    // GET, and the handler is attached the ordinary way, so button and Enter share
+    // one path through one function.
+    //
+    // In the script body rather than on DOMContentLoaded because that fires later,
+    // and every millisecond it is late is a millisecond where Enter submits a form
+    // with no handler. It does nothing in that window now instead of navigating,
+    // which is survivable, but shorter is better.
+    var addVideoForm = document.getElementById('addVideoForm');
+    if (addVideoForm) addVideoForm.addEventListener('submit', addVideo);
 
     async function removeVideo(videoId, title) {
         if (!confirm('Remove "' + title + '"?\n\n'

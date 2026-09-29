@@ -220,6 +220,40 @@ export const profilePhotoUrl = (userId, updatedAt) => {
 };
 
 /**
+ * Fetch a profile photo and return it as a data URI an <Image> can render.
+ *
+ * <p>The endpoint requires a Bearer token, and an `<img src>` cannot send one --
+ * react-native-web renders Image as exactly that, so handing it the URL produced
+ * a 401 and a blank grey circle. The upload had worked; only the display was
+ * broken, which is why a test asserting the bytes round-tripped through the API
+ * passed while nobody could see their own photograph.
+ *
+ * <p>Fetched here with the token and handed on as bytes. The photo stays private:
+ * this changes who asks, not who is allowed. Making the endpoint public would have
+ * been the easy fix and the wrong one -- these are pictures of children.
+ *
+ * <p>`FileReader.readAsDataURL` rather than `URL.createObjectURL`, because
+ * FileReader exists on React Native as well as on the web. One path, and no object
+ * URL to remember to revoke. An avatar is tens of kilobytes after the downscale,
+ * so carrying it as base64 costs little and avoids a second lifecycle to get wrong.
+ */
+export const fetchProfilePhoto = async (userId, updatedAt) => {
+  const url = profilePhotoUrl(userId, updatedAt);
+  if (!url) return null;
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    responseType: 'blob',
+  });
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read the photo that was fetched.'));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(response.data);
+  });
+};
+
+/**
  * Send a picked image as the caller's profile photo.
  *
  * Two things here are web-only, and both of them broke it silently.

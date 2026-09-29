@@ -183,6 +183,82 @@ test.describe('A profile photo', () => {
   });
 
   /**
+   * That it is actually ON SCREEN, which is not what the test above proves.
+   *
+   * <p>The test above fetches the photo from the API with an Authorization header
+   * and checks the bytes. It passed while every user saw a blank grey circle,
+   * because the screen does not get to send headers: react-native-web renders
+   * `<Image>` as `<img src>`, the endpoint is Bearer-authenticated, and the browser
+   * asked for it with no token and got a 401. Bytes in the database are not a
+   * photograph a parent can see.
+   *
+   * <p>So this asserts the rendered image: that an <img> exists, that it is showing
+   * something the app fetched rather than a URL the browser would have to
+   * authenticate, and that the browser actually decoded it -- naturalWidth is 0 for
+   * an image that failed to load, which is exactly what a 401 produces and what no
+   * amount of checking the src would have caught.
+   */
+  test('the avatar renders the photo, not a blank circle', async ({ page }) => {
+    await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
+    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await page.goto('/profile');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText('Add a photo')).toBeVisible({ timeout: 30000 });
+
+    const upload = page.waitForResponse(
+      (r) => r.url().includes('/api/mobile/user/photo') && r.request().method() === 'POST',
+      { timeout: 30000 },
+    );
+    await pick(page, () => page.getByText('Add a photo').click());
+    expect((await upload).status()).toBe(200);
+
+    // Reloaded, so what is on screen came from the server and not from the
+    // picker's own blob still sitting in memory.
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText('Remove photo')).toBeVisible({ timeout: 30000 });
+
+    // Asserted over every image source on the page rather than by locating the
+    // avatar element.
+    //
+    // Three attempts went into react-native-web's DOM before this: it hides the
+    // <img> on purpose for screen readers (so toBeVisible fails on a working
+    // avatar), `img` first() picked a navigation back-icon, and the accessible
+    // label lands on more than one nested node. None of that is what the bug was
+    // about, and coupling to it made the test fragile in ways that hid the point.
+    //
+    // The requirement is simply: nothing asks the browser to load the
+    // token-protected endpoint, and the photo the app fetched is on the page and
+    // decoded. Both are answerable from the image sources alone.
+    const sources = await page.evaluate(() => {
+      const out = [];
+      document.querySelectorAll('img').forEach((el) => out.push({
+        src: el.getAttribute('src') || '',
+        width: el.complete ? el.naturalWidth : 0,
+      }));
+      Array.from(document.querySelectorAll('*')).forEach((el) => {
+        const bg = getComputedStyle(el).backgroundImage;
+        if (bg && bg !== 'none') out.push({ src: bg, width: null });
+      });
+      return out;
+    });
+
+    // The bug: an <img src> pointed straight at a Bearer-authenticated endpoint,
+    // so the browser asked with no token, got a 401, and drew nothing.
+    const authenticated = sources.filter((s) => s.src.includes('/api/mobile/user/photo/'));
+    expect(authenticated,
+      'nothing may ask the browser to load the token-protected photo endpoint')
+      .toEqual([]);
+
+    // And the photo the app fetched is on the page, and the browser decoded it --
+    // naturalWidth stays 0 for an image that failed to load.
+    const decoded = sources.filter((s) => s.src.startsWith('data:image/') && s.width > 0);
+    expect(decoded.length,
+      `the avatar must show fetched bytes that actually decoded; saw ${JSON.stringify(sources.map((s) => s.src.slice(0, 40)))}`)
+      .toBeGreaterThan(0);
+  });
+
+  /**
    * The other half of the web/native split, and the one that would have been found
    * next.
    *
