@@ -51,13 +51,29 @@ public final class ImagePipeline {
     public enum Kind { JPEG, PNG }
 
     /**
-     * The largest file this will decode.
+     * The largest file this will read.
      *
-     * <p>Not a policy about photograph quality -- it is a memory bound. Decoding
-     * is where a small file becomes a large object, so the limit has to be
-     * enforced before {@link #render} is called, not after.
+     * <p>Not a policy about photograph quality -- it is a memory bound.
      */
     public static final int MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
+
+    /**
+     * The largest image this will decode, in pixels.
+     *
+     * <p>{@link #MAX_UPLOAD_BYTES} alone does not bound memory, and believing it
+     * did was a real hole here. Compression ratio is attacker-controlled: PNG
+     * deflates a single flat colour to almost nothing, so a few kilobytes can
+     * declare 20000x20000 in its header and cost 400 million pixels -- 1.6GB at
+     * four bytes each -- the instant anything decodes it. The container has 1GB,
+     * so that is not a slow request, it is the process dying.
+     *
+     * <p>40 megapixels is comfortably above any phone or DSLR a school will use
+     * and far below what it takes to hurt us.
+     */
+    public static final long MAX_PIXELS = 40_000_000L;
+
+    /** What a person is told when they send something that is not a photo we take. */
+    public static final String NOT_A_PHOTO = "Please upload a JPEG or PNG photo";
 
     private ImagePipeline() {
     }
@@ -94,6 +110,63 @@ public final class ImagePipeline {
             }
         }
         return Kind.PNG;
+    }
+
+    /**
+     * Is this an iPhone photograph in Apple's format?
+     *
+     * <p>Worth recognising rather than lumping in with "unreadable", because it
+     * is the commonest thing a parent will send and the answer they need is
+     * different. The web picker's accept is `image/&#42;`, which on a Mac or an
+     * iPhone offers .heic, and nothing converts it: expo-image-picker hands back
+     * the file as picked, and the browser's own decoder cannot read it either, so
+     * the client-side downscale passes the original through untouched. It arrives
+     * here intact.
+     *
+     * <p>ISO base media format: a `ftyp` box at offset 4, then a brand. heic and
+     * heix are stills; mif1 and msf1 are the generic HEIF brands Apple also
+     * writes.
+     */
+    public static boolean isHeic(byte[] bytes) {
+        if (bytes == null || bytes.length < 12) {
+            return false;
+        }
+        if (bytes[4] != 'f' || bytes[5] != 't' || bytes[6] != 'y' || bytes[7] != 'p') {
+            return false;
+        }
+        String brand = new String(bytes, 8, 4, java.nio.charset.StandardCharsets.US_ASCII);
+        return brand.equals("heic") || brand.equals("heix")
+                || brand.equals("mif1") || brand.equals("msf1")
+                || brand.equals("hevc") || brand.equals("heim");
+    }
+
+    /**
+     * The dimensions this file DECLARES, without decoding it.
+     *
+     * <p>The whole point: a reader parses the header and stops. Asking
+     * ImageIO.read first and checking afterwards is the bug -- by then the
+     * allocation has already happened, which is the thing being defended against.
+     *
+     * @return width and height, or null when no reader recognises the bytes
+     */
+    static long[] declaredSize(byte[] bytes) throws IOException {
+        try (javax.imageio.stream.ImageInputStream in =
+                     ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
+            if (in == null) {
+                return null;
+            }
+            java.util.Iterator<javax.imageio.ImageReader> readers = ImageIO.getImageReaders(in);
+            if (!readers.hasNext()) {
+                return null;
+            }
+            javax.imageio.ImageReader reader = readers.next();
+            try {
+                reader.setInput(in);
+                return new long[] {reader.getWidth(0), reader.getHeight(0)};
+            } finally {
+                reader.dispose();
+            }
+        }
     }
 
     /**
@@ -162,6 +235,25 @@ public final class ImagePipeline {
         if (bytes != null && bytes.length > MAX_UPLOAD_BYTES) {
             throw new IOException("that picture is too large to process");
         }
+        // An iPhone's own format, and the commonest thing that is not a JPEG. It
+        // gets its own answer because "we cannot read that" tells a parent
+        // nothing they can act on.
+        if (isHeic(bytes)) {
+            throw new IOException(NOT_A_PHOTO);
+        }
+        if (sniff(bytes) == null) {
+            throw new IOException(NOT_A_PHOTO);
+        }
+
+        // Before decoding, which is the only moment this check is worth anything.
+        long[] size = declaredSize(bytes);
+        if (size == null) {
+            throw new IOException(NOT_A_PHOTO);
+        }
+        if (size[0] <= 0 || size[1] <= 0 || size[0] * size[1] > MAX_PIXELS) {
+            throw new IOException("that picture has too many pixels to process");
+        }
+
         BufferedImage decoded = ImageIO.read(new ByteArrayInputStream(bytes));
         if (decoded == null) {
             throw new IOException("those bytes are not an image this server can read");

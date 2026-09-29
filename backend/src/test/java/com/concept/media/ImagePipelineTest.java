@@ -198,11 +198,95 @@ class ImagePipelineTest {
                 .hasMessageContaining("too large");
     }
 
+    /**
+     * The decompression bomb, which the byte cap alone does not stop.
+     *
+     * <p>Compression ratio is chosen by whoever makes the file. A PNG of one flat
+     * colour deflates to almost nothing, so a few hundred bytes can declare
+     * 20000x20000 and cost 400 million pixels -- 1.6GB at four bytes each -- the
+     * moment anything decodes it. On a 1GB container that is the process dying,
+     * not a slow request, and a byte limit of any size cannot see it coming.
+     *
+     * <p>The fixture is a real PNG header with a real IHDR and a real CRC, so it
+     * is genuinely something ImageIO will read the dimensions of. Its size is
+     * asserted, because a fixture that quietly grew past the byte cap would be
+     * refused for the wrong reason and prove nothing.
+     */
     @Test
-    void refusesBytesThatCannotBeDecoded() {
+    void refusesAnImageThatWouldDecodeToMoreMemoryThanWeHave() throws IOException {
+        byte[] bomb = pngDeclaring(20000, 20000);
+
+        assertThat(bomb.length)
+                .as("the fixture must be small, or it is the BYTE cap being tested")
+                .isLessThan(2000);
+        assertThat(ImagePipeline.declaredSize(bomb))
+                .as("and the header must really declare those dimensions")
+                .containsExactly(20000L, 20000L);
+        assertThat(20000L * 20000L * 4)
+                .as("for scale: this is what decoding it would have asked for")
+                .isGreaterThan(1_000_000_000L);
+
+        assertThatThrownBy(() -> ImagePipeline.render(bomb, 400))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("too many pixels");
+    }
+
+    @Test
+    void acceptsAnImageJustInsideThePixelCap() throws IOException {
+        // 6000x6000 is 36MP -- a large DSLR frame, and under the 40MP bound.
+        assertThat(ImagePipeline.declaredSize(pngDeclaring(6000, 6000)))
+                .containsExactly(6000L, 6000L);
+        assertThat(6000L * 6000L).isLessThan(ImagePipeline.MAX_PIXELS);
+    }
+
+    // ── HEIC ────────────────────────────────────────────────────────────────
+
+    /**
+     * An iPhone photograph reaches the server intact, so it needs an answer.
+     *
+     * <p>Established from the picker's source rather than assumed: its accept is
+     * `image/&#42;`, which on a Mac or iPhone offers .heic; `getImageMetadata`
+     * resolves {0,0} on error instead of rejecting; and nothing converts. The
+     * browser cannot decode it either, so the client-side downscale passes the
+     * original through untouched.
+     *
+     * <p>The message matters more than the rejection. "Could not read that image"
+     * leaves a parent with no move; naming JPEG and PNG tells them to change the
+     * setting or re-save.
+     */
+    @Test
+    void refusesAnIphonePhotographWithAnAnswerAPersonCanActOn() {
+        byte[] heic = heicHeader("heic");
+        assertThat(ImagePipeline.isHeic(heic)).isTrue();
+        assertThat(ImagePipeline.sniff(heic))
+                .as("it is not a JPEG or a PNG, whatever the filename said")
+                .isNull();
+
+        assertThatThrownBy(() -> ImagePipeline.render(heic, 400))
+                .isInstanceOf(IOException.class)
+                .hasMessage(ImagePipeline.NOT_A_PHOTO);
+    }
+
+    @Test
+    void recognisesTheOtherBrandsAppleWrites() {
+        for (String brand : new String[] {"heix", "mif1", "msf1"}) {
+            assertThat(ImagePipeline.isHeic(heicHeader(brand)))
+                    .as(brand + " is HEIF too")
+                    .isTrue();
+        }
+        assertThat(ImagePipeline.isHeic(new byte[] {1, 2, 3})).isFalse();
+    }
+
+    /**
+     * Bytes that are not any image we accept now fail at the format check, before
+     * anything tries to decode them, so the message is the one a person can act
+     * on rather than the decoder's.
+     */
+    @Test
+    void refusesBytesThatAreNotAPhotographAtAll() {
         assertThatThrownBy(() -> ImagePipeline.render(new byte[] {1, 2, 3, 4}, 400))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("not an image");
+                .hasMessage(ImagePipeline.NOT_A_PHOTO);
     }
 
     /**
@@ -225,6 +309,63 @@ class ImagePipelineTest {
         out.write(payload);
         out.write(base, 2, base.length - 2);
         return out.toByteArray();
+    }
+
+    /**
+     * A PNG header declaring any dimensions, with a valid CRC and no image data.
+     *
+     * <p>Enough for a reader to answer getWidth/getHeight, which is exactly the
+     * point: the defence has to work off the header alone, before anything is
+     * decoded. Deliberately not a decodable image -- if the check ran after
+     * decode, this would fail with a different message and the test would be
+     * passing for the wrong reason.
+     */
+    private static byte[] pngDeclaring(int width, int height) throws IOException {
+        ByteArrayOutputStream ihdr = new ByteArrayOutputStream();
+        ihdr.write(new byte[] {
+            (byte) (width >>> 24), (byte) (width >>> 16), (byte) (width >>> 8), (byte) width,
+            (byte) (height >>> 24), (byte) (height >>> 16), (byte) (height >>> 8), (byte) height,
+        });
+        ihdr.write(8);  // bit depth
+        ihdr.write(2);  // truecolour
+        ihdr.write(0);  // deflate
+        ihdr.write(0);  // adaptive filtering
+        ihdr.write(0);  // no interlace
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        out.write(new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A});
+        out.write(pngChunk("IHDR", ihdr.toByteArray()));
+        out.write(pngChunk("IEND", new byte[0]));
+        return out.toByteArray();
+    }
+
+    private static byte[] pngChunk(String type, byte[] data) throws IOException {
+        byte[] body = new byte[4 + data.length];
+        System.arraycopy(type.getBytes(StandardCharsets.US_ASCII), 0, body, 0, 4);
+        System.arraycopy(data, 0, body, 4, data.length);
+        java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+        crc.update(body);
+        long c = crc.getValue();
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        int len = data.length;
+        out.write(new byte[] {
+            (byte) (len >>> 24), (byte) (len >>> 16), (byte) (len >>> 8), (byte) len,
+        });
+        out.write(body);
+        out.write(new byte[] {
+            (byte) (c >>> 24), (byte) (c >>> 16), (byte) (c >>> 8), (byte) c,
+        });
+        return out.toByteArray();
+    }
+
+    /** The first bytes of an ISO base media file, as an iPhone writes them. */
+    private static byte[] heicHeader(String brand) {
+        byte[] b = new byte[32];
+        b[3] = 24; // box size
+        System.arraycopy("ftyp".getBytes(StandardCharsets.US_ASCII), 0, b, 4, 4);
+        System.arraycopy(brand.getBytes(StandardCharsets.US_ASCII), 0, b, 8, 4);
+        return b;
     }
 
     /** A JPEG with a red mark in its top-left corner, so a turn is visible. */
