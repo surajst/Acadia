@@ -103,10 +103,13 @@ test.describe('Messages reach the user on the web build', () => {
       await title.fill(`PW Notice ${Date.now()}`);
       await page.getByRole('button', { name: 'Create assessment' }).click();
 
-      // The claim: the failure is on the screen. Before this change the request
+      // The claim: the failure is on the screen, beside the button that was
+      // pressed, and carries the server's reason. Before this change the request
       // failed, the catch ran, Alert.alert did nothing, and the teacher was
       // given no reason at all.
-      await expect(page.getByText(/could not create assessment/i))
+      await page.waitForLoadState('networkidle');
+      await expect(page.getByRole('alert')
+        .filter({ hasText: /could not create assessment: refused for the purposes of this test/i }))
         .toBeVisible({ timeout: 30000 });
     });
 
@@ -116,29 +119,42 @@ test.describe('Messages reach the user on the web build', () => {
    * <p>Not a detail: a message that fades before it is read is the same failure
    * as one that never appeared, and the reader here may be a parent on a phone
    * browser reading at their own pace.
+   *
+   * <p>Driven through the verification queue's "Could not load", which goes
+   * through notify() -- the gradebook's create failure is shown in the page
+   * now, beside its button, so it no longer exercises the notice host.
    */
   test('an error notice waits to be dismissed, and then goes', async ({ page }) => {
+    // It waits six seconds on purpose, on top of a reset and a sign-in.
+    test.setTimeout(60000);
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
     await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
 
-    await page.route('**/api/teacher/assessments/create', (route) => (
-      route.request().method() === 'POST'
-        ? route.fulfill({ status: 400, contentType: 'application/json', body: '{}' })
-        : route.continue()));
+    // 400, not 500: on the dev server a 5xx also wakes Expo's log overlay,
+    // whose own requests keep the network from ever going idle.
+    await page.route('**/api/teacher/queue', (route) => route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'queue refused for the purposes of this test' }),
+    }));
 
-    await page.goto('/gradebook');
-    await page.waitForLoadState('networkidle');
-    await page.getByLabel('New assessment title').fill(`PW Stay ${Date.now()}`);
-    await page.getByRole('button', { name: 'Create assessment' }).click();
+    // Waits on the refused response rather than on networkidle: with this
+    // route in place the dashboard behind the stack keeps requests open and the
+    // network never goes idle. This is a page load, not a form submission.
+    const refused = page.waitForResponse((r) => r.url().endsWith('/api/teacher/queue')
+      && r.request().method() === 'GET');
+    await page.goto('/verification');
+    await refused;
 
-    const notice = page.getByText(/could not create assessment/i);
+    const notice = page.getByText('queue refused for the purposes of this test');
     await expect(notice).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText('Could not load')).toBeVisible();
 
     // Well past the fade used for successes.
     await page.waitForTimeout(6000);
     await expect(notice, 'an error must not disappear on its own').toBeVisible();
 
-    await page.getByRole('button', { name: /^Dismiss:/ }).first().click();
+    await page.getByRole('button', { name: 'Dismiss: Could not load' }).click();
     await expect(notice).toHaveCount(0);
   });
 
@@ -178,7 +194,12 @@ test.describe('Messages reach the user on the web build', () => {
       // "Decline" is the row's button; "Send back" is the dialog's confirm
       // label. They are deliberately different words and it is easy to reach for
       // the wrong one here.
-      const decline = page.getByText('Decline').first();
+      //
+      // By role and exact name: getByText('Decline') also matches the header's
+      // "Award or decline before it sits any longer", which comes first -- so
+      // the click landed on a subtitle, nothing opened, and that is what was
+      // recorded as "ask() does not open on web".
+      const decline = page.getByRole('button', { name: 'Decline', exact: true }).first();
       await expect(decline,
         'the queue must have something in it, or this test asserts nothing')
         .toBeVisible({ timeout: 30000 });
@@ -192,4 +213,35 @@ test.describe('Messages reach the user on the web build', () => {
       expect(decisions, 'dismissing a question must never be read as consent')
         .toEqual([]);
     });
+
+  /**
+   * And the other answer: confirming does what it says.
+   *
+   * <p>Escape-means-no alone would pass for a dialog whose confirm button did
+   * nothing at all. ask() has to hand back the user's choice, both ways.
+   */
+  test('confirming the question sends the work back', async ({ page, request }) => {
+    await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
+    await createSomethingToVerify(request);
+    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+
+    await page.goto('/verification');
+    await page.waitForLoadState('networkidle');
+
+    const decline = page.getByRole('button', { name: 'Decline', exact: true }).first();
+    await expect(decline).toBeVisible({ timeout: 30000 });
+    await decline.click();
+    await expect(page.getByText('Send this back?')).toBeVisible({ timeout: 30000 });
+
+    const decided = page.waitForRequest((r) => r.method() === 'POST'
+      && /\/api\/teacher\/(progress|milestone)\/reject/.test(r.url()));
+    await page.getByRole('button', { name: 'Send back', exact: true }).click();
+    const sent = await decided;
+    expect(sent.url()).toMatch(/reject/);
+
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText('Send this back?')).toHaveCount(0);
+    // The only item was sent back, so nothing is left to decline.
+    await expect(page.getByRole('button', { name: 'Decline', exact: true })).toHaveCount(0);
+  });
 });
