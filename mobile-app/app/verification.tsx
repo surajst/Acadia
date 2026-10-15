@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, } from 'react-native';
+  RefreshControl,
+} from 'react-native';
 import { Stack } from 'expo-router';
 import { getTeacherQueue, decideMilestone, decideProgress } from '@/services/api';
 import { ListSkeleton } from '@/components/ui/Skeleton';
@@ -160,6 +161,8 @@ export default function VerificationScreen() {
                 style={[s.btn, s.btnReject, busyId === r.id && s.busy]}
                 onPress={() => confirmDecline(r)}
                 disabled={busyId === r.id}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: busyId === r.id }}
               >
                 <Text style={s.btnRejectText}>Decline</Text>
               </TouchableOpacity>
@@ -167,6 +170,8 @@ export default function VerificationScreen() {
                 style={[s.btn, s.btnApprove, busyId === r.id && s.busy]}
                 onPress={() => decide(r, 'approve')}
                 disabled={busyId === r.id}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: busyId === r.id }}
               >
                 <Text style={s.btnApproveText}>
                   {busyId === r.id ? 'Saving…' : r.kind === 'milestone' ? 'Award XP' : 'Approve'}
