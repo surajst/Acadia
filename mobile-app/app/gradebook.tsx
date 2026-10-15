@@ -10,7 +10,6 @@ import {
   submitAssessmentScores,
 } from '@/services/api';
 import { useTheme, type Theme } from '../context/ThemeContext';
-import { notify } from '../utils/notify';
 
 /** What a school actually marks things out of. */
 const MAX_SCORE_CHOICES = [20, 25, 50, 100];
@@ -45,6 +44,10 @@ export default function GradebookScreen() {
   const [newTitle, setNewTitle] = useState('');
   const [newMaxScore, setNewMaxScore] = useState<number>(100);
   const [notice, setNotice] = useState<{ kind: 'ok' | 'bad'; text: string } | null>(null);
+  // Its own line, beside the Create button rather than under the roster: the
+  // roster may not be on screen at all (no assessments yet), and a failure has
+  // to be read where the action was taken.
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -94,6 +97,7 @@ export default function GradebookScreen() {
 
   const handleCreateAssessment = async () => {
     if (!selectedClass || !newTitle.trim()) return;
+    setCreateError(null);
     try {
       const created: any = await createAssessment({
         title: newTitle.trim(),
@@ -106,8 +110,13 @@ export default function GradebookScreen() {
       setNewTitle('');
       await loadAssessments(selectedClass.id);
       openAssessment(created.id);
-    } catch {
-      notify('Error', 'Could not create assessment.');
+    } catch (e: any) {
+      // In the page, the same way handleSaveScores reports. This used to go
+      // to Alert, which does nothing on React Native Web -- so a failed create
+      // left the panel on whatever assessment was already open, with no word
+      // that anything had gone wrong.
+      const reason = e?.response?.data?.error;
+      setCreateError(reason ? `Could not create assessment: ${reason}` : 'Could not create assessment. Please try again.');
     }
   };
 
@@ -183,6 +192,11 @@ export default function GradebookScreen() {
           <Text style={styles.createBtnText}>Create</Text>
         </TouchableOpacity>
       </View>
+      {!!createError && (
+        <Text style={[styles.notice, styles.noticeBad]} accessibilityRole="alert">
+          {createError}
+        </Text>
+      )}
 
       {/* What the assessment is out of. It was fixed at 100, so a 20-mark
           quiz had to be entered as if it were a percentage -- and the score
