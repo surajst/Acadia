@@ -6,7 +6,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
-  } from 'react-native';
+} from 'react-native';
 import { useContext, useState, useEffect, useMemo } from 'react';
 import * as Sharing from 'expo-sharing';
 import { DataContext } from './_layout';

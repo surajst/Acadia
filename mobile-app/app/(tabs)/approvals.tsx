@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, RefreshControl, } from 'react-native';
+  ActivityIndicator, RefreshControl,
+} from 'react-native';
 import { Stack } from 'expo-router';
 import {
   getPendingApprovals, decideApproval, getPendingStaff, decideStaff,
