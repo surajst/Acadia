@@ -63,6 +63,7 @@ class LayeringArchitectureTest {
                     "com.concept.teacher..",
                     "com.concept.notification..",
                     "com.concept.video..",
+                    "com.concept.gallery..",
                     "com.concept.export..",
                     "com.concept.academics..",
                     "com.concept.shared.."
@@ -247,6 +248,14 @@ class LayeringArchitectureTest {
             "VideoView",
             "StudentAssessmentScore",
 
+            // Scoped through its PhotoAlbum, which is tenant-scoped. Its
+            // repository extends the bare Spring Data Repository, so there is no
+            // findById at all; every read joins the album and filters its tenant.
+            "AlbumPhoto",
+            // Who is in which photo (V27): scoped through photo -> album, the
+            // same join; its repository has no findById either.
+            "AlbumPhotoPupil",
+
             // Scoped through its Conversation, the tenant-scoped aggregate root.
             // MessagingService proves conversation access first, then that the
             // message belongs to that conversation.
@@ -319,7 +328,7 @@ class LayeringArchitectureTest {
     private static final Set<String> MIGRATED_PACKAGE_NAMES = Set.of(
             "roster", "attendance", "fees", "staff", "rewards", "transport", "console",
             "dashboard", "messaging", "parent", "timetable", "assignment", "student",
-            "tasks", "assessment", "oversight", "curriculum", "teacher", "notification", "video",
+            "tasks", "assessment", "oversight", "curriculum", "teacher", "notification", "video", "gallery",
             "export", "shared", "academics", "recognition");
 
     /**
