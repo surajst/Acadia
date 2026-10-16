@@ -7,7 +7,7 @@ test.describe('Mobile Screenshots', () => {
     // Login as Parent
     await page.goto('/login');
     await page.fill('#username', 'ramesh@gmail.com');
-    await page.fill('#password', 'PilotLaunchSecure2026!');
+    await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/login'), { timeout: 90000 });
 
@@ -20,7 +20,7 @@ test.describe('Mobile Screenshots', () => {
     // Login as Student
     await page.goto('/login');
     await page.fill('#username', 'arjun@gmail.com');
-    await page.fill('#password', 'PilotLaunchSecure2026!');
+    await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/login'), { timeout: 90000 });
 

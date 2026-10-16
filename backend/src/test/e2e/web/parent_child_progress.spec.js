@@ -18,7 +18,7 @@ test.describe('ACADIA Parent Child Progress View', () => {
     // ─── Step 1: Student marks 2 Science chapters complete ───────────────────
     await page.goto('/login');
     await page.fill('input[name="username"]', 'arjun@gmail.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await Promise.all([
       page.waitForURL('**/web/student/**', { timeout: 90000 }),
       page.click('button:has-text("Sign in")')
@@ -51,7 +51,7 @@ test.describe('ACADIA Parent Child Progress View', () => {
     // ─── Step 2: Teacher approves both chapters ──────────────────────────────
     await page.goto('/login');
     await page.fill('input[name="username"]', 'teacher@greenwood.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await Promise.all([
       page.waitForURL('**/web/teacher/dashboard*', { timeout: 90000 }),
       page.click('button:has-text("Sign in")')
@@ -76,7 +76,7 @@ test.describe('ACADIA Parent Child Progress View', () => {
     // ─── Step 3: Parent views child's progress on parent dashboard ───────────
     await page.goto('/login');
     await page.fill('input[name="username"]', 'ramesh@gmail.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await Promise.all([
       page.waitForURL('**/web/parent/**', { timeout: 90000 }),
       page.click('button:has-text("Sign in")')
@@ -111,7 +111,7 @@ test.describe('ACADIA Parent Child Progress View', () => {
     // ─── Step 4: Idempotency — re-login and confirm dashboard loads ──────────
     await page.goto('/login');
     await page.fill('input[name="username"]', 'ramesh@gmail.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await Promise.all([
       page.waitForURL('**/web/parent/**', { timeout: 90000 }),
       page.click('button:has-text("Sign in")')

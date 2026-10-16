@@ -25,7 +25,7 @@ async function loginAsAdmin(page) {
   await page.goto('/test/reset');
   await page.goto('/login');
   await page.getByPlaceholder(/email|username/i).first().fill('admin@greenwood.com');
-  await page.locator('input[type=password]').first().fill('PilotLaunchSecure2026!');
+  await page.locator('input[type=password]').first().fill(process.env.DEMO_ADMIN_PASSWORD);
   await page.locator('button[type=submit]').first().click();
   await page.waitForURL('**/web/admin/dashboard');
 }

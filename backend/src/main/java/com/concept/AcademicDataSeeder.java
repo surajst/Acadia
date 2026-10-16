@@ -54,8 +54,8 @@ public class AcademicDataSeeder implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @org.springframework.beans.factory.annotation.Value("${demo.admin.password:PilotLaunchSecure2026!}")
-    private String demoAdminPassword;
+    @Autowired
+    private SeedCredentials seedCredentials;
 
     @Override
     @Transactional
@@ -100,12 +100,12 @@ public class AcademicDataSeeder implements CommandLineRunner {
             UUID activeUserId = UUID.fromString("22222222-3333-4444-5555-666666666666");
             jdbcTemplate.update(
                 "INSERT INTO users (id, tenant_id, academic_year_id, email, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                activeUserId, tenantId, academicYearId, "admin@greenwood.com", passwordEncoder.encode(demoAdminPassword), "Admin User", "ADMIN", true
+                activeUserId, tenantId, academicYearId, "admin@greenwood.com", passwordEncoder.encode(seedCredentials.password()), "Admin User", "ADMIN", true
             );
         } else {
             jdbcTemplate.update(
                 "UPDATE users SET password_hash = ? WHERE email = ?",
-                passwordEncoder.encode(demoAdminPassword), "admin@greenwood.com"
+                passwordEncoder.encode(seedCredentials.password()), "admin@greenwood.com"
             );
         }
 

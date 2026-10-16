@@ -13,7 +13,7 @@ test.describe('Native Web App E2E Tests', () => {
     
     // 2. Perform Login
     await page.getByPlaceholder('Email / Username').fill('arjun@gmail.com');
-    await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+    await page.getByPlaceholder('Password').fill(process.env.DEMO_ADMIN_PASSWORD);
     await page.getByText('Log In').click();
     
     // 3. Wait for Navigation to Dashboard
@@ -142,7 +142,7 @@ test.describe('Native Web App E2E Tests', () => {
     // 1. Login as parent
     await page.goto('/');
     await page.getByPlaceholder('Email / Username').fill('ramesh@gmail.com');
-    await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+    await page.getByPlaceholder('Password').fill(process.env.DEMO_ADMIN_PASSWORD);
     await page.getByText('Log In').click();
     await page.waitForLoadState('networkidle');
 
@@ -173,7 +173,7 @@ test.describe('Native Web App E2E Tests', () => {
     
     // 2. Perform Login as Student
     await page.getByPlaceholder('Email / Username').fill('arjun@gmail.com');
-    await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+    await page.getByPlaceholder('Password').fill(process.env.DEMO_ADMIN_PASSWORD);
     await page.getByText('Log In').click();
     
     // 3. Wait for Navigation to Dashboard
@@ -215,7 +215,7 @@ test.describe('Native Web App E2E Tests', () => {
     
     // 2. Perform Login as Parent
     await page.getByPlaceholder('Email / Username').fill('ramesh@gmail.com');
-    await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+    await page.getByPlaceholder('Password').fill(process.env.DEMO_ADMIN_PASSWORD);
     await page.getByText('Log In').click();
     
     // 3. Wait for Navigation to Dashboard
@@ -271,7 +271,7 @@ test.describe('Native Web App E2E Tests', () => {
     
     // 2. Perform Login as Student
     await page.getByPlaceholder('Email / Username').fill('arjun@gmail.com');
-    await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+    await page.getByPlaceholder('Password').fill(process.env.DEMO_ADMIN_PASSWORD);
     await page.getByText('Log In').click();
     
     // 3. Wait for Navigation to Dashboard
@@ -301,7 +301,7 @@ test.describe('Native Web App E2E Tests', () => {
 
     await page.goto('/');
     await page.getByPlaceholder('Email / Username').fill('teacher@greenwood.com');
-    await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+    await page.getByPlaceholder('Password').fill(process.env.DEMO_ADMIN_PASSWORD);
     await page.getByText('Log In').click();
     await page.waitForLoadState('networkidle');
 
@@ -331,7 +331,7 @@ test.describe('Native Web App E2E Tests', () => {
     // 1. Login as Teacher
     await page.goto('/');
     await page.getByPlaceholder('Email / Username').fill('teacher@greenwood.com');
-    await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+    await page.getByPlaceholder('Password').fill(process.env.DEMO_ADMIN_PASSWORD);
     await page.getByText('Log In').click();
     await page.waitForLoadState('networkidle');
 

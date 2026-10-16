@@ -410,6 +410,11 @@ jobs:
     name: build-and-test
     needs: enforce-architecture
     runs-on: ubuntu-latest
+    # A throwaway value for the dev-mode seeded accounts, read by both the
+    # backend it launches and the Playwright specs. Not a real password, and not
+    # in source: the seeders have no default (see SeedCredentials).
+    env:
+      DEMO_ADMIN_PASSWORD: ci-only-throwaway-not-a-real-password
 
     steps:
       - uses: actions/checkout@v4

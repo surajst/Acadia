@@ -4,7 +4,7 @@ test('Teacher Tasks Autocomplete Isolate Class 6', async ({ page }) => {
     await page.goto('/test/reset');
     await page.goto('/login');
     await page.fill('#username', 'teacher@greenwood.com');
-    await page.fill('#password', 'PilotLaunchSecure2026!');
+    await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
 
@@ -20,7 +20,7 @@ test('Student Attendance API returns 200', async ({ page, request }) => {
     await page.goto('/test/reset');
     await page.goto('/login');
     await page.fill('#username', 'arjun@gmail.com');
-    await page.fill('#password', 'PilotLaunchSecure2026!');
+    await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
 
@@ -34,7 +34,7 @@ test('Parent Attendance and Syllabus API returns 200', async ({ page, request })
     await page.goto('/test/reset');
     await page.goto('/login');
     await page.fill('#username', 'ramesh@gmail.com');
-    await page.fill('#password', 'PilotLaunchSecure2026!');
+    await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
 

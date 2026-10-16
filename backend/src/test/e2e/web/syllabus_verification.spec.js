@@ -13,7 +13,7 @@ test.describe('ACADIA Syllabus Verification System', () => {
     async function loginAsStudent() {
       await page.goto('/login');
       await page.fill('input[name="username"]', 'arjun@gmail.com');
-      await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+      await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
       await Promise.all([
         page.waitForURL('**/web/student/**', { timeout: 90000 }),
         page.click('button:has-text("Sign in")')
@@ -33,7 +33,7 @@ test.describe('ACADIA Syllabus Verification System', () => {
     async function loginAsTeacher() {
       await page.goto('/login');
       await page.fill('input[name="username"]', 'teacher@greenwood.com');
-      await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+      await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
       await Promise.all([
         page.waitForURL('**/web/teacher/dashboard*', { timeout: 90000 }),
         page.click('button:has-text("Sign in")')

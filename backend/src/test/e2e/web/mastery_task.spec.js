@@ -11,7 +11,7 @@ test.describe('ACADIA Mastery Task System', () => {
     // Login as arjun@gmail.com
     await page.goto('/login');
     await page.fill('input[name="username"]', 'arjun@gmail.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
 
     // wait for student dashboard
@@ -68,7 +68,7 @@ test.describe('ACADIA Mastery Task System', () => {
     // Login as teacher@greenwood.com
     await page.goto('/login');
     await page.fill('input[name="username"]', 'teacher@greenwood.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
 
     // wait for teacher dashboard
@@ -97,7 +97,7 @@ test.describe('ACADIA Mastery Task System', () => {
     // Login as arjun@gmail.com
     await page.goto('/login');
     await page.fill('input[name="username"]', 'arjun@gmail.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/web/student/*', { timeout: 90000 });
 
@@ -123,7 +123,7 @@ test.describe('ACADIA Mastery Task System', () => {
     // Login as arjun@gmail.com, submit same task again
     await page.goto('/login');
     await page.fill('input[name="username"]', 'arjun@gmail.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/web/student/**', { timeout: 90000 });
     
@@ -144,7 +144,7 @@ test.describe('ACADIA Mastery Task System', () => {
     // Login as teacher@greenwood.com, reject with reason "Insufficient proof"
     await page.goto('/login');
     await page.fill('input[name="username"]', 'teacher@greenwood.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/web/teacher/dashboard', { timeout: 90000 });
 
@@ -165,7 +165,7 @@ test.describe('ACADIA Mastery Task System', () => {
     // Login as arjun@gmail.com, assert rejection reason "Insufficient proof" visible
     await page.goto('/login');
     await page.fill('input[name="username"]', 'arjun@gmail.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/web/student/*', { timeout: 90000 });
     

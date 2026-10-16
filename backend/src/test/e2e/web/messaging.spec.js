@@ -23,7 +23,7 @@ test.describe('Sprint 6: Direct parent-teacher messaging', () => {
     const replyMessage = `Thanks for the update ${suffix}`;
 
     // Teacher starts a conversation with Arjun Sharma's parent
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/teacher/messages');
     await page.waitForFunction(() => {
       const s = document.getElementById('newMessageStudent');
@@ -41,7 +41,7 @@ test.describe('Sprint 6: Direct parent-teacher messaging', () => {
 
     // Parent sees the conversation with an unread indicator and opens it
     await page.context().clearCookies();
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/parent/portal');
     await page.waitForFunction(() => typeof window.switchTab === 'function', { timeout: 10000 });
     await page.evaluate(() => window.switchTab('messages'));
@@ -63,7 +63,7 @@ test.describe('Sprint 6: Direct parent-teacher messaging', () => {
 
     // Teacher sees the parent's reply
     await page.context().clearCookies();
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/teacher/messages');
     await page.waitForFunction((msg) => {
       const list = document.getElementById('conversationList');
@@ -80,7 +80,7 @@ test.describe('Sprint 6: Direct parent-teacher messaging', () => {
     const unrelatedParentEmail = `unrelated-parent-${suffix}@greenwood.com`;
 
     // Teacher starts a fresh conversation with Arjun Sharma's actual parent
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     const startRes = await page.request.post('/api/messages/conversations/start', {
       data: { studentId: '00000000-0000-0000-0000-000000000091', body: 'Access boundary check message' },
     });
@@ -88,21 +88,21 @@ test.describe('Sprint 6: Direct parent-teacher messaging', () => {
 
     // Create a parent in the same tenant with no link to Arjun
     await page.context().clearCookies();
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
-    await page.evaluate(async (email) => {
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
+    await page.evaluate(async ([email, pw]) => {
       const params = new URLSearchParams({
-        firstName: 'Unrelated', lastName: 'Parent', loginEmail: email, loginPassword: 'PilotLaunchSecure2026!',
+        firstName: 'Unrelated', lastName: 'Parent', loginEmail: email, loginPassword: pw,
       });
       await fetch('/web/admin/parent/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params.toString(),
       });
-    }, unrelatedParentEmail);
+    }, [unrelatedParentEmail, process.env.DEMO_ADMIN_PASSWORD]);
 
     // That parent cannot read Arjun's conversation
     await page.context().clearCookies();
-    await login(page, unrelatedParentEmail, 'PilotLaunchSecure2026!');
+    await login(page, unrelatedParentEmail, process.env.DEMO_ADMIN_PASSWORD);
     const response = await page.request.get(`/api/messages/conversations/${conv.id}`);
     expect(response.status()).toBe(403);
   });
