@@ -1,21 +1,29 @@
 package com.concept.gallery.app;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.concept.assignment.app.TeachingScope;
 import com.concept.gallery.app.GalleryViews.AlbumSummary;
 import com.concept.gallery.app.GalleryViews.CreateAlbum;
+import com.concept.gallery.app.GalleryViews.PhotoOfPupil;
 import com.concept.gallery.app.GalleryViews.PhotoSummary;
 import com.concept.gallery.app.GalleryViews.PupilWithoutConsent;
+import com.concept.gallery.data.AlbumPhoto;
+import com.concept.gallery.data.AlbumPhotoPupil;
+import com.concept.gallery.data.AlbumPhotoPupilRepository;
 import com.concept.gallery.data.AlbumPhotoRepository;
 import com.concept.gallery.data.AudienceType;
 import com.concept.gallery.data.PhotoAlbum;
@@ -37,6 +45,25 @@ import com.concept.user.UserRole;
  * section, a parent's linked children -- and never from anything in a request.
  * Tenant isolation is here and in the repositories, nowhere else.
  *
+ * <h2>Product rules (decided 2026-10-16)</h2>
+ *
+ * <ul>
+ *   <li><b>Teachers create albums only for sections they teach.</b> Grade and
+ *       whole-school albums are for admins and principals.</li>
+ *   <li><b>Teachers see</b> whole-school albums, albums for sections they teach
+ *       or grades they teach a section in, and albums they made. Admins and
+ *       principals see every album in the school.</li>
+ *   <li><b>Consent is tracked per child per photo.</b> Staff tag the pupils in a
+ *       photo; a pupil without consent cannot be tagged. A photo showing a pupil
+ *       whose consent is (later) withdrawn is never sent to pupils or parents --
+ *       withdrawal takes effect at once, without deleting anything -- and staff
+ *       see it flagged. {@link #photosOfPupil} answers "which photos is my child
+ *       in?". Untagged photos rest on the album-level consent confirmation.</li>
+ *   <li><b>Upload size:</b> the app-wide 2MB multipart limit stays. The photo
+ *       upload endpoint, when built, gets its own higher limit rather than the
+ *       whole app being raised (which would also loosen bulk import).</li>
+ * </ul>
+ *
  * <p>No uploads yet. This is the slice the upload endpoint and screens will
  * sit on; see docs/media-store-status.md.
  */
@@ -48,20 +75,26 @@ public class GalleryService {
 
     private final PhotoAlbumRepository albumRepository;
     private final AlbumPhotoRepository photoRepository;
+    private final AlbumPhotoPupilRepository tagRepository;
     private final ClassSectionRepository classSectionRepository;
     private final StudentRepository studentRepository;
     private final CurrentUserService currentUserService;
+    private final TeachingScope teachingScope;
 
     public GalleryService(PhotoAlbumRepository albumRepository,
                           AlbumPhotoRepository photoRepository,
+                          AlbumPhotoPupilRepository tagRepository,
                           ClassSectionRepository classSectionRepository,
                           StudentRepository studentRepository,
-                          CurrentUserService currentUserService) {
+                          CurrentUserService currentUserService,
+                          TeachingScope teachingScope) {
         this.albumRepository = albumRepository;
         this.photoRepository = photoRepository;
+        this.tagRepository = tagRepository;
         this.classSectionRepository = classSectionRepository;
         this.studentRepository = studentRepository;
         this.currentUserService = currentUserService;
+        this.teachingScope = teachingScope;
     }
 
     // ── Staff ────────────────────────────────────────────────────────────────
@@ -87,6 +120,7 @@ public class GalleryService {
             throw GalleryException.badRequest("Keep the title under " + MAX_TITLE + " characters.");
         }
         Audience audience = resolveAudience(request.audienceType(), request.audienceRef(), tenantId);
+        requireMayAddress(staff, audience, tenantId);
 
         if (!request.consentConfirmed()) {
             long missing = pupilsIn(audience, tenantId).stream().filter(s -> !s.isPhotoConsent()).count();
@@ -121,6 +155,7 @@ public class GalleryService {
                                                           Authentication authentication) {
         User staff = requireStaff(authentication);
         Audience audience = resolveAudience(type, ref, staff.getTenantId());
+        requireMayAddress(staff, audience, staff.getTenantId());
         return pupilsIn(audience, staff.getTenantId()).stream()
                 .filter(s -> !s.isPhotoConsent())
                 .sorted(Comparator.comparing(GalleryService::fullName))
@@ -159,9 +194,121 @@ public class GalleryService {
         if (!viewerFor(user, authentication).canSee(album)) {
             throw GalleryException.forbidden("That album is not shared with you.");
         }
-        return photoRepository.liveInAlbum(album.getId(), tenantId).stream()
-                .map(p -> new PhotoSummary(p.getId(), p.getWidth(), p.getHeight(), p.getCreatedAt()))
+        List<AlbumPhoto> photos = photoRepository.liveInAlbum(album.getId(), tenantId);
+        Set<UUID> withheld = withheldForConsent(photos, tenantId);
+        boolean staff = STAFF.contains(user.getRole());
+        return photos.stream()
+                // Never sent to a family, not merely flagged: a photo of a child
+                // whose parent has said no must not reach another parent's phone.
+                .filter(p -> staff || !withheld.contains(p.getId()))
+                .map(p -> new PhotoSummary(p.getId(), p.getWidth(), p.getHeight(), p.getCreatedAt(),
+                        withheld.contains(p.getId())))
                 .toList();
+    }
+
+    // ── Who is in a photo ────────────────────────────────────────────────────
+
+    /**
+     * Records which pupils appear in a photo.
+     *
+     * <p>Refused, naming the child, if any of them has no photo consent: the photo
+     * should not be in the album. Every pupil must be in the album's audience and
+     * this school. Tagging someone already tagged is a no-op, so a retry is safe.
+     */
+    @Transactional
+    public void tagPupils(UUID photoId, Collection<UUID> studentIds, Authentication authentication) {
+        User staff = requireStaff(authentication);
+        UUID tenantId = staff.getTenantId();
+        AlbumPhoto photo = photoRepository.liveByIdInTenant(photoId, tenantId)
+                .orElseThrow(() -> GalleryException.notFound("That photo is not available."));
+        PhotoAlbum album = albumRepository.findByIdAndTenantId(photo.getAlbumId(), tenantId)
+                .orElseThrow(() -> GalleryException.notFound("That photo is not available."));
+        if (!viewerFor(staff, authentication).canSee(album)) {
+            throw GalleryException.forbidden("That album is not one of yours.");
+        }
+        if (studentIds == null || studentIds.isEmpty()) {
+            return;
+        }
+
+        Set<UUID> wanted = new HashSet<>(studentIds);
+        List<Student> pupils = studentRepository.findByIdInAndTenantId(wanted, tenantId);
+        if (pupils.size() != wanted.size()) {
+            throw GalleryException.notFound("One of those pupils is not in this school.");
+        }
+        for (Student pupil : pupils) {
+            if (!isIn(pupil, album.getAudienceType(), album.getAudienceRef())) {
+                throw GalleryException.badRequest(fullName(pupil) + " is not in "
+                        + labelFor(album, tenantId) + ", so cannot be in this album.");
+            }
+            if (!pupil.isPhotoConsent()) {
+                throw GalleryException.badRequest(fullName(pupil)
+                        + " has no photo consent on record, so this photo should not be shared."
+                        + " Remove it, or ask the school office to update the consent first.");
+            }
+        }
+
+        Set<UUID> already = tagRepository.onPhotos(List.of(photo.getId()), tenantId).stream()
+                .map(AlbumPhotoPupil::getStudentId)
+                .collect(Collectors.toSet());
+        LocalDateTime now = LocalDateTime.now();
+        for (Student pupil : pupils) {
+            if (already.contains(pupil.getId())) {
+                continue;
+            }
+            AlbumPhotoPupil tag = new AlbumPhotoPupil();
+            tag.setId(UUID.randomUUID());
+            tag.setPhotoId(photo.getId());
+            tag.setStudentId(pupil.getId());
+            tag.setTaggedByUserId(staff.getId());
+            tag.setTaggedAt(now);
+            tagRepository.save(tag);
+        }
+    }
+
+    /**
+     * Every live photo a pupil is tagged in -- the answer a school owes a parent
+     * who withdraws consent. Admins and principals, or a teacher of the pupil's
+     * section.
+     */
+    @Transactional(readOnly = true)
+    public List<PhotoOfPupil> photosOfPupil(UUID studentId, Authentication authentication) {
+        User staff = requireStaff(authentication);
+        UUID tenantId = staff.getTenantId();
+        Student pupil = studentRepository.findByIdAndTenantId(studentId, tenantId)
+                .orElseThrow(() -> GalleryException.notFound("That pupil is not in this school."));
+        if (!teachingScope.isUnrestricted(staff)
+                && !teachingScope.teachesSection(staff, pupil.getClassSection())) {
+            throw GalleryException.forbidden("You do not teach this pupil's class.");
+        }
+        return tagRepository.photosOf(pupil.getId(), tenantId).stream()
+                .map(p -> {
+                    String title = albumRepository.findByIdAndTenantId(p.getAlbumId(), tenantId)
+                            .map(PhotoAlbum::getTitle).orElse("");
+                    return new PhotoOfPupil(p.getId(), p.getAlbumId(), title, p.getCreatedAt());
+                })
+                .toList();
+    }
+
+    /** The photos among these that show a pupil with no photo consent now. */
+    private Set<UUID> withheldForConsent(List<AlbumPhoto> photos, UUID tenantId) {
+        if (photos.isEmpty()) {
+            return Set.of();
+        }
+        List<AlbumPhotoPupil> tags = tagRepository.onPhotos(
+                photos.stream().map(AlbumPhoto::getId).toList(), tenantId);
+        if (tags.isEmpty()) {
+            return Set.of();
+        }
+        Set<UUID> withoutConsent = studentRepository.findByIdInAndTenantId(
+                        tags.stream().map(AlbumPhotoPupil::getStudentId).collect(Collectors.toSet()), tenantId)
+                .stream()
+                .filter(s -> !s.isPhotoConsent())
+                .map(Student::getId)
+                .collect(Collectors.toSet());
+        return tags.stream()
+                .filter(t -> withoutConsent.contains(t.getStudentId()))
+                .map(AlbumPhotoPupil::getPhotoId)
+                .collect(Collectors.toSet());
     }
 
     // ── Audience ─────────────────────────────────────────────────────────────
@@ -242,10 +389,22 @@ public class GalleryService {
 
     private Viewer viewerFor(User user, Authentication authentication) {
         UserRole role = user.getRole();
-        if (STAFF.contains(role)) {
-            // Staff see every album in their school. Whether a teacher should see
-            // only their own classes' albums is a product decision, not taken here.
+        if (teachingScope.isUnrestricted(user)) {
             return album -> true;
+        }
+        if (role == UserRole.TEACHER) {
+            // The sections this teacher takes, and the grades those sit in,
+            // settled once for the call.
+            List<ClassSection> taught = classSectionRepository.findByTenantId(user.getTenantId()).stream()
+                    .filter(cs -> teachingScope.teachesSection(user, cs))
+                    .toList();
+            Set<String> sectionIds = taught.stream().map(cs -> cs.getId().toString()).collect(Collectors.toSet());
+            Set<String> grades = taught.stream().map(ClassSection::getGradeName)
+                    .filter(Objects::nonNull).collect(Collectors.toSet());
+            return album -> user.getId().equals(album.getCreatedByUserId())
+                    || album.getAudienceType() == AudienceType.SCHOOL
+                    || (album.getAudienceType() == AudienceType.GRADE && grades.contains(album.getAudienceRef()))
+                    || (album.getAudienceType() == AudienceType.SECTION && sectionIds.contains(album.getAudienceRef()));
         }
         if (role == UserRole.STUDENT) {
             Optional<Student> self = currentUserService.getCurrentStudent(authentication)
@@ -279,6 +438,26 @@ public class GalleryService {
             throw GalleryException.forbidden("Only school staff can manage albums.");
         }
         return user;
+    }
+
+    /**
+     * Teachers may address only sections they teach; grade and whole-school
+     * albums are for admins and principals.
+     */
+    private void requireMayAddress(User staff, Audience audience, UUID tenantId) {
+        if (teachingScope.isUnrestricted(staff)) {
+            return;
+        }
+        if (audience.type() != AudienceType.SECTION) {
+            throw GalleryException.forbidden(
+                    "Teachers can make albums for classes they teach. Ask an admin for a grade or whole-school album.");
+        }
+        ClassSection section = classSectionRepository
+                .findByIdAndTenantId(UUID.fromString(audience.ref()), tenantId)
+                .orElseThrow(() -> GalleryException.notFound("That class is not in this school."));
+        if (!teachingScope.teachesSection(staff, section)) {
+            throw GalleryException.forbidden("You do not teach " + sectionLabel(section) + ".");
+        }
     }
 
     private AlbumSummary summarise(PhotoAlbum album, UUID tenantId) {

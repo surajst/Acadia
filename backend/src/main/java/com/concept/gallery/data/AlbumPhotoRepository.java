@@ -25,4 +25,11 @@ public interface AlbumPhotoRepository extends org.springframework.data.repositor
             + " AND a.id = :albumId AND a.tenantId = :tenantId"
             + " AND a.removedAt IS NULL AND p.removedAt IS NULL ORDER BY p.createdAt ASC")
     List<AlbumPhoto> liveInAlbum(@Param("albumId") UUID albumId, @Param("tenantId") UUID tenantId);
+
+    /** One live photo in a live album of this school. */
+    @Query("SELECT p FROM AlbumPhoto p, PhotoAlbum a WHERE p.albumId = a.id"
+            + " AND p.id = :photoId AND a.tenantId = :tenantId"
+            + " AND a.removedAt IS NULL AND p.removedAt IS NULL")
+    java.util.Optional<AlbumPhoto> liveByIdInTenant(@Param("photoId") UUID photoId,
+                                                    @Param("tenantId") UUID tenantId);
 }

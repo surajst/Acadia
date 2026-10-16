@@ -252,6 +252,9 @@ class LayeringArchitectureTest {
             // repository extends the bare Spring Data Repository, so there is no
             // findById at all; every read joins the album and filters its tenant.
             "AlbumPhoto",
+            // Who is in which photo (V27): scoped through photo -> album, the
+            // same join; its repository has no findById either.
+            "AlbumPhotoPupil",
 
             // Scoped through its Conversation, the tenant-scoped aggregate root.
             // MessagingService proves conversation access first, then that the

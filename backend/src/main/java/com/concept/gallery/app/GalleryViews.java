@@ -38,7 +38,16 @@ public final class GalleryViews {
     /**
      * A photo, as a gallery shows it. The storage keys stay behind: the read
      * path will turn them into short-lived links in this layer.
+     *
+     * @param withheldForConsent it shows a pupil who has no photo consent now.
+     *                           Pupils and parents are never sent such a photo;
+     *                           staff see it flagged, so they can act on it.
      */
-    public record PhotoSummary(UUID id, Integer width, Integer height, LocalDateTime addedAt) {
+    public record PhotoSummary(UUID id, Integer width, Integer height, LocalDateTime addedAt,
+                               boolean withheldForConsent) {
+    }
+
+    /** One photo a pupil is tagged in, for staff answering a consent question. */
+    public record PhotoOfPupil(UUID photoId, UUID albumId, String albumTitle, LocalDateTime addedAt) {
     }
 }
