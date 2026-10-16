@@ -46,7 +46,7 @@ test.describe('Messages reach the user on the web build', () => {
    */
   async function createSomethingToVerify(request) {
     const login = await request.post(`${API}/api/mobile/auth/login`, {
-      data: { email: 'arjun@gmail.com', password: 'PilotLaunchSecure2026!' },
+      data: { email: 'arjun@gmail.com', password: process.env.DEMO_ADMIN_PASSWORD },
     });
     expect(login.ok(), 'the pupil has to be able to sign in').toBeTruthy();
     const token = (await login.json()).token;
@@ -80,7 +80,7 @@ test.describe('Messages reach the user on the web build', () => {
   test('a failed assessment creation says so, instead of failing silently',
     async ({ page }) => {
       await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-      await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+      await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
       // Refuse the create. Anything the server could answer with -- this stands
       // in for the 4xx a real failure produces.
@@ -128,7 +128,7 @@ test.describe('Messages reach the user on the web build', () => {
     // It waits six seconds on purpose, on top of a reset and a sign-in.
     test.setTimeout(60000);
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 400, not 500: on the dev server a 5xx also wakes Expo's log overlay,
     // whose own requests keep the network from ever going idle.
@@ -177,7 +177,7 @@ test.describe('Messages reach the user on the web build', () => {
       // exactly what puts a row in front of the teacher.
       await createSomethingToVerify(request);
 
-      await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+      await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
       // Watch for the decision ever being sent.
       const decisions = [];
@@ -223,7 +223,7 @@ test.describe('Messages reach the user on the web build', () => {
   test('confirming the question sends the work back', async ({ page, request }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
     await createSomethingToVerify(request);
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/verification');
     await page.waitForLoadState('networkidle');
