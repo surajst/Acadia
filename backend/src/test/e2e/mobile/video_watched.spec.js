@@ -119,7 +119,7 @@ test.describe('Finishing a video marks it watched', () => {
 
   test('the player is configured so YouTube can report the end', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await stubThePlayer(page);
 
     await page.goto('/videos');
@@ -164,7 +164,7 @@ test.describe('Finishing a video marks it watched', () => {
   test('the app introduces itself and then asks to be told about state changes',
     async ({ page }) => {
       await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-      await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+      await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
       await stubThePlayer(page);
 
       await page.goto('/videos');
@@ -197,7 +197,7 @@ test.describe('Finishing a video marks it watched', () => {
 
   test('reaching the end records it, and the list says so', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await stubThePlayer(page);
 
     await page.goto('/videos');
@@ -223,7 +223,7 @@ test.describe('Finishing a video marks it watched', () => {
 
   test('it is still watched when the pupil comes back', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await stubThePlayer(page);
 
     await page.goto('/videos');
@@ -247,7 +247,7 @@ test.describe('Finishing a video marks it watched', () => {
    */
   test('a parent sees their child\'s list read-only', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await stubThePlayer(page);
 
     // Every attempt to record a watch, whoever makes it.
@@ -289,7 +289,7 @@ test.describe('Finishing a video marks it watched', () => {
    */
   test('a teacher sees what they shared, with how many have watched', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/videos');
     await page.waitForLoadState('networkidle');

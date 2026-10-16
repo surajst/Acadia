@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const PW = 'PilotLaunchSecure2026!';
+const PW = process.env.DEMO_ADMIN_PASSWORD;
 
 async function login(page, username, password) {
   await page.goto('/login');

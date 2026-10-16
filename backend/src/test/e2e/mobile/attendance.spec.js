@@ -11,7 +11,7 @@ test.describe('TEACHER ATTENDANCE SUBMISSION ENGINE TEST', () => {
 
         // 2. Perform Login as Teacher
         await page.getByPlaceholder('Email / Username').fill('teacher@greenwood.com');
-        await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+        await page.getByPlaceholder('Password').fill(process.env.DEMO_ADMIN_PASSWORD);
         await page.getByText('Log In').click();
 
         // 3. Wait for Navigation to Dashboard

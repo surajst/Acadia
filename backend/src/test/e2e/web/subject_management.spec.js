@@ -16,7 +16,7 @@ test.describe('Sprint 1: Data-driven Subject Catalog', () => {
     const displayName = `Test Subject ${suffix}`;
     const renamedName = `Test Subject Renamed ${suffix}`;
 
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/admin/subjects');
 
     // Create
@@ -51,7 +51,7 @@ test.describe('Sprint 1: Data-driven Subject Catalog', () => {
   });
 
   test('Teacher task creation subject dropdown is populated from /api/subjects, not hardcoded', async ({ page }) => {
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/teacher/tasks');
 
     await page.waitForFunction(() => {

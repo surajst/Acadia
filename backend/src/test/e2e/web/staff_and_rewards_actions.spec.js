@@ -19,7 +19,7 @@ const { test, expect } = require('@playwright/test');
 async function loginAsAdmin(page) {
   await page.goto('/login');
   await page.fill('#username', 'admin@greenwood.com');
-  await page.fill('#password', 'PilotLaunchSecure2026!');
+  await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/login'), { timeout: 90000 });
   await page.waitForLoadState('networkidle');
@@ -234,7 +234,7 @@ test.describe('Endpoints added for these screens', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           schoolName: 'PW Availability School', subdomain: sub,
-          adminEmail: `${sub}@example.com`, adminPassword: 'PilotLaunchSecure2026!',
+          adminEmail: `${sub}@example.com`, adminPassword: process.env.DEMO_ADMIN_PASSWORD,
           adminFullName: 'PW Admin', schoolType: 'SECONDARY',
         }),
       });

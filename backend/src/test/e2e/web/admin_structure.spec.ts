@@ -17,7 +17,7 @@ test.describe('ACADIA Student Lifecycle Operations Management Specs', () => {
     await page.goto('/test/reset');
 
     // 2. Login as Administrator
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 3. Navigate to Admin Configuration Dashboard
     await page.goto('/web/admin/management');

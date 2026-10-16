@@ -34,7 +34,7 @@ test.describe('Screens belong to roles', () => {
 
   test('a parent is sent home from the teacher gradebook', async ({ page }) => {
     await page.goto('/test/reset', { waitUntil: 'load' }).catch(() => {});
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/gradebook');
     await page.waitForLoadState('networkidle');
@@ -46,7 +46,7 @@ test.describe('Screens belong to roles', () => {
   });
 
   test('a parent is sent home from the pupil screens', async ({ page }) => {
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     for (const route of ['/challenges', '/marketplace', '/student-results']) {
       await page.goto(route);
@@ -63,7 +63,7 @@ test.describe('Screens belong to roles', () => {
    * constants/wheel.ts rather than written out a second time.
    */
   test('a parent still reaches their own screens', async ({ page }) => {
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     for (const route of ['/attendance', '/fees', '/performance', '/announcements', '/recognition']) {
       await page.goto(route);
@@ -73,7 +73,7 @@ test.describe('Screens belong to roles', () => {
   });
 
   test('a pupil is sent home from teacher screens', async ({ page }) => {
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     for (const route of ['/gradebook', '/verification', '/task-new']) {
       await page.goto(route);
@@ -88,7 +88,7 @@ test.describe('Screens belong to roles', () => {
    * reaching its own work.
    */
   test('a teacher still reaches their own screens', async ({ page }) => {
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     for (const route of ['/gradebook', '/teacher', '/tasks']) {
       await page.goto(route);
@@ -98,7 +98,7 @@ test.describe('Screens belong to roles', () => {
   });
 
   test('a pupil still reaches their own screens', async ({ page }) => {
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     for (const route of ['/challenges', '/marketplace']) {
       await page.goto(route);
@@ -132,7 +132,7 @@ test.describe('Screens belong to roles', () => {
     test(`every spoke on a ${role}'s wheel opens`, async ({ page }) => {
       // One login plus a page load per spoke; eight spokes is the widest wheel.
       test.setTimeout(120000);
-      await login(page, who, 'PilotLaunchSecure2026!');
+      await login(page, who, process.env.DEMO_ADMIN_PASSWORD);
 
       // UserWheel labels each spoke "{label}, {i + 1} of {n}".
       const spokeName = /, \d+ of \d+$/;
@@ -170,7 +170,7 @@ test.describe('Screens belong to roles', () => {
   test('profile and settings are open to every role', async ({ page }) => {
     for (const who of ['ramesh@gmail.com', 'arjun@gmail.com', 'teacher@greenwood.com']) {
       await page.goto('/');
-      await login(page, who, 'PilotLaunchSecure2026!');
+      await login(page, who, process.env.DEMO_ADMIN_PASSWORD);
       for (const route of ['/profile', '/settings']) {
         await page.goto(route);
         await page.waitForLoadState('networkidle');

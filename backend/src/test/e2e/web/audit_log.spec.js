@@ -15,7 +15,7 @@ test.describe('Sprint 4: Audit Trail', () => {
     const gradeName = `Audit-Grade-${suffix}`;
 
     // ADMIN performs an audited write
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.evaluate(async (grade) => {
       const params = new URLSearchParams({ gradeName: grade, sectionName: 'A', roomNumber: '' });
       await fetch('/web/admin/class-sections/add', {
@@ -36,14 +36,14 @@ test.describe('Sprint 4: Audit Trail', () => {
 
     // A TEACHER cannot reach the audit log directly
     await page.context().clearCookies();
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     const teacherResponse = await page.goto('/web/admin/audit-log');
     expect(teacherResponse.status()).toBe(403);
 
     // A PRINCIPAL can reach the audit log (cross-cutting oversight)
     const principalEmail = `principal-audit-${suffix}@greenwood.com`;
     await page.context().clearCookies();
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     const inviteResult = await page.evaluate(async (email) => {
       const params = new URLSearchParams({
         fullName: 'Audit Principal', email, role: 'PRINCIPAL',

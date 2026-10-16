@@ -6,7 +6,7 @@ const { test, expect } = require('@playwright/test');
 async function loginAsAdmin(page) {
   await page.goto('/login');
   await page.fill('#username', 'admin@greenwood.com');
-  await page.fill('#password', 'PilotLaunchSecure2026!');
+  await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/login'), { timeout: 90000 });
 }
@@ -14,7 +14,7 @@ async function loginAsAdmin(page) {
 async function loginAsTeacher(page) {
   await page.goto('/login');
   await page.fill('#username', 'teacher@greenwood.com');
-  await page.fill('#password', 'PilotLaunchSecure2026!');
+  await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/login'), { timeout: 90000 });
 }
@@ -53,7 +53,7 @@ test.describe('API: Assignment Seed Endpoint — secured in production', () => {
 
   test('POST /api/admin/assignments/seed — as TEACHER returns 403 (not admin)', async ({ request }) => {
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'teacher@greenwood.com', password: 'PilotLaunchSecure2026!' },
+      data: { email: 'teacher@greenwood.com', password: process.env.DEMO_ADMIN_PASSWORD },
     });
     const { token } = await loginRes.json();
     const res = await request.post('/api/admin/assignments/seed', {
@@ -176,7 +176,7 @@ test.describe('API: Teacher Classes resolve from JWT (not hardcoded UUID)', () =
   test('GET /api/teacher/classes returns assignments for authenticated teacher', async ({ request }) => {
     // Login as teacher to get JWT
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'teacher@greenwood.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'teacher@greenwood.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     expect(loginRes.ok()).toBeTruthy();
     const { token } = await loginRes.json();
@@ -205,7 +205,7 @@ test.describe('API: Teacher Classes resolve from JWT (not hardcoded UUID)', () =
     // for the teacher, the API returns {error: "...", classes: []} instead of silent []
     // We verify by inspecting the response shape from a fresh reset (before seed)
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'teacher@greenwood.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'teacher@greenwood.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     expect(loginRes.ok()).toBeTruthy();
     const { token } = await loginRes.json();
@@ -234,7 +234,7 @@ test.describe('API: Teacher Classes resolve from JWT (not hardcoded UUID)', () =
 
   test('GET /api/teacher/attendance/summary returns totals for authenticated teacher', async ({ request }) => {
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'teacher@greenwood.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'teacher@greenwood.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     const { token } = await loginRes.json();
 
@@ -310,7 +310,7 @@ test.describe('Attendance scope: a teacher is offered only her own sections', ()
    */
   test('the register dropdown offers exactly the sections the teacher is assigned', async ({ page, request }) => {
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'teacher@greenwood.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'teacher@greenwood.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     const { token } = await loginRes.json();
     const assigned = await (await request.get('/api/teacher/classes', {
@@ -342,7 +342,7 @@ test.describe('Attendance scope: a teacher is offered only her own sections', ()
   /** An admin covering for an absent teacher still sees the whole school. */
   test('an admin is still offered more sections than a single teacher', async ({ page, request }) => {
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'teacher@greenwood.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'teacher@greenwood.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     const { token } = await loginRes.json();
     const assigned = await (await request.get('/api/teacher/classes', {

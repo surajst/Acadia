@@ -20,7 +20,7 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     await page.fill('#subdomain', subdomain);
     await page.fill('#adminFullName', 'Test Admin');
     await page.fill('#adminEmail', adminEmail);
-    await page.fill('#adminPassword', 'PilotLaunchSecure2026!');
+    await page.fill('#adminPassword', process.env.DEMO_ADMIN_PASSWORD);
     // School Type has no default any more: it decides what the school's pages
     // call things and which features exist, and it cannot be changed later, so
     // a silent "Secondary" was that decision made on the school's behalf.
@@ -37,7 +37,7 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     await page.fill('#subdomain', subdomain);
     await page.fill('#adminFullName', 'Another Admin');
     await page.fill('#adminEmail', `another-${suffix}@testschool.com`);
-    await page.fill('#adminPassword', 'PilotLaunchSecure2026!');
+    await page.fill('#adminPassword', process.env.DEMO_ADMIN_PASSWORD);
     // School Type has no default any more: it decides what the school's pages
     // call things and which features exist, and it cannot be changed later, so
     // a silent "Secondary" was that decision made on the school's behalf.
@@ -61,7 +61,7 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     await page.fill('#subdomain', subdomain);
     await page.fill('#adminFullName', 'Wizard Admin');
     await page.fill('#adminEmail', adminEmail);
-    await page.fill('#adminPassword', 'PilotLaunchSecure2026!');
+    await page.fill('#adminPassword', process.env.DEMO_ADMIN_PASSWORD);
     // School Type has no default any more: it decides what the school's pages
     // call things and which features exist, and it cannot be changed later, so
     // a silent "Secondary" was that decision made on the school's behalf.
@@ -109,11 +109,11 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
 
     // Admin adds a parent with login provisioning
     await page.context().clearCookies();
-    await login(page, adminEmail, 'PilotLaunchSecure2026!');
+    await login(page, adminEmail, process.env.DEMO_ADMIN_PASSWORD);
     const parentEmail = `parent-${suffix}@wizardschool.com`;
     const addParentResult = await page.evaluate(async (email) => {
       const params = new URLSearchParams({
-        firstName: 'New', lastName: 'Parent', loginEmail: email, loginPassword: 'PilotLaunchSecure2026!',
+        firstName: 'New', lastName: 'Parent', loginEmail: email, loginPassword: process.env.DEMO_ADMIN_PASSWORD,
       });
       const res = await fetch('/web/admin/parent/add', {
         method: 'POST',
@@ -126,7 +126,7 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
 
     // The newly provisioned parent login also works
     await page.context().clearCookies();
-    await login(page, parentEmail, 'PilotLaunchSecure2026!');
+    await login(page, parentEmail, process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/parent/portal');
     await expect(page.locator('body')).not.toContainText('Forbidden');
   });
