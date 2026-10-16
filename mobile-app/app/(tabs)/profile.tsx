@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -8,6 +8,7 @@ import { getUserProfile, type UserProfile, type UserRole } from '../../services/
 import { useTheme, type Theme } from '../../context/ThemeContext';
 import { useProfilePhoto } from '../../context/ProfilePhotoContext';
 import Avatar from '../../components/ui/Avatar';
+import { notify } from '../../utils/notify';
 
 function isUserRole(value: string | null): value is UserRole {
   return value === 'STUDENT' || value === 'PARENT' || value === 'TEACHER';
@@ -71,7 +72,7 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     if (!editFirst.trim()) {
-      Alert.alert('Validation', 'First name cannot be empty.');
+      notify('Validation', 'First name cannot be empty.');
       return;
     }
     setSaving(true);
@@ -82,7 +83,7 @@ export default function ProfileScreen() {
       setProfile(prev => prev ? { ...prev, firstName: editFirst.trim(), lastName: editLast.trim() } : prev);
       setEditing(false);
     } catch {
-      Alert.alert('Error', 'Could not save changes.');
+      notify('Error', 'Could not save changes.');
     } finally {
       setSaving(false);
     }

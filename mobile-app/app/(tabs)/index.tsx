@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Platform } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useContext, useState, useEffect, useMemo } from 'react';
 import { DataContext } from './_layout';
@@ -9,6 +9,7 @@ import HomeWheel from '../../components/HomeWheel';
 import TeacherDashboard from '../../components/TeacherDashboard';
 import ParentDashboard from '../../components/ParentDashboard';
 import { useTheme, type Theme } from '../../context/ThemeContext';
+import { notify } from '../../utils/notify';
 
 export default function DashboardScreen() {
   const T = useTheme();
@@ -46,7 +47,7 @@ export default function DashboardScreen() {
       }
       await refreshData();
     } catch (e: any) {
-      Alert.alert('Trip sharing', e?.message ?? 'Could not update trip status.');
+      notify('Trip sharing', e?.message ?? 'Could not update trip status.');
     } finally {
       setTripBusy(false);
     }

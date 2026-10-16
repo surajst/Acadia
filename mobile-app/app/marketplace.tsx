@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Stack } from 'expo-router';
 import {
   getStudentDashboard,
@@ -10,6 +10,7 @@ import { ListSkeleton } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import { Stat, StatRow } from '@/components/ui/Stat';
 import { useTheme, type Theme } from '@/context/ThemeContext';
+import { notify, notifySuccess } from '../utils/notify';
 
 /**
  * Spending XP. The catalogue and the redeem logic both already existed -- but
@@ -65,9 +66,9 @@ export default function MarketplaceScreen() {
       else await redeemParentReward(id);
       // Refetch: the balance and what is still affordable both move.
       await load();
-      Alert.alert('Redeemed', `${title} is yours. ${cost} XP spent.`);
+      notifySuccess('Redeemed', `${title} is yours. ${cost} XP spent.`);
     } catch (e: any) {
-      Alert.alert('Could not redeem', e?.response?.data?.error ?? 'Please try again.');
+      notify('Could not redeem', e?.response?.data?.error ?? 'Please try again.');
     } finally {
       setBusyId(null);
     }
