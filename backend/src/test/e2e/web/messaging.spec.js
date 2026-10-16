@@ -89,16 +89,16 @@ test.describe('Sprint 6: Direct parent-teacher messaging', () => {
     // Create a parent in the same tenant with no link to Arjun
     await page.context().clearCookies();
     await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
-    await page.evaluate(async (email) => {
+    await page.evaluate(async ([email, pw]) => {
       const params = new URLSearchParams({
-        firstName: 'Unrelated', lastName: 'Parent', loginEmail: email, loginPassword: process.env.DEMO_ADMIN_PASSWORD,
+        firstName: 'Unrelated', lastName: 'Parent', loginEmail: email, loginPassword: pw,
       });
       await fetch('/web/admin/parent/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params.toString(),
       });
-    }, unrelatedParentEmail);
+    }, [unrelatedParentEmail, process.env.DEMO_ADMIN_PASSWORD]);
 
     // That parent cannot read Arjun's conversation
     await page.context().clearCookies();

@@ -228,18 +228,18 @@ test.describe('Endpoints added for these screens', () => {
     // "greenwood-static" -- a different name, which really is available. That
     // is correct behaviour and a misleading thing to assert against.
     const slug = `pw-taken-${Date.now()}`;
-    const created = await page.evaluate(async (sub) => {
+    const created = await page.evaluate(async ([sub, pw]) => {
       const res = await fetch('/api/onboard/create-school', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           schoolName: 'PW Availability School', subdomain: sub,
-          adminEmail: `${sub}@example.com`, adminPassword: process.env.DEMO_ADMIN_PASSWORD,
+          adminEmail: `${sub}@example.com`, adminPassword: pw,
           adminFullName: 'PW Admin', schoolType: 'SECONDARY',
         }),
       });
       return res.ok;
-    }, slug);
+    }, [slug, process.env.DEMO_ADMIN_PASSWORD]);
     expect(created, 'the fixture school must be created').toBe(true);
 
     const taken = await page.evaluate(async (sub) =>

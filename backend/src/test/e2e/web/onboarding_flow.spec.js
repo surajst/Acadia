@@ -111,9 +111,9 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
     await page.context().clearCookies();
     await login(page, adminEmail, process.env.DEMO_ADMIN_PASSWORD);
     const parentEmail = `parent-${suffix}@wizardschool.com`;
-    const addParentResult = await page.evaluate(async (email) => {
+    const addParentResult = await page.evaluate(async ([email, pw]) => {
       const params = new URLSearchParams({
-        firstName: 'New', lastName: 'Parent', loginEmail: email, loginPassword: process.env.DEMO_ADMIN_PASSWORD,
+        firstName: 'New', lastName: 'Parent', loginEmail: email, loginPassword: pw,
       });
       const res = await fetch('/web/admin/parent/add', {
         method: 'POST',
@@ -121,7 +121,7 @@ test.describe('Sprint 2: Self-serve Onboarding Wizard', () => {
         body: params.toString(),
       });
       return res.json();
-    }, parentEmail);
+    }, [parentEmail, process.env.DEMO_ADMIN_PASSWORD]);
     expect(addParentResult.status).toBe('created');
 
     // The newly provisioned parent login also works
