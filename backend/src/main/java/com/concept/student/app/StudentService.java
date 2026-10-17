@@ -348,7 +348,11 @@ public class StudentService {
         if (quest.getStudent() == null || !student.getId().equals(quest.getStudent().getId())) {
             throw StudentException.forbidden("Not authorized for this quest");
         }
-        quest.setStatus("AWAITING_APPROVAL");
+        // The status the parent's approval list reads, and the one the web
+        // portal's claim (StudentRewardService) already wrote. This wrote
+        // "AWAITING_APPROVAL", so a quest claimed on the phone never reached
+        // the parent.
+        quest.setStatus("COMPLETED_AWAITING_APPROVAL");
         parentQuestRepository.save(quest);
         return Map.of("status", "success");
     }
