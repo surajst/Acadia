@@ -9,7 +9,9 @@ import com.concept.shared.data.StudentRepository;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -64,8 +66,10 @@ public class AnnouncementService {
         boolean everyone = target == null || target.isBlank() || "ALL".equalsIgnoreCase(target);
         int wanted = everyone ? GradeLevel.UNKNOWN : GradeLevel.parse(target);
 
-        List<UUID> students = new ArrayList<>();
-        List<UUID> guardians = new ArrayList<>();
+        // Sets, not lists: a parent with two children in the audience was added
+        // once per child, and so got every announcement twice.
+        Set<UUID> students = new LinkedHashSet<>();
+        Set<UUID> guardians = new LinkedHashSet<>();
         for (Student s : studentRepository.findByTenantId(saved.getTenantId())) {
             if (!everyone) {
                 if (s.getClassSection() == null) continue;
@@ -78,9 +82,9 @@ public class AnnouncementService {
                 }
             }
         }
-        notificationPublisher.announcementPosted(students, "STUDENT",
+        notificationPublisher.announcementPosted(new ArrayList<>(students), "STUDENT",
                 saved.getTenantId(), saved.getAcademicYearId(), saved.getId(), saved.getTitle());
-        notificationPublisher.announcementPosted(guardians, "PARENT",
+        notificationPublisher.announcementPosted(new ArrayList<>(guardians), "PARENT",
                 saved.getTenantId(), saved.getAcademicYearId(), saved.getId(), saved.getTitle());
     }
 
