@@ -18,7 +18,7 @@ test.describe('ACADIA Parent-Kid Quest Engagement Flow', () => {
 
   test('TC-08/09/10/11/12/13/14: Assign task, claim quest, and approve quest loop', async ({ page }) => {
     // 1. Login as Parent (Ramesh)
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 2. Navigate to the Parent Dashboard (the /portal route now redirects here)
     await page.goto('/web/parent/dashboard');
@@ -45,7 +45,7 @@ test.describe('ACADIA Parent-Kid Quest Engagement Flow', () => {
     await page.context().clearCookies();
 
     // 9. Login as Student (Arjun)
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 10. Navigate to Student Portal
     await page.goto('/web/student/portal');
@@ -75,7 +75,7 @@ test.describe('ACADIA Parent-Kid Quest Engagement Flow', () => {
     await page.context().clearCookies();
 
     // 14. Login as Parent (Ramesh)
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 15. Navigate to the Parent Dashboard
     await page.goto('/web/parent/dashboard');

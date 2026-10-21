@@ -27,10 +27,10 @@ test.describe('Teacher Task Creation', () => {
         // Login as teacher@greenwood.com
         await page.goto('/login');
         await page.fill('input[name="username"]', 'teacher@greenwood.com');
-        await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+        await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
         await page.click('button[type="submit"]');
         await page.waitForURL('**/web/**', { timeout: 90000 });
-        await setJwtHeader(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+        await setJwtHeader(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
         // Navigate to /web/teacher/tasks
         await page.goto('/web/teacher/tasks');
@@ -77,10 +77,10 @@ test.describe('Teacher Task Creation', () => {
 
         // Login as arjun@gmail.com
         await page.fill('input[name="username"]', 'arjun@gmail.com');
-        await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+        await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
         await page.click('button[type="submit"]');
         await page.waitForURL('**/web/**', { timeout: 90000 });
-        await setJwtHeader(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+        await setJwtHeader(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
         // Force navigate to dashboard tab just to be sure
         await page.goto('/web/student/portal');
@@ -141,10 +141,10 @@ test.describe('Teacher Task Creation', () => {
 
         // Login as teacher@greenwood.com
         await page.fill('input[name="username"]', 'teacher@greenwood.com');
-        await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+        await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
         await page.click('button[type="submit"]');
         await page.waitForURL('**/web/**', { timeout: 90000 });
-        await setJwtHeader(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+        await setJwtHeader(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
         await page.goto('/web/teacher/dashboard');
 
         // Assert submission appears in Verification Queue
@@ -165,10 +165,10 @@ test.describe('Teacher Task Creation', () => {
 
         // Login as arjun@gmail.com
         await page.fill('input[name="username"]', 'arjun@gmail.com');
-        await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+        await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
         await page.click('button[type="submit"]');
         await page.waitForURL('**/web/**', { timeout: 90000 });
-        await setJwtHeader(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+        await setJwtHeader(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
         // Assert task approved in history
         await page.goto('/web/student/portal');
@@ -192,10 +192,10 @@ test.describe('Teacher Task Creation', () => {
         // Login as teacher@greenwood.com
         await page.goto('/login');
         await page.fill('input[name="username"]', 'teacher@greenwood.com');
-        await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+        await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
         await page.click('button[type="submit"]');
         await page.waitForURL('**/web/**', { timeout: 90000 });
-        await setJwtHeader(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+        await setJwtHeader(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
         // Navigate to /web/teacher/tasks
         await page.goto('/web/teacher/tasks');
@@ -238,10 +238,10 @@ test.describe('Teacher Task Creation', () => {
 
         // Login as arjun@gmail.com
         await page.fill('input[name="username"]', 'arjun@gmail.com');
-        await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+        await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
         await page.click('button[type="submit"]');
         await page.waitForURL('**/web/**', { timeout: 90000 });
-        await setJwtHeader(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+        await setJwtHeader(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
         await page.goto('/web/student/portal');
         await page.locator('[data-tab="home"]').first().click();
         await page.waitForLoadState('networkidle');
@@ -304,10 +304,10 @@ test.describe('Teacher Task Creation', () => {
 
         // Login as teacher@greenwood.com
         await page.fill('input[name="username"]', 'teacher@greenwood.com');
-        await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+        await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
         await page.click('button[type="submit"]');
         await page.waitForURL('**/web/**', { timeout: 90000 });
-        await setJwtHeader(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+        await setJwtHeader(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
         await page.goto('/web/teacher/dashboard');
 
         // Find submission in Verification Queue
@@ -334,10 +334,10 @@ test.describe('Teacher Task Creation', () => {
 
         // Login as arjun@gmail.com
         await page.fill('input[name="username"]', 'arjun@gmail.com');
-        await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+        await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
         await page.click('button[type="submit"]');
         await page.waitForURL('**/web/**', { timeout: 90000 });
-        await setJwtHeader(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+        await setJwtHeader(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
         // Assert approved and XP increased by 50
         await page.goto('/web/student/portal');

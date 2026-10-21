@@ -40,7 +40,7 @@ test.describe('The language a parent reads notices in', () => {
   async function login(page) {
     await page.goto('/');
     await page.getByPlaceholder('Email / Username').fill('ramesh@gmail.com');
-    await page.getByPlaceholder('Password').fill('PilotLaunchSecure2026!');
+    await page.getByPlaceholder('Password').fill(process.env.DEMO_ADMIN_PASSWORD);
     await page.getByText('Log In').click();
     await page.waitForLoadState('networkidle');
     await expect(page.getByPlaceholder('Password')).toHaveCount(0, { timeout: 30000 });

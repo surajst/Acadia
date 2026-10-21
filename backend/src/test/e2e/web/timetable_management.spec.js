@@ -14,7 +14,7 @@ test.describe('Sprint 5: Timetable management', () => {
     const suffix = Date.now();
     const room = `Room-${suffix}`;
 
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/admin/timetable');
 
     // Dropdowns populate (class sections, teachers, subjects)
@@ -46,7 +46,7 @@ test.describe('Sprint 5: Timetable management', () => {
   });
 
   test('Teacher is blocked from timetable management; TEACHER dashboard shows Today\'s Schedule widget', async ({ page }) => {
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // Access boundary: page and API both 403
     const pageResp = await page.goto('/web/admin/timetable');

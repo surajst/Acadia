@@ -32,7 +32,7 @@ test.describe('Setting work from the phone says who will get it', () => {
 
   test('the form names the class, not the whole grade', async ({ page }) => {
     await page.goto('http://localhost:8080/test/reset');
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/task-new');
     await page.waitForLoadState('networkidle');
@@ -51,7 +51,7 @@ test.describe('Setting work from the phone says who will get it', () => {
 
   test('the confirmation after saving names the class too', async ({ page }) => {
     await page.goto('http://localhost:8080/test/reset');
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/task-new');
     await page.waitForLoadState('networkidle');

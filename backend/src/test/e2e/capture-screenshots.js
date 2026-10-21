@@ -6,7 +6,7 @@ const fs = require('fs');
 
 const BASE_URL = 'http://localhost:8080';
 const OUT_DIR = path.join(__dirname, '..', '..', '..', '..', 'screenshots');
-const PASSWORD = 'PilotLaunchSecure2026!';
+const PASSWORD = process.env.DEMO_ADMIN_PASSWORD;
 
 async function login(page, username) {
   await page.goto(`${BASE_URL}/login`);

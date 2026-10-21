@@ -14,7 +14,7 @@ test.describe('Sprint 5: Gradebook (bulk score entry)', () => {
     const suffix = Date.now();
     const title = `E2E Quiz ${suffix}`;
 
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/teacher/assessments');
 
     // Class dropdown populates from /api/teacher/classes

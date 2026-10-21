@@ -17,7 +17,7 @@ const { test, expect } = require('@playwright/test');
  * pointing this at a real deployment would create tenants it cannot clean up.
  */
 
-const PW = 'PilotLaunchSecure2026!';
+const PW = process.env.DEMO_ADMIN_PASSWORD;
 
 async function login(page, username, password) {
   await page.goto('/login');
@@ -338,17 +338,17 @@ test.describe.serial('Lifecycle of a self-onboarded school', () => {
     await expect(page).toHaveURL(/login/, { timeout: 15000 });
 
     // And the same identifiers are free again.
-    const reuse = await page.evaluate(async ([sub, email]) => {
+    const reuse = await page.evaluate(async ([sub, email, pw]) => {
       const res = await fetch('/api/onboard/create-school', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           schoolName: 'Reborn School', subdomain: sub, adminEmail: email,
-          adminPassword: 'PilotLaunchSecure2026!', adminFullName: 'Reborn Admin',
+          adminPassword: pw, adminFullName: 'Reborn Admin',
         }),
       });
       return { status: res.status, body: await res.json() };
-    }, [doomed.subdomain, doomed.adminEmail]);
+    }, [doomed.subdomain, doomed.adminEmail, process.env.DEMO_ADMIN_PASSWORD]);
 
     expect(reuse.status, 'subdomain and email are reusable after a purge').toBe(200);
     created.push(doomed.subdomain);

@@ -15,7 +15,7 @@ test.describe('ACADIA Role Clearance Specs', () => {
     await page.goto('/test/reset');
 
     // 2. Login as Administrator
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 3. Navigate to the Unified Dashboard
     await page.goto('/web/admin/dashboard');
