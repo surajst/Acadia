@@ -16,7 +16,7 @@ test.describe('Mobile Responsiveness Specs', () => {
   });
 
   test('Assert mobile responsiveness on Parent Dashboard', async ({ page }) => {
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/parent/portal');
     
     // Assert no horizontal overflow
@@ -29,7 +29,7 @@ test.describe('Mobile Responsiveness Specs', () => {
   });
 
   test('Assert mobile responsiveness on Student Portal', async ({ page }) => {
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/student/portal');
     await page.locator('#mobile-nav-challenges').click();
     await page.waitForLoadState('networkidle');

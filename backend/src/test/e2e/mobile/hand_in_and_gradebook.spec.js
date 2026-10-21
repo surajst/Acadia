@@ -30,7 +30,7 @@ test.describe('App actions that need a real browser', () => {
 
   test('a student handing work in sees it confirmed in the sheet', async ({ page }) => {
     await page.goto('http://localhost:8080/test/reset');
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // Challenges is where a pupil's set work lives.
     await page.getByText('Challenges', { exact: true }).first().click();
@@ -86,7 +86,7 @@ test.describe('App actions that need a real browser', () => {
    */
   test('closing the hand-in sheet does not blank it on the way out', async ({ page }) => {
     await page.goto('http://localhost:8080/test/reset');
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.getByText('Challenges', { exact: true }).first().click();
     await page.waitForLoadState('networkidle');
@@ -137,7 +137,7 @@ test.describe('App actions that need a real browser', () => {
 
   test('a teacher cannot save a score above the maximum, and sees it said so', async ({ page }) => {
     await page.goto('http://localhost:8080/test/reset');
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/gradebook');
     await page.waitForLoadState('networkidle');
@@ -184,7 +184,7 @@ test.describe('App actions that need a real browser', () => {
 
   test('an empty Quests screen says so instead of inventing a quest', async ({ page }) => {
     await page.goto('http://localhost:8080/test/reset');
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/quests');
     await page.waitForLoadState('networkidle');

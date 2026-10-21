@@ -10,7 +10,6 @@ files.forEach(f => {
                    .replace(/parent_1/g, 'ramesh@gmail.com')
                    .replace(/teacher_1/g, 'teacher@greenwood.com')
                    .replace(/pilot_admin/g, 'admin@greenwood.com')
-                   .replace(/GreenwoodStaffTesting2026!/g, 'PilotLaunchSecure2026!')
                    .replace(/parent_2/g, 'ramesh@gmail.com')
                    .replace(/student_2/g, 'arjun@gmail.com')
                    .replace(/'admin'/g, "'admin@greenwood.com'")

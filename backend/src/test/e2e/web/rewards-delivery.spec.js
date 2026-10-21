@@ -17,7 +17,7 @@ test.describe('ACADIA Custom Parent Rewards Delivery Flow', () => {
 
   test('TC-15/16/17/18/19: Create custom reward, redeem, verify dual-deduction math, and release delivery loop', async ({ page }) => {
     // 1. Login as Parent (Ramesh)
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 2. Navigate to the Parent Dashboard (the /portal route now redirects here)
     await page.goto('/web/parent/dashboard');
@@ -46,7 +46,7 @@ test.describe('ACADIA Custom Parent Rewards Delivery Flow', () => {
     await page.context().clearCookies();
 
     // 7. Login as Student (Arjun)
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 8. Navigate to Student Portal (Rewards Tab)
     await page.goto('/web/student/portal');
@@ -82,7 +82,7 @@ test.describe('ACADIA Custom Parent Rewards Delivery Flow', () => {
     await page.context().clearCookies();
 
     // 12. Login as Parent (Ramesh)
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 13. Navigate to the Parent Dashboard
     await page.goto('/web/parent/dashboard');

@@ -21,7 +21,7 @@ async function assertPageHealth(page, path) {
 test.describe('Admin Page Health', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
   });
 
   test('Admin Dashboard', async ({ page }) => {
@@ -75,7 +75,7 @@ test.describe('Admin Page Health', () => {
 test.describe('Teacher Page Health', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
   });
 
   test('Teacher Dashboard', async ({ page }) => {
@@ -98,7 +98,7 @@ test.describe('Teacher Page Health', () => {
 test.describe('Parent Page Health', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
   });
 
   test('Parent Dashboard', async ({ page }) => {
@@ -109,7 +109,7 @@ test.describe('Parent Page Health', () => {
 test.describe('Student Page Health', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
   });
 
   test('Student Dashboard', async ({ page }) => {
@@ -120,7 +120,7 @@ test.describe('Student Page Health', () => {
 test.describe('Mobile API Health', () => {
   test('Mobile Auth & Student Dashboard API', async ({ request }) => {
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'arjun@gmail.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'arjun@gmail.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     expect(loginRes.ok()).toBeTruthy();
     const data = await loginRes.json();
@@ -136,7 +136,7 @@ test.describe('Mobile API Health', () => {
 
   test('Mobile Auth & Parent Dashboard API', async ({ request }) => {
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'ramesh@gmail.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'ramesh@gmail.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     expect(loginRes.ok()).toBeTruthy();
     const data = await loginRes.json();
@@ -152,7 +152,7 @@ test.describe('Mobile API Health', () => {
 
   test('Mobile Parent Attendance API', async ({ request }) => {
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'ramesh@gmail.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'ramesh@gmail.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     expect(loginRes.ok()).toBeTruthy();
     const data = await loginRes.json();
@@ -168,7 +168,7 @@ test.describe('Mobile API Health', () => {
 
   test('Mobile Student Attendance API', async ({ request }) => {
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'arjun@gmail.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'arjun@gmail.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     expect(loginRes.ok()).toBeTruthy();
     const data = await loginRes.json();
@@ -184,7 +184,7 @@ test.describe('Mobile API Health', () => {
 
   test('Mobile Student Tasks API', async ({ request }) => {
     const loginRes = await request.post('/api/mobile/auth/login', {
-      data: { email: 'arjun@gmail.com', password: 'PilotLaunchSecure2026!' }
+      data: { email: 'arjun@gmail.com', password: process.env.DEMO_ADMIN_PASSWORD }
     });
     expect(loginRes.ok()).toBeTruthy();
     const data = await loginRes.json();

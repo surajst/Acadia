@@ -23,8 +23,8 @@ test.describe('Multi-Role Announcement Workflow E2E Test', () => {
     await page.goto('/test/reset');
 
     // 2. Login as Admin
-    console.log('Executing line 26: ' + "await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');");
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    console.log('Executing line 26: ' + "await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);");
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 3. Navigate to Admin Broadcast Center
     console.log('Executing line 30: ' + "await page.goto('/web/admin');");
@@ -57,8 +57,8 @@ test.describe('Multi-Role Announcement Workflow E2E Test', () => {
     await page.context().clearCookies();
 
     // 8. Login as Parent (Ramesh)
-    console.log('Executing line 57: ' + "await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');");
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    console.log('Executing line 57: ' + "await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);");
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 9. Navigate to Parent Dashboard
     console.log('Executing line 61: ' + "await page.goto('/web/parent/dashboard');");

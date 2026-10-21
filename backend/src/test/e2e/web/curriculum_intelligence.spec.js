@@ -8,7 +8,7 @@ test.describe('Admin Curriculum Intelligence Dashboard', () => {
     // Login as admin@greenwood.com
     await page.goto('/login');
     await page.fill('input[name="username"]', 'admin@greenwood.com');
-    await page.fill('input[name="password"]', 'PilotLaunchSecure2026!');
+    await page.fill('input[name="password"]', process.env.DEMO_ADMIN_PASSWORD);
     await Promise.all([
       page.waitForURL('**/web/admin/*', { timeout: 90000 }),
       page.click('button:has-text("Sign in")')

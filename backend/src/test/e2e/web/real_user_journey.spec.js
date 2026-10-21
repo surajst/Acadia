@@ -21,7 +21,7 @@ test.describe.serial('Real User Journey E2E Specs', () => {
 
   test('TEST 1 — Admin Journey', async ({ page }) => {
     // Login as admin@greenwood.com, assert redirect to admin dashboard
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.url()).toContain('/web/admin/dashboard');
 
     // Add a new student (reveal the Classrooms & Students section from the card hub first)
@@ -76,7 +76,7 @@ test.describe.serial('Real User Journey E2E Specs', () => {
 
   test('TEST 2 — Teacher Journey', async ({ page }) => {
     // Login as teacher@greenwood.com, assert redirect to dashboard
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.url()).toContain('/web/teacher/dashboard'); // Teacher redirects to teacher dashboard
 
     // Open attendance page
@@ -117,7 +117,7 @@ test.describe.serial('Real User Journey E2E Specs', () => {
 
   test('TEST 3 — Parent Journey (isolation test)', async ({ page }) => {
     // Login as ramesh@gmail.com, assert redirect to parent dashboard
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.url()).toContain('/web/parent/dashboard');
     
     // Assert the linked child (Arjun) is visible on the dashboard
@@ -138,7 +138,7 @@ test.describe.serial('Real User Journey E2E Specs', () => {
     await page.context().clearCookies();
     
     // Login as ramesh@gmail.com, assert their dashboard loads
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.url()).toContain('/web/parent/dashboard');
     
     // Assert ramesh@gmail.com's dashboard does NOT contain the student created by Admin
@@ -150,7 +150,7 @@ test.describe.serial('Real User Journey E2E Specs', () => {
 
   test('TEST 4 — Student Journey', async ({ page }) => {
     // Login as first seeded student
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     
     // Assert redirect to student portal
     await expect(page.url()).toContain('/web/student/portal'); // Wait, student portal is /web/student/portal? The previous scripts used /web/student/portal?tab=dashboard. I'll check. Let's navigate to /web/student/portal?tab=dashboard to be safe.
