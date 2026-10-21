@@ -99,7 +99,7 @@ button{font:inherit}
 .toast .ic{flex:none;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center}
 .toast b{display:block;font-size:13.5px;font-weight:700;color:var(--text)}
 .toast span{display:block;font-size:12px;color:var(--muted)}
-.t1{left:-10px;top:110px}.t2{right:-16px;top:300px}.t3{left:6px;bottom:90px}
+.t1{left:-24px;top:64px}.t2{right:-16px;top:300px}.t3{left:6px;bottom:90px}
 @media (max-width:520px){.stage{height:620px;transform:scale(.92);transform-origin:top center}.t1{left:-6px}.t2{right:-6px}.t3{left:0}}
 
 /* ---------- Phone + app UI (faithful to the ACADIA app) ---------- */
@@ -232,7 +232,7 @@ button{font:inherit}
 @keyframes floatup{from{opacity:0;transform:translateY(10px) scale(.8)}20%{opacity:1}to{opacity:0;transform:translateY(-80px) scale(1.1)}}
 .lvlup{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0}
 .lvlup.go{animation:lvl 2.2s ease forwards}
-.lvlup b{font-family:var(--display);font-size:clamp(34px,5vw,56px);font-weight:800;padding:14px 30px;border-radius:24px}
+.lvlup b{font-family:var(--display);font-size:clamp(34px,5vw,56px);font-weight:800;padding:14px 30px;border-radius:24px;background:rgba(10,11,14,.88)!important;box-shadow:0 0 0 1px rgba(223,224,92,.45),0 0 60px rgba(223,224,92,.35)}
 @keyframes lvl{0%{opacity:0;transform:scale(.6)}15%{opacity:1;transform:scale(1.05)}25%{transform:scale(1)}80%{opacity:1}100%{opacity:0}}
 .spark{position:absolute;width:8px;height:8px;border-radius:2px;pointer-events:none;animation:burst 1.2s cubic-bezier(.2,.8,.2,1) forwards}
 @keyframes burst{to{transform:translate(var(--dx),var(--dy)) rotate(540deg);opacity:0}}
@@ -276,7 +276,7 @@ button{font:inherit}
 .kpi{background:#fff;border:1px solid #E7EAF2;border-radius:14px;padding:14px}
 .kpi small{font-size:11px;font-weight:700;letter-spacing:.06em;color:#64748B;text-transform:uppercase}
 .kpi b{display:block;font-size:24px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
-.kpi span{font-size:12px;font-weight:700}
+.kpi > span{font-size:12px;font-weight:700}
 .panels{display:grid;grid-template-columns:1.5fr 1fr;gap:12px;min-width:0}
 .panel{background:#fff;border:1px solid #E7EAF2;border-radius:14px;padding:16px;min-width:0}
 .panel h5{margin:0 0 10px;font-size:14px;font-weight:800}
