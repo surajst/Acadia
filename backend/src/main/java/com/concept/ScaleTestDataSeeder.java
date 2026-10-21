@@ -45,8 +45,8 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
     @Autowired
     private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
-    @org.springframework.beans.factory.annotation.Value("${demo.admin.password:PilotLaunchSecure2026!}")
-    private String demoAdminPassword;
+    @Autowired
+    private SeedCredentials seedCredentials;
 
     @Override
     @Transactional
@@ -236,13 +236,13 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
                 user.setTenantId(tenantId);
                 user.setAcademicYearId(academicYearId);
                 user.setEmail(email);
-                user.setPasswordHash(passwordEncoder.encode("GreenwoodStaffTesting2026!"));
+                user.setPasswordHash(passwordEncoder.encode(seedCredentials.password()));
                 user.setFullName(roleName + " Staff " + i);
                 user.setRole(role);
                 user.setActive(true);
                 userRepository.save(user);
             } else {
-                user.setPasswordHash(passwordEncoder.encode("GreenwoodStaffTesting2026!"));
+                user.setPasswordHash(passwordEncoder.encode(seedCredentials.password()));
                 userRepository.save(user);
             }
         }
@@ -254,7 +254,7 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
 
     private void seedPilotDatabaseCredentials(UUID tenantId, UUID academicYearId) {
         System.out.println(">> Scale Simulation Seeder -> Seeding Pilot Database Credentials");
-        String pilotPassword = passwordEncoder.encode(demoAdminPassword);
+        String pilotPassword = passwordEncoder.encode(seedCredentials.password());
         
         // Helper array to seed roles easily
         String[][] pilotAccounts = {
@@ -281,6 +281,15 @@ public class ScaleTestDataSeeder implements CommandLineRunner {
                 user.setActive(true);
                 userRepository.save(user);
                 System.out.println("Automated Seeder -> Created Pilot DB User: " + email);
+            } else {
+                // Re-applied on every start, as the admin's already is: the
+                // password comes from DEMO_ADMIN_PASSWORD now, and an account
+                // left over from a run with a different value (or none, which
+                // seeds a random one) would otherwise keep a password nobody
+                // knows.
+                User existing = userRepository.findByEmail(email).get();
+                existing.setPasswordHash(pilotPassword);
+                userRepository.save(existing);
             }
         }
     }

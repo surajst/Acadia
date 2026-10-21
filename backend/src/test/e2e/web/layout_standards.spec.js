@@ -22,7 +22,7 @@ test.describe('Viewport Architecture Standards', () => {
         test(`Assert zero-scroll layout on ${p.path} (${p.role})`, async ({ page }) => {
             await page.goto('/login');
             await page.fill('#username', p.role);
-            await page.fill('#password', 'PilotLaunchSecure2026!');
+            await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
             await page.click('button[type="submit"]');
             await page.waitForLoadState('load');
 

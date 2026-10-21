@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
-  ActivityIndicator, RefreshControl, Alert, Linking,
+  ActivityIndicator, RefreshControl, Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { getStudentProfile, getBadges, awardBadge } from '../../services/api';
 import { useTheme, type Theme } from '../../context/ThemeContext';
+import { notify } from '../../utils/notify';
 
 /**
  * One child, on a teacher's phone.
@@ -59,7 +60,7 @@ export default function StudentProfileScreen() {
   useEffect(() => {
     (async () => {
       try { await load(); }
-      catch (e: any) { Alert.alert('Could not load', e?.response?.data?.error ?? 'Please try again.'); }
+      catch (e: any) { notify('Could not load', e?.response?.data?.error ?? 'Please try again.'); }
       finally { setLoading(false); }
     })();
   }, [id]);
@@ -79,7 +80,7 @@ export default function StudentProfileScreen() {
       setReason('');
       await load();
     } catch (e: any) {
-      Alert.alert('Could not award', e?.response?.data?.error ?? 'Please try again.');
+      notify('Could not award', e?.response?.data?.error ?? 'Please try again.');
     } finally {
       setSaving(false);
     }

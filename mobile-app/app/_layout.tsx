@@ -15,6 +15,7 @@ import DocumentTitle from '../components/DocumentTitle';
 // used below for the Stack) -- unrelated to the app's own brand-colour theme.
 import { ThemeProvider as AppThemeProvider } from '@/context/ThemeContext';
 import { ProfilePhotoProvider } from '@/context/ProfilePhotoContext';
+import NoticeHost from '@/components/ui/NoticeHost';
 import T from '../constants/theme';
 import LoginScreen from './index';
 
@@ -59,6 +60,12 @@ export default function RootLayout() {
           {/* Inside AuthProvider: it reads the profile, which needs a token. */}
           <ProfilePhotoProvider>
             <RootLayoutGate fontsLoaded={loaded} />
+            {/*
+              Outside every screen and above them, so a message is not lost when
+              the screen that raised it unmounts -- which is exactly what happens
+              when a failed save navigates away.
+            */}
+            <NoticeHost />
           </ProfilePhotoProvider>
         </AuthProvider>
       </AppThemeProvider>

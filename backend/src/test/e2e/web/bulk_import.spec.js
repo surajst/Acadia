@@ -24,7 +24,7 @@ test.describe('Bulk student import: preview / confirm / cancel', () => {
 
   test('preview is a dry run, confirm commits, cancel discards', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     const suffix = Date.now();
     const rollA = `PW${suffix}A`;
@@ -77,7 +77,7 @@ test.describe('Bulk student import: preview / confirm / cancel', () => {
 
   test('staff CSV import commits directly and reports per-row outcomes', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     const suffix = Date.now();
     // 1 valid new teacher, 1 duplicate email (seeded teacher -> skip), 1 invalid role (error).
@@ -110,7 +110,7 @@ test.describe('Bulk student import: preview / confirm / cancel', () => {
   });
 
   test('tab switcher toggles Students and Staff panels', async ({ page }) => {
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/management/upload');
 
     const students = page.locator('section[data-panel="students"]');

@@ -42,7 +42,7 @@ const { chromium, expect } = require('@playwright/test');
   console.log("Teacher logging in...");
   await page.goto('http://localhost:8080/web/login');
   await page.fill('#username', 'teacher_1@greenwood.com');
-  await page.fill('#password', 'GreenwoodStaffTesting2026!');
+  await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForTimeout(2000);
 
