@@ -25,15 +25,47 @@ public class JwtUtils {
     private static final long JWT_EXPIRATION_MS = 86400000; // 24 hours
     private static final String INSECURE_DEFAULT_SECRET = "dev-only-insecure-default-change-in-production-please-32bytes-min";
 
-    public JwtUtils(@Value("${app.jwt-secret}") String jwtSecret,
+    /** HS256 needs a key at least as long as its 256-bit output. */
+    static final int MIN_SECRET_BYTES = 32;
+
+    public JwtUtils(@Value("${app.jwt-secret:}") String jwtSecret,
                      @Value("${app.dev-mode:false}") boolean devMode) {
-        if (!devMode && INSECURE_DEFAULT_SECRET.equals(jwtSecret)) {
-            throw new IllegalStateException(
-                "app.jwt-secret is using the insecure dev-only default outside of dev mode. " +
-                "Set the JWT_SECRET environment variable to a real random secret before starting with app.dev-mode=false."
-            );
-        }
+        requireUsableSecret(jwtSecret, devMode);
         this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Refuses to start outside dev mode on a secret anyone could know or guess.
+     *
+     * <p>Whoever holds the signing secret can mint a token for any user, admin
+     * included. The default in application.properties is public -- the
+     * repository was -- so a deploy that lost JWT_SECRET would otherwise come up
+     * looking healthy while accepting forged logins. Failing at startup turns
+     * that into a deploy that does not go live, which is loud and harmless.
+     *
+     * <p>Dev mode keeps the default so a fresh checkout runs with no setup.
+     */
+    static void requireUsableSecret(String jwtSecret, boolean devMode) {
+        if (devMode) {
+            return;
+        }
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException(
+                "app.jwt-secret is not set. Set the JWT_SECRET environment variable to a random secret of at least "
+                + MIN_SECRET_BYTES + " bytes before starting with app.dev-mode=false.");
+        }
+        if (INSECURE_DEFAULT_SECRET.equals(jwtSecret)) {
+            throw new IllegalStateException(
+                "app.jwt-secret is using the insecure dev-only default outside of dev mode. "
+                + "Set the JWT_SECRET environment variable to a real random secret before starting with app.dev-mode=false.");
+        }
+        int bytes = jwtSecret.getBytes(StandardCharsets.UTF_8).length;
+        if (bytes < MIN_SECRET_BYTES) {
+            // The length only, never the value: this message lands in deploy logs.
+            throw new IllegalStateException(
+                "app.jwt-secret is " + bytes + " bytes; at least " + MIN_SECRET_BYTES
+                + " are required. Set JWT_SECRET to a longer random secret before starting with app.dev-mode=false.");
+        }
     }
 
     public String extractUsername(String token) {
