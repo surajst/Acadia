@@ -55,6 +55,22 @@ test.describe('Sprint 3: PRINCIPAL role and access boundaries', () => {
     await expect(page.locator('body')).toContainText('Curriculum');
     await expect(page.locator('body')).toContainText('Fee collection');
 
+    // Every link in the principal's sidebar opens. It used to offer School
+    // Management, Fees, Subjects, the Setup Wizard and more -- all ADMIN-only,
+    // so a principal clicking round the sidebar met a 403 at almost every turn.
+    await page.waitForLoadState('networkidle');
+    const sidebarLinks = await page.locator('a.navlink').evaluateAll(
+      (links) => [...new Set(links.map((a) => a.getAttribute('href')))]);
+    expect(sidebarLinks.length, 'the sidebar should still offer something').toBeGreaterThan(0);
+    for (const href of sidebarLinks) {
+      const res = await page.request.get(href);
+      expect(res.status(), `sidebar link ${href} must open for a principal`).not.toBe(403);
+    }
+    for (const adminOnly of ['/web/admin/management', '/web/admin/fees', '/web/admin/subjects',
+      '/web/onboard/setup', '/web/admin/assignments', '/web/management/upload']) {
+      expect(sidebarLinks, `${adminOnly} is ADMIN-only and must not be offered`).not.toContain(adminOnly);
+    }
+
     // Blocked from ADMIN-only data-entry / setup pages
     for (const path of ['/web/admin/management', '/web/admin/fees', '/web/admin/subjects', '/web/onboard/setup']) {
       const response = await page.goto(path);

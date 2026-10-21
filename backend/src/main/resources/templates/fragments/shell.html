@@ -49,19 +49,19 @@
                th:classappend="${shell != null and shell.on('/web/admin/dashboard')} ? 'active' : ''">
                 <span class="dot"></span> Roster Hub
             </a>
-            <a class="navlink" href="/web/admin/timetable"
+            <a class="navlink" href="/web/admin/timetable" th:if="${shell == null or shell.role() == 'ADMIN'}"
                th:classappend="${shell != null and shell.on('/web/admin/timetable')} ? 'active' : ''">
                 <span class="dot"></span> Timetable
             </a>
-            <a class="navlink" href="/web/admin/curriculum" th:if="${school == null or school.hasSyllabus}"
+            <a class="navlink" href="/web/admin/curriculum" th:if="${(shell == null or shell.role() == 'ADMIN') and (school == null or school.hasSyllabus)}"
                th:classappend="${shell != null and shell.on('/web/admin/curriculum')} ? 'active' : ''">
                 <span class="dot"></span> Curriculum
             </a>
-            <a class="navlink" href="/web/admin/subjects" th:if="${school == null or school.hasSyllabus}"
+            <a class="navlink" href="/web/admin/subjects" th:if="${(shell == null or shell.role() == 'ADMIN') and (school == null or school.hasSyllabus)}"
                th:classappend="${shell != null and shell.on('/web/admin/subjects')} ? 'active' : ''">
                 <span class="dot"></span> Subjects
             </a>
-            <a class="navlink" href="/web/admin/fees"
+            <a class="navlink" href="/web/admin/fees" th:if="${shell == null or shell.role() == 'ADMIN'}"
                th:classappend="${shell != null and shell.on('/web/admin/fees')} ? 'active' : ''">
                 <span class="dot"></span> Fees &amp; Billing
                 <span class="count" th:if="${navCountFees != null and navCountFees > 0}" th:text="${navCountFees}">14</span>
@@ -102,7 +102,10 @@
 
         <!-- People and Governance stay behind the same guard the pages
              themselves use; a nav item you are not allowed to open is a
-             worse experience than one that is not there. -->
+             worse experience than one that is not there. A principal is
+             read-only (SecurityConfig): every /web/admin/** page but the
+             dashboard and audit log is ADMIN-only, so those links carry an
+             ADMIN guard of their own and a principal is not shown a 403. -->
         <div class="shell-group" th:if="${shell != null and (shell.role() == 'ADMIN' or shell.role() == 'PRINCIPAL')}">
             <p class="shell-grouplabel">People</p>
 
@@ -115,7 +118,7 @@
                 <span class="dot"></span> Student Work Review
                 <span class="count" th:if="${navCountQueue != null and navCountQueue > 0}" th:text="${navCountQueue}">6</span>
             </a>
-            <a class="navlink" href="/web/admin/management"
+            <a class="navlink" href="/web/admin/management" th:if="${shell == null or shell.role() == 'ADMIN'}"
                th:classappend="${shell != null and shell.on('/web/admin/management')} ? 'active' : ''">
                 <span class="dot"></span> School Management
                 <span class="count" th:if="${navCountStaff != null and navCountStaff > 0}" th:text="${navCountStaff}">3</span>
@@ -123,15 +126,15 @@
 
             <!-- These six were reachable only from cards on the management
                  page, so nothing in the navigation said they existed. -->
-            <a class="navlink" href="/web/admin/assignments"
+            <a class="navlink" href="/web/admin/assignments" th:if="${shell == null or shell.role() == 'ADMIN'}"
                th:classappend="${shell != null and shell.on('/web/admin/assignments')} ? 'active' : ''">
                 <span class="dot"></span> Teacher Assignments
             </a>
-            <a class="navlink" href="/web/management/upload"
+            <a class="navlink" href="/web/management/upload" th:if="${shell == null or shell.role() == 'ADMIN'}"
                th:classappend="${shell != null and shell.on('/web/management/upload')} ? 'active' : ''">
                 <span class="dot"></span> Import &amp; Export
             </a>
-            <a class="navlink" href="/web/admin/bus-routes"
+            <a class="navlink" href="/web/admin/bus-routes" th:if="${shell == null or shell.role() == 'ADMIN'}"
                th:classappend="${shell != null and shell.on('/web/admin/bus-routes')} ? 'active' : ''">
                 <span class="dot"></span> Bus Routes
             </a>
@@ -147,7 +150,7 @@
             <!-- This is the setup wizard, not a settings page. Calling it
                  Settings while a dashboard quick action called the management
                  page "School setup" made the two read as swapped. -->
-            <a class="navlink" href="/web/onboard/setup"
+            <a class="navlink" href="/web/onboard/setup" th:if="${shell == null or shell.role() == 'ADMIN'}"
                th:classappend="${shell != null and shell.on('/web/onboard/setup')} ? 'active' : ''">
                 <span class="dot"></span> Setup Wizard
             </a>

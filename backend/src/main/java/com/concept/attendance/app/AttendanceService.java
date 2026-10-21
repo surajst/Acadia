@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -126,6 +128,16 @@ public class AttendanceService {
         } else {
             students = tenantId != null ? studentRepository.findByTenantId(tenantId) : Collections.emptyList();
         }
+
+        // Register order: roll number, as on paper, then name, then id. The
+        // repository returns rows in no fixed order, and on Postgres editing a
+        // student's record moved them around the register.
+        students = new ArrayList<>(students);
+        students.sort(Comparator
+                .comparing(Student::getRollNumber, Comparator.nullsLast(Comparator.<String>naturalOrder()))
+                .thenComparing(Student::getFirstName, Comparator.nullsLast(Comparator.<String>naturalOrder()))
+                .thenComparing(Student::getLastName, Comparator.nullsLast(Comparator.<String>naturalOrder()))
+                .thenComparing(Student::getId, Comparator.nullsLast(Comparator.<UUID>naturalOrder())));
 
         List<AttendanceFormView.ClassOption> classList = classes.stream()
                 .map(c -> new AttendanceFormView.ClassOption(c.getId(), label(c)))

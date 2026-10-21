@@ -118,8 +118,13 @@ public class ParentDashboardService {
             return Optional.empty();
         }
 
-        List<ParentQuest> awaitingQuests =
-                parentQuestRepository.findByParentIdAndStatus(parent.getId(), "COMPLETED_AWAITING_APPROVAL");
+        List<ParentQuest> awaitingQuests = new ArrayList<>(
+                parentQuestRepository.findByParentIdAndStatus(parent.getId(), "COMPLETED_AWAITING_APPROVAL"));
+        // Quests claimed from the phone before the mobile claim was fixed were
+        // stored as "AWAITING_APPROVAL" and have sat unseen since. Listed here
+        // too, so they reach the parent without a data migration.
+        awaitingQuests.addAll(
+                parentQuestRepository.findByParentIdAndStatus(parent.getId(), "AWAITING_APPROVAL"));
         // PENDING is what assignTask sets: assigned, not yet done.
         List<ParentQuest> activeQuests =
                 parentQuestRepository.findByParentIdAndStatus(parent.getId(), "PENDING");

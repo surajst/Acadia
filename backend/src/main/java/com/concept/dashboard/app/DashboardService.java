@@ -17,13 +17,16 @@ import com.concept.user.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,6 +50,15 @@ public class DashboardService {
 
     private final DashboardClassSectionRepository classSectionRepository;
     private final DashboardStudentRepository studentRepository;
+
+    /** The roster's order, by first name, last name, then id. */
+    static final Sort ROSTER_ORDER = Sort.by("firstName", "lastName", "id");
+
+    /** The same order, for a list sorted in memory. */
+    static final Comparator<Student> ROSTER_COMPARATOR = Comparator
+            .comparing(Student::getFirstName, Comparator.nullsLast(Comparator.<String>naturalOrder()))
+            .thenComparing(Student::getLastName, Comparator.nullsLast(Comparator.<String>naturalOrder()))
+            .thenComparing(Student::getId, Comparator.nullsLast(Comparator.<java.util.UUID>naturalOrder()));
     private final DashboardAttendanceRepository attendanceRepository;
     private final AdminProgressService adminProgressService;
     private final FeeManagementService feeManagementService;
@@ -117,7 +129,11 @@ public class DashboardService {
         String effectiveName = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
         String effectiveGrade = (gradeFilter != null && !gradeFilter.isBlank()) ? gradeFilter.trim() : null;
 
-        Pageable pageable = PageRequest.of(page, size);
+        // A fixed order. Without one the database returns rows in whatever
+        // order it likes, and on Postgres an UPDATE moves a row -- so editing
+        // a student reshuffled the roster and could move them to another page.
+        // Id last, so two pupils with the same name still keep their places.
+        Pageable pageable = PageRequest.of(page, size, ROSTER_ORDER);
         List<Student> conditionalRoster = Collections.emptyList();
         long totalRosterItems = 0;
         int totalRosterPages = 0;
@@ -149,7 +165,8 @@ public class DashboardService {
                 // Class-specific view with name/grade filters: no dedicated paginated
                 // query exists for this combination, so filter in-memory (bounded by
                 // one class section's roster size, not the whole tenant).
-                List<Student> byClass = studentRepository.findByClassSectionId(classId);
+                List<Student> byClass = new ArrayList<>(studentRepository.findByClassSectionId(classId));
+                byClass.sort(ROSTER_COMPARATOR);
                 String nameNeedle = effectiveName == null ? null : effectiveName.toLowerCase();
                 conditionalRoster = byClass.stream()
                         .filter(s -> nameNeedle == null
