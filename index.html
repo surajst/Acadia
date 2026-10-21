@@ -464,8 +464,9 @@ footer .navlink{font-size:15px}
   fillBars(document.querySelector('.hero'));
 
   /* ---- Demo form ---- */
-  // Set FORM_ENDPOINT to a form service URL (e.g. Formspree) or your ACADIA backend to receive leads.
-  var FORM_ENDPOINT='';
+  // Demo requests are emailed via FormSubmit. After activation, swap the email for FormSubmit's
+  // random alias (from the activation email) so the address isn't visible in the page source.
+  var FORM_ENDPOINT='https://formsubmit.co/ajax/tomar.sooraj@gmail.com';
   var form=document.getElementById('demo-form'),err=document.getElementById('f-error');
   form.addEventListener('submit',function(e){
     e.preventDefault();err.textContent='';
