@@ -49,19 +49,19 @@ test.describe('Sprint 5: Bulk verification queue', () => {
     const titleB = `Bulk Task B ${suffix}`;
 
     // Teacher creates two tasks
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await createHomeworkTask(page, titleA);
     await createHomeworkTask(page, titleB);
 
     // Student submits both
     await page.context().clearCookies();
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await submitTask(page, titleA);
     await submitTask(page, titleB);
 
     // Teacher bulk-approves both from the dashboard
     await page.context().clearCookies();
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/teacher/dashboard');
 
     const rowA = page.locator('div[id^="task-row-"]', { hasText: titleA });

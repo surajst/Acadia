@@ -17,7 +17,7 @@ const { test, expect } = require('@playwright/test');
 async function login(page, username) {
   await page.goto('/login');
   await page.fill('#username', username);
-  await page.fill('#password', 'PilotLaunchSecure2026!');
+  await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForURL(url => url.pathname.includes('/web/') && !url.pathname.includes('/login'),
     { timeout: 90000 });

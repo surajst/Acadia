@@ -102,7 +102,7 @@ test.describe("A teacher's task list on the phone", () => {
 
   test('a closed task is marked closed, and an open one is not', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     expect(await setTask(page, 'QA P18 Close Me'),
       'the rest of this test is about a task, so one has to exist')
@@ -134,7 +134,7 @@ test.describe("A teacher's task list on the phone", () => {
 
   test('closing one task does not mark the others closed', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     expect(await setTask(page, 'QA P18 One')).toBe('QA P18 One');
     expect(await setTask(page, 'QA P18 Two')).toBe('QA P18 Two');

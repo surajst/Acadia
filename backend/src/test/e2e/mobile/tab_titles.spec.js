@@ -28,7 +28,7 @@ test.describe('Browser tabs are named after the screen', () => {
 
   test("a parent's screens are each named, and named differently", async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     const seen = {};
     for (const [route, expected] of [
@@ -54,7 +54,7 @@ test.describe('Browser tabs are named after the screen', () => {
   });
 
   test('a teacher gets their own screens named too', async ({ page }) => {
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/gradebook');
     await page.waitForLoadState('networkidle');
@@ -71,7 +71,7 @@ test.describe('Browser tabs are named after the screen', () => {
    * keeping whatever the screen before it was called.
    */
   test('the home screen carries the app name', async ({ page }) => {
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/challenges');
     await page.waitForLoadState('networkidle');

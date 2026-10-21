@@ -27,7 +27,7 @@ test.describe.configure({ mode: 'serial' });
 test.describe('App shell', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
   });
 
   test('every converted page carries the rail', async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe('App shell', () => {
 test.describe('Teacher navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
   });
 
   test('a teacher gets their own classroom nav, not an admin\'s', async ({ page }) => {
@@ -94,7 +94,7 @@ test.describe('Teacher navigation', () => {
 test.describe('Recognition', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
   });
 
   test('awarding a child records what they did and moves their XP', async ({ page }) => {

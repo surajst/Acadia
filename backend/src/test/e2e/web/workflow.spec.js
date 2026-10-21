@@ -12,7 +12,7 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
 
   test('Test 1: Admin Statistics & Classroom Progress Check', async ({ page }) => {
     // 1. Login as Admin
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 2. Navigate to Admin Dashboard
     await page.goto('/web/admin/dashboard');
@@ -33,7 +33,7 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
 
   test('Test 2: Teacher Daily Attendance Toggles & Ledger Saving', async ({ page }) => {
     // 1. Login as Teacher
-    await login(page, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 2. Navigate to Daily Attendance Log page
     await page.goto('/web/teacher/attendance');
@@ -66,7 +66,7 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // ----------------------------------------------------
     // STEP 3.1: Log in as Ramesh (Parent) and Assign Quest
     // ----------------------------------------------------
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/parent/dashboard');
     await page.locator('[data-tab="profile"]').first().click();
     const questChild = page.locator('#profile-assignStudentId option', { hasText: 'Arjun' }).first();
@@ -87,7 +87,7 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // ----------------------------------------------------
     // STEP 3.2: Log in as Arjun (Student) and Claim Quest
     // ----------------------------------------------------
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/student/portal');
     await page.waitForLoadState('networkidle');
     // Wait, the claim button is in the challenges tab.
@@ -111,7 +111,7 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // ----------------------------------------------------
     // STEP 3.3: Log in as Ramesh (Parent) and Approve Quest
     // ----------------------------------------------------
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/parent/dashboard');
     await page.waitForLoadState('domcontentloaded');
     // The Approval Queue lives in the hidden Quests tab; approval is an AJAX POST.
@@ -148,7 +148,7 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // ----------------------------------------------------
     // STEP 3.5: Log in as Arjun (Student) and Redeem Custom Reward
     // ----------------------------------------------------
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     
     // Go to rewards tab in student portal
     await page.goto('/web/student/portal');
@@ -189,7 +189,7 @@ test.describe('ACADIA End-to-End Simulation & Regression Sweep', () => {
     // ----------------------------------------------------
     // STEP 3.7: Log in as Ramesh and Release Reward
     // ----------------------------------------------------
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/parent/dashboard');
     await page.waitForLoadState('networkidle');
     // The Deliveries Pending queue lives in the hidden Quests tab.

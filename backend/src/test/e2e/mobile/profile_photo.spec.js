@@ -113,7 +113,7 @@ test.describe('A profile photo', () => {
 
   test('survives a reload, which means it reached the server', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/profile');
     await page.waitForLoadState('networkidle');
@@ -143,7 +143,7 @@ test.describe('A profile photo', () => {
 
   test('is served back as the image that was uploaded', async ({ page, request }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/profile');
     await page.waitForLoadState('networkidle');
@@ -200,7 +200,7 @@ test.describe('A profile photo', () => {
    */
   test('the avatar renders the photo, not a blank circle', async ({ page }) => {
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/profile');
     await page.waitForLoadState('networkidle');
     await expect(page.getByText('Add a photo')).toBeVisible({ timeout: 30000 });
@@ -277,7 +277,7 @@ test.describe('A profile photo', () => {
       .toBeGreaterThan(1_500_000);
 
     await page.goto(`${API}/test/reset`, { waitUntil: 'load' });
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/profile');
     await page.waitForLoadState('networkidle');
     await expect(page.getByText('Add a photo')).toBeVisible({ timeout: 30000 });

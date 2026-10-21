@@ -16,7 +16,7 @@ test.skip('Capture Screenshots', async ({ page, context }) => {
   // 2. Student Portal Screenshots
   await page.goto('/login');
   await page.fill('#username', 'arjun@gmail.com');
-  await page.fill('#password', 'PilotLaunchSecure2026!');
+  await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
   await Promise.all([
     page.waitForURL('**/web/student/**', { timeout: 10000 }),
     page.click('button[type="submit"]')
@@ -41,7 +41,7 @@ test.skip('Capture Screenshots', async ({ page, context }) => {
   // 3. Parent Portal Screenshots
   await page.goto('/login');
   await page.fill('#username', 'ramesh@gmail.com');
-  await page.fill('#password', 'PilotLaunchSecure2026!');
+  await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
   await Promise.all([
     page.waitForURL('**/web/parent/**', { timeout: 10000 }),
     page.click('button[type="submit"]')
