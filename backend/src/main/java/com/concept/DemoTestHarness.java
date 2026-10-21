@@ -38,7 +38,7 @@ public class DemoTestHarness implements CommandLineRunner {
     private final com.concept.parent.data.ParentRewardRepository parentRewardRepository;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
-    private final String demoAdminPassword;
+    private final SeedCredentials seedCredentials;
 
     public DemoTestHarness(AnnouncementService announcementService,
                            AnnouncementRepository announcementRepository,
@@ -52,7 +52,7 @@ public class DemoTestHarness implements CommandLineRunner {
                            com.concept.parent.data.ParentRewardRepository parentRewardRepository,
                            JdbcTemplate jdbcTemplate,
                            PasswordEncoder passwordEncoder,
-                           @org.springframework.beans.factory.annotation.Value("${demo.admin.password:PilotLaunchSecure2026!}") String demoAdminPassword) {
+                           SeedCredentials seedCredentials) {
         this.announcementService = announcementService;
         this.announcementRepository = announcementRepository;
         this.classSectionRepository = classSectionRepository;
@@ -65,7 +65,7 @@ public class DemoTestHarness implements CommandLineRunner {
         this.parentRewardRepository = parentRewardRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.passwordEncoder = passwordEncoder;
-        this.demoAdminPassword = demoAdminPassword;
+        this.seedCredentials = seedCredentials;
     }
 
     // ── Deterministic Test Identity UUIDs ─────────────────────────────────────
@@ -107,11 +107,11 @@ public class DemoTestHarness implements CommandLineRunner {
 
             // Admin user with pinned UUID
             jdbcTemplate.update("INSERT INTO users (id, tenant_id, academic_year_id, email, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                ADMIN_UUID, activeTenantId, activeAcademicYearId, "admin@greenwood.com", passwordEncoder.encode(demoAdminPassword), "Admin User", "ADMIN", true);
+                ADMIN_UUID, activeTenantId, activeAcademicYearId, "admin@greenwood.com", passwordEncoder.encode(seedCredentials.password()), "Admin User", "ADMIN", true);
 
             // Teacher user with pinned UUID
             jdbcTemplate.update("INSERT INTO users (id, tenant_id, academic_year_id, email, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                TEACHER_UUID, activeTenantId, activeAcademicYearId, "teacher@greenwood.com", passwordEncoder.encode(demoAdminPassword), "Class Teacher", "TEACHER", true);
+                TEACHER_UUID, activeTenantId, activeAcademicYearId, "teacher@greenwood.com", passwordEncoder.encode(seedCredentials.password()), "Class Teacher", "TEACHER", true);
 
             Announcement announcement = new Announcement();
             announcement.setTitle("Rain Holiday");
@@ -290,7 +290,9 @@ public class DemoTestHarness implements CommandLineRunner {
         System.out.println("\n===========================================================");
         System.out.println("[TEST CREDENTIALS] Use these to log in at /web/login:");
         System.out.println("Email: " + userEmail);
-        System.out.println("Password: " + demoAdminPassword);
+        // Never the value itself: it comes from the environment, and logs are kept.
+        System.out.println("Password: " + (seedCredentials.isConfigured()
+                ? "the value of DEMO_ADMIN_PASSWORD" : "random for this run (DEMO_ADMIN_PASSWORD is not set)"));
         System.out.println("===========================================================\n");
 
         System.out.println("--- DEMO TEST HARNESS COMPLETED ---\n");

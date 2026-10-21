@@ -15,7 +15,7 @@ test.describe('Parent-Kid Engagement Flow: Assign Task', () => {
     await page.goto('/test/reset');
 
     // 2. Login as Parent
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 3. Navigate to Parent Dashboard (the /portal route now redirects here)
     await page.goto('/web/parent/dashboard');
@@ -42,7 +42,7 @@ test.describe('Parent-Kid Engagement Flow: Assign Task', () => {
 
     // 8. Log in as matching student
     const studentUsername = 'arjun@gmail.com';
-    await login(page, studentUsername, 'PilotLaunchSecure2026!');
+    await login(page, studentUsername, process.env.DEMO_ADMIN_PASSWORD);
 
     // 9. Navigate to student portal dashboard tab
     await page.goto('/web/student/portal');

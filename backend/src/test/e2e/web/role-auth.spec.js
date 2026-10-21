@@ -17,23 +17,23 @@ test.describe('ACADIA Role Authentication & Isolation Specs', () => {
 
   test('TC-01/02/03: Successfully authenticate Admin, Parent, and Student roles', async ({ page }) => {
     // Admin login
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.locator('body')).not.toContainText('Forbidden');
     await page.context().clearCookies();
 
     // Parent login
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.locator('body')).not.toContainText('Forbidden');
     await page.context().clearCookies();
 
     // Student login
-    await login(page, 'arjun@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'arjun@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.locator('body')).not.toContainText('Forbidden');
   });
 
   test('TC-04: Enforce role isolation - Parent is forbidden from accessing Admin views', async ({ page }) => {
     // Login as Parent
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // Attempt to access Admin Broadcast center
     const response = await page.goto('/web/admin');

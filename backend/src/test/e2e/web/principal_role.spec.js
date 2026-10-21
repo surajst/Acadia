@@ -15,7 +15,7 @@ test.describe('Sprint 3: PRINCIPAL role and access boundaries', () => {
     const principalEmail = `principal-${suffix}@greenwood.com`;
 
     // Invite a PRINCIPAL as an existing ADMIN
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     const inviteResult = await page.evaluate(async (email) => {
       const params = new URLSearchParams({
         fullName: 'New Principal', email, role: 'PRINCIPAL',

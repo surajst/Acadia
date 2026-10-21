@@ -29,7 +29,7 @@ test.describe('An ended session sends you back to sign-in', () => {
 
   test('a parent whose token has expired is signed out rather than shown empty data', async ({ page }) => {
     await page.goto('/test/reset', { waitUntil: 'load' }).catch(() => {});
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.getByPlaceholder('Password')).toHaveCount(0, { timeout: 30000 });
 
     // Replace the stored token with one that is structurally a JWT and long
@@ -57,7 +57,7 @@ test.describe('An ended session sends you back to sign-in', () => {
   });
 
   test('the stored token is cleared, so a reload does not resurrect the dead session', async ({ page }) => {
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.getByPlaceholder('Password')).toHaveCount(0, { timeout: 30000 });
 
     await page.evaluate(() => {
@@ -89,7 +89,7 @@ test.describe('An ended session sends you back to sign-in', () => {
    * a 403 in its normal flow.
    */
   test('a 403 does not sign anyone out', async ({ page }) => {
-    await login(page, 'ramesh@gmail.com', 'PilotLaunchSecure2026!');
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
     await expect(page.getByPlaceholder('Password')).toHaveCount(0, { timeout: 30000 });
 
     const before = await page.evaluate(() => window.localStorage.getItem('userToken'));

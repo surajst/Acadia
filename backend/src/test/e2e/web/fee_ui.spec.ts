@@ -17,7 +17,7 @@ test.describe('ACADIA Administrative Fee Management Specs', () => {
     await page.goto('/test/reset');
 
     // 2. Login as Administrator
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     // 3. Navigate to Admin Fees Dashboard
     await page.goto('/web/admin/fees');
@@ -90,7 +90,7 @@ test.describe('Invoice cancellation and due-date correction', () => {
    */
   test('an admin can cancel an unpaid invoice from the ledger', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/admin/fees');
     await page.waitForLoadState('networkidle');
 
@@ -113,7 +113,7 @@ test.describe('Invoice cancellation and due-date correction', () => {
   /** Backing out of the prompt must not cancel anything. */
   test('dismissing the reason prompt cancels nothing', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/admin/fees');
     await page.waitForLoadState('networkidle');
 
@@ -135,7 +135,7 @@ test.describe('Invoice cancellation and due-date correction', () => {
    */
   test('the due-date correction reports what it changed and is safe to repeat', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await page.goto('/web/admin/fees');
     await page.waitForLoadState('networkidle');
 

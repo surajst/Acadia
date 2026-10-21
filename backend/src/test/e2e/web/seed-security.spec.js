@@ -19,7 +19,7 @@ test.describe('Seed Endpoint Security (dev-mode=false)', () => {
   });
 
   test('POST /api/admin/assignments/seed — as TEACHER returns 403', async ({ request }) => {
-    const token = await getToken(request, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    const token = await getToken(request, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     expect(token).not.toBeNull();
 
     const res = await request.post('/api/admin/assignments/seed', {
@@ -30,7 +30,7 @@ test.describe('Seed Endpoint Security (dev-mode=false)', () => {
   });
 
   test('POST /api/admin/assignments/seed — as ADMIN returns 403 (devMode=false guard)', async ({ request }) => {
-    const token = await getToken(request, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    const token = await getToken(request, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     expect(token).not.toBeNull();
 
     const res = await request.post('/api/admin/assignments/seed', {
@@ -55,7 +55,7 @@ test.describe('Seed Endpoint Security (dev-mode=false)', () => {
   });
 
   test('POST /api/teacher/timetable/seed — as TEACHER returns 403', async ({ request }) => {
-    const token = await getToken(request, 'teacher@greenwood.com', 'PilotLaunchSecure2026!');
+    const token = await getToken(request, 'teacher@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     expect(token).not.toBeNull();
 
     const res = await request.post('/api/teacher/timetable/seed', {
@@ -67,7 +67,7 @@ test.describe('Seed Endpoint Security (dev-mode=false)', () => {
   });
 
   test('POST /api/teacher/timetable/seed — as ADMIN returns 403 (devMode=false guard)', async ({ request }) => {
-    const token = await getToken(request, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    const token = await getToken(request, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     expect(token).not.toBeNull();
 
     const res = await request.post('/api/teacher/timetable/seed', {

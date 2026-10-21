@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
   await page.goto('http://localhost:8080/test/reset');
   await page.goto('http://localhost:8080/login');
   await page.fill('#username', 'teacher_1');
-  await page.fill('#password', 'PilotLaunchSecure2026!');
+  await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForLoadState('networkidle');
   
@@ -23,7 +23,7 @@ const { chromium } = require('playwright');
   await page.goto('http://localhost:8080/test/reset');
   await page.goto('http://localhost:8080/login');
   await page.fill('#username', 'teacher_2');
-  await page.fill('#password', 'PilotLaunchSecure2026!');
+  await page.fill('#password', process.env.DEMO_ADMIN_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForLoadState('networkidle');
   

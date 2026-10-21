@@ -80,7 +80,7 @@ test.describe('Student guardian capture & profile display', () => {
 
   test('a guardian entered at registration is linked and shown on the profile (no phantom parent)', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await registerStudent(page, {
       first: 'Guardiantest', last: 'Studentone', roll: '6A-701',
@@ -111,7 +111,7 @@ test.describe('Student guardian capture & profile display', () => {
 
   test('a student with no guardian shows an honest empty state, not a fabricated parent', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await registerStudent(page, { first: 'Noguardian', last: 'Studenttwo', roll: '6A-702' });
 
@@ -123,7 +123,7 @@ test.describe('Student guardian capture & profile display', () => {
 
   test('admin can reset/re-issue student and guardian passwords from the profile', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await registerStudent(page, {
       first: 'Resettest', last: 'Studentthree', roll: '6A-703',
@@ -147,7 +147,7 @@ test.describe('Student guardian capture & profile display', () => {
 
   test('admin can edit a student\'s details from the profile', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await registerStudent(page, { first: 'Edittest', last: 'Studentfour', roll: '6A-704' });
     await openProfile(page, 'Edittest Studentfour', 'Edittest');
@@ -192,7 +192,7 @@ test.describe('Student guardian capture & profile display', () => {
     await page.goto('/test/reset');
 
     // School A: open a seeded student's profile and capture its id from the URL.
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
     await registerStudent(page, { first: 'Isolationa', last: 'Studentfive', roll: '6A-705' });
     await openProfile(page, 'Isolationa Studentfive', 'Isolationa');
     await expect(page.locator('h2')).toContainText('Isolationa Studentfive');
@@ -244,7 +244,7 @@ test.describe('A refused registration keeps what was typed', () => {
    */
   test('an unusable guardian phone comes back to the form, not an error page', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/web/admin/management');
     await page.click('button:has-text("Classrooms & Students")');
@@ -287,7 +287,7 @@ test.describe('A refused registration keeps what was typed', () => {
   /** Correcting the one bad field and resubmitting has to work from there. */
   test('fixing the phone and resubmitting registers the student', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await registerStudent(page, {
       first: 'Neha', last: 'Verma', roll: 'QA-P14-02',
@@ -319,7 +319,7 @@ test.describe('A refused registration keeps what was typed', () => {
    */
   test('the guardian phone field asks for a phone and refuses a typed non-number', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/web/admin/management');
     await page.click('button:has-text("Classrooms & Students")');
@@ -356,7 +356,7 @@ test.describe('A refused registration keeps what was typed', () => {
   /** An ordinary visit must not reopen the modal. */
   test('the modal stays shut when nothing was refused', async ({ page }) => {
     await page.goto('/test/reset');
-    await login(page, 'admin@greenwood.com', 'PilotLaunchSecure2026!');
+    await login(page, 'admin@greenwood.com', process.env.DEMO_ADMIN_PASSWORD);
 
     await page.goto('/web/admin/management');
     await page.waitForLoadState('networkidle');
