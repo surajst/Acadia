@@ -151,13 +151,38 @@ test.describe('App actions that need a real browser', () => {
     await page.getByRole('button', { name: 'Create assessment' }).click();
     await page.waitForLoadState('networkidle');
 
+    // A failed create is reported in the page now. If it failed, say so here
+    // rather than carrying on against whatever assessment was already open --
+    // which is how this test used to "pass" its first half against a pre-seeded
+    // assessment out of 100.
+    await expect(page.getByText(/could not create assessment/i)).toHaveCount(0);
+
+    // The new assessment is the one open, before any score is typed: its own
+    // heading, out of 20, and every score field says out of 20. The panel used
+    // to be able to show an older assessment, because two detail requests
+    // raced and the last to answer won.
+    await expect(page.getByText(`${title.toUpperCase()} — MAX 20`, { exact: true }))
+      .toBeVisible({ timeout: 30000 });
+
     // Guard on the Save button as well as a score field: the detail panel only
     // renders when the teacher has an assigned class with pupils in it, and
     // checking a proxy for it is how this timed out waiting to click Save.
     const saveBtn = page.getByRole('button', { name: 'Save all scores' });
-    const scoreField = page.locator('input[aria-label*="Score for"]').first();
-    const ready = (await scoreField.count()) > 0 && (await saveBtn.count()) > 0;
+    const scoreFields = page.locator('input[aria-label^="Score for "]');
+    const ready = (await scoreFields.count()) > 0 && (await saveBtn.count()) > 0;
     test.skip(!ready, 'this teacher has no assigned class with pupils in the seed, so there is nothing to score');
+
+    const labels = await scoreFields.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
+    for (const label of labels) {
+      expect(label, 'every score field belongs to the new 20-mark assessment').toMatch(/, out of 20$/);
+    }
+    // A fresh assessment has no marks in it yet.
+    for (const value of await scoreFields.evaluateAll((els) => els.map((e) => e.value))) {
+      expect(value).toBe('');
+    }
+
+    const scoreField = scoreFields.first();
+    const pupil = labels[0].replace(/^Score for /, '').replace(/, out of 20$/, '');
 
     await scoreField.fill('150');
     // The button sits below a ScrollView, so it is present but not in view.
@@ -168,9 +193,12 @@ test.describe('App actions that need a real browser', () => {
     await saveBtn.click();
     await page.waitForLoadState('networkidle');
 
-    // The server refuses it and names the pupil and the maximum; the screen
-    // shows that message rather than a generic failure.
-    await expect(page.locator('text=/out of 20/ >> visible=true').first())
+    // The server's own refusal, which names the pupil and the maximum. Not
+    // /out of 20/ anywhere on the page: the "Out of 20 marks" control matches
+    // that too, so the old assertion passed whether or not anything was
+    // refused.
+    await expect(page.getByRole('alert')
+      .filter({ hasText: `${pupil} scored 150, but this assessment is out of 20.` }))
       .toBeVisible({ timeout: 30000 });
 
     // A mark inside the range saves, and says so in the page.
@@ -178,7 +206,7 @@ test.describe('App actions that need a real browser', () => {
     await saveBtn.scrollIntoViewIfNeeded();
     await saveBtn.click();
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('text=/score.* saved/ >> visible=true').first())
+    await expect(page.getByRole('alert').filter({ hasText: /^1 score saved\.$/ }))
       .toBeVisible({ timeout: 30000 });
   });
 

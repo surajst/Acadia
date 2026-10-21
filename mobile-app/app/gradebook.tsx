@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import EmptyState from '@/components/ui/EmptyState';
@@ -66,10 +66,18 @@ export default function GradebookScreen() {
   // Declared before loadAssessments, which calls it. Read the other way round
   // the reference was to whichever openAssessment existed on the first render,
   // so it would not have picked up later changes to this function.
+  //
+  // Only the most recent request may fill the panel. Two can be in flight at
+  // once -- creating an assessment reloads the list and opens the new one --
+  // and whichever answered last used to win, so a teacher could create a
+  // 20-mark quiz and be shown a different, older assessment out of 100.
+  const latestOpen = useRef<string | null>(null);
   const openAssessment = useCallback(async (assessmentId: string) => {
+    latestOpen.current = assessmentId;
     setSelectedAssessment(assessmentId);
     try {
       const d: any = await getAssessmentDetail(assessmentId);
+      if (latestOpen.current !== assessmentId) return;
       setDetail(d);
       const prefill: Record<string, string> = {};
       (d.roster ?? []).forEach((r: any) => { prefill[r.studentId] = r.score != null ? String(r.score) : ''; });
@@ -79,13 +87,16 @@ export default function GradebookScreen() {
     }
   }, []);
 
-  const loadAssessments = useCallback(async (classSectionId: string) => {
+  // `open` names the assessment to show once the list is in; otherwise the
+  // first one is.
+  const loadAssessments = useCallback(async (classSectionId: string, open?: string) => {
     try {
       const list = await getAssessmentsForClass(classSectionId);
       setAssessments(list);
       setSelectedAssessment(null);
       setDetail(null);
-      if (list.length > 0) openAssessment((list[0] as any).id);
+      const target = open ?? (list[0] as any)?.id;
+      if (target) await openAssessment(target);
     } catch (e) {
       console.error('Failed to fetch assessments:', e);
     }
@@ -108,8 +119,7 @@ export default function GradebookScreen() {
         assessmentDate: new Date().toISOString().split('T')[0],
       });
       setNewTitle('');
-      await loadAssessments(selectedClass.id);
-      openAssessment(created.id);
+      await loadAssessments(selectedClass.id, created.id);
     } catch (e: any) {
       // In the page, the same way handleSaveScores reports. This used to go
       // to Alert, which does nothing on React Native Web -- so a failed create
