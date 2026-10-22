@@ -798,7 +798,11 @@ footer a.l:hover{color:var(--text)}
             <div class="field"><label for="f-phone">Phone / WhatsApp</label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required></div>
             <div class="field"><label for="f-size">Number of students</label><select id="f-size" name="students"><option>Under 300</option><option>300 – 800</option><option>800 – 1,500</option><option>1,500+</option></select></div>
           </div>
-          <div class="field"><label for="f-city">City</label><input id="f-city" name="city" type="text" autocomplete="address-level2"></div>
+          <div class="two">
+            <div class="field"><label for="f-email">Email <span style="font-weight:500;color:var(--faint)">(optional)</span></label><input id="f-email" name="email" type="email" autocomplete="email"></div>
+            <div class="field"><label for="f-city">City</label><input id="f-city" name="city" type="text" autocomplete="address-level2"></div>
+          </div>
+          <div class="field"><label for="f-heard">How did you hear about us?</label><select id="f-heard" name="heard"><option value="">Choose one</option><option>Instagram</option><option>Google search</option><option>A friend or colleague</option><option>WhatsApp</option><option>LinkedIn</option><option>An event</option><option>Our team visited the school</option><option>Other</option></select></div>
           <input type="text" name="_honey" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
           <p id="f-error" role="alert" style="margin:0;font-size:14px;color:#ffb4a8;font-weight:600"></p>
           <button class="btn btn-gold" type="submit" style="min-height:56px;font-size:17px">Request my demo</button>
@@ -1046,7 +1050,19 @@ footer a.l:hover{color:var(--text)}
   showRole(0);
   cycleToasts();
 
-  /* ---- Demo form (FormSubmit) ---- */
+  /* ---- First touch (for knowing which channel brought the visitor) ---- */
+  var firstTouch = {};
+  try {
+    firstTouch = JSON.parse(localStorage.getItem('acadia_ft') || 'null') || {};
+    if (!firstTouch.at){
+      var q = new URLSearchParams(location.search);
+      firstTouch = {at: Date.now(), utm_source: q.get('utm_source') || '', utm_campaign: q.get('utm_campaign') || '', referrer: (document.referrer && document.referrer.indexOf(location.host) < 0) ? document.referrer : ''};
+      localStorage.setItem('acadia_ft', JSON.stringify(firstTouch));
+    }
+  } catch(_){}
+
+  /* ---- Demo form: HubSpot (via /api/inquiry) + email alert (FormSubmit) ---- */
+  var CRM_ENDPOINT='/api/inquiry';
   var FORM_ENDPOINT='https://formsubmit.co/ajax/tomar.sooraj@gmail.com';
   var form = $('#demo-form'), err = $('#f-error');
   form.addEventListener('submit', function(e){
@@ -1055,12 +1071,15 @@ footer a.l:hover{color:var(--text)}
     if (missing.length){ err.textContent = 'Please fill in your name, school and phone number.'; missing[0].focus(); return }
     var data = Object.fromEntries(new FormData(form).entries());
     if (data._honey) return;
-    data._subject = 'ACADIA demo request — ' + (data.school || 'website');
-    data._template = 'table'; data._captcha = 'false';
-    var btn = $('button[type="submit"]', form); btn.disabled = true; btn.textContent = 'Sending…';
-    fetch(FORM_ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(data)})
-      .then(function(r){ if(!r.ok) throw 0; form.hidden = true; $('#demo-done').hidden = false })
-      .catch(function(){ err.textContent = 'Something went wrong. Please try again in a moment.'; btn.disabled = false; btn.textContent = 'Request my demo' });
+    if (data.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)){ err.textContent = 'That email address doesn\u2019t look right.'; $('#f-email').focus(); return }
+    var btn = $('button[type="submit"]', form); btn.disabled = true; btn.textContent = 'Sending\u2026';
+    var crm = Object.assign({}, data, {first_touch: firstTouch});
+    var mail = Object.assign({}, data, {_subject: 'ACADIA demo request \u2014 ' + (data.school || 'website'), _template: 'table', _captcha: 'false'});
+    function post(url, body){ return fetch(url, {method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(body)}).then(function(r){ if(!r.ok) throw r.status; return r }) }
+    Promise.allSettled([post(CRM_ENDPOINT, crm), post(FORM_ENDPOINT, mail)]).then(function(rs){
+      if (rs.some(function(r){ return r.status === 'fulfilled' })){ form.hidden = true; $('#demo-done').hidden = false }
+      else { err.textContent = 'Something went wrong. Please try again in a moment.'; btn.disabled = false; btn.textContent = 'Request my demo' }
+    });
   });
 })();
 </script>
