@@ -447,4 +447,26 @@ class ImagePipelineTest {
         }
         return -1;
     }
+
+    // ── Both sizes from one decode ───────────────────────────────────────────
+
+    @Test
+    void makesTheDisplayAndThumbnailSizesFromOneUpload() throws IOException {
+        ImagePipeline.Gallery gallery = ImagePipeline.renderForGallery(jpeg(6000, 4000));
+
+        assertThat(gallery.display().width()).isEqualTo(ImagePipeline.DISPLAY_EDGE);
+        assertThat(gallery.display().height()).isEqualTo(1067);
+        assertThat(gallery.thumb().width()).isEqualTo(ImagePipeline.THUMB_EDGE);
+        assertThat(gallery.thumb().height()).isEqualTo(267);
+        assertThat(ImagePipeline.sniff(gallery.display().bytes())).isEqualTo(ImagePipeline.Kind.JPEG);
+        assertThat(ImagePipeline.sniff(gallery.thumb().bytes())).isEqualTo(ImagePipeline.Kind.JPEG);
+    }
+
+    @Test
+    void refusesAnIphonePhotographForTheGalleryToo() {
+        byte[] heic = new byte[64];
+        System.arraycopy("ftypheic".getBytes(java.nio.charset.StandardCharsets.US_ASCII), 0, heic, 4, 8);
+        assertThatThrownBy(() -> ImagePipeline.renderForGallery(heic))
+                .hasMessage(ImagePipeline.NOT_A_PHOTO);
+    }
 }

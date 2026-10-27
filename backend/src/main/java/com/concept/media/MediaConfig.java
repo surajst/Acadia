@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -37,6 +38,7 @@ public class MediaConfig {
     @ConditionalOnProperty(name = "app.media.bucket")
     public S3Client s3Client(@Value("${app.media.region}") String region) {
         return S3Client.builder()
+                .httpClientBuilder(UrlConnectionHttpClient.builder())
                 .region(Region.of(region))
                 .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
@@ -59,20 +61,33 @@ public class MediaConfig {
     }
 
     /**
-     * The fallback, and it says so on startup.
-     *
-     * <p>Silence here is how a misconfigured deploy writes to a disk that is
-     * about to disappear. A line in the log is the cheapest way for that to be
-     * noticed by somebody reading startup output for any other reason.
+     * A developer's machine and CI: the filesystem, and it says so on startup.
      */
     @Bean
     @ConditionalOnMissingBean(MediaStore.class)
+    @ConditionalOnProperty(name = "app.dev-mode", havingValue = "true")
     public MediaStore localMediaStore(
             @Value("${app.media.local-dir:./data/media}") String dir,
             @Value("${app.media.local-base:http://localhost:8080}") String base) {
         System.out.println(">> Media store: LOCAL FILESYSTEM at " + dir
-                + " -- no app.media.bucket is set, so nothing is going to S3. "
-                + "Correct for a developer machine and for CI; wrong for anything deployed.");
+                + " (dev mode, no app.media.bucket). Correct for a developer machine and for CI.");
         return new LocalMediaStore(Path.of(dir), base);
+    }
+
+    /**
+     * Anything deployed without a bucket: photos are switched off.
+     *
+     * <p>This used to fall back to the filesystem with a warning. On Render the
+     * disk is wiped on each deploy, so that meant photographs silently lost.
+     * Refusing to start was the other option, and would take the whole school's
+     * app down over one feature. So the gallery reports that photos are not set
+     * up, and the rest runs as normal.
+     */
+    @Bean
+    @ConditionalOnMissingBean(MediaStore.class)
+    public MediaStore unavailableMediaStore() {
+        System.out.println(">> Media store: NOT SET UP -- no app.media.bucket, and not in dev mode. "
+                + "Photo uploads are switched off until a bucket is configured.");
+        return new UnavailableMediaStore();
     }
 }

@@ -42,4 +42,12 @@ public interface MediaStore {
 
     /** Remove an object. Succeeds when the object was already gone. */
     void delete(String key);
+
+    /**
+     * Whether photos can be stored at all. False only for
+     * {@link UnavailableMediaStore}: a deployed server with no bucket set up.
+     */
+    default boolean available() {
+        return true;
+    }
 }

@@ -7,6 +7,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Turns an uploaded file into the two images we are willing to keep.
@@ -31,13 +33,12 @@ import java.io.IOException;
  *
  * <h2>Memory</h2>
  *
- * <p>Sizing is the other reason the caller matters. A decoded image costs four
- * bytes a pixel whatever the file compressed to, so a 12-megapixel photograph is
- * ~48MB of heap before anything is resized, and a rotation holds a second copy.
- * The container this runs in has 1GB. Uploads are therefore capped
- * ({@link #MAX_UPLOAD_BYTES}) and handled one at a time; a batch endpoint that
- * decoded several at once would be a heap exhaustion waiting for a school with
- * a good camera.
+ * <p>A decoded image costs four bytes a pixel whatever the file compressed to,
+ * and the container this runs in has 1GB. So: the header is checked against a
+ * pixel cap before anything is decoded; the decode itself skips pixels so it
+ * lands at about twice the display size rather than full size; the rotation
+ * is done on that smaller image; one decode serves both sizes; and only
+ * {@link #CONCURRENT_DECODES} uploads are decoded at a time.
  */
 public final class ImagePipeline {
 
@@ -220,6 +221,37 @@ public final class ImagePipeline {
         return dst;
     }
 
+    /** Both sizes a gallery keeps, from one decode. */
+    public record Gallery(Rendered display, Rendered thumb) {
+    }
+
+    /**
+     * How many uploads may be decoded at the same time.
+     *
+     * <p>Each is bounded (see {@link #decodeShrunk}), but nothing bounds how
+     * many arrive together, and the container has 1GB. Two keeps a second
+     * teacher from waiting on the first without letting a class's worth of
+     * phones decode at once.
+     */
+    static final int CONCURRENT_DECODES = 2;
+    private static final Semaphore DECODES = new Semaphore(CONCURRENT_DECODES, true);
+
+    /** What a person is told when the server is already busy with photos. */
+    public static final String BUSY = "The server is busy with other photos. Try again in a minute.";
+
+    /**
+     * The display and thumbnail versions of an upload, from a single decode.
+     *
+     * <p>Decoding twice, once per size, was the expensive half of the old
+     * memory budget; the thumbnail is drawn from the display version instead.
+     */
+    public static Gallery renderForGallery(byte[] bytes) throws IOException {
+        BufferedImage upright = withDecodePermit(() -> uprightShrunk(bytes, DISPLAY_EDGE));
+        BufferedImage display = scaleTo(upright, DISPLAY_EDGE);
+        BufferedImage thumb = scaleTo(display, THUMB_EDGE);
+        return new Gallery(encode(display), encode(thumb));
+    }
+
     /**
      * Decode, scale so the longest edge is at most {@code maxEdge}, re-encode.
      *
@@ -232,6 +264,41 @@ public final class ImagePipeline {
      *                     usually have caught first
      */
     public static Rendered render(byte[] bytes, int maxEdge) throws IOException {
+        BufferedImage upright = withDecodePermit(() -> uprightShrunk(bytes, maxEdge));
+        return encode(scaleTo(upright, maxEdge));
+    }
+
+    private interface Decode {
+        BufferedImage run() throws IOException;
+    }
+
+    private static BufferedImage withDecodePermit(Decode decode) throws IOException {
+        boolean acquired;
+        try {
+            acquired = DECODES.tryAcquire(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException(BUSY, e);
+        }
+        if (!acquired) {
+            throw new IOException(BUSY);
+        }
+        try {
+            return decode.run();
+        } finally {
+            DECODES.release();
+        }
+    }
+
+    /**
+     * Checks the bytes, decodes them already shrunk towards {@code maxEdge},
+     * and turns the result upright.
+     *
+     * <p>The rotation happens on the shrunk image, not the original: a phone's
+     * portrait photograph is exactly the one that needs turning, and turning it
+     * at full size held three full copies at once.
+     */
+    private static BufferedImage uprightShrunk(byte[] bytes, int maxEdge) throws IOException {
         if (bytes != null && bytes.length > MAX_UPLOAD_BYTES) {
             throw new IOException("that picture is too large to process");
         }
@@ -244,24 +311,56 @@ public final class ImagePipeline {
         if (sniff(bytes) == null) {
             throw new IOException(NOT_A_PHOTO);
         }
-
-        // Before decoding, which is the only moment this check is worth anything.
-        long[] size = declaredSize(bytes);
-        if (size == null) {
-            throw new IOException(NOT_A_PHOTO);
-        }
-        if (size[0] <= 0 || size[1] <= 0 || size[0] * size[1] > MAX_PIXELS) {
-            throw new IOException("that picture has too many pixels to process");
-        }
-
-        BufferedImage decoded = ImageIO.read(new ByteArrayInputStream(bytes));
-        if (decoded == null) {
-            throw new IOException("those bytes are not an image this server can read");
-        }
-
+        BufferedImage decoded = decodeShrunk(bytes, maxEdge);
         // Before anything else, and before the metadata is discarded.
-        BufferedImage source = turnUpright(decoded, ExifOrientation.read(bytes));
+        return turnUpright(decoded, ExifOrientation.read(bytes));
+    }
 
+    /**
+     * Decodes at most about twice {@code maxEdge} on the longest side.
+     *
+     * <p>The reader skips rows and columns as it decodes (subsampling), so a
+     * 40-megapixel photograph never exists in memory at full size. Twice the
+     * target keeps enough detail for a clean downscale afterwards; the
+     * subsampling alone would alias.
+     *
+     * <p>The size is read from the header before anything is decoded, which is
+     * the only moment the pixel cap is worth anything.
+     */
+    private static BufferedImage decodeShrunk(byte[] bytes, int maxEdge) throws IOException {
+        try (javax.imageio.stream.ImageInputStream in =
+                     ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
+            java.util.Iterator<javax.imageio.ImageReader> readers =
+                    in == null ? java.util.Collections.emptyIterator() : ImageIO.getImageReaders(in);
+            if (!readers.hasNext()) {
+                throw new IOException(NOT_A_PHOTO);
+            }
+            javax.imageio.ImageReader reader = readers.next();
+            try {
+                reader.setInput(in, true, true);
+                long width = reader.getWidth(0);
+                long height = reader.getHeight(0);
+                if (width <= 0 || height <= 0 || width * height > MAX_PIXELS) {
+                    throw new IOException("that picture has too many pixels to process");
+                }
+                int step = (int) Math.max(1, Math.max(width, height) / (2L * maxEdge));
+                javax.imageio.ImageReadParam param = reader.getDefaultReadParam();
+                param.setSourceSubsampling(step, step, 0, 0);
+                BufferedImage image = reader.read(0, param);
+                if (image == null) {
+                    throw new IOException("those bytes are not an image this server can read");
+                }
+                return image;
+            } catch (javax.imageio.IIOException e) {
+                throw new IOException("those bytes are not an image this server can read", e);
+            } finally {
+                reader.dispose();
+            }
+        }
+    }
+
+    /** Scales so the longest edge is at most {@code maxEdge}, onto white, never enlarging. */
+    private static BufferedImage scaleTo(BufferedImage source, int maxEdge) {
         int longest = Math.max(source.getWidth(), source.getHeight());
         double scale = longest > maxEdge ? (double) maxEdge / longest : 1.0;
         int width = Math.max(1, (int) Math.round(source.getWidth() * scale));
@@ -284,11 +383,14 @@ public final class ImagePipeline {
         } finally {
             g.dispose();
         }
+        return target;
+    }
 
+    private static Rendered encode(BufferedImage image) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        if (!ImageIO.write(target, "jpg", out)) {
+        if (!ImageIO.write(image, "jpg", out)) {
             throw new IOException("no JPEG writer available");
         }
-        return new Rendered(out.toByteArray(), width, height);
+        return new Rendered(out.toByteArray(), image.getWidth(), image.getHeight());
     }
 }

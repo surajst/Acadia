@@ -16,11 +16,11 @@
 	<properties>
 		<java.version>21</java.version>
 		<!--
-		  Pinned, and pinned to a version already in the local repository, because
-		  the build runs offline (-o) on the machines that matter. A floating
-		  version here is a build that works until somebody's cache is cold.
+		  Pinned to a release that has been out for a few weeks: new enough to carry
+		  current fixes, old enough that a bad release would have been pulled. Bump
+		  it deliberately, not by range.
 		-->
-		<aws.sdk.version>2.20.162</aws.sdk.version>
+		<aws.sdk.version>2.55.0</aws.sdk.version>
 	</properties>
 	<dependencies>
 		<!--
@@ -31,6 +31,31 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>
+			<version>${aws.sdk.version}</version>
+			<exclusions>
+				<!--
+				  The SDK's default HTTP client needs a newer Apache HttpClient 5 than
+				  Spring Boot manages, and fails at the first S3 call with
+				  NoClassDefFoundError. The JDK-based client below has no such clash
+				  and is plenty for one photo at a time.
+				-->
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>apache5-client</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>apache-client</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>netty-nio-client</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>url-connection-client</artifactId>
 			<version>${aws.sdk.version}</version>
 		</dependency>
 		<dependency>
