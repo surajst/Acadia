@@ -1,5 +1,7 @@
 package com.concept.gallery.app;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Comparator;
@@ -13,14 +15,19 @@ import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.concept.assignment.app.TeachingScope;
 import com.concept.gallery.app.GalleryViews.AlbumSummary;
+import com.concept.gallery.app.GalleryViews.AudienceOption;
 import com.concept.gallery.app.GalleryViews.CreateAlbum;
+import com.concept.gallery.app.GalleryViews.GalleryStatus;
 import com.concept.gallery.app.GalleryViews.PhotoOfPupil;
 import com.concept.gallery.app.GalleryViews.PhotoSummary;
 import com.concept.gallery.app.GalleryViews.PupilWithoutConsent;
+import com.concept.gallery.app.GalleryViews.TaggablePupil;
 import com.concept.gallery.data.AlbumPhoto;
 import com.concept.gallery.data.AlbumPhotoPupil;
 import com.concept.gallery.data.AlbumPhotoPupilRepository;
@@ -28,6 +35,10 @@ import com.concept.gallery.data.AlbumPhotoRepository;
 import com.concept.gallery.data.AudienceType;
 import com.concept.gallery.data.PhotoAlbum;
 import com.concept.gallery.data.PhotoAlbumRepository;
+import com.concept.media.ImagePipeline;
+import com.concept.media.MediaKeys;
+import com.concept.media.MediaStore;
+import com.concept.media.UnavailableMediaStore;
 import com.concept.shared.data.ClassSection;
 import com.concept.shared.data.ClassSectionRepository;
 import com.concept.shared.data.Parent;
@@ -59,19 +70,26 @@ import com.concept.user.UserRole;
  *       withdrawal takes effect at once, without deleting anything -- and staff
  *       see it flagged. {@link #photosOfPupil} answers "which photos is my child
  *       in?". Untagged photos rest on the album-level consent confirmation.</li>
- *   <li><b>Upload size:</b> the app-wide 2MB multipart limit stays. The photo
- *       upload endpoint, when built, gets its own higher limit rather than the
- *       whole app being raised (which would also loosen bulk import).</li>
+ *   <li><b>Upload size:</b> the app-wide 2MB multipart limit stays. Photos are
+ *       sent as the raw request body and capped at the pipeline's own limit
+ *       instead, which also loosens nothing for bulk import.</li>
+ *   <li><b>Who may add and remove photos:</b> admins and principals in any
+ *       album; a teacher in albums they made or albums for a class they teach.
+ *       Removing a photo deletes the stored images too: these are pictures of
+ *       children, and "hidden" is not "gone".</li>
  * </ul>
- *
- * <p>No uploads yet. This is the slice the upload endpoint and screens will
- * sit on; see docs/media-store-status.md.
  */
 @Service
 public class GalleryService {
 
     private static final Set<UserRole> STAFF = Set.of(UserRole.ADMIN, UserRole.PRINCIPAL, UserRole.TEACHER);
     private static final int MAX_TITLE = 255;
+
+    /**
+     * How long a photo link works. Long enough to scroll an album, short enough
+     * that a link copied out of a browser is dead by the time it is shared.
+     */
+    static final Duration LINK_LIFETIME = Duration.ofMinutes(15);
 
     private final PhotoAlbumRepository albumRepository;
     private final AlbumPhotoRepository photoRepository;
@@ -80,6 +98,8 @@ public class GalleryService {
     private final StudentRepository studentRepository;
     private final CurrentUserService currentUserService;
     private final TeachingScope teachingScope;
+    private final MediaStore mediaStore;
+    private final TransactionTemplate transactions;
 
     public GalleryService(PhotoAlbumRepository albumRepository,
                           AlbumPhotoRepository photoRepository,
@@ -87,7 +107,9 @@ public class GalleryService {
                           ClassSectionRepository classSectionRepository,
                           StudentRepository studentRepository,
                           CurrentUserService currentUserService,
-                          TeachingScope teachingScope) {
+                          TeachingScope teachingScope,
+                          MediaStore mediaStore,
+                          PlatformTransactionManager transactionManager) {
         this.albumRepository = albumRepository;
         this.photoRepository = photoRepository;
         this.tagRepository = tagRepository;
@@ -95,6 +117,8 @@ public class GalleryService {
         this.studentRepository = studentRepository;
         this.currentUserService = currentUserService;
         this.teachingScope = teachingScope;
+        this.mediaStore = mediaStore;
+        this.transactions = new TransactionTemplate(transactionManager);
     }
 
     // ── Staff ────────────────────────────────────────────────────────────────
@@ -143,7 +167,9 @@ public class GalleryService {
         album.setConsentCheckedAt(now);
         album.setCreatedByUserId(staff.getId());
         album.setCreatedAt(now);
-        return summarise(albumRepository.save(album), tenantId);
+        PhotoAlbum saved = albumRepository.save(album);
+        return new AlbumSummary(saved.getId(), saved.getTitle(), saved.getAudienceType(),
+                labelFor(saved, tenantId), saved.getCreatedAt(), 0, null, true);
     }
 
     /**
@@ -163,6 +189,40 @@ public class GalleryService {
                 .toList();
     }
 
+    /**
+     * Whom this person may make an album for: a teacher, the classes they teach;
+     * an admin or principal, every class, every grade and the whole school.
+     */
+    @Transactional(readOnly = true)
+    public List<AudienceOption> audiencesFor(Authentication authentication) {
+        User staff = requireStaff(authentication);
+        List<ClassSection> sections = classSectionRepository.findByTenantId(staff.getTenantId()).stream()
+                .filter(cs -> teachingScope.isUnrestricted(staff) || teachingScope.teachesSection(staff, cs))
+                .sorted(Comparator.comparing(GalleryService::sectionLabel))
+                .toList();
+        List<AudienceOption> options = new java.util.ArrayList<>();
+        if (teachingScope.isUnrestricted(staff)) {
+            options.add(new AudienceOption(AudienceType.SCHOOL.name(), null, "The whole school"));
+            sections.stream().map(ClassSection::getGradeName).filter(Objects::nonNull).distinct().sorted()
+                    .forEach(g -> options.add(new AudienceOption(AudienceType.GRADE.name(), g, "All of " + g)));
+        }
+        sections.forEach(cs -> options.add(
+                new AudienceOption(AudienceType.SECTION.name(), cs.getId().toString(), sectionLabel(cs))));
+        return options;
+    }
+
+    /** As {@link #pupilsWithoutConsent(AudienceType, String, Authentication)}, from a request's words. */
+    @Transactional(readOnly = true)
+    public List<PupilWithoutConsent> pupilsWithoutConsent(String type, String ref, Authentication authentication) {
+        AudienceType parsed;
+        try {
+            parsed = type == null ? null : AudienceType.valueOf(type.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            parsed = null;
+        }
+        return pupilsWithoutConsent(parsed, ref, authentication);
+    }
+
     // ── Anyone signed in ─────────────────────────────────────────────────────
 
     /** The live albums this person may see, newest first. */
@@ -171,9 +231,17 @@ public class GalleryService {
         User user = requireUser(authentication);
         UUID tenantId = user.getTenantId();
         Viewer viewer = viewerFor(user, authentication);
+        boolean staff = STAFF.contains(user.getRole());
         return albumRepository.liveForTenant(tenantId).stream()
                 .filter(viewer::canSee)
-                .map(a -> summarise(a, tenantId))
+                .map(a -> {
+                    List<Shown> shown = shownIn(a, tenantId, staff);
+                    String cover = shown.isEmpty() ? null
+                            : link(shown.get(shown.size() - 1).photo().getThumbKey());
+                    return new AlbumSummary(a.getId(), a.getTitle(), a.getAudienceType(),
+                            labelFor(a, tenantId), a.getCreatedAt(), shown.size(), cover,
+                            staff && mayManage(user, a, authentication));
+                })
                 .toList();
     }
 
@@ -194,16 +262,247 @@ public class GalleryService {
         if (!viewerFor(user, authentication).canSee(album)) {
             throw GalleryException.forbidden("That album is not shared with you.");
         }
+        boolean staff = STAFF.contains(user.getRole());
+        List<Shown> shown = shownIn(album, tenantId, staff);
+        java.util.Map<UUID, List<String>> names = staff ? taggedNames(shown, tenantId) : java.util.Map.of();
+        return shown.stream()
+                .map(s -> new PhotoSummary(s.photo().getId(), s.photo().getWidth(), s.photo().getHeight(),
+                        s.photo().getCreatedAt(), s.withheld(),
+                        link(s.photo().getThumbKey()), link(s.photo().getDisplayKey()),
+                        names.getOrDefault(s.photo().getId(), List.of())))
+                .toList();
+    }
+
+    /** A live photo this person may be shown, and whether it is withheld for consent. */
+    private record Shown(AlbumPhoto photo, boolean withheld) {
+    }
+
+    /**
+     * The live photos of an album that this person may be sent, oldest first.
+     * Withheld photos go to staff, flagged, and to nobody else -- never merely
+     * flagged for a family: a photo of a child whose parent has said no must not
+     * reach another parent's phone.
+     */
+    private List<Shown> shownIn(PhotoAlbum album, UUID tenantId, boolean staff) {
         List<AlbumPhoto> photos = photoRepository.liveInAlbum(album.getId(), tenantId);
         Set<UUID> withheld = withheldForConsent(photos, tenantId);
-        boolean staff = STAFF.contains(user.getRole());
         return photos.stream()
-                // Never sent to a family, not merely flagged: a photo of a child
-                // whose parent has said no must not reach another parent's phone.
                 .filter(p -> staff || !withheld.contains(p.getId()))
-                .map(p -> new PhotoSummary(p.getId(), p.getWidth(), p.getHeight(), p.getCreatedAt(),
-                        withheld.contains(p.getId())))
+                .map(p -> new Shown(p, withheld.contains(p.getId())))
                 .toList();
+    }
+
+    private java.util.Map<UUID, List<String>> taggedNames(List<Shown> shown, UUID tenantId) {
+        if (shown.isEmpty()) {
+            return java.util.Map.of();
+        }
+        List<AlbumPhotoPupil> tags = tagRepository.onPhotos(shown.stream().map(s -> s.photo().getId()).toList(), tenantId);
+        java.util.Map<UUID, String> nameOf = studentRepository.findByIdInAndTenantId(
+                        tags.stream().map(AlbumPhotoPupil::getStudentId).collect(Collectors.toSet()), tenantId)
+                .stream().collect(Collectors.toMap(Student::getId, GalleryService::fullName));
+        return tags.stream().collect(Collectors.groupingBy(AlbumPhotoPupil::getPhotoId,
+                Collectors.mapping(t -> nameOf.getOrDefault(t.getStudentId(), ""),
+                        Collectors.collectingAndThen(Collectors.toList(), l -> l.stream().sorted().toList()))));
+    }
+
+    /** A short-lived link to one stored image, or null where storage is not set up. */
+    private String link(String key) {
+        if (!mediaStore.available()) {
+            return null;
+        }
+        return mediaStore.readUrl(key, LINK_LIFETIME).toString();
+    }
+
+    // ── Adding and removing photos ───────────────────────────────────────────
+
+    /** Whether photos can be stored on this server at all. */
+    public GalleryStatus status() {
+        return mediaStore.available()
+                ? new GalleryStatus(true, null)
+                : new GalleryStatus(false, UnavailableMediaStore.NOT_SET_UP);
+    }
+
+    /**
+     * Adds one photo to an album.
+     *
+     * <p>In three steps, deliberately outside one transaction: the decode is the
+     * slow, memory-heavy part and must not hold a database connection while it
+     * runs. So: check the caller may add to the album; make the two sizes and
+     * store them; then write the row. If the row cannot be written, the two
+     * stored images are deleted again, so a failure leaves nothing behind.
+     */
+    public PhotoSummary addPhoto(UUID albumId, byte[] upload, Authentication authentication) {
+        if (!mediaStore.available()) {
+            throw GalleryException.unavailable(UnavailableMediaStore.NOT_SET_UP);
+        }
+        record Target(User staff, PhotoAlbum album) {
+        }
+        Target target = transactions.execute(status -> {
+            User staff = requireStaff(authentication);
+            PhotoAlbum album = requireLiveAlbum(albumId, staff.getTenantId());
+            requireMayManage(staff, album, authentication);
+            return new Target(staff, album);
+        });
+        if (upload == null || upload.length == 0) {
+            throw GalleryException.badRequest("Choose a photo to upload.");
+        }
+        if (upload.length > ImagePipeline.MAX_UPLOAD_BYTES) {
+            throw uploadTooLarge();
+        }
+
+        ImagePipeline.Gallery images;
+        try {
+            images = ImagePipeline.renderForGallery(upload);
+        } catch (IOException e) {
+            throw ImagePipeline.BUSY.equals(e.getMessage())
+                    ? GalleryException.unavailable(e.getMessage())
+                    : GalleryException.badRequest(friendly(e.getMessage()));
+        }
+
+        UUID tenantId = target.staff().getTenantId();
+        UUID photoId = UUID.randomUUID();
+        String thumbKey = MediaKeys.albumThumb(tenantId, target.album().getId(), photoId);
+        String displayKey = MediaKeys.albumDisplay(tenantId, target.album().getId(), photoId);
+        try {
+            mediaStore.put(displayKey, images.display().bytes(), "image/jpeg");
+            mediaStore.put(thumbKey, images.thumb().bytes(), "image/jpeg");
+            AlbumPhoto saved = transactions.execute(status -> {
+                AlbumPhoto photo = new AlbumPhoto();
+                photo.setId(photoId);
+                photo.setAlbumId(target.album().getId());
+                photo.setThumbKey(thumbKey);
+                photo.setDisplayKey(displayKey);
+                photo.setWidth(images.display().width());
+                photo.setHeight(images.display().height());
+                photo.setUploadedByUserId(target.staff().getId());
+                photo.setCreatedAt(LocalDateTime.now());
+                return photoRepository.save(photo);
+            });
+            return new PhotoSummary(saved.getId(), saved.getWidth(), saved.getHeight(), saved.getCreatedAt(),
+                    false, link(thumbKey), link(displayKey), List.of());
+        } catch (RuntimeException e) {
+            deleteQuietly(displayKey);
+            deleteQuietly(thumbKey);
+            throw e;
+        }
+    }
+
+    /**
+     * Removes a photo: the row is kept, marked removed, for the consent record;
+     * the stored images are deleted.
+     */
+    @Transactional
+    public void removePhoto(UUID photoId, Authentication authentication) {
+        User staff = requireStaff(authentication);
+        UUID tenantId = staff.getTenantId();
+        AlbumPhoto photo = photoRepository.liveByIdInTenant(photoId, tenantId)
+                .orElseThrow(() -> GalleryException.notFound("That photo is not available."));
+        PhotoAlbum album = requireLiveAlbum(photo.getAlbumId(), tenantId);
+        requireMayManage(staff, album, authentication);
+        photo.setRemovedAt(LocalDateTime.now());
+        photoRepository.save(photo);
+        mediaStore.delete(photo.getDisplayKey());
+        mediaStore.delete(photo.getThumbKey());
+    }
+
+    /** Removes an album and every photo in it, deleting their stored images. */
+    @Transactional
+    public void removeAlbum(UUID albumId, Authentication authentication) {
+        User staff = requireStaff(authentication);
+        UUID tenantId = staff.getTenantId();
+        PhotoAlbum album = requireLiveAlbum(albumId, tenantId);
+        requireMayManage(staff, album, authentication);
+        LocalDateTime now = LocalDateTime.now();
+        for (AlbumPhoto photo : photoRepository.liveInAlbum(album.getId(), tenantId)) {
+            photo.setRemovedAt(now);
+            photoRepository.save(photo);
+            mediaStore.delete(photo.getDisplayKey());
+            mediaStore.delete(photo.getThumbKey());
+        }
+        album.setRemovedAt(now);
+        albumRepository.save(album);
+    }
+
+    /** The pupils who may be tagged in this album's photos: in its audience, with consent. */
+    @Transactional(readOnly = true)
+    public List<TaggablePupil> taggablePupils(UUID albumId, Authentication authentication) {
+        User staff = requireStaff(authentication);
+        UUID tenantId = staff.getTenantId();
+        PhotoAlbum album = requireLiveAlbum(albumId, tenantId);
+        requireMayManage(staff, album, authentication);
+        return studentRepository.findByTenantId(tenantId).stream()
+                .filter(s -> isIn(s, album.getAudienceType(), album.getAudienceRef()))
+                .filter(Student::isPhotoConsent)
+                .sorted(Comparator.comparing(GalleryService::fullName))
+                .map(s -> new TaggablePupil(s.getId(), fullName(s), sectionLabel(s.getClassSection())))
+                .toList();
+    }
+
+    private PhotoAlbum requireLiveAlbum(UUID albumId, UUID tenantId) {
+        return albumRepository.findByIdAndTenantId(albumId, tenantId)
+                .filter(a -> a.getRemovedAt() == null)
+                .orElseThrow(() -> GalleryException.notFound("That album is not available."));
+    }
+
+    /**
+     * Admins and principals manage any album; a teacher, albums they made or
+     * albums for a class they teach. Seeing a grade or whole-school album is not
+     * enough to add to it.
+     */
+    private boolean mayManage(User staff, PhotoAlbum album, Authentication authentication) {
+        if (teachingScope.isUnrestricted(staff)) {
+            return true;
+        }
+        if (staff.getRole() != UserRole.TEACHER || !viewerFor(staff, authentication).canSee(album)) {
+            return false;
+        }
+        if (staff.getId().equals(album.getCreatedByUserId())) {
+            return true;
+        }
+        if (album.getAudienceType() != AudienceType.SECTION) {
+            return false;
+        }
+        try {
+            return classSectionRepository.findByIdAndTenantId(UUID.fromString(album.getAudienceRef()), staff.getTenantId())
+                    .map(cs -> teachingScope.teachesSection(staff, cs))
+                    .orElse(false);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private void requireMayManage(User staff, PhotoAlbum album, Authentication authentication) {
+        if (!mayManage(staff, album, authentication)) {
+            throw GalleryException.forbidden("You can add and remove photos only in albums for classes you teach.");
+        }
+    }
+
+    private void deleteQuietly(String key) {
+        try {
+            mediaStore.delete(key);
+        } catch (RuntimeException ignored) {
+            // Best effort: the upload has already failed, and that is the error to report.
+        }
+    }
+
+    /** The refusal for a photo over the upload cap (413). */
+    public static GalleryException uploadTooLarge() {
+        return GalleryException.tooLarge("That photo is larger than "
+                + (ImagePipeline.MAX_UPLOAD_BYTES / (1024 * 1024)) + " MB. Try a smaller one.");
+    }
+
+    /** The pipeline's reasons, in words a teacher can act on. */
+    private static String friendly(String reason) {
+        if (reason == null || ImagePipeline.NOT_A_PHOTO.equals(reason)) {
+            return ImagePipeline.NOT_A_PHOTO + ". iPhone photos: choose \"Most Compatible\" in Camera settings, or share as JPEG.";
+        }
+        if (reason.contains("too many pixels") || reason.contains("too large")) {
+            return "That photo is too large to process. Try a smaller one.";
+        }
+        if (reason.contains("not an image this server can read")) {
+            return "That file could not be read as a photo. Try saving it as a JPEG first.";
+        }
+        return reason;
     }
 
     // ── Who is in a photo ────────────────────────────────────────────────────
@@ -458,11 +757,6 @@ public class GalleryService {
         if (!teachingScope.teachesSection(staff, section)) {
             throw GalleryException.forbidden("You do not teach " + sectionLabel(section) + ".");
         }
-    }
-
-    private AlbumSummary summarise(PhotoAlbum album, UUID tenantId) {
-        return new AlbumSummary(album.getId(), album.getTitle(), album.getAudienceType(),
-                labelFor(album, tenantId), album.getCreatedAt());
     }
 
     private String labelFor(PhotoAlbum album, UUID tenantId) {

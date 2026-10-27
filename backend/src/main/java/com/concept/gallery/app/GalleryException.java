@@ -28,4 +28,13 @@ public class GalleryException extends RuntimeException {
     public static GalleryException notFound(String message) {
         return new GalleryException(404, message);
     }
+
+    public static GalleryException tooLarge(String message) {
+        return new GalleryException(413, message);
+    }
+
+    /** Photos are not set up on this server, or it is busy with other photos. */
+    public static GalleryException unavailable(String message) {
+        return new GalleryException(503, message);
+    }
 }
