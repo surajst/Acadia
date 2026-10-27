@@ -409,7 +409,12 @@ jobs:
   build-and-test:
     name: build-and-test
     needs: enforce-architecture
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: latest moved to Ubuntu 26.04, which the
+    # Playwright in backend/src/test/e2e (1.60) cannot install browsers on --
+    # "Playwright does not support chromium on ubuntu26.04-x64" -- so every PR
+    # went red before a single test ran. Move this forward together with a
+    # Playwright upgrade that supports the newer image.
+    runs-on: ubuntu-24.04
     # A throwaway value for the dev-mode seeded accounts, read by both the
     # backend it launches and the Playwright specs. Not a real password, and not
     # in source: the seeders have no default (see SeedCredentials).
