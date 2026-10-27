@@ -441,22 +441,7 @@ public class ParentService {
 
     @Transactional
     public Map<String, Object> approveQuestApi(UUID id, Authentication authentication) {
-        UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
-        ParentQuest quest = parentQuestRepository.findByIdAndTenantId(id, tenantId).orElse(null);
-        if (quest == null) {
-            throw ParentException.badRequest("Quest not found");
-        }
-        Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
-        if (parent == null || !quest.getStudent().getParents().contains(parent)) {
-            throw ParentException.forbidden("Not authorized for this quest");
-        }
-        quest.setStatus("APPROVED");
-        parentQuestRepository.save(quest);
-
-        StudentMetric metric = studentMetricRepository.findByStudentId(quest.getStudent().getId()).orElseThrow();
-        metric.setParentXp(metric.getParentXp() + quest.getXpBounty());
-        studentMetricRepository.save(metric);
-
+        approveQuest(id, authentication);
         return Map.of("status", "success");
     }
 
@@ -592,24 +577,43 @@ public class ParentService {
 
     @Transactional
     public void approveQuestWeb(UUID id, Authentication authentication) {
+        approveQuest(id, authentication);
+    }
+
+    /**
+     * Statuses a claimed quest can be approved from: the one both claims write
+     * now, and the one the phone wrote before that was fixed.
+     */
+    private static final List<String> AWAITING_APPROVAL = List.of("COMPLETED_AWAITING_APPROVAL", "AWAITING_APPROVAL");
+
+    /**
+     * Approves a claimed quest and pays its XP, once. The web form and the
+     * dashboard button both land here; a second click, a second tab or a quest
+     * that was never claimed gets a 409 and pays nothing.
+     */
+    private void approveQuest(UUID id, Authentication authentication) {
         UUID tenantId = currentUserService.getCurrentTenantId(authentication).orElse(null);
         ParentQuest quest = parentQuestRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> ParentException.badRequest("Invalid parent quest ID: " + id));
+                .orElseThrow(() -> ParentException.badRequest("Quest not found"));
         Parent parent = currentUserService.getCurrentParent(authentication).orElse(null);
         if (parent == null || !quest.getStudent().getParents().contains(parent)) {
             throw ParentException.forbidden("Not authorized for this quest");
         }
+        if (parentQuestRepository.approveIfAwaiting(id, tenantId, AWAITING_APPROVAL) == 0) {
+            throw ParentException.conflict("This quest is not waiting for approval. It may already be approved.");
+        }
+        // Keep the loaded entity in step with the row, so a later flush of it
+        // does not write the old status back.
         quest.setStatus("APPROVED");
-        parentQuestRepository.saveAndFlush(quest);
 
-        UUID studentId = quest.getStudent().getId();
-        StudentMetric metric = studentMetricRepository.findByStudentId(studentId).orElse(null);
+        Student student = quest.getStudent();
+        StudentMetric metric = studentMetricRepository.findByStudentId(student.getId()).orElse(null);
         if (metric == null) {
             metric = new StudentMetric();
             metric.setId(UUID.randomUUID());
-            metric.setStudent(quest.getStudent());
-            metric.setTenantId(quest.getStudent().getTenantId());
-            metric.setAcademicYearId(quest.getStudent().getAcademicYearId());
+            metric.setStudent(student);
+            metric.setTenantId(student.getTenantId());
+            metric.setAcademicYearId(student.getAcademicYearId());
             metric.setSchoolXp(0);
             metric.setParentXp(0);
             metric.setActiveStreak(0);

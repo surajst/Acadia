@@ -1099,15 +1099,24 @@
                 btn.addEventListener('click', function() {
                     var questId = this.dataset.questId;
                     var self    = this;
+                    // Disabled before the request, not after it: a double-click
+                    // used to send two approvals before the first one answered.
+                    if (self.disabled) return;
+                    self.disabled = true;
                     fetch('/api/parent/approve-quest/' + questId, { method: 'POST' })
                         .then(function(r) {
-                            if (r.ok) {
-                                self.disabled = true;
+                            // 409: approved already (another tab, the other parent).
+                            if (r.ok || r.status === 409) {
                                 self.className = 'text-[10px] font-bold px-3 py-1 rounded-full bg-slate-700 text-slate-500 border border-slate-300 cursor-default';
                                 self.innerText = '✓ Verified';
+                            } else {
+                                self.disabled = false;
                             }
                         })
-                        .catch(function(err) { console.error('Approve quest error:', err); });
+                        .catch(function(err) {
+                            self.disabled = false;
+                            console.error('Approve quest error:', err);
+                        });
                 });
             });
         }

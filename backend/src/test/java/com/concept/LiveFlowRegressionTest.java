@@ -1,6 +1,7 @@
 package com.concept;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -18,12 +19,16 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.concept.academics.data.StudentMetric;
+import com.concept.academics.data.StudentMetricRepository;
 import com.concept.announcement.Announcement;
 import com.concept.announcement.AnnouncementService;
 import com.concept.attendance.app.AttendanceFormView;
 import com.concept.attendance.app.AttendanceService;
 import com.concept.notification.data.NotificationRepository;
 import com.concept.parent.app.ParentDashboardService;
+import com.concept.parent.app.ParentException;
+import com.concept.parent.app.ParentService;
 import com.concept.parent.app.ParentDashboardService.QuestView;
 import com.concept.parent.data.ParentQuest;
 import com.concept.parent.data.ParentQuestRepository;
@@ -55,6 +60,8 @@ class LiveFlowRegressionTest {
 
     @Autowired private StudentService studentService;
     @Autowired private ParentDashboardService parentDashboardService;
+    @Autowired private ParentService parentService;
+    @Autowired private StudentMetricRepository studentMetricRepository;
     @Autowired private AnnouncementService announcementService;
     @Autowired private AttendanceService attendanceService;
     @Autowired private NotificationRepository notificationRepository;
@@ -120,6 +127,16 @@ class LiveFlowRegressionTest {
 
         adminUser = person("admin", UserRole.ADMIN);
         adminAuth = auth(adminUser.getEmail(), "ADMIN");
+
+        StudentMetric metric = new StudentMetric();
+        metric.setId(UUID.randomUUID());
+        metric.setStudent(aarav);
+        metric.setTenantId(tenantId);
+        metric.setAcademicYearId(yearId);
+        metric.setSchoolXp(0);
+        metric.setParentXp(0);
+        metric.setActiveStreak(0);
+        studentMetricRepository.saveAndFlush(metric);
     }
 
     // ── A quest claimed on the phone reaches the parent ──────────────────────
@@ -142,6 +159,45 @@ class LiveFlowRegressionTest {
 
         assertTrue(awaitingIds().contains(stuck.getId()),
                 "rows already stored with the old status are listed too");
+    }
+
+    // ── A quest is approved, and paid, once ─────────────────────────────────
+
+    @Test
+    void approvingAQuestTwicePaysTheXpOnce() {
+        ParentQuest quest = quest("COMPLETED_AWAITING_APPROVAL");
+
+        parentService.approveQuestApi(quest.getId(), parentAuth);
+        ParentException second = assertThrows(ParentException.class,
+                () -> parentService.approveQuestWeb(quest.getId(), parentAuth));
+
+        assertEquals(409, second.status());
+        assertEquals("APPROVED",
+                parentQuestRepository.findByIdAndTenantId(quest.getId(), tenantId).orElseThrow().getStatus());
+        assertEquals(50, studentMetricRepository.findByStudentId(aarav.getId()).orElseThrow().getParentXp(),
+                "the 50 XP bounty is paid once, not twice");
+    }
+
+    @Test
+    void aQuestTheChildHasNotClaimedCannotBeApproved() {
+        ParentQuest quest = quest("PENDING");
+
+        ParentException e = assertThrows(ParentException.class,
+                () -> parentService.approveQuestApi(quest.getId(), parentAuth));
+
+        assertEquals(409, e.status());
+        assertEquals("PENDING",
+                parentQuestRepository.findByIdAndTenantId(quest.getId(), tenantId).orElseThrow().getStatus());
+    }
+
+    @Test
+    void aQuestClaimedUnderTheOldPhoneStatusCanStillBeApproved() {
+        ParentQuest quest = quest("AWAITING_APPROVAL");
+
+        parentService.approveQuestApi(quest.getId(), parentAuth);
+
+        assertEquals("APPROVED",
+                parentQuestRepository.findByIdAndTenantId(quest.getId(), tenantId).orElseThrow().getStatus());
     }
 
     // ── One announcement, one notification, however many children ──────────
