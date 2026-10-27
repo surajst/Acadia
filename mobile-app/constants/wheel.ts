@@ -47,6 +47,7 @@ const STUDENT: WheelOption[] = [
   { key: 'rewards',    label: 'Rewards',    route: '/marketplace',        icon: { ios: 'gift',          android: 'redeem',        web: 'redeem' } },
   { key: 'news',       label: 'News',       route: '/student-news',       icon: { ios: 'megaphone',      android: 'campaign',      web: 'campaign' } },
   { key: 'videos',     label: 'Videos',     route: '/videos',             icon: { ios: 'play.rectangle', android: 'smart_display',  web: 'smart_display' } },
+  { key: 'photos', label: 'Photos', route: '/gallery', icon: { ios: 'photo.on.rectangle', android: 'photo_library', web: 'photo_library' } },
 ];
 
 const PARENT: WheelOption[] = [
@@ -58,6 +59,7 @@ const PARENT: WheelOption[] = [
   { key: 'news',        label: 'News',        route: '/announcements', icon: { ios: 'megaphone',  android: 'campaign',          web: 'campaign' } },
   { key: 'recognition', label: 'Recognition', route: '/recognition',   icon: { ios: 'rosette',    android: 'workspace_premium', web: 'workspace_premium' } },
   { key: 'videos',      label: 'Videos',      route: '/videos',        icon: { ios: 'play.rectangle', android: 'smart_display', web: 'smart_display' } },
+  { key: 'photos', label: 'Photos', route: '/gallery', icon: { ios: 'photo.on.rectangle', android: 'photo_library', web: 'photo_library' } },
 ];
 
 const TEACHER: WheelOption[] = [
@@ -69,6 +71,7 @@ const TEACHER: WheelOption[] = [
   { key: 'messages',     label: 'Messages',   route: '/messages',     icon: { ios: 'message',                     android: 'chat',     web: 'chat' } },
   { key: 'newTask',      label: 'New task',   route: '/task-new',     icon: { ios: 'plus',                        android: 'add',      web: 'add' } },
   { key: 'videos',       label: 'Videos',     route: '/videos',       icon: { ios: 'play.rectangle',              android: 'smart_display', web: 'smart_display' } },
+  { key: 'photos', label: 'Photos', route: '/gallery', icon: { ios: 'photo.on.rectangle', android: 'photo_library', web: 'photo_library' } },
 ];
 
 // None. A driver's job is the trip button, which stays on the home screen

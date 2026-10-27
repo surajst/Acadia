@@ -871,3 +871,55 @@ export const decideWaiver = async (invoiceId, action) => {
 };
 
 export default api;
+// ─── Photos (gallery) ──────────────────────────────────────────────────────
+// One API for every role; the server decides what each may see and do. The
+// image links it returns expire after a few minutes, so a list is fetched
+// again rather than cached.
+
+const galleryHeaders = async () => ({ Authorization: `Bearer ${await AsyncStorage.getItem('userToken')}` });
+
+export const getGalleryStatus = async () => {
+  const response = await axios.get(`${BASE_HOST}/api/gallery/status`, { headers: await galleryHeaders() });
+  return response.data;
+};
+
+export const getGalleryAlbums = async () => {
+  const response = await axios.get(`${BASE_HOST}/api/gallery/albums`, { headers: await galleryHeaders() });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getGalleryPhotos = async (albumId) => {
+  const response = await axios.get(`${BASE_HOST}/api/gallery/albums/${albumId}/photos`, {
+    headers: await galleryHeaders(),
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const removeGalleryPhoto = async (photoId) => {
+  const response = await axios.delete(`${BASE_HOST}/api/gallery/photos/${photoId}`, {
+    headers: await galleryHeaders(),
+  });
+  return response.data;
+};
+
+/**
+ * Adds one picked photo to an album. The bytes go as the request body, not a
+ * form: the server takes photos larger than the app's general upload limit
+ * this way. Resolves to the new photo, or throws an Error carrying the
+ * server's own words ("Please upload a JPEG or PNG photo", "larger than 12 MB").
+ */
+export const uploadGalleryPhoto = async (albumId, { uri, mimeType }) => {
+  const picked = await (await fetch(uri)).blob();
+  const type = mimeType || picked.type || 'image/jpeg';
+  const response = await fetch(`${BASE_HOST}/api/gallery/albums/${albumId}/photos`, {
+    method: 'POST',
+    headers: { ...(await galleryHeaders()), 'Content-Type': type },
+    body: picked,
+  });
+  let data = null;
+  try { data = await response.json(); } catch { /* empty body */ }
+  if (!response.ok) {
+    throw new Error((data && data.error) || `Upload failed (${response.status}).`);
+  }
+  return data;
+};

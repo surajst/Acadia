@@ -39,6 +39,7 @@ export const SCREEN_TITLES = {
 
   // (tabs)
   videos: 'Videos',
+  gallery: 'Photos',
   syllabus: 'Syllabus',
   'student-attendance': 'Attendance',
   challenges: 'Challenges',

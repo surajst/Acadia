@@ -70,6 +70,10 @@ test.describe('Admin Page Health', () => {
     // swallowed the whole form on first load, when no import had run yet.
     await expect(page.locator('section[data-panel="students"] input[type="file"]')).toHaveCount(1);
   });
+
+  test('Admin Photos', async ({ page }) => {
+    await assertPageHealth(page, '/web/gallery');
+  });
 });
 
 test.describe('Teacher Page Health', () => {
@@ -93,6 +97,10 @@ test.describe('Teacher Page Health', () => {
   test('Teacher Videos', async ({ page }) => {
     await assertPageHealth(page, '/web/teacher/videos');
   });
+
+  test('Teacher Photos', async ({ page }) => {
+    await assertPageHealth(page, '/web/gallery');
+  });
 });
 
 test.describe('Parent Page Health', () => {
@@ -104,6 +112,10 @@ test.describe('Parent Page Health', () => {
   test('Parent Dashboard', async ({ page }) => {
     await assertPageHealth(page, '/web/parent/portal');
   });
+
+  test('Parent Photos', async ({ page }) => {
+    await assertPageHealth(page, '/web/gallery');
+  });
 });
 
 test.describe('Student Page Health', () => {
@@ -114,6 +126,10 @@ test.describe('Student Page Health', () => {
 
   test('Student Dashboard', async ({ page }) => {
     await assertPageHealth(page, '/web/student/portal');
+  });
+
+  test('Student Photos', async ({ page }) => {
+    await assertPageHealth(page, '/web/gallery');
   });
 });
 

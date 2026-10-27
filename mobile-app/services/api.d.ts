@@ -295,3 +295,31 @@ export function removeTeacherVideo(videoId: string): Promise<{ status: string }>
 declare const api: AxiosInstance;
 
 export default api;
+
+export interface GalleryAlbum {
+  id: string;
+  title: string;
+  audienceType: 'SCHOOL' | 'GRADE' | 'SECTION';
+  audienceLabel: string;
+  createdAt: string;
+  photoCount: number;
+  coverUrl: string | null;
+  canAddPhotos: boolean;
+}
+
+export interface GalleryPhoto {
+  id: string;
+  width: number | null;
+  height: number | null;
+  addedAt: string;
+  withheldForConsent: boolean;
+  thumbUrl: string | null;
+  displayUrl: string | null;
+  taggedNames: string[];
+}
+
+export function getGalleryStatus(): Promise<{ available: boolean; message: string | null }>;
+export function getGalleryAlbums(): Promise<GalleryAlbum[]>;
+export function getGalleryPhotos(albumId: string): Promise<GalleryPhoto[]>;
+export function removeGalleryPhoto(photoId: string): Promise<{ status: string }>;
+export function uploadGalleryPhoto(albumId: string, picked: { uri: string; mimeType?: string }): Promise<GalleryPhoto>;
