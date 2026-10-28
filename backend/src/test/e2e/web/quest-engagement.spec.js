@@ -104,4 +104,55 @@ test.describe('ACADIA Parent-Kid Quest Engagement Flow', () => {
     await expect(page.locator('#tab-quests').getByText(uniqueTitle)).toHaveCount(0);
   });
 
+  // The phone claims through /api/student/claim-quest, which wrote a status the
+  // parent's approval list never read: a quest marked done on the phone simply
+  // vanished. The web claim above goes another way and never caught it.
+  test('A quest claimed on the phone reaches the parent\'s approval queue', async ({ page, request }) => {
+    await login(page, 'ramesh@gmail.com', process.env.DEMO_ADMIN_PASSWORD);
+    await page.goto('/web/parent/dashboard');
+    await page.locator('[data-tab="profile"]').first().click();
+    const uniqueTitle = 'Phone Claim Task: ' + Math.random().toString(36).substring(7);
+    const taskChild = page.locator('#profile-assignStudentId option', { hasText: 'Arjun' }).first();
+    await page.selectOption('#profile-assignStudentId', await taskChild.getAttribute('value'));
+    await page.fill('#profile-taskTitle', uniqueTitle);
+    await page.fill('#profile-xpBounty', '150');
+    await page.locator('#assignTaskForm-profile button[type="submit"]').click();
+    await page.waitForURL(url => url.pathname.includes('/web/parent/dashboard'), { timeout: 90000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#toast')).toContainText('Home task assigned successfully!');
+
+    // Arjun, on the phone: sign in, find the quest, mark it done -- the same
+    // three calls the app makes.
+    const loginRes = await request.post('/api/mobile/auth/login', {
+      data: { email: 'arjun@gmail.com', password: process.env.DEMO_ADMIN_PASSWORD },
+    });
+    expect(loginRes.ok()).toBeTruthy();
+    const auth = { Authorization: `Bearer ${(await loginRes.json()).token}` };
+    const dashRes = await request.get('/api/mobile/student/dashboard', { headers: auth });
+    expect(dashRes.ok()).toBeTruthy();
+    const quest = (await dashRes.json()).parentQuests.find(q => q.taskDescription === uniqueTitle);
+    expect(quest, 'the new quest should be on the phone').toBeDefined();
+    expect(quest.status).toBe('PENDING');
+    const claimRes = await request.post(`/api/student/claim-quest/${quest.id}`, { headers: auth });
+    expect(claimRes.ok()).toBeTruthy();
+
+    // Ramesh, on the web portal: the claim is waiting for him, and approving it clears it.
+    await page.goto('/web/parent/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.locator('[data-tab="quests"]').first().click();
+    const queueRow = page.locator('#tab-quests').locator('div', { hasText: uniqueTitle })
+      .filter({ has: page.locator('.approve-quest-btn') }).last();
+    await expect(queueRow).toBeVisible({ timeout: 90000 });
+    const [approveResp] = await Promise.all([
+      page.waitForResponse(r => r.url().includes('/api/parent/approve-quest/') && r.request().method() === 'POST'),
+      queueRow.locator('.approve-quest-btn').click(),
+    ]);
+    expect(approveResp.ok()).toBeTruthy();
+
+    await page.goto('/web/parent/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.locator('[data-tab="quests"]').first().click();
+    await expect(page.locator('#tab-quests').getByText(uniqueTitle)).toHaveCount(0);
+  });
+
 });
