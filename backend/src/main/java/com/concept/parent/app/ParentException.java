@@ -26,4 +26,9 @@ public class ParentException extends RuntimeException {
     public static ParentException forbidden(String message) {
         return new ParentException(403, message);
     }
+
+    /** The request is valid but the record has already moved on, e.g. a quest approved twice. */
+    public static ParentException conflict(String message) {
+        return new ParentException(409, message);
+    }
 }
