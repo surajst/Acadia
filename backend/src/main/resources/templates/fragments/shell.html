@@ -61,6 +61,10 @@
                th:classappend="${shell != null and shell.on('/web/admin/subjects')} ? 'active' : ''">
                 <span class="dot"></span> Subjects
             </a>
+            <a class="navlink" href="/web/gallery"
+               th:classappend="${shell != null and shell.on('/web/gallery')} ? 'active' : ''">
+                <span class="dot"></span> Photos
+            </a>
             <a class="navlink" href="/web/admin/fees" th:if="${shell == null or shell.role() == 'ADMIN'}"
                th:classappend="${shell != null and shell.on('/web/admin/fees')} ? 'active' : ''">
                 <span class="dot"></span> Fees &amp; Billing
@@ -89,6 +93,10 @@
             <a class="navlink" href="/web/teacher/videos"
                th:classappend="${shell != null and shell.on('/web/teacher/videos')} ? 'active' : ''">
                 <span class="dot"></span> Videos
+            </a>
+            <a class="navlink" href="/web/gallery"
+               th:classappend="${shell != null and shell.on('/web/gallery')} ? 'active' : ''">
+                <span class="dot"></span> Photos
             </a>
             <a class="navlink" href="/web/teacher/assessments" th:if="${school == null or school.hasExamScores}"
                th:classappend="${shell != null and shell.on('/web/teacher/assessments')} ? 'active' : ''">

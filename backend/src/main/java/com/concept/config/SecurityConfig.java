@@ -171,6 +171,9 @@ public class SecurityConfig {
                         .requestMatchers("/web/student/**").hasAnyRole("STUDENT", "PARENT", "ADMIN")
                         .requestMatchers("/web/parent/**").hasAnyRole("PARENT", "ADMIN")
                         .requestMatchers("/feed").authenticated() // announcement feed leaked cross-tenant data while public
+                        // Photos: every signed-in role has a view of it; what each
+                        // may see and do is decided by GalleryService behind the API.
+                        .requestMatchers("/web/gallery").authenticated()
                         .requestMatchers("/login", "/logout").permitAll()
                         // Liveness/readiness probe: Render calls this unauthenticated, so it
                         // must be public. It returns only {"status":"UP"|"DOWN"} to anonymous

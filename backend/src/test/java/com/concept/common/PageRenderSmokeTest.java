@@ -131,6 +131,11 @@ class PageRenderSmokeTest {
         assertTrue(renderAsAdmin("/web/teacher/tasks").contains("loadSectionOptions"));
     }
 
+    @Test
+    void thePhotosPageRenders() throws Exception {
+        assertTrue(renderAsAdmin("/web/gallery").contains("/api/gallery/albums"));
+    }
+
     /**
      * No inline script may open a Thymeleaf expression by accident.
      *

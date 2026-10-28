@@ -4,6 +4,37 @@ Branch: `wip/pr-b-media-store` (3 WIP commits, head `8355541`, based on
 `97fb6ad`). Read on 2026-10-15. This is a report, not a review of a PR; nothing
 on the branch was changed.
 
+## Update, 2026-10-27: built
+
+The gallery is now built end to end, in three PRs: the media store (#119),
+the API (#120) and the screens (this one). What this report listed as
+missing is done, with these choices:
+
+- **Pipeline memory:** subsampled decode to about 2x the display size,
+  rotation on the small image, one decode for both sizes, at most 2 at once.
+- **Upload:** the raw request body with the pipeline's 12 MB cap, not
+  multipart, so the app-wide 2 MB limit stays. Row written last; stored
+  images deleted again if it fails.
+- **Read path:** 15-minute links, only after the audience and consent checks.
+- **Dev-media:** dev mode only, and only for signed, unexpired links.
+- **Removal:** deletes the stored images; the rows stay for the consent record.
+- **Consent withdrawal:** per-child tags (#114); a photo of a child without
+  consent is never sent to families.
+- **HEIC:** the pickers ask for JPEG (web `accept`, and the app's picker in
+  "compatible" mode); anything that still arrives as HEIC is refused in words.
+- **No bucket when deployed:** photos are switched off with a clear message;
+  the app does not crash and does not write to the container's disk.
+- **AWS SDK:** 2.55.0, on the JDK HTTP client.
+
+**Still yours (infrastructure):** the bucket, its IAM user, and the four
+environment variables on Render (see #119), then one real upload to prove
+signing, permissions and CORS. Until then the gallery says photos are not set
+up.
+
+The original report follows, unchanged.
+
+---
+
 **One-line summary:** the storage port and the image pipeline are done and
 well tested. Nothing calls them yet. There is no upload endpoint, no album
 service, no read path, and no app or portal screen. In size, the branch is
