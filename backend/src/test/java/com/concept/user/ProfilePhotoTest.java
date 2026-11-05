@@ -188,4 +188,20 @@ public class ProfilePhotoTest {
         assertEquals(401, controller.photo(me.getId(), null).getStatusCode().value());
         assertEquals(401, controller.deletePhoto(null).getStatusCode().value());
     }
+
+    @Test
+    public void aDeletionRequestDeactivatesTheCallerAndErasesTheirPhoto() {
+        controller.uploadPhoto(jpeg("bytes".getBytes()), as(me));
+
+        ResponseEntity<?> res = controller.requestAccountDeletion(as(me));
+        assertEquals(200, res.getStatusCode().value());
+
+        User reloaded = userRepository.findById(me.getId()).orElseThrow();
+        assertEquals(false, reloaded.isActive(), "a deleted account must not be able to sign in");
+        assertNull(reloaded.getPhotoUpdatedAt());
+        assertEquals(404, controller.photo(me.getId(), as(sameSchool)).getStatusCode().value(),
+                "the photograph is erased, not just hidden");
+        assertEquals(true, userRepository.findById(sameSchool.getId()).orElseThrow().isActive(),
+                "only the caller's own account is touched");
+    }
 }

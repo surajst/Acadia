@@ -182,6 +182,11 @@ export default function DashboardScreen() {
               </Text>
             </TouchableOpacity>
           )}
+          {Platform.OS !== 'web' && tripActive && (
+            <Text style={[styles.infoText, { marginTop: 8 }]}>
+              Keep ACADIA open on this screen during the trip. The bus location is shared only while the app is open.
+            </Text>
+          )}
         </>
       )}
 

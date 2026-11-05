@@ -7,9 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/context/AuthContext';
 import { DataContext } from './_layout';
-import { getSupportedLanguages, setPreferredLanguage } from '../../services/api';
+import { getSupportedLanguages, setPreferredLanguage, requestAccountDeletion } from '../../services/api';
 import { useThemePicker, type Theme } from '../../context/ThemeContext';
-import { notify } from '../../utils/notify';
+import { ask, notify } from '../../utils/notify';
 
 /**
  * Preferences and sign-out, split out of the profile screen when the wheel
@@ -60,6 +60,26 @@ export default function SettingsScreen() {
     await logout();
   };
 
+  const [deleting, setDeleting] = useState(false);
+  const handleDeleteAccount = async () => {
+    const ok = await ask(
+      'Delete your account?',
+      'You will be signed out and will not be able to sign in again. Your profile photo is erased now, and your school will delete the rest of your personal data. Records the school must keep by law, such as marks and fees, stay with the school.',
+      { confirmLabel: 'Delete account', destructive: true },
+    );
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await requestAccountDeletion();
+      notify('Account deleted', 'Your account has been deactivated and your school has been asked to delete your data.');
+      await logout();
+    } catch {
+      notify('Delete account', 'Could not delete your account. Check your connection and try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
       <View style={styles.section}>
@@ -97,6 +117,10 @@ export default function SettingsScreen() {
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
         <Text style={styles.logoutText}>Log Out</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount} disabled={deleting} activeOpacity={0.7}>
+        {deleting ? <ActivityIndicator size="small" color={T.dangerInk} /> : <Text style={styles.deleteText}>Delete account</Text>}
       </TouchableOpacity>
 
       <Modal visible={languagePickerOpen} transparent animationType="slide" onRequestClose={() => setLanguagePickerOpen(false)}>
@@ -179,6 +203,8 @@ const makeStyles = (T: Theme) => StyleSheet.create({
     borderRadius: T.rSm, paddingVertical: 14, alignItems: 'center',
   },
   logoutText: { color: T.dangerInk, fontSize: 15, fontWeight: '700' },
+  deleteButton: { marginTop: 12, marginHorizontal: 16, paddingVertical: 12, alignItems: 'center' },
+  deleteText: { color: T.dangerInk, fontSize: 14, fontWeight: '600', textDecorationLine: 'underline' },
   modalOverlay: { flex: 1, backgroundColor: T.scrim, justifyContent: 'flex-end' },
   modalCard: {
     backgroundColor: T.surface, borderTopLeftRadius: 20,

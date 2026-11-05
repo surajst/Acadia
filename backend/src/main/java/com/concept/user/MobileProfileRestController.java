@@ -1,5 +1,6 @@
 package com.concept.user;
 
+import com.concept.common.AuditLogService;
 import com.concept.tenant.AcademicYearRepository;
 import com.concept.tenant.TenantRepository;
 import org.springframework.http.CacheControl;
@@ -32,15 +33,18 @@ public class MobileProfileRestController {
     private final UserPhotoRepository userPhotoRepository;
     private final TenantRepository tenantRepository;
     private final AcademicYearRepository academicYearRepository;
+    private final AuditLogService auditLogService;
 
     public MobileProfileRestController(UserRepository userRepository,
                                         UserPhotoRepository userPhotoRepository,
                                         TenantRepository tenantRepository,
-                                        AcademicYearRepository academicYearRepository) {
+                                        AcademicYearRepository academicYearRepository,
+                                        AuditLogService auditLogService) {
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.tenantRepository = tenantRepository;
         this.academicYearRepository = academicYearRepository;
+        this.auditLogService = auditLogService;
     }
 
     @GetMapping("/profile")
@@ -188,6 +192,44 @@ public class MobileProfileRestController {
                     user.setPhotoUpdatedAt(null);
                     userRepository.save(user);
                     return ResponseEntity.ok(Map.of("status", "removed"));
+                })
+                .orElse(ResponseEntity.status(404).body(Map.of("error", "User not found")));
+    }
+
+    // ── Account deletion ────────────────────────────────────────────────────
+
+    /**
+     * The signed-in user asks for their account to be deleted (Google Play
+     * requires this to be reachable from inside the app).
+     *
+     * <p>Accounts are issued and owned by the school, and the school is the
+     * controller of the records attached to them (marks, attendance, fees),
+     * which it may be required to keep. So this does what the user can decide
+     * on their own, immediately: the account is deactivated -- it can no longer
+     * sign in -- and the profile photograph is erased. The request is written
+     * to the audit log, where the school's admin sees it and completes the
+     * deletion of the remaining personal data, as the privacy policy describes.
+     *
+     * <p>The account acted on is always the caller's own, taken from the
+     * Authentication, never from the request.
+     */
+    @PostMapping("/deletion-request")
+    @Transactional
+    public ResponseEntity<?> requestAccountDeletion(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+        return userRepository.findByEmail(authentication.getName())
+                .map(user -> {
+                    // Logged first, while the account is still active, so the
+                    // audit row resolves its actor like every other entry.
+                    auditLogService.log(authentication, "ACCOUNT_DELETION_REQUESTED", "User", user.getId(),
+                            user.getFullName() + " (" + user.getRole().name() + ") asked for their account to be deleted from the mobile app");
+                    userPhotoRepository.deleteByUserId(user.getId());
+                    user.setPhotoUpdatedAt(null);
+                    user.setActive(false);
+                    userRepository.save(user);
+                    return ResponseEntity.ok(Map.of("status", "requested"));
                 })
                 .orElse(ResponseEntity.status(404).body(Map.of("error", "User not found")));
     }

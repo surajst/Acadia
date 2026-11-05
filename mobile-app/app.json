@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile-app",
+    "name": "ACADIA",
     "slug": "mobile-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,12 +11,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.acadia.mobileapp",
       "infoPlist": {
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "The driver's location is shared while a trip is active so parents can see the bus's live pickup status.",
-        "NSLocationWhenInUseUsageDescription": "The driver's location is shared while a trip is active so parents can see the bus's live pickup status.",
-        "UIBackgroundModes": [
-          "location",
-          "location"
-        ]
+        "NSLocationWhenInUseUsageDescription": "While a trip is active and the app is open, the driver's location is shared so parents can see the bus's live pickup status."
       }
     },
     "android": {
@@ -30,10 +25,12 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "versionCode": 1,
+      "blockedPermissions": [
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "web": {
@@ -55,14 +52,21 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "The driver's location is shared while a trip is active so parents can see the bus's live pickup status.",
-          "isAndroidBackgroundLocationEnabled": true,
-          "isAndroidForegroundServiceEnabled": true
+          "locationWhenInUsePermission": "While a trip is active and the app is open, the driver's location is shared so parents can see the bus's live pickup status.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
         }
       ],
       "./plugins/withGradleMemory",
       "./plugins/withReleaseSigning",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "ACADIA uses the microphone so you can record voice messages for your child's teachers.",
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
+      ],
       [
         "expo-image-picker",
         {
