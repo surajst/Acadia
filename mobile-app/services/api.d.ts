@@ -150,6 +150,7 @@ export function fetchProfilePhoto(
 ): Promise<string | null>;
 export function uploadProfilePhoto(input: { uri: string; mimeType?: string }): Promise<ApiObject>;
 export function deleteProfilePhoto(): Promise<ApiObject>;
+export function requestAccountDeletion(): Promise<ApiObject>;
 
 export function getCurriculumTopics(subjectEnum: string, standard?: number): Promise<CurriculumTopic[]>;
 export function getParentAttendance(studentId?: string): Promise<ApiObject>;

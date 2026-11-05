@@ -302,6 +302,17 @@ export const deleteProfilePhoto = async () => {
   return response.data;
 };
 
+// Google Play requires account deletion to be reachable in the app. The server
+// deactivates the caller's own account at once and logs the request for the
+// school's admin, who completes erasure of the remaining records.
+export const requestAccountDeletion = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  const response = await axios.post(`${BASE_HOST}/api/mobile/user/deletion-request`, {}, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export const getUserProfile = async () => {
   const token = await AsyncStorage.getItem('userToken');
   const response = await axios.get(`${BASE_HOST}/api/mobile/user/profile`, {
